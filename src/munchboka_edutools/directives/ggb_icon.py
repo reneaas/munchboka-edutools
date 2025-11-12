@@ -29,6 +29,7 @@ from sphinx.util.osutil import relative_uri
 # Custom node for GeoGebra icons
 class ggb_icon_node(nodes.Inline, nodes.Element):
     """Custom node for GeoGebra icons."""
+
     pass
 
 
@@ -54,15 +55,15 @@ def ggb_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 def visit_ggb_icon_html(self, node):
     """HTML visitor for ggb_icon_node - generates relative path."""
     icon_name = node["icon_name"]
-    
+
     # Get the relative path from current document to _static directory
     # self.builder.current_docname is like "examples/ggb_icon"
     # We want path from there to ../static/munchboka/icons/ggb/
     from os.path import relpath, dirname, join
-    
+
     # Current document directory depth
     doc_dir = dirname(self.builder.current_docname) if "/" in self.builder.current_docname else ""
-    
+
     # Calculate relative path
     if doc_dir:
         # For documents in subdirectories like "examples/ggb_icon"
@@ -71,9 +72,9 @@ def visit_ggb_icon_html(self, node):
     else:
         # For top-level documents
         rel_prefix = ""
-    
+
     img_path = f"{rel_prefix}_static/munchboka/icons/ggb/{icon_name}.svg"
-    
+
     # Generate the HTML with relative path
     html = f'<img src="{img_path}" alt="GeoGebra {icon_name} icon" class="inline-image" />'
     self.body.append(html)
@@ -92,7 +93,7 @@ def setup(app):
         ggb_icon_node,
         html=(visit_ggb_icon_html, depart_ggb_icon_html),
     )
-    
+
     # Register the role with both hyphenated and unhyphenated names
     roles.register_local_role("ggb-icon", ggb_icon_role)
     roles.register_local_role("ggbicon", ggb_icon_role)

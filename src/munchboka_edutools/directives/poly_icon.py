@@ -25,6 +25,7 @@ from docutils.parsers.rst import roles
 # Custom node for polynomial icons
 class poly_icon_node(nodes.Inline, nodes.Element):
     """Custom node for polynomial icons."""
+
     pass
 
 
@@ -60,15 +61,15 @@ def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[])
 def visit_poly_icon_html(self, node):
     """HTML visitor for poly_icon_node - generates relative path."""
     icon_name = node["icon_name"]
-    
+
     # Get the relative path from current document to _static directory
     # self.builder.current_docname is like "examples/poly_icon"
     # We want path from there to ../_static/munchboka/icons/polyicons/
     from os.path import dirname
-    
+
     # Current document directory depth
     doc_dir = dirname(self.builder.current_docname) if "/" in self.builder.current_docname else ""
-    
+
     # Calculate relative path
     if doc_dir:
         # For documents in subdirectories like "examples/poly_icon"
@@ -77,9 +78,9 @@ def visit_poly_icon_html(self, node):
     else:
         # For top-level documents
         rel_prefix = ""
-    
+
     img_path = f"{rel_prefix}_static/munchboka/icons/polyicons/{icon_name}.svg"
-    
+
     # Generate the HTML with relative path
     html = f'<img src="{img_path}" alt="{icon_name} polynomial icon" class="inline-image" />'
     self.body.append(html)
@@ -98,7 +99,7 @@ def setup(app):
         poly_icon_node,
         html=(visit_poly_icon_html, depart_poly_icon_html),
     )
-    
+
     # Register the role with both hyphenated and unhyphenated names
     roles.register_local_role("poly-icon", poly_icon_role)
     roles.register_local_role("polyicon", poly_icon_role)

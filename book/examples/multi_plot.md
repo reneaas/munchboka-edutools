@@ -1,34 +1,148 @@
-# Multi-Plot Examples
 
-This page demonstrates the `multi-plot` directive, which creates grids of mathematical function plots using the `plotmath` library.
+# `multiplot` directive
+
+This page demonstrates the `multi-plot` directive, which creates grids of plots of mathematical functions.
+
+## Full Keyword Specification
+
+### Required Options
+
+| Keyword | Type | Description |
+|---------|------|-------------|
+| `functions` | list | Comma-separated or bracketed list of function expressions (e.g., `[x**2, sin(x), exp(x)]`) |
+
+### Layout & Styling Options
+
+| Keyword | Type | Default | Description |
+|---------|------|---------|-------------|
+| `rows` | int | auto | Number of rows in the grid |
+| `cols` | int | auto | Number of columns in the grid |
+| `width` | string | - | Figure width as percentage (e.g., `100%`) or pixels (e.g., `400px`) |
+| `align` | string | `center` | Figure alignment: `left`, `center`, or `right` |
+| `class` | string | - | Extra CSS classes for the figure container |
+| `alt` | string | auto | Accessible description for screen readers |
+
+### Global Axis Options
+
+| Keyword | Type | Default | Description |
+|---------|------|---------|-------------|
+| `xmin` | float | auto | Global minimum x-axis value |
+| `xmax` | float | auto | Global maximum x-axis value |
+| `ymin` | float | auto | Global minimum y-axis value |
+| `ymax` | float | auto | Global maximum y-axis value |
+| `xstep` | float | auto | Spacing between x-axis ticks |
+| `ystep` | float | auto | Spacing between y-axis ticks |
+
+### Appearance Options
+
+| Keyword | Type | Default | Description |
+|---------|------|---------|-------------|
+| `fontsize` | float | 12 | Base font size for labels and ticks |
+| `lw` | float | 1.5 | Line width for function curves |
+| `alpha` | float | 1.0 | Transparency for function curves (0.0-1.0) |
+| `grid` | bool | false | Toggle grid lines (`true`/`false` or `on`/`off`) |
+| `ticks` | bool | true | Toggle axis ticks (`true`/`false` or `on`/`off`) |
+
+### Per-Function Options
+
+| Keyword | Aliases | Type | Description |
+|---------|---------|------|-------------|
+| `fn_labels` | `function-names` | list | LaTeX-formatted labels for each function (e.g., `[f(x)=x^2, g(x)=\sin(x)]`) |
+| `domains` | - | list | Domain specifications with optional exclusions (e.g., `[(-5,5) \ {0}, (-2,2)]`) |
+| `points` | - | list | Point markers for each plot (e.g., `[[(0,0), (1,1)], None, [(2,4)]]`) |
+| `vlines` | - | list | Vertical reference lines per plot (e.g., `[[0, 1], None, [-1]]`) |
+| `hlines` | - | list | Horizontal reference lines per plot (e.g., `[[0], None, [1, 2]]`) |
+| `lines` | - | list | Linear reference lines y=ax+b per plot (e.g., `[(1, 0), None, (2, -1)]`) |
+| `xlims` | - | list | Per-plot x-axis limits (e.g., `[(-3,3), None, (-1,5)]`) |
+| `ylims` | - | list | Per-plot y-axis limits (e.g., `[(-5,10), None, (-2,2)]`) |
+
+### Control Options
+
+| Keyword | Type | Default | Description |
+|---------|------|---------|-------------|
+| `nocache` | bool | false | Force regeneration of the plot (bypass cache) |
+| `debug` | bool | false | Keep raw SVG without ID rewriting for inspection |
+| `name` | string | auto | Explicit base name for cache filename |
+
+### Usage Notes
+
+- **Functions**: Use SymPy syntax (e.g., `x**2`, `sin(x)`, `exp(x)`, `1/(x-1)`)
+- **Domains**: Use set notation for exclusions: `(a,b) \ {x1, x2}` excludes points x1, x2 from interval (a,b)
+- **Lists**: Can use brackets `[a, b, c]` or comma-separated `a, b, c`
+- **None values**: Use `None` to skip a function in per-function lists (e.g., `vlines: [[0], None, [1]]`)
+- **Caption**: Any content after options (or after `---` delimiter) becomes the figure caption
+- **Caching**: Plots are cached based on content hash; use `nocache: true` to force regeneration
+
+---
 
 ## Basic Usage
 
-Three functions in a row:
+### Example 1
 
+Two functions side-by-side on one row:
+
+```markdown
 :::{multiplot}
-functions: [x**2, -x, x**3]
+functions: x**2, x**2 * exp(-x)
 rows: 1
-cols: 3
+cols: 2
 :::
+```
 
-## Custom Grid Layout
-
-2x2 grid with four functions:
+Output:
 
 :::{multiplot}
-functions: [x**2, sin(x), exp(x), log(abs(x)+1)]
-rows: 2
+functions: x**2, x**2 * exp(-x)
+rows: 1
 cols: 2
 :::
 
-## With Function Labels
+### Example 2
+
+A 2x2 grid with four functions:
+
+```markdown
+:::{multiplot}
+width: 100%
+functions: (x - 1) / (x + 1), x / (x**2 - 1), (x**3 - 2*x + 1) / (x - 1), (x**2 - 4) / (x**2 - 1)
+function-names: A, B, C, D
+rows: 2
+cols: 2
+ticks: off
+:::
+```
+
 
 :::{multiplot}
-functions: [x**2 - 2*x, -x + 2, x - 3]
-fn_labels: [f(x)=x^2-2x, g(x)=-x+2, h(x)=x-3]
+width: 100%
+functions: (x - 1) / (x + 1), x / (x**2 - 1), (x**3 - 2*x + 1) / (x - 1), (x**2 - 4) / (x**2 - 1)
+function-names: A, B, C, D
+rows: 2
+cols: 2
+ticks: off
+:::
+
+
+
+
+### Example 3
+
+
+```markdown
+:::{multiplot}
+functions: x**2 - 2*x, -x + 2
+function-names: f(x)=x^2-2x, g(x)=-x+2
 rows: 1
-cols: 3
+cols: 2
+width: 100%
+:::
+```
+
+:::{multiplot}
+functions: x**2 - 2*x, -x + 2
+function-names: f(x)=x^2-2x, g(x)=-x+2
+rows: 1
+cols: 2
 width: 100%
 :::
 

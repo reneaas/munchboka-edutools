@@ -1,25 +1,26 @@
 format: jb-book
 root: index
 chapters:
-  - file: examples/quiz
   - file: examples/plot.md
+  - file: examples/multi_plot.md
+  - file: examples/quiz/quiz.md
   - file: examples/jeopardy/jeopardy.md
   - file: examples/interactive_code.md
   - file: examples/polydiv.md
   - file: examples/horner.md
   - file: examples/cas_popup.md
   - file: examples/factor_tree.md
-  - file: examples/multi_plot.md
-  - file: pair_puzzle.md
-  - file: escape_room.md
+  - file: examples/pair_puzzle.md
+  - file: examples/escape_room.md
   - file: examples/escape_room/escape_room.md
-  - file: admonitions.md
-  - file: dialogue.md
-  - file: parsons.md
-  - file: ggb_icon.md
-  - file: ggb_popup.md
-  - file: ggb.md
-  - file: poly_icon.md
-  - file: signchart.md
-  - file: timed_quiz.md
-  - file: turtle.md
+  - file: examples/admonitions.md
+  - file: examples/dialogue.md
+  - file: examples/clear.md
+  - file: examples/parsons.md
+  - file: examples/ggb_icon.md
+  - file: examples/ggb_popup.md
+  - file: examples/ggb.md
+  - file: examples/poly_icon.md
+  - file: examples/signchart.md
+  - file: examples/timed_quiz.md
+  - file: examples/turtle.md

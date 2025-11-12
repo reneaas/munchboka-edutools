@@ -27,7 +27,7 @@ dependencies = [
   "signchart",
   "plotmath",
 ]
-version = "0.1.0"
+version = "0.1.2"
 
 [project.urls]
 Homepage = "https://github.com/reneaas/munchboka-edutools"

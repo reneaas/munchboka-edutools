@@ -33,4 +33,7 @@ jobs:
           python -m twine upload dist/*
 
       - name: Clean up
-        run: rm -r dist *.egg-info
+        if: always()
+        run: |
+          rm -rf dist build
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true

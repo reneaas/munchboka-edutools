@@ -25,6 +25,7 @@ dependencies = [
   "numpy>=1.23",
   "matplotlib>=3.7",
   "signchart",
+  "plotmath",
 ]
 version = "0.1.0"
 

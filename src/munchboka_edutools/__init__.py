@@ -48,6 +48,7 @@ def _copy_static(app):
         _register("css/interactive_code.css")
         _register("css/jeopardy.css")
         _register("css/general_style.css")
+        _register("css/popup.css")
         _register("css/quiz.css")
         _register("css/timedQuiz.css")
         _register("css/cas_popup.css")
@@ -80,6 +81,7 @@ def _copy_static(app):
         )
 
         _register("js/jeopardy.js")
+        _register("js/popup.js")
         _register("js/quiz.js")
         _register("js/timedQuiz/utils.js")
         _register("js/timedQuiz/multipleChoiceQuestion.js")

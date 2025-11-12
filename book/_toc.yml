@@ -17,6 +17,7 @@ chapters:
   - file: examples/dialogue.md
   - file: examples/clear.md
   - file: examples/parsons.md
+  - file: examples/popup.md
   - file: examples/ggb_icon.md
   - file: examples/ggb_popup.md
   - file: examples/ggb.md

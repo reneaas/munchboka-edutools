@@ -32,7 +32,7 @@ from docutils.parsers.rst import roles
 def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """
     Custom role for polynomial/cubic function icons.
-    
+
     Args:
         name: The role name used in the document
         rawtext: The entire role markup string
@@ -41,20 +41,20 @@ def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[])
         inliner: The inliner instance
         options: Dictionary of directive options
         content: List of strings, the content of the role
-        
+
     Returns:
         tuple: (list of nodes, list of system messages)
-        
+
     Example:
         Input: {poly-icon}`cubicup`
-        Output: <img src="/_static/munchboka/icons/polyicons/cubicup.svg" 
+        Output: <img src="/_static/munchboka/icons/polyicons/cubicup.svg"
                      alt="Cubic cubicup icon" class="inline-image">
     """
     # Clean up the icon name (remove any extra whitespace)
     icon_name = text.strip()
 
-    # Build the image path relative to the source directory
-    # Note: Using /_static/munchboka/ path structure for built HTML
+    # Build the image path as absolute from site root
+    # Using leading slash makes it absolute, preventing Sphinx from prepending the document path
     img_src = f"/_static/munchboka/icons/polyicons/{icon_name}.svg"
 
     # Create a proper image node that Sphinx can process
@@ -70,13 +70,13 @@ def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[])
 def setup(app):
     """
     Setup function to register the role with Sphinx.
-    
+
     This function is called automatically by Sphinx when the extension is loaded.
     It registers the poly-icon role for use in documentation.
-    
+
     Args:
         app: The Sphinx application instance
-        
+
     Returns:
         dict: Extension metadata including version and parallel processing flags
     """

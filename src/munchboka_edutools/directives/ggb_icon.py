@@ -36,8 +36,8 @@ def ggb_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     # Clean up the icon name (remove any extra whitespace)
     icon_name = text.strip()
 
-    # Build the image path relative to the source directory
-    # Note: The path uses munchboka subdirectory since static files are organized there
+    # Build the image path as absolute from site root
+    # Using leading slash makes it absolute, preventing Sphinx from prepending the document path
     img_src = f"/_static/munchboka/icons/ggb/{icon_name}.svg"
 
     # Create a proper image node that Sphinx can process

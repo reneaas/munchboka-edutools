@@ -9,6 +9,7 @@ Directives included:
 - example: For worked examples
 - exercise: For exercise problems
 - explore: For exploratory activities
+- goals: For learning objectives/goals
 - hints: For providing hints (with dropdown option)
 - solution: For full solutions (with dropdown option, default on)
 - summary: For chapter/section summaries
@@ -162,6 +163,37 @@ class ExploreDirective(SphinxDirective):
         admonition_node["classes"] = ["admonition", "explore"]
 
         # Create the title node
+        title_node = nodes.title()
+        parsed_title, _ = self.state.inline_text(title, self.lineno)
+        title_node += parsed_title
+        admonition_node += title_node
+
+        # Parse the content
+        self.state.nested_parse(self.content, self.content_offset, admonition_node)
+
+        return [admonition_node]
+
+
+class GoalsDirective(SphinxDirective):
+    """
+    Goals directive for learning objectives.
+
+    Usage:
+        .. goals:: Learning Goals
+    """
+
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+
+    def run(self):
+        title = self.arguments[0]
+
+        # Create the admonition node
+        admonition_node = nodes.admonition()
+        admonition_node["classes"] = ["admonition", "tip"]
+
         title_node = nodes.title()
         parsed_title, _ = self.state.inline_text(title, self.lineno)
         title_node += parsed_title
@@ -344,6 +376,7 @@ def setup(app):
     app.add_directive("example", ExampleDirective)
     app.add_directive("exercise", ExerciseDirective)
     app.add_directive("explore", ExploreDirective)
+    app.add_directive("goals", GoalsDirective)
     app.add_directive("hints", HintsDirective)
     app.add_directive("solution", SolutionDirective)
     app.add_directive("summary", SummaryDirective)

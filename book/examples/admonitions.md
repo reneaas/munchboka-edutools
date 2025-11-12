@@ -46,6 +46,17 @@ Try different values and observe the pattern:
 - Can you find a general rule?
 :::
 
+## Goals
+
+For learning objectives and goals:
+
+:::{goals} Learning Objectives
+After this section, you should be able to:
+- Understand the concept of derivatives
+- Apply the chain rule
+- Solve optimization problems
+:::
+
 ## Summary
 
 For section summaries:

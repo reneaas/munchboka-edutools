@@ -31,20 +31,17 @@ def ggb_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
     Usage: {ggb-icon}`mode_intersect`
 
-    This generates an image node that Sphinx processes as an inline SVG icon.
+    This generates an inline image using raw HTML to avoid path resolution issues.
     """
     # Clean up the icon name (remove any extra whitespace)
     icon_name = text.strip()
 
-    # Build the image path as absolute from site root
-    # Using leading slash makes it absolute, preventing Sphinx from prepending the document path
+    # Build the image path - use absolute path from site root
     img_src = f"/_static/munchboka/icons/ggb/{icon_name}.svg"
 
-    # Create a proper image node that Sphinx can process
-    node = nodes.image(uri=img_src, alt=f"GeoGebra {icon_name} icon")
-
-    # Add the inline-image class for styling
-    node["classes"] = ["inline-image"]
+    # Create raw HTML node instead of image node to avoid Sphinx path processing
+    html = f'<img src="{img_src}" alt="GeoGebra {icon_name} icon" class="inline-image" />'
+    node = nodes.raw("", html, format="html")
 
     return [node], []
 

@@ -53,16 +53,12 @@ def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[])
     # Clean up the icon name (remove any extra whitespace)
     icon_name = text.strip()
 
-    # Build the image path as absolute from site root
-    # Using leading slash makes it absolute, preventing Sphinx from prepending the document path
+    # Build the image path - use absolute path from site root
     img_src = f"/_static/munchboka/icons/polyicons/{icon_name}.svg"
 
-    # Create a proper image node that Sphinx can process
-    node = nodes.image(uri=img_src, alt=f"Cubic {icon_name} icon")
-
-    # Add the inline-image class for consistent styling
-    # (defined in figures.css with theme-aware styling)
-    node["classes"] = ["inline-image"]
+    # Create raw HTML node instead of image node to avoid Sphinx path processing
+    html = f'<img src="{img_src}" alt="Cubic {icon_name} icon" class="inline-image" />'
+    node = nodes.raw("", html, format="html")
 
     return [node], []
 

@@ -1,87 +1,110 @@
 """
-Polynomial Icon Role for Munchboka Edutools
-===========================================
+Polynomial function shape icon role for inline SVG icons.
 
-This module provides a custom inline role for displaying polynomial/cubic function
-icons in Sphinx documentation. It's designed for mathematical content where you need
-to refer to cubic function shapes visually.
+This role allows you to insert icons representing different polynomial function shapes.
+The icons help visualize the general shape of polynomial functions.
 
-Usage in MyST Markdown:
-    {poly-icon}`cubicup`
-    {poly-icon}`cubicdown`
-    {poly-icon}`smile`
-    {poly-icon}`frown`
+Usage:
+    A quadratic function with positive leading coefficient has a {poly-icon}`smile` shape.
 
-Available Icons:
-    - cubicup: Cubic function going up (standard cubic)
-    - cubicdown: Cubic function going down (negative cubic)
-    - smile: Positive quadratic (parabola opening up)
-    - frown: Negative quadratic (parabola opening down)
+    A cubic function with negative leading coefficient has a {poly-icon}`cubicdown` shape.
 
-The icons are displayed inline with the text and adapt to the current theme
-(light/dark mode). They use the .inline-image class for consistent styling.
+Available icons:
+    - smile: U-shaped (parabola opening upward, like a smile)
+    - frown: ∩-shaped (parabola opening downward, like a frown)
+    - cubicup: Cubic function starting low and ending high (∪∩ shape)
+    - cubicdown: Cubic function starting high and ending low (∩∪ shape)
 
-Author: René Aasen (ported from matematikk_r1)
-Date: November 2025
+The icons are rendered as inline images with appropriate alt text.
 """
 
 from docutils import nodes
 from docutils.parsers.rst import roles
 
 
+# Custom node for polynomial icons
+class poly_icon_node(nodes.Inline, nodes.Element):
+    """Custom node for polynomial icons."""
+    pass
+
+
 def poly_icon_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """
-    Custom role for polynomial/cubic function icons.
+    Custom role for polynomial function shape icons.
 
-    Args:
-        name: The role name used in the document
-        rawtext: The entire role markup string
-        text: The icon name (e.g., 'cubicup', 'smile')
-        lineno: Line number where the role appears
-        inliner: The inliner instance
-        options: Dictionary of directive options
-        content: List of strings, the content of the role
+    Usage: {poly-icon}`smile`
 
-    Returns:
-        tuple: (list of nodes, list of system messages)
-
-    Example:
-        Input: {poly-icon}`cubicup`
-        Output: <img src="/_static/munchboka/icons/polyicons/cubicup.svg"
-                     alt="Cubic cubicup icon" class="inline-image">
+    This generates a custom node that will be rendered with relative paths.
     """
     # Clean up the icon name (remove any extra whitespace)
-    icon_name = text.strip()
+    icon_name = text.strip().lower()
 
-    # Build the image path - use absolute path from site root
-    img_src = f"/_static/munchboka/icons/polyicons/{icon_name}.svg"
+    # Validate icon name
+    valid_icons = ["smile", "frown", "cubicup", "cubicdown"]
+    if icon_name not in valid_icons:
+        msg = inliner.reporter.error(
+            f'Invalid poly-icon name "{icon_name}". Must be one of: {", ".join(valid_icons)}',
+            line=lineno,
+        )
+        prb = inliner.problematic(rawtext, rawtext, msg)
+        return [prb], [msg]
 
-    # Create raw HTML node instead of image node to avoid Sphinx path processing
-    html = f'<img src="{img_src}" alt="Cubic {icon_name} icon" class="inline-image" />'
-    node = nodes.raw("", html, format="html")
+    # Create our custom node
+    node = poly_icon_node()
+    node["icon_name"] = icon_name
+    node["classes"] = ["inline-image"]
 
     return [node], []
 
 
+def visit_poly_icon_html(self, node):
+    """HTML visitor for poly_icon_node - generates relative path."""
+    icon_name = node["icon_name"]
+    
+    # Get the relative path from current document to _static directory
+    # self.builder.current_docname is like "examples/poly_icon"
+    # We want path from there to ../_static/munchboka/icons/polyicons/
+    from os.path import dirname
+    
+    # Current document directory depth
+    doc_dir = dirname(self.builder.current_docname) if "/" in self.builder.current_docname else ""
+    
+    # Calculate relative path
+    if doc_dir:
+        # For documents in subdirectories like "examples/poly_icon"
+        depth = doc_dir.count("/") + 1
+        rel_prefix = "../" * depth
+    else:
+        # For top-level documents
+        rel_prefix = ""
+    
+    img_path = f"{rel_prefix}_static/munchboka/icons/polyicons/{icon_name}.svg"
+    
+    # Generate the HTML with relative path
+    html = f'<img src="{img_path}" alt="{icon_name} polynomial icon" class="inline-image" />'
+    self.body.append(html)
+    raise nodes.SkipNode
+
+
+def depart_poly_icon_html(self, node):
+    """Depart function (not needed as we raise SkipNode)."""
+    pass
+
+
 def setup(app):
-    """
-    Setup function to register the role with Sphinx.
-
-    This function is called automatically by Sphinx when the extension is loaded.
-    It registers the poly-icon role for use in documentation.
-
-    Args:
-        app: The Sphinx application instance
-
-    Returns:
-        dict: Extension metadata including version and parallel processing flags
-    """
-    # Register the role with both hyphenated and unhyphenated names for compatibility
+    """Setup function to register the role with Sphinx."""
+    # Register the custom node
+    app.add_node(
+        poly_icon_node,
+        html=(visit_poly_icon_html, depart_poly_icon_html),
+    )
+    
+    # Register the role with both hyphenated and unhyphenated names
     roles.register_local_role("poly-icon", poly_icon_role)
     roles.register_local_role("polyicon", poly_icon_role)
 
     return {
-        "version": "0.1",
+        "version": "0.1.0",
         "parallel_read_safe": True,
         "parallel_write_safe": True,
     }

@@ -1,3 +1,63 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.21.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "munchboka-edutools"
+description = "Sphinx/Jupyter Book directives and assets for Munchboka and VGS books"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Rene Aas" }
+]
+keywords = ["sphinx", "jupyter-book", "directives", "education", "munchboka"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Framework :: Sphinx :: Extension",
+  "Framework :: Sphinx :: Theme",
+  "Topic :: Documentation",
+]
+dependencies = [
+  "sphinx>=6.0",
+  "sympy>=1.11",
+  "numpy>=1.23",
+  "matplotlib>=3.7",
+  "signchart",
+]
+version = "0.1.0"
+
+[project.urls]
+Homepage = "https://github.com/reneaas/munchboka-edutools"
+Issues = "https://github.com/reneaas/munchboka-edutools/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "jupyter-book",
+  "ruff",
+  "black",
+  "build",
+  "twine",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/munchboka_edutools"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/munchboka_edutools/**",
+  "README.md",
+  "LICENSE",
+  "book/**",
+  "tests/**",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]

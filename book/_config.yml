@@ -1,0 +1,12 @@
+# Jupyter Book config for developing and testing munchboka-edutools
+title: munchboka-edutools
+author: Rene Aas
+only_build_toc_files: true
+execute:
+  execute_notebooks: "off"
+sphinx:
+  extra_extensions:
+    - munchboka_edutools
+  config:
+    html_theme: sphinx_book_theme
+    html_static_path: ["_static"]

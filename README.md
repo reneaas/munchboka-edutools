@@ -1,104 +1,57 @@
-# `signchart`
-`signchart` is a Python package for plotting sign charts for polynomial functions. It is designed to be simple to use to generate beautiful sign charts for polynomial functions.
+# munchboka-edutools
 
-## Basic examples
+Reusable Sphinx / Jupyter Book directives and assets for Norwegian educational content.
 
-### Example 1
+## Install
 
-```python
-import signchart
-
-f = "(x**2 + 1)**2 * (x - 1)**2 * (x + 1)"
-
-signchart.plot(f=f, include_factors=True)
-signchart.savefig(
-    dirname="dirname",
-    fname="fname",
-)
-
-signchart.show()
+```bash
+pip install munchboka-edutools
 ```
 
-This will generate the following sign chart:
+## Usage (Jupyter Book `_config.yml`)
 
-![sign chart](https://raw.githubusercontent.com/reneaas/signchart/refs/heads/main/examples/figures/example_1.svg)
-
-
-### Example 2
-
-```python
-import signchart
-
-f = "x**2 - x - 6"
-
-signchart.plot(
-    f=f,
-    include_factors=True,
-    color=True,  # Includes colored lines.
-    fn_name="g(x)",  # Names the function g(x)
-)
-
-signchart.savefig(
-    dirname="figures",
-    fname="example_2.svg",
-)
-
-signchart.show()
+```yaml
+sphinx:
+  extra_extensions:
+    - munchboka_edutools
 ```
 
-This will generate the following sign chart:
+All packaged directives are auto-registered. Static assets are placed under `_static/munchboka/` during the build.
 
-![sign chart](https://raw.githubusercontent.com/reneaas/signchart/refs/heads/main/examples/figures/example_2.svg)
+## Development
 
-### Example 3
+Clone and install dev extras:
 
-```python
-import signchart
-
-f = "-2 * x**2 + 2 * x + 12"
-
-signchart.plot(
-    f=f,
-    include_factors=True,
-    color=True,  # Includes colored lines.
-    fn_name="h(x)",  # Names the function h(x)
-)
-
-signchart.savefig(
-    dirname="figures",
-    fname="example_3.svg",
-)
-
-signchart.show()
+```bash
+pip install -e .[dev]
 ```
 
-This will generate the following sign chart:
+### Local demo book
 
-![sign chart](https://raw.githubusercontent.com/reneaas/signchart/refs/heads/main/examples/figures/example_3.svg)
+Build the embedded demo book:
 
-
-### Example 4
-
-```python
-import signchart
-
-f = "-3 * (t - 1) * (t + 3)"  # Uses 't' as variable in place of 'x'
-
-signchart.plot(
-    f=f,
-    include_factors=False,  # excludes linear factors in the polynomial
-    color=False,  # sign lines are black (uncolored)
-    fn_name="x(t)",  # Names the function x(t)
-)
-
-signchart.savefig(
-    dirname="figures",
-    fname="example_4.svg",
-)
-
-signchart.show()
+```bash
+jupyter-book build book/
 ```
 
-This will generate the following sign chart:
+### Adding a new directive
 
-![sign chart](https://raw.githubusercontent.com/reneaas/signchart/refs/heads/main/examples/figures/example_4.svg)
+1. Create `src/munchboka_edutools/directives/my_directive.py` exposing `setup(app)`.
+2. The package auto-loads modules under `munchboka_edutools.directives`.
+3. Add an example page in `book/examples/`.
+
+### Testing
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+### Releasing
+
+Tag a version (`v0.1.0`) and the GitHub Action will build and publish.
+
+## License
+
+MIT

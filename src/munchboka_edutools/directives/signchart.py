@@ -395,7 +395,7 @@ class SignChartDirective(SphinxDirective):
                 }
                 # Add domain if custom domain is specified
                 if custom_domain is not None:
-                    plot_kwargs["domains"] = custom_domain
+                    plot_kwargs["domain"] = custom_domain
 
                 signchart.plot(**plot_kwargs)
                 signchart.savefig(dirname=abs_dir, fname=svg_name)

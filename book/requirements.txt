@@ -13,3 +13,4 @@ pygments==2.18.0
 sphinxcontrib-video
 plotmath>=0.3.0
 svgutils==0.3.4
+munchboka-edutools

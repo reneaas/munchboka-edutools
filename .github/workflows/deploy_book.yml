@@ -1,0 +1,43 @@
+name: deploy-book
+
+# Only run this when the main branch changes
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-book:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # Install dependencies
+      - name: Set up Python 3.12.3
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12.3
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Build the book
+      - name: Build the book
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          jupyter-book clean ./book --all
+          rm -rf ./book/_build .jupyter_cache
+          jupyter-book build ./book --all
+
+
+      # Deploy to GitHub Pages
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v3.6.1
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          publish_dir: ./book/_build/html
+          keep_files: true  # Ensures existing files like CNAME remain
+
+
+          

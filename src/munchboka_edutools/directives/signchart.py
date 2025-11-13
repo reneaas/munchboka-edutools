@@ -208,6 +208,8 @@ class SignChartDirective(SphinxDirective):
                             Format: "expression, label" or ("expression", "label")
                             Example: "x**2 - 4, f(x)"
         factors (optional): Whether to show factored form (default: true)
+        xmin (optional): Minimum x-value for the domain (custom domain)
+        xmax (optional): Maximum x-value for the domain (custom domain)
         width (optional): Width of the chart (e.g., "100%", "500px", "500")
         align (optional): Alignment ("left", "center", "right")
         class (optional): Additional CSS classes
@@ -225,6 +227,17 @@ class SignChartDirective(SphinxDirective):
         ---
         Sign chart for f(x) = x² - 4
         ```
+
+        With custom domain:
+        ```{signchart}
+        ---
+        function: -3/2 * k**2 + 9/2, A'(k)
+        xmin: 0
+        xmax: 3
+        width: 100%
+        ---
+        Sign chart restricted to domain [0, 3]
+        ```
     """
 
     has_content = True
@@ -241,6 +254,8 @@ class SignChartDirective(SphinxDirective):
         # specific options
         "function": directives.unchanged_required,  # e.g. "x**2 - 4, f(x)"
         "factors": directives.unchanged,  # default True
+        "xmin": directives.unchanged,  # custom domain minimum
+        "xmax": directives.unchanged,  # custom domain maximum
     }
 
     def _parse_kv_block(self) -> Tuple[Dict[str, Any], int]:
@@ -337,8 +352,30 @@ class SignChartDirective(SphinxDirective):
         explicit_name = merged.get("name")
         debug_mode = "debug" in merged
 
-        # Hash includes function, name, and factors
-        content_hash = _hash_key(f_expr, f_name or "", int(bool(include_factors)))
+        # Parse custom domain if provided
+        xmin_val = merged.get("xmin")
+        xmax_val = merged.get("xmax")
+        custom_domain = None
+        if xmin_val is not None and xmax_val is not None:
+            try:
+                xmin_float = float(xmin_val)
+                xmax_float = float(xmax_val)
+                custom_domain = (xmin_float, xmax_float)
+            except (ValueError, TypeError):
+                return [
+                    self.state_machine.reporter.warning(
+                        f"signchart: Could not parse xmin='{xmin_val}' and xmax='{xmax_val}' as floats. Ignoring domain.",
+                        line=self.lineno,
+                    )
+                ]
+
+        # Hash includes function, name, factors, and domain
+        content_hash = _hash_key(
+            f_expr,
+            f_name or "",
+            int(bool(include_factors)),
+            str(custom_domain) if custom_domain else "",
+        )
         base_name = explicit_name or f"signchart_{content_hash}"
 
         rel_dir = os.path.join("_static", "signchart")
@@ -351,11 +388,16 @@ class SignChartDirective(SphinxDirective):
         if regenerate:
             try:
                 # Render using signchart and save as SVG
-                signchart.plot(
-                    f=f_expr,
-                    fn_name=f_name or None,
-                    include_factors=bool(include_factors),
-                )
+                plot_kwargs = {
+                    "f": f_expr,
+                    "fn_name": f_name or None,
+                    "include_factors": bool(include_factors),
+                }
+                # Add domain if custom domain is specified
+                if custom_domain is not None:
+                    plot_kwargs["domains"] = custom_domain
+
+                signchart.plot(**plot_kwargs)
                 signchart.savefig(dirname=abs_dir, fname=svg_name)
             except Exception as e:
                 return [

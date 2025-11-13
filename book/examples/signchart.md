@@ -85,6 +85,37 @@ width: 90%
 Sign chart for g(x) = x⁵ - 5x³ + 4x
 ```
 
+## Custom Domain
+
+You can restrict the sign chart to a specific interval using `xmin` and `xmax`:
+
+```{signchart}
+---
+function: -3/2 * k**2 + 9/2, A'(k)
+xmin: 0
+xmax: 3
+width: 100%
+---
+Sign chart for A'(k) restricted to domain [0, 3]
+```
+
+This is useful when:
+- The function has a restricted domain in the problem context
+- You only want to show behavior in a specific interval
+- The function represents a real-world quantity with physical constraints
+
+Another example with a rational function derivative:
+
+```{signchart}
+---
+function: (-8 * r**2 + 160) / (r**2 + 20)**2, A'(r)
+xmin: 0
+xmax: 10
+width: 100%
+---
+Sign chart for A'(r) on [0, 10]
+```
+
 ## Features
 
 ### Automatic Factorization
@@ -119,6 +150,8 @@ nocache: true
 |--------|------|---------|-------------|
 | `function` | string (required) | - | Polynomial expression and optional label |
 | `factors` | boolean | `true` | Show factored form |
+| `xmin` | number | auto | Minimum x-value for domain |
+| `xmax` | number | auto | Maximum x-value for domain |
 | `width` | string | auto | Width (e.g., "80%", "600px", "500") |
 | `align` | string | `center` | Alignment: "left", "center", "right" |
 | `alt` | string | "Fortegnsskjema" | Alt text for accessibility |

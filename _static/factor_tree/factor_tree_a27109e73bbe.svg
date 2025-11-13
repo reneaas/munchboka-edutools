@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="208.8pt" height="208.8pt" viewBox="0 0 208.8 208.8" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2025-11-12T00:29:39.656472</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.9.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 208.8 
+L 208.8 208.8 
+L 208.8 0 
+L 0 0 
+L 0 208.8 
+z
+" style="fill: none"/>
+  </g>
+  <g id="axes_1">
+   <g id="text_1">
+    <g id="patch_2">
+     <path d="M 104.4 121.32 
+C 108.887236 121.32 113.191291 119.537202 116.364247 116.364247 
+C 119.537202 113.191291 121.32 108.887236 121.32 104.4 
+C 121.32 99.912764 119.537202 95.608709 116.364247 92.435753 
+C 113.191291 89.262798 108.887236 87.48 104.4 87.48 
+C 99.912764 87.48 95.608709 89.262798 92.435753 92.435753 
+C 89.262798 95.608709 87.48 99.912764 87.48 104.4 
+C 87.48 108.887236 89.262798 113.191291 92.435753 116.364247 
+C 95.608709 119.537202 99.912764 121.32 104.4 121.32 
+z
+" style="fill: #e0f7fa; stroke: #0072b2; stroke-width: 1.5; stroke-linejoin: miter"/>
+    </g>
+    <!-- $17$ -->
+    <g transform="translate(92.88 109.366875) scale(0.18 -0.18)">
+     <defs>
+      <path id="DejaVuSans-31" d="M 794 531 
+L 1825 531 
+L 1825 4091 
+L 703 3866 
+L 703 4441 
+L 1819 4666 
+L 2450 4666 
+L 2450 531 
+L 3481 531 
+L 3481 0 
+L 794 0 
+L 794 531 
+z
+" transform="scale(0.015625)"/>
+      <path id="DejaVuSans-37" d="M 525 4666 
+L 3525 4666 
+L 3525 4397 
+L 1831 0 
+L 1172 0 
+L 2766 4134 
+L 525 4134 
+L 525 4666 
+z
+" transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#DejaVuSans-31" transform="translate(0 0.09375)"/>
+     <use xlink:href="#DejaVuSans-37" transform="translate(63.623047 0.09375)"/>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

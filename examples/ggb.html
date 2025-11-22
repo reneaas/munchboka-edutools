@@ -226,11 +226,12 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quiz/quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy/jeopardy.html">Jeopardy example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive_code.html">Interactive Code Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas_popup.html">CAS Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factor_tree.html">Factor Tree Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pair_puzzle.html">Pair Puzzle Examples</a></li>
@@ -245,7 +246,6 @@
 <li class="toctree-l1"><a class="reference internal" href="ggb_popup.html">GeoGebra Popup Examples</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">GeoGebra Applet Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signchart.html">Sign Chart Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="turtle.html">Turtle Graphics Examples</a></li>
 </ul>
@@ -423,7 +423,7 @@ document.write(`
 <h2>Example 1: Empty Applet (Full Controls)<a class="headerlink" href="#example-1-empty-applet-full-controls" title="Link to this heading">#</a></h2>
 <p>When no <code class="docutils literal notranslate"><span class="pre">material_id</span></code> is provided, an empty applet is created with all controls enabled by default:</p>
 
-<div id="ggb-cas-712c65c0" style="width: 800px; height: 500px;" class="ggb-window"></div>
+<div id="ggb-cas-e0b12377" style="width: 800px; height: 500px;" class="ggb-window"></div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var options = {
@@ -442,13 +442,13 @@ document.addEventListener("DOMContentLoaded", function() {
         rounding: 2,
         showKeyboardOnFocus: false,
         preventFocus: true,
-        id: 'ggb-cas-712c65c0',
+        id: 'ggb-cas-e0b12377',
         '': '',
         '': '',
     };
 
     var applet = new GGBApplet(options, true);
-    applet.inject('ggb-cas-712c65c0');
+    applet.inject('ggb-cas-e0b12377');
 });
 </script>
         </section>
@@ -456,7 +456,7 @@ document.addEventListener("DOMContentLoaded", function() {
 <h2>Example 2: Specific GeoGebra Material<a class="headerlink" href="#example-2-specific-geogebra-material" title="Link to this heading">#</a></h2>
 <p>You can embed existing GeoGebra materials using their material ID:</p>
 
-<div id="ggb-cas-a73b13e2" style="width: 720px; height: 600px;" class="ggb-window"></div>
+<div id="ggb-cas-5fb24fdf" style="width: 720px; height: 600px;" class="ggb-window"></div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var options = {
@@ -475,13 +475,13 @@ document.addEventListener("DOMContentLoaded", function() {
         rounding: 2,
         showKeyboardOnFocus: false,
         preventFocus: true,
-        id: 'ggb-cas-a73b13e2',
+        id: 'ggb-cas-5fb24fdf',
         material_id: 'gt63unet',
         '': '',
     };
 
     var applet = new GGBApplet(options, true);
-    applet.inject('ggb-cas-a73b13e2');
+    applet.inject('ggb-cas-5fb24fdf');
 });
 </script>
         </section>

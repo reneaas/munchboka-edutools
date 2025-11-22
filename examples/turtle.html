@@ -225,11 +225,12 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quiz/quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy/jeopardy.html">Jeopardy example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive_code.html">Interactive Code Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas_popup.html">CAS Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factor_tree.html">Factor Tree Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pair_puzzle.html">Pair Puzzle Examples</a></li>
@@ -244,7 +245,6 @@
 <li class="toctree-l1"><a class="reference internal" href="ggb_popup.html">GeoGebra Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ggb.html">GeoGebra Applet Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signchart.html">Sign Chart Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Turtle Graphics Examples</a></li>
 </ul>
@@ -423,7 +423,7 @@ document.write(`
 <section id="example-1-simple-square">
 <h2>Example 1: Simple Square<a class="headerlink" href="#example-1-simple-square" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-13d751da"></div>
+        <div id="container-kode-turtle-bfebec7e"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `from turtle import *
@@ -431,14 +431,14 @@ document.write(`
 for i in range(4):
     forward(100)
     right(90)`;
-                makeTurtleCode("container-kode-turtle-13d751da", code);
+                makeTurtleCode("container-kode-turtle-bfebec7e", code);
             });
         </script>
         </section>
 <section id="example-2-colorful-spiral">
 <h2>Example 2: Colorful Spiral<a class="headerlink" href="#example-2-colorful-spiral" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-eda2cd0b"></div>
+        <div id="container-kode-turtle-7eb26b5b"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -452,14 +452,14 @@ for i in range(180):
     t.width(i / 100 + 1)
     t.forward(i)
     t.left(59)`;
-                makeTurtleCode("container-kode-turtle-eda2cd0b", code);
+                makeTurtleCode("container-kode-turtle-7eb26b5b", code);
             });
         </script>
         </section>
 <section id="example-3-star-pattern">
 <h2>Example 3: Star Pattern<a class="headerlink" href="#example-3-star-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-fb8116aa"></div>
+        <div id="container-kode-turtle-231a7a2c"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -474,14 +474,14 @@ for i in range(5):
     t.right(144)
 
 t.end_fill()`;
-                makeTurtleCode("container-kode-turtle-fb8116aa", code);
+                makeTurtleCode("container-kode-turtle-231a7a2c", code);
             });
         </script>
         </section>
 <section id="example-4-circle-flower">
 <h2>Example 4: Circle Flower<a class="headerlink" href="#example-4-circle-flower" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-d15e185f"></div>
+        <div id="container-kode-turtle-ac797a83"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -495,14 +495,14 @@ for i in range(36):
     t.pencolor(colors[i % 6])
     t.circle(100)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-d15e185f", code);
+                makeTurtleCode("container-kode-turtle-ac797a83", code);
             });
         </script>
         </section>
 <section id="example-5-recursive-tree">
 <h2>Example 5: Recursive Tree<a class="headerlink" href="#example-5-recursive-tree" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-40794377"></div>
+        <div id="container-kode-turtle-f1e6d33e"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -523,14 +523,14 @@ t.speed(0)
 t.color('green')
 
 draw_tree(75, t)`;
-                makeTurtleCode("container-kode-turtle-40794377", code);
+                makeTurtleCode("container-kode-turtle-f1e6d33e", code);
             });
         </script>
         </section>
 <section id="example-6-hexagonal-pattern">
 <h2>Example 6: Hexagonal Pattern<a class="headerlink" href="#example-6-hexagonal-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-585e8c2e"></div>
+        <div id="container-kode-turtle-0de69fea"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -547,7 +547,7 @@ for i in range(36):
         t.forward(100)
         t.right(60)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-585e8c2e", code);
+                makeTurtleCode("container-kode-turtle-0de69fea", code);
             });
         </script>
         </section>
@@ -587,7 +587,7 @@ t.goto(-50, 0)`;
 <section id="multiple-turtles">
 <h3>Multiple Turtles<a class="headerlink" href="#multiple-turtles" title="Link to this heading">#</a></h3>
 
-        <div id="container-kode-turtle-cfc83435"></div>
+        <div id="container-kode-turtle-d7b5515a"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -610,7 +610,7 @@ t2.pendown()
 # Draw circles
 t1.circle(50)
 t2.circle(50)`;
-                makeTurtleCode("container-kode-turtle-cfc83435", code);
+                makeTurtleCode("container-kode-turtle-d7b5515a", code);
             });
         </script>
         </section>

@@ -1,4 +1,4 @@
-# Sign Chart Directive
+# `signchart` directive
 
 The `signchart` directive generates visual sign charts (fortegnsskjema in Norwegian) for polynomial functions. Sign charts show where a function is positive (+), negative (-), or zero (0).
 
@@ -207,3 +207,13 @@ pip install signchart
 ```
 
 The package uses SymPy for symbolic mathematics and Matplotlib for rendering.
+
+
+
+
+
+:::{signchart}
+width: 100%
+function: (x**2 - 1) / (exp(x) - 1), f(x)
+nocache:
+:::

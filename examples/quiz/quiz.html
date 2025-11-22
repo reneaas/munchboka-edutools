@@ -111,7 +111,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Jeopardy example" href="../jeopardy/jeopardy.html" />
-    <link rel="prev" title="multiplot directive" href="../multi_plot.html" />
+    <link rel="prev" title="Horner Examples" href="../horner.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -226,11 +226,12 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../horner.html">Horner Examples</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../jeopardy/jeopardy.html">Jeopardy example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../interactive_code.html">Interactive Code Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../polydiv.html">Polydiv Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cas_popup.html">CAS Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../factor_tree.html">Factor Tree Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pair_puzzle.html">Pair Puzzle Examples</a></li>
@@ -245,7 +246,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../ggb_popup.html">GeoGebra Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ggb.html">GeoGebra Applet Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../poly_icon.html">Polynomial Icon Role</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../signchart.html">Sign Chart Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../turtle.html">Turtle Graphics Examples</a></li>
 </ul>
@@ -433,7 +433,7 @@ Q: What is the answer to $2 + 2$?
 <p>which gives the following output:</p>
 
         <!-- Container for the quiz -->
-        <div id="quiz-container-e708381fa9af46e4abaa76789df827bd" class="quiz-main-container"></div>
+        <div id="quiz-container-176e7d9f030d4249b2062daff0cc4b82" class="quiz-main-container"></div>
         <!-- Include KaTeX for LaTeX rendering -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
         <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
@@ -445,7 +445,7 @@ Q: What is the answer to $2 + 2$?
                 const questionsData = [{"content": "What is the answer to $2 + 2$?", "answers": [{"content": "$4$", "isCorrect": true}, {"content": "$3$", "isCorrect": false}, {"content": "$2$", "isCorrect": false}, {"content": "$1$", "isCorrect": false}]}];
 
                 // Initialize the multiple-choice quiz
-                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-e708381fa9af46e4abaa76789df827bd', questionsData);
+                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-176e7d9f030d4249b2062daff0cc4b82', questionsData);
             });
         </script>
         </section>
@@ -470,7 +470,7 @@ Q: Which code will produce the sequence $1, 2, 4, 8$?
 <p>The result:</p>
 
         <!-- Container for the quiz -->
-        <div id="quiz-container-f1ada147dbe64eb6947eee8a71e3af8a" class="quiz-main-container"></div>
+        <div id="quiz-container-6494df072f5e4ab996569ac46151ea94" class="quiz-main-container"></div>
         <!-- Include KaTeX for LaTeX rendering -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
         <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
@@ -482,7 +482,7 @@ Q: Which code will produce the sequence $1, 2, 4, 8$?
                 const questionsData = [{"content": "What is the output from the following code: <pre><code class=\"python\">def f(x):\n    return x**2 - 2*x + 1\n\nx = 1\ny = f(x)\n\nprint(x)</code></pre>", "answers": [{"content": "$0$", "isCorrect": true}, {"content": "$1$", "isCorrect": false}, {"content": "$-1$", "isCorrect": false}, {"content": "$2$", "isCorrect": false}]}, {"content": "Which code will produce the sequence $1, 2, 4, 8$?", "answers": [{"content": "<pre><code class=\"python\">for i in range(4):\n    print(2**i)</code></pre>", "isCorrect": true}, {"content": "<pre><code class=\"python\">for i in range(4):\n    print(i*2)</code></pre>", "isCorrect": false}, {"content": "<pre><code class=\"python\">for i in range(4):\n    print(i+1)</code></pre>", "isCorrect": false}, {"content": "<pre><code class=\"python\">for i in range(4):\n    print(i**3)</code></pre>", "isCorrect": false}]}];
 
                 // Initialize the multiple-choice quiz
-                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-f1ada147dbe64eb6947eee8a71e3af8a', questionsData);
+                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-6494df072f5e4ab996569ac46151ea94', questionsData);
             });
         </script>
         </section>
@@ -520,12 +520,12 @@ Q: Which code will produce the sequence $1, 2, 4, 8$?
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../multi_plot.html"
+       href="../horner.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</p>
+        <p class="prev-next-title">Horner Examples</p>
       </div>
     </a>
     <a class="right-next"

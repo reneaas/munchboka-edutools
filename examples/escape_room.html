@@ -226,11 +226,12 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quiz/quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy/jeopardy.html">Jeopardy example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive_code.html">Interactive Code Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas_popup.html">CAS Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="factor_tree.html">Factor Tree Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pair_puzzle.html">Pair Puzzle Examples</a></li>
@@ -245,7 +246,6 @@
 <li class="toctree-l1"><a class="reference internal" href="ggb_popup.html">GeoGebra Popup Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ggb.html">GeoGebra Applet Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signchart.html">Sign Chart Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="turtle.html">Turtle Graphics Examples</a></li>
 </ul>
@@ -420,7 +420,7 @@ document.write(`
 <h2>Basic Math Puzzle<a class="headerlink" href="#basic-math-puzzle" title="Link to this heading">#</a></h2>
 <p>A simple three-room escape room with math problems:</p>
 
-        <div id="escape-room-dfe72b1ce14045ebbfeda5d661c8b419" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Addisjon&quot;, &quot;codes&quot;: [&quot;42&quot;], &quot;question&quot;: &quot;Hva er $20 + 22$?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Multiplikasjon&quot;, &quot;codes&quot;: [&quot;144&quot;], &quot;question&quot;: &quot;Hva er $12 \\times 12$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Potenser&quot;, &quot;codes&quot;: [&quot;256&quot;], &quot;question&quot;: &quot;Hva er $2^8$?&quot;}], &quot;caseInsensitive&quot;: false}">
+        <div id="escape-room-aaddbe4287954f309343fe88cf1f557a" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Addisjon&quot;, &quot;codes&quot;: [&quot;42&quot;], &quot;question&quot;: &quot;Hva er $20 + 22$?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Multiplikasjon&quot;, &quot;codes&quot;: [&quot;144&quot;], &quot;question&quot;: &quot;Hva er $12 \\times 12$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Potenser&quot;, &quot;codes&quot;: [&quot;256&quot;], &quot;question&quot;: &quot;Hva er $2^8$?&quot;}], &quot;caseInsensitive&quot;: false}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Addisjon", "codes": ["42"], "question": "Hva er $20 + 22$?\n"}, {"title": "Rom 2 - Multiplikasjon", "codes": ["144"], "question": "Hva er $12 \\times 12$?\n"}, {"title": "Rom 3 - Potenser", "codes": ["256"], "question": "Hva er $2^8$?"}], "caseInsensitive": false}</script>
         </div>
         </section>
@@ -428,7 +428,7 @@ document.write(`
 <h2>Multiple Correct Codes<a class="headerlink" href="#multiple-correct-codes" title="Link to this heading">#</a></h2>
 <p>You can specify multiple acceptable codes separated by commas:</p>
 
-        <div id="escape-room-7ea39ae3a4ad4ce3ade6b8652a737458" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Synonymer&quot;, &quot;codes&quot;: [&quot;fire&quot;, &quot;4&quot;, &quot;IV&quot;], &quot;question&quot;: &quot;Hvilket tall kommer etter tre?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Fakta&quot;, &quot;codes&quot;: [&quot;Norge&quot;, &quot;norway&quot;, &quot;NO&quot;], &quot;question&quot;: &quot;Hvilket land er Oslo hovedstaden i?&quot;}], &quot;caseInsensitive&quot;: true}">
+        <div id="escape-room-297ad2ac510d49adbd00d62d065b9962" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Synonymer&quot;, &quot;codes&quot;: [&quot;fire&quot;, &quot;4&quot;, &quot;IV&quot;], &quot;question&quot;: &quot;Hvilket tall kommer etter tre?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Fakta&quot;, &quot;codes&quot;: [&quot;Norge&quot;, &quot;norway&quot;, &quot;NO&quot;], &quot;question&quot;: &quot;Hvilket land er Oslo hovedstaden i?&quot;}], &quot;caseInsensitive&quot;: true}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Synonymer", "codes": ["fire", "4", "IV"], "question": "Hvilket tall kommer etter tre?\n"}, {"title": "Rom 2 - Fakta", "codes": ["Norge", "norway", "NO"], "question": "Hvilket land er Oslo hovedstaden i?"}], "caseInsensitive": true}</script>
         </div>
         </section>
@@ -436,7 +436,7 @@ document.write(`
 <h2>With LaTeX Math<a class="headerlink" href="#with-latex-math" title="Link to this heading">#</a></h2>
 <p>Complex mathematical expressions using LaTeX:</p>
 
-        <div id="escape-room-6aa8b5703df5400ba0f07eedc06876cd" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Algebra&quot;, &quot;codes&quot;: [&quot;x=2&quot;], &quot;question&quot;: &quot;Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Trigonometri&quot;, &quot;codes&quot;: [&quot;1&quot;], &quot;question&quot;: &quot;Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Derivasjon&quot;, &quot;codes&quot;: [&quot;2x&quot;], &quot;question&quot;: &quot;Hva er den deriverte av $f(x) = x^2$?&quot;}], &quot;caseInsensitive&quot;: false}">
+        <div id="escape-room-7a99f90a848e4582bd2cc9d61c46130b" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Algebra&quot;, &quot;codes&quot;: [&quot;x=2&quot;], &quot;question&quot;: &quot;Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Trigonometri&quot;, &quot;codes&quot;: [&quot;1&quot;], &quot;question&quot;: &quot;Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Derivasjon&quot;, &quot;codes&quot;: [&quot;2x&quot;], &quot;question&quot;: &quot;Hva er den deriverte av $f(x) = x^2$?&quot;}], &quot;caseInsensitive&quot;: false}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Algebra", "codes": ["x=2"], "question": "Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n"}, {"title": "Rom 2 - Trigonometri", "codes": ["1"], "question": "Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n"}, {"title": "Rom 3 - Derivasjon", "codes": ["2x"], "question": "Hva er den deriverte av $f(x) = x^2$?"}], "caseInsensitive": false}</script>
         </div>
         </section>

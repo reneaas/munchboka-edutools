@@ -433,6 +433,7 @@ class PlotDirective(SphinxDirective):
             "vline": [],
             "hline": [],
             "line": [],
+            "tangent": [],
             "polygon": [],
             "axis": [],
             "fill-polygon": [],
@@ -933,6 +934,86 @@ class PlotDirective(SphinxDirective):
                         point_vals.append((float(x_val), float(y_val)))
                     except Exception:
                         pass
+
+        # Tangents: entries like "(x0, f(x0))" or
+        # "(x0, f(x0)), dashed, red" -> draw tangent to f at x0
+        tangent_vals: List[Tuple[float, float, float, str | None, str | None]] = (
+            []
+        )  # (a, b, x0, style, color)
+        for t in lists.get("tangent", []):
+            ps = str(t).strip()
+            # Split on top-level commas so we can accept extra style/color tokens
+            depth_t = 0
+            cur_t: List[str] = []
+            parts_t: List[str] = []
+            for ch in ps:
+                if ch == "(":
+                    depth_t += 1
+                    cur_t.append(ch)
+                elif ch == ")":
+                    depth_t -= 1
+                    cur_t.append(ch)
+                elif ch == "," and depth_t == 0:
+                    tok = "".join(cur_t).strip()
+                    if tok:
+                        parts_t.append(tok)
+                    cur_t = []
+                else:
+                    cur_t.append(ch)
+            tail_t = "".join(cur_t).strip()
+            if tail_t:
+                parts_t.append(tail_t)
+            if not parts_t:
+                continue
+
+            # First part must be the point pair (x0, f(x0))
+            m_pair = re.match(r"^\(\s*([^,]+?)\s*,\s*([^,]+?)\s*\)$", parts_t[0])
+            if not m_pair:
+                continue
+            x_raw = m_pair.group(1).strip()
+            y_raw = m_pair.group(2).strip()
+            # Expect y_raw to be a function label call like f(0.5)
+            m_fy = re.match(
+                r"^([A-Za-z_][A-Za-z0-9_]*)\(\s*([^()]+)\s*\)$",
+                y_raw,
+            )
+            if not m_fy:
+                continue
+            lbl = m_fy.group(1)
+            arg_expr = m_fy.group(2)
+            if lbl not in fn_labels_list:
+                continue
+            try:
+                x0 = _eval_expr(x_raw)
+                arg_val = _eval_expr(arg_expr)
+            except Exception:
+                continue
+            # Remaining parts: optional linestyle/color in any order (like vline/hline/line)
+            style_t: str | None = None
+            color_t: str | None = None
+            _allowed_styles_t = {"solid", "dotted", "dashed", "dashdot"}
+            for extra in parts_t[1:]:
+                tok = extra.strip().strip("'\"")
+                low = tok.lower()
+                if low in _allowed_styles_t and style_t is None:
+                    style_t = low
+                elif color_t is None:
+                    color_t = tok
+            try:
+                idx = fn_labels_list.index(lbl)
+                f = functions[idx]
+                import numpy as _np_t
+
+                # Finite-difference derivative around x0
+                h = max(1e-5, 1e-5 * (1.0 + abs(x0)))
+                y_plus = float(f(_np_t.array([x0 + h], dtype=float))[0])
+                y_minus = float(f(_np_t.array([x0 - h], dtype=float))[0])
+                a_t = (y_plus - y_minus) / (2 * h)
+                y0 = float(f(_np_t.array([x0], dtype=float))[0])
+                b_t = y0 - a_t * x0
+                tangent_vals.append((a_t, b_t, x0, style_t, color_t))
+            except Exception:
+                continue
 
         # Annotations: [(xytext), (xy), "text", arc] OR without outer brackets:
         # (xytext), (xy), "text"[, arc]
@@ -2100,6 +2181,9 @@ class PlotDirective(SphinxDirective):
             "|".join(axis_cmds),
             ";".join([f"{a},{b}:{(st or '')}:{(col or '')}" for (a, b, st, col) in line_vals]),
             ";".join(
+                [f"{a},{b}:{x0}:{(st or '')}:{(col or '')}" for (a, b, x0, st, col) in tangent_vals]
+            ),
+            ";".join(
                 [
                     f"{x},{y}:{txt}:{pos}:{int(1 if bbox else 0)}"
                     for (x, y, txt, pos, bbox) in text_vals
@@ -2299,8 +2383,8 @@ class PlotDirective(SphinxDirective):
                 for xytext, xy, text, arc in ann_vals:
                     plotmath.annotate(xy=xy, xytext=xytext, s=text, arc=arc, fontsize=int(fontsize))
 
-                # Lines (y = a*x + b); draw before points so markers remain visible
-                if line_vals:
+                # Lines (y = a*x + b) and tangents; draw before points so markers remain visible
+                if line_vals or tangent_vals:
                     import numpy as _np_l
 
                     style_map_line = {
@@ -2315,10 +2399,10 @@ class PlotDirective(SphinxDirective):
                     except Exception:
                         _mcolors = None
                     x_line = _np_l.array([xmin, xmax], dtype=float)
-                    for a_l, b_l, st_l, col_l in line_vals:
+
+                    def _draw_line(a_l: float, b_l: float, st_l: str | None, col_l: str | None):
                         y_line = a_l * x_line + b_l
                         ls = style_map_line.get((st_l or "dashed").lower(), "--")
-                        # Resolve color via plotmath.COLORS if provided; fallback to original token then default
                         if col_l:
                             _mapped = plotmath.COLORS.get(col_l)
                         else:
@@ -2347,6 +2431,15 @@ class PlotDirective(SphinxDirective):
                                 lw=lw,
                                 alpha=alpha,
                             )
+
+                    for a_l, b_l, st_l, col_l in line_vals:
+                        _draw_line(a_l, b_l, st_l, col_l)
+
+                    # Tangents: allow optional style/color, with dashed orange default
+                    for a_t, b_t, _x0, st_t, col_t in tangent_vals:
+                        style_use = st_t or "dashed"
+                        color_use = col_t or "orange"
+                        _draw_line(a_t, b_t, style_use, color_use)
 
                 # Bars
                 for xy, length, orientation in bar_vals:

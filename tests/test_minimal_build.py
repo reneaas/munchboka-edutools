@@ -4,27 +4,6 @@ from pathlib import Path
 from sphinx.application import Sphinx
 
 
-def _make_source(tmp: Path):
-    (tmp / "conf.py").write_text(
-        """
-extensions = ['munchboka_edutools']
-master_doc = 'index'
-"""
-    )
-    (tmp / "index.rst").write_text(
-        """
-Quiz test
-=========
-
-.. quiz::
-
-   Q: What is 2+2?
-   + 4
-   - 3
-"""
-    )
-
-
 def test_quiz_build(tmp_path):
     src = tmp_path / "src"
     build = tmp_path / "build"

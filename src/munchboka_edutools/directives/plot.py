@@ -959,8 +959,10 @@ class PlotDirective(SphinxDirective):
                     except Exception:
                         pass
 
-        # Tangents: entries like "(x0, f(x0))" or
-        # "(x0, f(x0)), dashed, red" -> draw tangent to f at x0
+        # Tangents: can be specified either as
+        #   - "(x0, f(x0))" or "(x0, f(x0)), dashed, red"
+        #   - "x0, f [, style] [, color]" (preferred, simpler form)
+        # In all cases, we draw the tangent to the function with label f at x0.
         tangent_vals: List[Tuple[float, float, float, str | None, str | None]] = (
             []
         )  # (a, b, x0, style, color)
@@ -990,7 +992,52 @@ class PlotDirective(SphinxDirective):
             if not parts_t:
                 continue
 
-            # First part must be the point pair (x0, f(x0))
+            # Helper: parse optional style/color tokens
+            def _parse_tangent_style(tokens: List[str]) -> Tuple[str | None, str | None]:
+                style_t: str | None = None
+                color_t: str | None = None
+                _allowed_styles_t = {"solid", "dotted", "dashed", "dashdot"}
+                for extra in tokens:
+                    tok = extra.strip().strip("'\"")
+                    low = tok.lower()
+                    if low in _allowed_styles_t and style_t is None:
+                        style_t = low
+                    elif color_t is None:
+                        color_t = tok
+                return style_t, color_t
+
+            # First try the simple form: x0, f [, style] [, color]
+            simple_ok = False
+            if len(parts_t) >= 2:
+                x0_raw = parts_t[0].strip()
+                f_lbl_raw = parts_t[1].strip()
+                # f_lbl_raw should look like a bare label, e.g. "f"
+                if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", f_lbl_raw):
+                    lbl = f_lbl_raw
+                    if lbl in fn_labels_list:
+                        try:
+                            x0 = _eval_expr(x0_raw)
+                            style_t, color_t = _parse_tangent_style(parts_t[2:])
+                            idx = fn_labels_list.index(lbl)
+                            f = functions[idx]
+                            import numpy as _np_t
+
+                            # Finite-difference derivative around x0
+                            h = max(1e-5, 1e-5 * (1.0 + abs(x0)))
+                            y_plus = float(f(_np_t.array([x0 + h], dtype=float))[0])
+                            y_minus = float(f(_np_t.array([x0 - h], dtype=float))[0])
+                            a_t = (y_plus - y_minus) / (2 * h)
+                            y0 = float(f(_np_t.array([x0], dtype=float))[0])
+                            b_t = y0 - a_t * x0
+                            tangent_vals.append((a_t, b_t, x0, style_t, color_t))
+                            simple_ok = True
+                        except Exception:
+                            pass
+
+            if simple_ok:
+                continue
+
+            # Fallback: old form where first part is the point pair (x0, f(x0))
             m_pair = re.match(r"^\(\s*([^,]+?)\s*,\s*([^,]+?)\s*\)$", parts_t[0])
             if not m_pair:
                 continue
@@ -1009,20 +1056,10 @@ class PlotDirective(SphinxDirective):
                 continue
             try:
                 x0 = _eval_expr(x_raw)
-                arg_val = _eval_expr(arg_expr)
+                _ = _eval_expr(arg_expr)  # just ensure it's valid
             except Exception:
                 continue
-            # Remaining parts: optional linestyle/color in any order (like vline/hline/line)
-            style_t: str | None = None
-            color_t: str | None = None
-            _allowed_styles_t = {"solid", "dotted", "dashed", "dashdot"}
-            for extra in parts_t[1:]:
-                tok = extra.strip().strip("'\"")
-                low = tok.lower()
-                if low in _allowed_styles_t and style_t is None:
-                    style_t = low
-                elif color_t is None:
-                    color_t = tok
+            style_t, color_t = _parse_tangent_style(parts_t[1:])
             try:
                 idx = fn_labels_list.index(lbl)
                 f = functions[idx]
@@ -2459,10 +2496,17 @@ class PlotDirective(SphinxDirective):
                     for a_l, b_l, st_l, col_l in line_vals:
                         _draw_line(a_l, b_l, st_l, col_l)
 
-                    # Tangents: allow optional style/color, with dashed orange default
+                    # Tangents: allow optional style/color, with dashed red default
                     for a_t, b_t, _x0, st_t, col_t in tangent_vals:
                         style_use = st_t or "dashed"
-                        color_use = col_t or "orange"
+                        # Prefer the plotmath color palette for the default
+                        if col_t:
+                            color_use = col_t
+                        else:
+                            _mapped_red = (
+                                plotmath.COLORS.get("red") if hasattr(plotmath, "COLORS") else None
+                            )
+                            color_use = _mapped_red or "red"
                         _draw_line(a_t, b_t, style_use, color_use)
 
                 # Bars

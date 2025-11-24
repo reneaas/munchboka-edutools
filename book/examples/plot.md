@@ -70,6 +70,7 @@ The plot directive allows you to create figures using a simple markup syntax. Be
 | `hline` | `y [, xmin, xmax] [, style] [, color]` | Horizontal line at y |
 | `line` | `a, (x0, y0) [, style] [, color]` | Line through point with slope: y = a*(x-x0) + y0 |
 | `line` | `a, b [, style] [, color]` | Line with slope-intercept: y = ax + b |
+| `tangent` | `x0, f [, style] [, color]` or `(x0, f(x0)) [, style] [, color]` | Tangent to a previously defined function label at `x0` |
 | `line-segment` | `(x1, y1), (x2, y2) [, style] [, color]` | Finite line segment |
 | `polygon` | `(x1, y1), (x2, y2), ... [, show_vertices]` | Polygon outline |
 | `fill-polygon` | `(x1, y1), (x2, y2), ... [, color] [, alpha]` | Filled polygon (default alpha 0.1) |
@@ -115,6 +116,13 @@ Almost all numeric fields accept **SymPy expressions**:
 **Function label calls:** Use `f(x)` syntax in points to evaluate a plotted function:
 - `point: (2, f(2))` - plot point at x=2, y=f(2)
 - Works with any function label defined in `function:` directive
+
+**Tangents:** Use `tangent:` to draw the tangent line to a labeled function at a given x-value:
+- Preferred simple form: `tangent: x0, f [, style] [, color]`, e.g. `tangent: 1, f, dashed, red`.
+- Legacy form (still supported): `tangent: (x0, f(x0)) [, style] [, color]`.
+- In both forms, `x0` can be an expression like `2 - sqrt(2)`.
+- Optional style and color work like for `line`/`vline`/`hline`.
+- If no style/color is given, tangents default to a dashed orange line.
 
 ### Usage Notes
 
@@ -511,17 +519,16 @@ text: 480, 35, "70 cm", center-right
 ---
 
 
-
 :::{plot}
-width: 80%
-function: x**2 * exp(-x), f
-xmin: -2
+width: 70%
+function: (x**2 - 1) * exp(-x), f
+xmin: -6
 xmax: 6
-ymin: -1
-ymax: 2
-point: (0, f(0))
-point: (2, f(2))
-point: (2 + sqrt(2), f(2 + sqrt(2)))
-point: (2 - sqrt(2), f(2 - sqrt(2)))
+ymin: -6
+ymax: 6
+ticks: off
+point: (2 + sqrt(3), f(2 + sqrt(3)))
+point: (2 - sqrt(3), f(2 - sqrt(3)))
+tangent: 2 + sqrt(3), f
 nocache:
 :::

@@ -505,3 +505,23 @@ bar: (480, 0), 70, vertical
 text: 480, 35, "70 cm", center-right
 :::
 ```
+
+
+
+---
+
+
+
+:::{plot}
+width: 80%
+function: x**2 * exp(-x), f
+xmin: -2
+xmax: 6
+ymin: -1
+ymax: 2
+point: (0, f(0))
+point: (2, f(2))
+point: (2 + sqrt(2), f(2 + sqrt(2)))
+point: (2 - sqrt(2), f(2 - sqrt(2)))
+nocache:
+:::

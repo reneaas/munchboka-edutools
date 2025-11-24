@@ -347,7 +347,9 @@
       });
       body.appendChild(q); body.appendChild(a);
 
+      // Tracking for duel vs turn-based scoring
       let scored = false;
+      let duelPendingTeams = new Set();
       const teamActions = document.createElement('div'); teamActions.className='jeopardy-team-actions';
       const disableTeamButtons = () => { teamActions.querySelectorAll('button').forEach(b=>{ b.disabled = true; }); };
       const onTimeout = ()=>{
@@ -357,29 +359,93 @@
         try { setTimeout(()=>{ hideModal(); }, 300); } catch(e){}
       };
       teams.forEach((t, i)=>{
+        // In turn-based mode, only the active team can be scored on
         if (gameMode==='turn' && i!==currentTurn) return;
-        const add = document.createElement('button'); add.className='j-btn primary'; add.textContent = `+${value} ${t.name}`;
-        const sub = document.createElement('button'); sub.className='j-btn warn'; sub.textContent = `-${value} ${t.name}`;
-        const handle = (delta)=>{
-          if (scored) return;
+
+        const add = document.createElement('button');
+        add.className='j-btn primary';
+        add.textContent = `+${value} ${t.name}`;
+
+        // In duel mode, we need an explicit "0 points" option per team
+        let zeroBtn = null;
+        if (gameMode === 'duel') {
+          zeroBtn = document.createElement('button');
+          zeroBtn.className = 'j-btn secondary';
+          zeroBtn.textContent = `0 ${t.name}`;
+        }
+
+        // Register this team as pending in duel mode
+        if (gameMode === 'duel') {
+          duelPendingTeams.add(i);
+        }
+
+        const registerScore = (delta)=>{
           if (tileStates[key] && tileStates[key].locked) return;
           setScore(i, delta);
-          scored = true;
-          tileStates[key] = { locked: true };
           try {
             const ci = parseInt(String(key).split('|')[0], 10);
-            if (!isNaN(ci) && categoryStats[ci]) { if (delta > 0) categoryStats[ci].correct++; else if (delta < 0) categoryStats[ci].wrong++; }
-            if (!isNaN(ci) && teamCategoryPoints[i]) { if (typeof teamCategoryPoints[i][ci] !== 'number') teamCategoryPoints[i][ci] = 0; teamCategoryPoints[i][ci] += delta; }
+            if (!isNaN(ci) && categoryStats[ci]) {
+              if (delta > 0) categoryStats[ci].correct++;
+            }
+            if (!isNaN(ci) && teamCategoryPoints[i]) {
+              if (typeof teamCategoryPoints[i][ci] !== 'number') teamCategoryPoints[i][ci] = 0;
+              teamCategoryPoints[i][ci] += delta;
+            }
           } catch(e){}
+        };
+
+        const finalizeIfNeeded = ()=>{
+          if (gameMode === 'duel') {
+            if (duelPendingTeams.size > 0) return;
+          } else {
+            // turn-based: single decision ends the question
+          }
+
+          scored = true;
+          tileStates[key] = { locked: true };
           if (tile) { tile.classList.add('used'); tile.disabled = true; }
-          disableTeamButtons();
           if (gameMode==='turn' && teams.length>0){ currentTurn = (currentTurn+1)%teams.length; updateActiveTeamHighlight(); }
           try { saveState(); setTimeout(()=>{ hideModal(); checkCompletionAndShowWinner(); }, 300); } catch(e){}
         };
-        add.addEventListener('click', ()=> handle(value));
-        sub.addEventListener('click', ()=> handle(-value));
-        if (tileStates[key] && tileStates[key].locked) { add.disabled = true; sub.disabled = true; }
-        teamActions.appendChild(add); teamActions.appendChild(sub);
+
+        const handleAdd = ()=>{
+          if (gameMode === 'turn') {
+            if (scored) return;
+            registerScore(value);
+            scored = true;
+            if (add) { add.disabled = true; add.classList.add('used-choice'); }
+            finalizeIfNeeded();
+          } else {
+            if (!duelPendingTeams.has(i)) return;
+            registerScore(value);
+            duelPendingTeams.delete(i);
+            if (add) { add.disabled = true; add.classList.add('used-choice'); }
+            if (zeroBtn) { zeroBtn.disabled = true; zeroBtn.classList.add('used-choice'); }
+            finalizeIfNeeded();
+          }
+        };
+
+        const handleZero = ()=>{
+          if (gameMode === 'duel') {
+            if (!duelPendingTeams.has(i)) return;
+            // Zero points: just clear pending state for this team
+            duelPendingTeams.delete(i);
+            if (add) { add.disabled = true; add.classList.add('used-choice'); }
+            if (zeroBtn) { zeroBtn.disabled = true; zeroBtn.classList.add('used-choice'); }
+            finalizeIfNeeded();
+          }
+        };
+
+        add.addEventListener('click', handleAdd);
+        if (zeroBtn) zeroBtn.addEventListener('click', handleZero);
+
+        if (tileStates[key] && tileStates[key].locked) {
+          add.disabled = true;
+          if (zeroBtn) zeroBtn.disabled = true;
+        }
+
+        teamActions.appendChild(add);
+        if (zeroBtn) teamActions.appendChild(zeroBtn);
       });
       const footerRight = document.createElement('div');
       footerRight.className = 'jeopardy-footer-right';

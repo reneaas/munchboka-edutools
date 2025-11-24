@@ -368,6 +368,34 @@ body[data-theme='dark'] .jeopardy-modal-body pre,
 .jeopardy-team-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
 .jeopardy-team-actions .j-btn { font-size: 0.9rem; }
 
+/* Per-team scoring buttons in the modal: make choices visually distinct
+   and slightly fade once used to signal that the option is consumed. */
+.jeopardy-team-actions .j-btn.primary {
+  border: 2px solid var(--jp-success-border);
+  background: var(--jp-success);
+  color: #fff;
+}
+.jeopardy-team-actions .j-btn.secondary {
+  border: 2px solid var(--jp-outline);
+  /* Neutral grey with good contrast in both light/dark contexts */
+  background: #4b5563;
+  color: #f9fafb;
+}
+.jeopardy-team-actions .j-btn.used-choice {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Keep the selected choice visually strong even when faded by adding
+   an explicit ring and subtle background tint. */
+.jeopardy-team-actions .j-btn.used-choice.primary {
+  box-shadow: 0 0 0 2px var(--jp-success-border);
+}
+.jeopardy-team-actions .j-btn.used-choice.secondary {
+  box-shadow: 0 0 0 2px var(--jp-outline);
+  background: #374151;
+}
+
 /* Images inside content */
 .jeopardy-image-container {
   text-align: center;

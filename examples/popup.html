@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=ba9d6122" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=44fb6708" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
@@ -78,7 +78,7 @@
     <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
-    <script src="../_static/munchboka/js/jeopardy.js?v=e34dfd27"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=baed0e4d"></script>
     <script src="../_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -425,13 +425,13 @@ document.write(`
 <section id="popup-role-inline-tooltip">
 <h2>Popup Role (Inline Tooltip)<a class="headerlink" href="#popup-role-inline-tooltip" title="Link to this heading">#</a></h2>
 <p>You can also use the popup role inline: This is some 
-<span class="popup-wrapper" id="popup-role-88254d2b">
+<span class="popup-wrapper" id="popup-role-e927a80a">
   <span class="popup-trigger">hover text</span>
   <span class="popup-bubble" style="display:none;">This content appears in a tooltip</span>
 </span>
  in a paragraph.</p>
 <p>Another example with 
-<span class="popup-wrapper" id="popup-role-eb672efd">
+<span class="popup-wrapper" id="popup-role-6f0d2b1d">
   <span class="popup-trigger">math</span>
   <span class="popup-bubble" style="display:none;">The formula is $E = mc^2$</span>
 </span>
@@ -442,10 +442,10 @@ document.write(`
 <p>If you don’t specify options, defaults are used:</p>
 
 <!-- Button to open the popup -->
-<button id="button-popup-7b7bafbb" class="popup-button">Vis mer</button>
+<button id="button-popup-c641ad6a" class="popup-button">Vis mer</button>
 
 <!-- Dialog container -->
-<div id="content-popup-7b7bafbb" class="popup-content" style="display:none;">
+<div id="content-popup-c641ad6a" class="popup-content" style="display:none;">
     This popup uses all default settings:
 - Default button text: "Vis mer"
 - Default title: "Mer informasjon"
@@ -493,7 +493,7 @@ document.write(`
 
     // Initialize dialog once everything is loaded
     function initializeDialog() {
-        $("#content-popup-7b7bafbb").dialog({
+        $("#content-popup-c641ad6a").dialog({
             autoOpen: false,
             title: "Mer informasjon",
             width: 500,
@@ -505,7 +505,7 @@ document.write(`
                 // Safety check to ensure KaTeX is available
                 if (window.katex && window.renderMathInElement) {
                     try {
-                        renderMathInElement(document.getElementById('content-popup-7b7bafbb'), {
+                        renderMathInElement(document.getElementById('content-popup-c641ad6a'), {
                             delimiters: [
                                 {left: "$$", right: "$$", display: true},
                                 {left: "$", right: "$", display: false},
@@ -522,8 +522,8 @@ document.write(`
         });
         
         // Button click handler
-        $("#button-popup-7b7bafbb").on("click", function() {
-            $("#content-popup-7b7bafbb").dialog("open");
+        $("#button-popup-c641ad6a").on("click", function() {
+            $("#content-popup-c641ad6a").dialog("open");
         });
     }
     

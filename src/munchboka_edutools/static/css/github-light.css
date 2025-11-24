@@ -1,43 +1,78 @@
-/* github-light theme for CodeMirror */
-.cm-s-github-light.CodeMirror {
+/* GitHub-like LIGHT theme for rendered code blocks.
+   Scoped to light-mode attributes so it can coexist with a dark theme.
+*/
+
+html.light-mode,
+body.light-mode,
+html[data-theme='light'],
+body[data-theme='light'],
+[data-mode='light'] {
+}
+
+html.light-mode pre, html.light-mode code,
+body.light-mode pre, body.light-mode code,
+html[data-theme='light'] pre, html[data-theme='light'] code,
+body[data-theme='light'] pre, body[data-theme='light'] code,
+[data-mode='light'] pre, [data-mode='light'] code {
   background-color: #ffffff;
   color: #24292f;
 }
 
-.cm-s-github-light .CodeMirror-gutters {
-  background-color: #ffffff;
-  border-right: 1px solid #d1d5da;
+html.light-mode pre, body.light-mode pre,
+html[data-theme='light'] pre, body[data-theme='light'] pre,
+[data-mode='light'] pre {
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
 }
 
-.cm-s-github-light .CodeMirror-linenumber {
+/* Basic token colors assuming highlight.js / pygments style classes */
+html.light-mode .hljs-comment,
+body.light-mode .hljs-comment,
+html[data-theme='light'] .hljs-comment,
+body[data-theme='light'] .hljs-comment,
+[data-mode='light'] .hljs-comment {
   color: #6e7781;
 }
 
-.cm-s-github-light .CodeMirror-cursor {
-  border-left: 1px solid #24292f;
-}
-
-.cm-s-github-light .CodeMirror-selected {
-  background: #0969da4a;
-}
-
-/* Token Colors */
-.cm-s-github-light .cm-comment {
-  color: #6e7781;
-  /* font-style: italic; */
-}
-
-.cm-s-github-light .cm-error {
+html.light-mode .hljs-keyword,
+body.light-mode .hljs-keyword,
+html[data-theme='light'] .hljs-keyword,
+body[data-theme='light'] .hljs-keyword,
+[data-mode='light'] .hljs-keyword {
   color: #cf222e;
 }
 
-.cm-s-github-light .cm-keyword {
-  color: #cf222e;
-}
-
-.cm-s-github-light .cm-operator {
+html.light-mode .hljs-string,
+body.light-mode .hljs-string,
+html[data-theme='light'] .hljs-string,
+body[data-theme='light'] .hljs-string,
+[data-mode='light'] .hljs-string {
   color: #116329;
-  font-weight: bold;
+}
+
+html.light-mode .hljs-number,
+body.light-mode .hljs-number,
+html[data-theme='light'] .hljs-number,
+body[data-theme='light'] .hljs-number,
+[data-mode='light'] .hljs-number {
+  color: #0550ae;
+}
+
+html.light-mode .hljs-title,
+body.light-mode .hljs-title,
+html[data-theme='light'] .hljs-title,
+body[data-theme='light'] .hljs-title,
+[data-mode='light'] .hljs-title {
+  color: #0550ae;
+}
+
+/* Fallback for generic code tokens used by sphinx/highlight.js */
+html.light-mode .nb-output pre,
+body.light-mode .nb-output pre,
+html[data-theme='light'] .nb-output pre,
+body[data-theme='light'] .nb-output pre,
+[data-mode='light'] .nb-output pre {
+  background-color: #f6f8fa;
 }
 
 .cm-s-github-light .cm-literal {

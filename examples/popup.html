@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=44fb6708" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=c929b6a2" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
@@ -48,8 +48,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/timedQuiz.css?v=89e27729" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/cas_popup.css?v=bae4ad7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=facc8b7a" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=d1235728" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=a6d10b1c" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=2454bc3f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark-high-contrast.css?v=4c0c1b0f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=f77426ac" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
@@ -425,13 +425,13 @@ document.write(`
 <section id="popup-role-inline-tooltip">
 <h2>Popup Role (Inline Tooltip)<a class="headerlink" href="#popup-role-inline-tooltip" title="Link to this heading">#</a></h2>
 <p>You can also use the popup role inline: This is some 
-<span class="popup-wrapper" id="popup-role-7b23c557">
+<span class="popup-wrapper" id="popup-role-9826e75b">
   <span class="popup-trigger">hover text</span>
   <span class="popup-bubble" style="display:none;">This content appears in a tooltip</span>
 </span>
  in a paragraph.</p>
 <p>Another example with 
-<span class="popup-wrapper" id="popup-role-48feb8d9">
+<span class="popup-wrapper" id="popup-role-bbb0be62">
   <span class="popup-trigger">math</span>
   <span class="popup-bubble" style="display:none;">The formula is $E = mc^2$</span>
 </span>
@@ -442,10 +442,10 @@ document.write(`
 <p>If you don’t specify options, defaults are used:</p>
 
 <!-- Button to open the popup -->
-<button id="button-popup-974bb44f" class="popup-button">Vis mer</button>
+<button id="button-popup-434adf9e" class="popup-button">Vis mer</button>
 
 <!-- Dialog container -->
-<div id="content-popup-974bb44f" class="popup-content" style="display:none;">
+<div id="content-popup-434adf9e" class="popup-content" style="display:none;">
     This popup uses all default settings:
 - Default button text: "Vis mer"
 - Default title: "Mer informasjon"
@@ -493,7 +493,7 @@ document.write(`
 
     // Initialize dialog once everything is loaded
     function initializeDialog() {
-        $("#content-popup-974bb44f").dialog({
+        $("#content-popup-434adf9e").dialog({
             autoOpen: false,
             title: "Mer informasjon",
             width: 500,
@@ -505,7 +505,7 @@ document.write(`
                 // Safety check to ensure KaTeX is available
                 if (window.katex && window.renderMathInElement) {
                     try {
-                        renderMathInElement(document.getElementById('content-popup-974bb44f'), {
+                        renderMathInElement(document.getElementById('content-popup-434adf9e'), {
                             delimiters: [
                                 {left: "$$", right: "$$", display: true},
                                 {left: "$", right: "$", display: false},
@@ -522,8 +522,8 @@ document.write(`
         });
         
         // Button click handler
-        $("#button-popup-974bb44f").on("click", function() {
-            $("#content-popup-974bb44f").dialog("open");
+        $("#button-popup-434adf9e").on("click", function() {
+            $("#content-popup-434adf9e").dialog("open");
         });
     }
     

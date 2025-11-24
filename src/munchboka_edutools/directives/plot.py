@@ -823,30 +823,48 @@ class PlotDirective(SphinxDirective):
             if s0 in _num_cache:
                 return _num_cache[s0]
             s = s0
-            # Replace user function label calls iteratively.
-            # Allow nested parentheses now by a balanced scan: we match label( ... ) at top-level of that paren group.
-            pat = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\(")
-            # Simpler: fallback to previous non-nested approach but broaden attempt; for safety keep prior pattern.
-            pat_simple = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\(([^()]+)\)")
+            # Replace user function label calls iteratively, allowing
+            # general expressions as arguments, e.g. f(2 - sqrt(2)).
             for _ in range(50):
-                m = pat_simple.search(s)
+                m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s)
                 if not m:
                     break
-                lbl, arg_expr = m.group(1), m.group(2)
-                if lbl in fn_labels_list:
-                    try:
-                        arg_val = _eval_expr(arg_expr)
-                        idx = fn_labels_list.index(lbl)
-                        f = functions[idx]
-                        yv = float(f([arg_val])[0])
-                        s = s[: m.start()] + f"{yv}" + s[m.end() :]
-                        continue
-                    except Exception:
-                        # leave unresolved for sympy
-                        pass
-                # If not user function, just proceed to next occurrence
-                # Remove nothing to avoid infinite loop: break
-                break
+                lbl = m.group(1)
+                if lbl not in fn_labels_list:
+                    # Skip this label, look for the next one
+                    start_next = m.start() + 1
+                    n = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[start_next:])
+                    if not n:
+                        break
+                    m = n
+                    lbl = m.group(1)
+                    if lbl not in fn_labels_list:
+                        break
+                # Find matching closing parenthesis for this call
+                start = m.end() - 1  # position of '('
+                depth = 0
+                end = None
+                for i in range(start, len(s)):
+                    if s[i] == "(":
+                        depth += 1
+                    elif s[i] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            end = i
+                            break
+                if end is None:
+                    break
+                arg_expr = s[start + 1 : end]
+                try:
+                    arg_val = _eval_expr(arg_expr)
+                    idx = fn_labels_list.index(lbl)
+                    f = functions[idx]
+                    yv = float(f([arg_val])[0])
+                    s = s[: m.start()] + f"{yv}" + s[end + 1 :]
+                    continue
+                except Exception:
+                    # leave unresolved for sympy if evaluation fails
+                    break
             allowed = {
                 k: getattr(sympy, k)
                 for k in [

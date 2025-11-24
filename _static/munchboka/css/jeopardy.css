@@ -307,6 +307,31 @@ html[data-theme='dark'] .jeopardy-modal-body,
 body[data-theme='dark'] .jeopardy-modal-body,
 [data-mode='dark'] .jeopardy-modal-body { background: var(--jp-modal-bg) !important; color: var(--jp-modal-fg) !important; }
 
+/* Code inside Jeopardy content should follow the page's syntax theme.
+   Do NOT override background in light mode; only tweak spacing and borders. */
+.jeopardy-modal-body pre,
+.jeopardy-modal-body code {
+  background: inherit;
+}
+
+html.light-mode .jeopardy-modal-body pre,
+body.light-mode .jeopardy-modal-body pre,
+html[data-theme='light'] .jeopardy-modal-body pre,
+body[data-theme='light'] .jeopardy-modal-body pre,
+[data-mode='light'] .jeopardy-modal-body pre {
+  background-color: transparent;
+}
+
+/* In dark mode, still avoid forcing a separate dark block if the
+   global theme already supplies one; inherit instead. */
+html.dark-mode .jeopardy-modal-body pre,
+body.dark-mode .jeopardy-modal-body pre,
+html[data-theme='dark'] .jeopardy-modal-body pre,
+body[data-theme='dark'] .jeopardy-modal-body pre,
+[data-mode='dark'] .jeopardy-modal-body pre {
+  background-color: inherit;
+}
+
 .jeopardy-q { font-size: 1.05rem; margin-bottom: 1rem; background: inherit !important; }
 .jeopardy-a { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--jp-outline); }
 

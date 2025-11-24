@@ -367,7 +367,23 @@ body[data-theme='dark'] .jeopardy-modal-body pre,
 .j-btn.accent:hover { filter: brightness(1.05); }
 .j-btn:focus { outline: 2px solid var(--jp-outline); outline-offset: 2px; }
 
-.jeopardy-team-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.jeopardy-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.jeopardy-team-actions .jeopardy-team-column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 7rem;
+}
+.jeopardy-team-actions .jeopardy-team-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
 .jeopardy-team-actions .j-btn { font-size: 0.9rem; }
 
 /* Per-team scoring buttons in the modal: make choices visually distinct

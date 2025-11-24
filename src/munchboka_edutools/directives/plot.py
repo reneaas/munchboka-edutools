@@ -885,17 +885,21 @@ class PlotDirective(SphinxDirective):
                 except Exception:
                     pass
             else:
-                # Support dynamic evaluation referencing previously defined function labels, e.g. (5, f(5))
+                # Support dynamic evaluation referencing previously defined function labels, e.g.
+                # (5, f(5)) or (2 - sqrt(2), f(2 - sqrt(2))).
                 # Simple pattern match for a parenthesized pair allowing arbitrary (non-comma) inner expressions.
                 ps = str(p).strip()
                 m_pair = re.match(r"^\(\s*([^,]+?)\s*,\s*([^,]+?)\s*\)$", ps)
                 if m_pair:
                     x_raw = m_pair.group(1).strip()
                     y_raw = m_pair.group(2).strip()
+                    # Evaluate x and y as full expressions first; this already
+                    # supports f(2 - sqrt(2)) via _eval_expr.
                     try:
                         x_val = _eval_expr(x_raw)
                     except Exception:
-                        # If x itself references a function call label(arg)
+                        # If x itself references a function call label(arg),
+                        # fall back to a simple numeric-argument pattern.
                         m_fx = re.match(
                             r"^([A-Za-z_][A-Za-z0-9_]*)\(\s*([+-]?(?:\d+(?:\.\d+)?))\s*\)$",
                             x_raw,
@@ -910,7 +914,9 @@ class PlotDirective(SphinxDirective):
                                 continue  # give up on this point
                         else:
                             continue
-                    # y may be a direct float or a function label call like f(5)
+
+                    # y may be a direct expression or a function label call
+                    # like f(2 - sqrt(2)). Try full expression evaluation first.
                     try:
                         y_val = _eval_expr(y_raw)
                     except Exception:

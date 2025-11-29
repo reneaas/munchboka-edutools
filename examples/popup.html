@@ -426,13 +426,13 @@ document.write(`
 <section id="popup-role-inline-tooltip">
 <h2>Popup Role (Inline Tooltip)<a class="headerlink" href="#popup-role-inline-tooltip" title="Link to this heading">#</a></h2>
 <p>You can also use the popup role inline: This is some 
-<span class="popup-wrapper" id="popup-role-f0b0fb45">
+<span class="popup-wrapper" id="popup-role-a5b31f2f">
   <span class="popup-trigger">hover text</span>
   <span class="popup-bubble" style="display:none;">This content appears in a tooltip</span>
 </span>
  in a paragraph.</p>
 <p>Another example with 
-<span class="popup-wrapper" id="popup-role-70b238f5">
+<span class="popup-wrapper" id="popup-role-d2edbe44">
   <span class="popup-trigger">math</span>
   <span class="popup-bubble" style="display:none;">The formula is $E = mc^2$</span>
 </span>
@@ -443,10 +443,10 @@ document.write(`
 <p>If you don’t specify options, defaults are used:</p>
 
 <!-- Button to open the popup -->
-<button id="button-popup-b0a6fd82" class="popup-button">Vis mer</button>
+<button id="button-popup-07d81518" class="popup-button">Vis mer</button>
 
 <!-- Dialog container -->
-<div id="content-popup-b0a6fd82" class="popup-content" style="display:none;">
+<div id="content-popup-07d81518" class="popup-content" style="display:none;">
     This popup uses all default settings:
 - Default button text: "Vis mer"
 - Default title: "Mer informasjon"
@@ -494,7 +494,7 @@ document.write(`
 
     // Initialize dialog once everything is loaded
     function initializeDialog() {
-        $("#content-popup-b0a6fd82").dialog({
+        $("#content-popup-07d81518").dialog({
             autoOpen: false,
             title: "Mer informasjon",
             width: 500,
@@ -506,7 +506,7 @@ document.write(`
                 // Safety check to ensure KaTeX is available
                 if (window.katex && window.renderMathInElement) {
                     try {
-                        renderMathInElement(document.getElementById('content-popup-b0a6fd82'), {
+                        renderMathInElement(document.getElementById('content-popup-07d81518'), {
                             delimiters: [
                                 {left: "$$", right: "$$", display: true},
                                 {left: "$", right: "$", display: false},
@@ -523,8 +523,8 @@ document.write(`
         });
         
         // Button click handler
-        $("#button-popup-b0a6fd82").on("click", function() {
-            $("#content-popup-b0a6fd82").dialog("open");
+        $("#button-popup-07d81518").on("click", function() {
+            $("#content-popup-07d81518").dialog("open");
         });
     }
     

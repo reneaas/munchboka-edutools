@@ -426,9 +426,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-e68bf60f" class="ggb-cas-button">Åpne CAS‑vindu</button>
-<div id="dialog-ggb-cas-e68bf60f" title="CAS‑vindu" style="display:none;">
-    <div id="ggb-cas-e68bf60f" class="ggb-window"></div>
+<button id="button-ggb-cas-b60dda12" class="ggb-cas-button">Åpne CAS‑vindu</button>
+<div id="dialog-ggb-cas-b60dda12" title="CAS‑vindu" style="display:none;">
+    <div id="ggb-cas-b60dda12" class="ggb-window"></div>
 </div>
 
 <style>
@@ -445,12 +445,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-e68bf60f").width(),
-            h = $("#ggb-cas-e68bf60f").height();
+      const w = $("#ggb-cas-b60dda12").width(),
+            h = $("#ggb-cas-b60dda12").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-e68bf60f").dialog({
+    const $dlg = $("#dialog-ggb-cas-b60dda12").dialog({
       autoOpen: false,
       width: 390, height: 580,
       resizable: true, draggable: true,
@@ -459,14 +459,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-e68bf60f",
+            appName: "classic", id: "ggb-cas-b60dda12",
             width: 350, height: 500,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-e68bf60f");
+          }, true).inject("ggb-cas-b60dda12");
         } else {
           applySize();
         }
@@ -509,7 +509,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-e68bf60f')) {
+          if (!e.target.closest('#ggb-cas-b60dda12')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -537,7 +537,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-e68bf60f');
+      const ggbContainer = document.getElementById('ggb-cas-b60dda12');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -583,10 +583,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-e68bf60f").button()
+    $("#button-ggb-cas-b60dda12").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-e68bf60f").dialog("open");
+        $("#dialog-ggb-cas-b60dda12").dialog("open");
       });
   });
 })();
@@ -600,9 +600,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-90c2b509" class="ggb-cas-button">Åpne CAS‑vindu</button>
-<div id="dialog-ggb-cas-90c2b509" title="CAS‑vindu" style="display:none;">
-    <div id="ggb-cas-90c2b509" class="ggb-window"></div>
+<button id="button-ggb-cas-4b318217" class="ggb-cas-button">Åpne CAS‑vindu</button>
+<div id="dialog-ggb-cas-4b318217" title="CAS‑vindu" style="display:none;">
+    <div id="ggb-cas-4b318217" class="ggb-window"></div>
 </div>
 
 <style>
@@ -619,12 +619,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-90c2b509").width(),
-            h = $("#ggb-cas-90c2b509").height();
+      const w = $("#ggb-cas-4b318217").width(),
+            h = $("#ggb-cas-4b318217").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-90c2b509").dialog({
+    const $dlg = $("#dialog-ggb-cas-4b318217").dialog({
       autoOpen: false,
       width: 640, height: 780,
       resizable: true, draggable: true,
@@ -633,14 +633,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-90c2b509",
+            appName: "classic", id: "ggb-cas-4b318217",
             width: 600, height: 700,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-90c2b509");
+          }, true).inject("ggb-cas-4b318217");
         } else {
           applySize();
         }
@@ -683,7 +683,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-90c2b509')) {
+          if (!e.target.closest('#ggb-cas-4b318217')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -711,7 +711,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-90c2b509');
+      const ggbContainer = document.getElementById('ggb-cas-4b318217');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -757,10 +757,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-90c2b509").button()
+    $("#button-ggb-cas-4b318217").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-90c2b509").dialog("open");
+        $("#dialog-ggb-cas-4b318217").dialog("open");
       });
   });
 })();
@@ -774,9 +774,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-c9be8e3b" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-cas-c9be8e3b" title="Calculator" "My CAS Window"" style="display:none;">
-    <div id="ggb-cas-c9be8e3b" class="ggb-window"></div>
+<button id="button-ggb-cas-4d0c0ce0" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-cas-4d0c0ce0" title="Calculator" "My CAS Window"" style="display:none;">
+    <div id="ggb-cas-4d0c0ce0" class="ggb-window"></div>
 </div>
 
 <style>
@@ -793,12 +793,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-c9be8e3b").width(),
-            h = $("#ggb-cas-c9be8e3b").height();
+      const w = $("#ggb-cas-4d0c0ce0").width(),
+            h = $("#ggb-cas-4d0c0ce0").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-c9be8e3b").dialog({
+    const $dlg = $("#dialog-ggb-cas-4d0c0ce0").dialog({
       autoOpen: false,
       width: 440, height: 680,
       resizable: true, draggable: true,
@@ -807,14 +807,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-c9be8e3b",
+            appName: "classic", id: "ggb-cas-4d0c0ce0",
             width: 400, height: 600,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-c9be8e3b");
+          }, true).inject("ggb-cas-4d0c0ce0");
         } else {
           applySize();
         }
@@ -857,7 +857,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-c9be8e3b')) {
+          if (!e.target.closest('#ggb-cas-4d0c0ce0')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -885,7 +885,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-c9be8e3b');
+      const ggbContainer = document.getElementById('ggb-cas-4d0c0ce0');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -931,10 +931,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-c9be8e3b").button()
+    $("#button-ggb-cas-4d0c0ce0").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-c9be8e3b").dialog("open");
+        $("#dialog-ggb-cas-4d0c0ce0").dialog("open");
       });
   });
 })();
@@ -948,9 +948,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-2947b576" class="ggb-cas-button">"Åpne</button>
-<div id="dialog-ggb-cas-2947b576" title="kalkulator" "Matematisk kalkulator"" style="display:none;">
-    <div id="ggb-cas-2947b576" class="ggb-window"></div>
+<button id="button-ggb-cas-fd1aafc1" class="ggb-cas-button">"Åpne</button>
+<div id="dialog-ggb-cas-fd1aafc1" title="kalkulator" "Matematisk kalkulator"" style="display:none;">
+    <div id="ggb-cas-fd1aafc1" class="ggb-window"></div>
 </div>
 
 <style>
@@ -967,12 +967,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-2947b576").width(),
-            h = $("#ggb-cas-2947b576").height();
+      const w = $("#ggb-cas-fd1aafc1").width(),
+            h = $("#ggb-cas-fd1aafc1").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-2947b576").dialog({
+    const $dlg = $("#dialog-ggb-cas-fd1aafc1").dialog({
       autoOpen: false,
       width: 540, height: 730,
       resizable: true, draggable: true,
@@ -981,14 +981,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-2947b576",
+            appName: "classic", id: "ggb-cas-fd1aafc1",
             width: 500, height: 650,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-2947b576");
+          }, true).inject("ggb-cas-fd1aafc1");
         } else {
           applySize();
         }
@@ -1031,7 +1031,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-2947b576')) {
+          if (!e.target.closest('#ggb-cas-fd1aafc1')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1059,7 +1059,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-2947b576');
+      const ggbContainer = document.getElementById('ggb-cas-fd1aafc1');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1105,10 +1105,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-2947b576").button()
+    $("#button-ggb-cas-fd1aafc1").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-2947b576").dialog("open");
+        $("#dialog-ggb-cas-fd1aafc1").dialog("open");
       });
   });
 })();
@@ -1122,9 +1122,9 @@ document.write(`
 <div class="sidebar-cas">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-5859557c" class="ggb-cas-button">"CAS"</button>
-<div id="dialog-ggb-cas-5859557c" title=""Calculator"" style="display:none;">
-    <div id="ggb-cas-5859557c" class="ggb-window"></div>
+<button id="button-ggb-cas-ba12b7cf" class="ggb-cas-button">"CAS"</button>
+<div id="dialog-ggb-cas-ba12b7cf" title=""Calculator"" style="display:none;">
+    <div id="ggb-cas-ba12b7cf" class="ggb-window"></div>
 </div>
 
 <style>
@@ -1141,12 +1141,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-5859557c").width(),
-            h = $("#ggb-cas-5859557c").height();
+      const w = $("#ggb-cas-ba12b7cf").width(),
+            h = $("#ggb-cas-ba12b7cf").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-5859557c").dialog({
+    const $dlg = $("#dialog-ggb-cas-ba12b7cf").dialog({
       autoOpen: false,
       width: 390, height: 580,
       resizable: true, draggable: true,
@@ -1155,14 +1155,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-5859557c",
+            appName: "classic", id: "ggb-cas-ba12b7cf",
             width: 350, height: 500,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-5859557c");
+          }, true).inject("ggb-cas-ba12b7cf");
         } else {
           applySize();
         }
@@ -1205,7 +1205,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-5859557c')) {
+          if (!e.target.closest('#ggb-cas-ba12b7cf')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1233,7 +1233,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-5859557c');
+      const ggbContainer = document.getElementById('ggb-cas-ba12b7cf');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1279,10 +1279,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-5859557c").button()
+    $("#button-ggb-cas-ba12b7cf").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-5859557c").dialog("open");
+        $("#dialog-ggb-cas-ba12b7cf").dialog("open");
       });
   });
 })();
@@ -1298,9 +1298,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-2449a53c" class="ggb-cas-button">"CAS</button>
-<div id="dialog-ggb-cas-2449a53c" title="Window 1" "Calculator 1"" style="display:none;">
-    <div id="ggb-cas-2449a53c" class="ggb-window"></div>
+<button id="button-ggb-cas-7c56ca42" class="ggb-cas-button">"CAS</button>
+<div id="dialog-ggb-cas-7c56ca42" title="Window 1" "Calculator 1"" style="display:none;">
+    <div id="ggb-cas-7c56ca42" class="ggb-window"></div>
 </div>
 
 <style>
@@ -1317,12 +1317,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-2449a53c").width(),
-            h = $("#ggb-cas-2449a53c").height();
+      const w = $("#ggb-cas-7c56ca42").width(),
+            h = $("#ggb-cas-7c56ca42").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-2449a53c").dialog({
+    const $dlg = $("#dialog-ggb-cas-7c56ca42").dialog({
       autoOpen: false,
       width: 440, height: 580,
       resizable: true, draggable: true,
@@ -1331,14 +1331,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-2449a53c",
+            appName: "classic", id: "ggb-cas-7c56ca42",
             width: 400, height: 500,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-2449a53c");
+          }, true).inject("ggb-cas-7c56ca42");
         } else {
           applySize();
         }
@@ -1381,7 +1381,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-2449a53c')) {
+          if (!e.target.closest('#ggb-cas-7c56ca42')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1409,7 +1409,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-2449a53c');
+      const ggbContainer = document.getElementById('ggb-cas-7c56ca42');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1455,10 +1455,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-2449a53c").button()
+    $("#button-ggb-cas-7c56ca42").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-2449a53c").dialog("open");
+        $("#dialog-ggb-cas-7c56ca42").dialog("open");
       });
   });
 })();
@@ -1468,9 +1468,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-edd501b2" class="ggb-cas-button">"CAS</button>
-<div id="dialog-ggb-cas-edd501b2" title="Window 2" "Calculator 2"" style="display:none;">
-    <div id="ggb-cas-edd501b2" class="ggb-window"></div>
+<button id="button-ggb-cas-2b0f119e" class="ggb-cas-button">"CAS</button>
+<div id="dialog-ggb-cas-2b0f119e" title="Window 2" "Calculator 2"" style="display:none;">
+    <div id="ggb-cas-2b0f119e" class="ggb-window"></div>
 </div>
 
 <style>
@@ -1487,12 +1487,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-edd501b2").width(),
-            h = $("#ggb-cas-edd501b2").height();
+      const w = $("#ggb-cas-2b0f119e").width(),
+            h = $("#ggb-cas-2b0f119e").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    const $dlg = $("#dialog-ggb-cas-edd501b2").dialog({
+    const $dlg = $("#dialog-ggb-cas-2b0f119e").dialog({
       autoOpen: false,
       width: 440, height: 580,
       resizable: true, draggable: true,
@@ -1501,14 +1501,14 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-edd501b2",
+            appName: "classic", id: "ggb-cas-2b0f119e",
             width: 400, height: 500,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             customToolBar: "1001 | 1002 | 1007 | 1010 | 6",
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-cas-edd501b2");
+          }, true).inject("ggb-cas-2b0f119e");
         } else {
           applySize();
         }
@@ -1551,7 +1551,7 @@ document.write(`
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-edd501b2')) {
+          if (!e.target.closest('#ggb-cas-2b0f119e')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1579,7 +1579,7 @@ document.write(`
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-edd501b2');
+      const ggbContainer = document.getElementById('ggb-cas-2b0f119e');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1625,10 +1625,10 @@ document.write(`
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-edd501b2").button()
+    $("#button-ggb-cas-2b0f119e").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-edd501b2").dialog("open");
+        $("#dialog-ggb-cas-2b0f119e").dialog("open");
       });
   });
 })();

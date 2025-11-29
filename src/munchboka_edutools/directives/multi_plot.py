@@ -242,6 +242,7 @@ def _hash_key(*parts) -> str:
 
 def _compile_function(expr: str) -> Callable:
     import sympy, numpy as np  # local import
+    from scipy import special as sp_special
 
     expr = expr.strip()
     x = sympy.symbols("x")
@@ -249,7 +250,9 @@ def _compile_function(expr: str) -> Callable:
         sym = sympy.sympify(expr)
     except Exception as e:  # pragma: no cover - user error path
         raise ValueError(f"Ugyldig funksjonsuttrykk '{expr}': {e}")
-    fn_np = sympy.lambdify(x, sym, modules=["numpy"])
+
+    # Map special functions like erf to scipy implementations for numpy arrays
+    fn_np = sympy.lambdify(x, sym, modules=[{"erf": sp_special.erf}, "numpy"])
 
     def f(arr):
         return fn_np(np.asarray(arr, dtype=float))

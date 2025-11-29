@@ -126,7 +126,9 @@ class FlashcardsDirective(SphinxDirective):
             s = (alt_text or "").strip()
 
             def parse_pairs(content: str):
-                for m in re.finditer(r'(\\w+)\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s}]+))', content):
+                for m in re.finditer(
+                    r'(\\w+)\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s}]+))', content
+                ):
                     val = m.group(2) or m.group(3) or m.group(4) or ""
                     opts[m.group(1)] = val
 

@@ -222,6 +222,7 @@ def _hash_key(*parts) -> str:
 
 def _compile_function(expr: str) -> Callable:
     import sympy, numpy as np
+    from scipy import special as sp_special
 
     expr = expr.strip()
     x = sympy.symbols("x")
@@ -240,7 +241,8 @@ def _compile_function(expr: str) -> Callable:
         _ = f([0.0, 1.0])
         return f
 
-    fn_np = sympy.lambdify(x, sym, modules=["numpy"])
+    # Include scipy.special for erf and other special functions
+    fn_np = sympy.lambdify(x, sym, modules=[{"erf": sp_special.erf}, "numpy"])
 
     def f(arr):
         return fn_np(np.asarray(arr, dtype=float))

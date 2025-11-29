@@ -361,18 +361,22 @@
       teams.forEach((t, i)=>{
         // In turn-based mode, only the active team can be scored on
         if (gameMode==='turn' && i!==currentTurn) return;
+        // Create a per-team column with label and buttons
+        const teamCol = document.createElement('div');
+        teamCol.className = 'jeopardy-team-column';
+        const teamLabel = document.createElement('div');
+        teamLabel.className = 'jeopardy-team-label';
+        teamLabel.textContent = t.name;
+        teamCol.appendChild(teamLabel);
 
         const add = document.createElement('button');
         add.className='j-btn primary';
-        add.textContent = `+${value} ${t.name}`;
+        add.textContent = `+${value} poeng`;
 
-        // In duel mode, we need an explicit "0 points" option per team
-        let zeroBtn = null;
-        if (gameMode === 'duel') {
-          zeroBtn = document.createElement('button');
-          zeroBtn.className = 'j-btn secondary';
-          zeroBtn.textContent = `0 ${t.name}`;
-        }
+        // Explicit 0-points option per team in both modes
+        let zeroBtn = document.createElement('button');
+        zeroBtn.className = 'j-btn secondary';
+        zeroBtn.textContent = '0 poeng';
 
         // Register this team as pending in duel mode
         if (gameMode === 'duel') {
@@ -414,6 +418,7 @@
             registerScore(value);
             scored = true;
             if (add) { add.disabled = true; add.classList.add('used-choice'); }
+            if (zeroBtn) { zeroBtn.disabled = true; zeroBtn.classList.add('used-choice'); }
             finalizeIfNeeded();
           } else {
             if (!duelPendingTeams.has(i)) return;
@@ -426,7 +431,14 @@
         };
 
         const handleZero = ()=>{
-          if (gameMode === 'duel') {
+          if (gameMode === 'turn') {
+            if (scored) return;
+            // Explicitly choose 0 points: no score change, but consume the question
+            scored = true;
+            if (add) { add.disabled = true; add.classList.add('used-choice'); }
+            if (zeroBtn) { zeroBtn.disabled = true; zeroBtn.classList.add('used-choice'); }
+            finalizeIfNeeded();
+          } else if (gameMode === 'duel') {
             if (!duelPendingTeams.has(i)) return;
             // Zero points: just clear pending state for this team
             duelPendingTeams.delete(i);
@@ -444,8 +456,9 @@
           if (zeroBtn) zeroBtn.disabled = true;
         }
 
-        teamActions.appendChild(add);
-        if (zeroBtn) teamActions.appendChild(zeroBtn);
+        teamCol.appendChild(add);
+        if (zeroBtn) teamCol.appendChild(zeroBtn);
+        teamActions.appendChild(teamCol);
       });
       const footerRight = document.createElement('div');
       footerRight.className = 'jeopardy-footer-right';

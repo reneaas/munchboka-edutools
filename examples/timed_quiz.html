@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=c929b6a2" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=e40b38cf" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
@@ -78,7 +78,7 @@
     <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
-    <script src="../_static/munchboka/js/jeopardy.js?v=baed0e4d"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=e090935c"></script>
     <script src="../_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -248,6 +248,7 @@
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Timed Quiz Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="turtle.html">Turtle Graphics Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flashcards.html">Flashcards-eksempel</a></li>
 </ul>
 
     </div>
@@ -440,7 +441,7 @@ document.write(`
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 
         <!-- Container for the timed quiz -->
-        <div id="quiz-container-4347e311f2da48ee9aeafafbabaf274e" class="quiz-main-container"></div>
+        <div id="quiz-container-91a24a057a21443fa5f39922a7b920ed" class="quiz-main-container"></div>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -448,7 +449,7 @@ document.write(`
                 const questionsData = [{"content": "What is 2 + 2?", "answers": [{"content": "4", "isCorrect": true}, {"content": "3", "isCorrect": false}, {"content": "5", "isCorrect": false}, {"content": "6", "isCorrect": false}]}, {"content": "What is 3 × 7?", "answers": [{"content": "21", "isCorrect": true}, {"content": "18", "isCorrect": false}, {"content": "24", "isCorrect": false}, {"content": "28", "isCorrect": false}]}, {"content": "What is 10 - 4?", "answers": [{"content": "6", "isCorrect": true}, {"content": "4", "isCorrect": false}, {"content": "8", "isCorrect": false}, {"content": "5", "isCorrect": false}]}];
 
                 // Initialize the timed multiple-choice quiz
-                const quiz = new TimedMultipleChoiceQuiz('quiz-container-4347e311f2da48ee9aeafafbabaf274e', questionsData);
+                const quiz = new TimedMultipleChoiceQuiz('quiz-container-91a24a057a21443fa5f39922a7b920ed', questionsData);
             });
         </script>
         </section>
@@ -476,7 +477,7 @@ document.write(`
 <p>Questions and answers can include LaTeX math:</p>
 
         <!-- Container for the timed quiz -->
-        <div id="quiz-container-73d3014a6592404dbd938471e2e69b68" class="quiz-main-container"></div>
+        <div id="quiz-container-f92b1d4111fd4441a50a5992158daf49" class="quiz-main-container"></div>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -484,7 +485,7 @@ document.write(`
                 const questionsData = [{"content": "Solve: $x^2 = 16$", "answers": [{"content": "$x = \\pm 4$", "isCorrect": true}, {"content": "$x = 4$", "isCorrect": false}, {"content": "$x = 8$", "isCorrect": false}, {"content": "$x = 16$", "isCorrect": false}]}, {"content": "What is $\\frac{1}{2} + \\frac{1}{3}$?", "answers": [{"content": "$\\frac{5}{6}$", "isCorrect": true}, {"content": "$\\frac{2}{5}$", "isCorrect": false}, {"content": "$\\frac{3}{5}$", "isCorrect": false}, {"content": "$\\frac{1}{6}$", "isCorrect": false}]}];
 
                 // Initialize the timed multiple-choice quiz
-                const quiz = new TimedMultipleChoiceQuiz('quiz-container-73d3014a6592404dbd938471e2e69b68', questionsData);
+                const quiz = new TimedMultipleChoiceQuiz('quiz-container-f92b1d4111fd4441a50a5992158daf49', questionsData);
             });
         </script>
         </section>

@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=c929b6a2" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=e40b38cf" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
@@ -78,7 +78,7 @@
     <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
-    <script src="../_static/munchboka/js/jeopardy.js?v=baed0e4d"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=e090935c"></script>
     <script src="../_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -110,6 +110,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Flashcards-eksempel" href="flashcards.html" />
     <link rel="prev" title="Timed Quiz Directive" href="timed_quiz.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -247,6 +248,7 @@
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Turtle Graphics Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flashcards.html">Flashcards-eksempel</a></li>
 </ul>
 
     </div>
@@ -423,7 +425,7 @@ document.write(`
 <section id="example-1-simple-square">
 <h2>Example 1: Simple Square<a class="headerlink" href="#example-1-simple-square" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-6f301e4f"></div>
+        <div id="container-kode-turtle-56f15a2d"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `from turtle import *
@@ -431,14 +433,14 @@ document.write(`
 for i in range(4):
     forward(100)
     right(90)`;
-                makeTurtleCode("container-kode-turtle-6f301e4f", code);
+                makeTurtleCode("container-kode-turtle-56f15a2d", code);
             });
         </script>
         </section>
 <section id="example-2-colorful-spiral">
 <h2>Example 2: Colorful Spiral<a class="headerlink" href="#example-2-colorful-spiral" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-a1c29de5"></div>
+        <div id="container-kode-turtle-61e7c9d3"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -452,14 +454,14 @@ for i in range(180):
     t.width(i / 100 + 1)
     t.forward(i)
     t.left(59)`;
-                makeTurtleCode("container-kode-turtle-a1c29de5", code);
+                makeTurtleCode("container-kode-turtle-61e7c9d3", code);
             });
         </script>
         </section>
 <section id="example-3-star-pattern">
 <h2>Example 3: Star Pattern<a class="headerlink" href="#example-3-star-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-94fe739c"></div>
+        <div id="container-kode-turtle-e0ce3efb"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -474,14 +476,14 @@ for i in range(5):
     t.right(144)
 
 t.end_fill()`;
-                makeTurtleCode("container-kode-turtle-94fe739c", code);
+                makeTurtleCode("container-kode-turtle-e0ce3efb", code);
             });
         </script>
         </section>
 <section id="example-4-circle-flower">
 <h2>Example 4: Circle Flower<a class="headerlink" href="#example-4-circle-flower" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-43fdb09d"></div>
+        <div id="container-kode-turtle-fd055ccc"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -495,14 +497,14 @@ for i in range(36):
     t.pencolor(colors[i % 6])
     t.circle(100)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-43fdb09d", code);
+                makeTurtleCode("container-kode-turtle-fd055ccc", code);
             });
         </script>
         </section>
 <section id="example-5-recursive-tree">
 <h2>Example 5: Recursive Tree<a class="headerlink" href="#example-5-recursive-tree" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-30ce7eb3"></div>
+        <div id="container-kode-turtle-deb766a6"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -523,14 +525,14 @@ t.speed(0)
 t.color('green')
 
 draw_tree(75, t)`;
-                makeTurtleCode("container-kode-turtle-30ce7eb3", code);
+                makeTurtleCode("container-kode-turtle-deb766a6", code);
             });
         </script>
         </section>
 <section id="example-6-hexagonal-pattern">
 <h2>Example 6: Hexagonal Pattern<a class="headerlink" href="#example-6-hexagonal-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-2fc4e7bf"></div>
+        <div id="container-kode-turtle-ae328e5b"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -547,7 +549,7 @@ for i in range(36):
         t.forward(100)
         t.right(60)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-2fc4e7bf", code);
+                makeTurtleCode("container-kode-turtle-ae328e5b", code);
             });
         </script>
         </section>
@@ -587,7 +589,7 @@ t.goto(-50, 0)`;
 <section id="multiple-turtles">
 <h3>Multiple Turtles<a class="headerlink" href="#multiple-turtles" title="Link to this heading">#</a></h3>
 
-        <div id="container-kode-turtle-0ffeb675"></div>
+        <div id="container-kode-turtle-dc096918"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -610,7 +612,7 @@ t2.pendown()
 # Draw circles
 t1.circle(50)
 t2.circle(50)`;
-                makeTurtleCode("container-kode-turtle-0ffeb675", code);
+                makeTurtleCode("container-kode-turtle-dc096918", code);
             });
         </script>
         </section>
@@ -655,6 +657,15 @@ t2.circle(50)`;
         <p class="prev-next-subtitle">previous</p>
         <p class="prev-next-title">Timed Quiz Directive</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="flashcards.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Flashcards-eksempel</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>

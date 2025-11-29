@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=c929b6a2" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=e40b38cf" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
@@ -78,7 +78,7 @@
     <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
-    <script src="../_static/munchboka/js/jeopardy.js?v=baed0e4d"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=e090935c"></script>
     <script src="../_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -248,6 +248,7 @@
 <li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="turtle.html">Turtle Graphics Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flashcards.html">Flashcards-eksempel</a></li>
 </ul>
 
     </div>
@@ -420,7 +421,7 @@ document.write(`
 <h2>Basic Math Puzzle<a class="headerlink" href="#basic-math-puzzle" title="Link to this heading">#</a></h2>
 <p>A simple three-room escape room with math problems:</p>
 
-        <div id="escape-room-114736ba0d3440bda51bce47c13a9e87" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Addisjon&quot;, &quot;codes&quot;: [&quot;42&quot;], &quot;question&quot;: &quot;Hva er $20 + 22$?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Multiplikasjon&quot;, &quot;codes&quot;: [&quot;144&quot;], &quot;question&quot;: &quot;Hva er $12 \\times 12$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Potenser&quot;, &quot;codes&quot;: [&quot;256&quot;], &quot;question&quot;: &quot;Hva er $2^8$?&quot;}], &quot;caseInsensitive&quot;: false}">
+        <div id="escape-room-807e644e8ba141528e44c3f31528617a" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Addisjon&quot;, &quot;codes&quot;: [&quot;42&quot;], &quot;question&quot;: &quot;Hva er $20 + 22$?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Multiplikasjon&quot;, &quot;codes&quot;: [&quot;144&quot;], &quot;question&quot;: &quot;Hva er $12 \\times 12$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Potenser&quot;, &quot;codes&quot;: [&quot;256&quot;], &quot;question&quot;: &quot;Hva er $2^8$?&quot;}], &quot;caseInsensitive&quot;: false}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Addisjon", "codes": ["42"], "question": "Hva er $20 + 22$?\n"}, {"title": "Rom 2 - Multiplikasjon", "codes": ["144"], "question": "Hva er $12 \\times 12$?\n"}, {"title": "Rom 3 - Potenser", "codes": ["256"], "question": "Hva er $2^8$?"}], "caseInsensitive": false}</script>
         </div>
         </section>
@@ -428,7 +429,7 @@ document.write(`
 <h2>Multiple Correct Codes<a class="headerlink" href="#multiple-correct-codes" title="Link to this heading">#</a></h2>
 <p>You can specify multiple acceptable codes separated by commas:</p>
 
-        <div id="escape-room-af74b6a9bf18466dbd491907bd955822" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Synonymer&quot;, &quot;codes&quot;: [&quot;fire&quot;, &quot;4&quot;, &quot;IV&quot;], &quot;question&quot;: &quot;Hvilket tall kommer etter tre?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Fakta&quot;, &quot;codes&quot;: [&quot;Norge&quot;, &quot;norway&quot;, &quot;NO&quot;], &quot;question&quot;: &quot;Hvilket land er Oslo hovedstaden i?&quot;}], &quot;caseInsensitive&quot;: true}">
+        <div id="escape-room-d2c156c90ae6478b96d96ae3f53b849b" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Synonymer&quot;, &quot;codes&quot;: [&quot;fire&quot;, &quot;4&quot;, &quot;IV&quot;], &quot;question&quot;: &quot;Hvilket tall kommer etter tre?\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Fakta&quot;, &quot;codes&quot;: [&quot;Norge&quot;, &quot;norway&quot;, &quot;NO&quot;], &quot;question&quot;: &quot;Hvilket land er Oslo hovedstaden i?&quot;}], &quot;caseInsensitive&quot;: true}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Synonymer", "codes": ["fire", "4", "IV"], "question": "Hvilket tall kommer etter tre?\n"}, {"title": "Rom 2 - Fakta", "codes": ["Norge", "norway", "NO"], "question": "Hvilket land er Oslo hovedstaden i?"}], "caseInsensitive": true}</script>
         </div>
         </section>
@@ -436,7 +437,7 @@ document.write(`
 <h2>With LaTeX Math<a class="headerlink" href="#with-latex-math" title="Link to this heading">#</a></h2>
 <p>Complex mathematical expressions using LaTeX:</p>
 
-        <div id="escape-room-1a1625662a254579aa2700b77f851fc5" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Algebra&quot;, &quot;codes&quot;: [&quot;x=2&quot;], &quot;question&quot;: &quot;Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Trigonometri&quot;, &quot;codes&quot;: [&quot;1&quot;], &quot;question&quot;: &quot;Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Derivasjon&quot;, &quot;codes&quot;: [&quot;2x&quot;], &quot;question&quot;: &quot;Hva er den deriverte av $f(x) = x^2$?&quot;}], &quot;caseInsensitive&quot;: false}">
+        <div id="escape-room-9eefeb1f7c6d4273bf63ffeef048d310" class="escape-room-container" data-config="{&quot;steps&quot;: [{&quot;title&quot;: &quot;Rom 1 - Algebra&quot;, &quot;codes&quot;: [&quot;x=2&quot;], &quot;question&quot;: &quot;Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n&quot;}, {&quot;title&quot;: &quot;Rom 2 - Trigonometri&quot;, &quot;codes&quot;: [&quot;1&quot;], &quot;question&quot;: &quot;Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n&quot;}, {&quot;title&quot;: &quot;Rom 3 - Derivasjon&quot;, &quot;codes&quot;: [&quot;2x&quot;], &quot;question&quot;: &quot;Hva er den deriverte av $f(x) = x^2$?&quot;}], &quot;caseInsensitive&quot;: false}">
           <script type="application/json" class="escape-room-data">{"steps": [{"title": "Rom 1 - Algebra", "codes": ["x=2"], "question": "Løs likningen: $x^2 - 4 = 0$ (positiv løsning)\n"}, {"title": "Rom 2 - Trigonometri", "codes": ["1"], "question": "Hva er verdien av $\\sin^2(\\theta) + \\cos^2(\\theta)$?\n"}, {"title": "Rom 3 - Derivasjon", "codes": ["2x"], "question": "Hva er den deriverte av $f(x) = x^2$?"}], "caseInsensitive": false}</script>
         </div>
         </section>

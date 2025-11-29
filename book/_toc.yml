@@ -25,3 +25,4 @@ chapters:
   - file: examples/poly_icon.md
   - file: examples/timed_quiz.md
   - file: examples/turtle.md
+  - file: examples/flashcards.md

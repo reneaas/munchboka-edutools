@@ -880,6 +880,7 @@ class PlotDirective(SphinxDirective):
                     "acos",
                     "atan",
                     "Rational",
+                    "erf",
                 ]
                 if hasattr(sympy, k)
             }

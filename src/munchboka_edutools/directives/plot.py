@@ -1552,8 +1552,42 @@ class PlotDirective(SphinxDirective):
                 out.append(tail)
             return out
 
-        num_re_line = r"[+-]?\d+(?:\.\d+)?"
-        tup_pat_line = re.compile(rf"\(\s*({num_re_line})\s*,\s*({num_re_line})\s*\)")
+        # Helper to extract (x, y) coordinate pair from a string, handling nested parens and expressions
+        def _extract_tuple_pair(s: str) -> Tuple[str, str] | None:
+            """Extract first balanced parenthesized pair (x_expr, y_expr) from string."""
+            s = s.strip()
+            if not s.startswith("("):
+                return None
+            depth = 0
+            comma_idx = None
+            for i, ch in enumerate(s):
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                    if depth == 0:
+                        # Found closing paren
+                        content = s[1:i]
+                        # Find top-level comma
+                        d2 = 0
+                        for j, c in enumerate(content):
+                            if c in "([{":
+                                d2 += 1
+                            elif c in ")]}":
+                                d2 -= 1
+                            elif c == "," and d2 == 0:
+                                comma_idx = j
+                                break
+                        if comma_idx is not None:
+                            x_expr = content[:comma_idx].strip()
+                            y_expr = content[comma_idx + 1 :].strip()
+                            return (x_expr, y_expr)
+                        return None
+                elif ch == "," and depth == 1:
+                    if comma_idx is None:
+                        comma_idx = i
+            return None
+
         for l in lists.get("line", []):
             a_val: float | None = None
             b_val: float | None = None
@@ -1562,21 +1596,21 @@ class PlotDirective(SphinxDirective):
             lit_line = _safe_literal(l)
             if isinstance(lit_line, (list, tuple)) and len(lit_line) >= 2:
                 try:
-                    a_val = float(lit_line[0])
+                    a_val = _eval_expr(lit_line[0])
                 except Exception:
                     a_val = None
                 second = lit_line[1]
                 if isinstance(second, (list, tuple)) and len(second) == 2:
                     try:
-                        x0p = float(second[0])
-                        y0p = float(second[1])
+                        x0p = _eval_expr(second[0])
+                        y0p = _eval_expr(second[1])
                         if a_val is not None:
                             b_val = y0p - a_val * x0p
                     except Exception:
                         pass
                 else:
                     try:
-                        b_val = float(second)
+                        b_val = _eval_expr(second)
                     except Exception:
                         pass
                 for extra in list(lit_line[2:]):
@@ -1592,21 +1626,22 @@ class PlotDirective(SphinxDirective):
             parts = _split_top_level_line(str(l))
             if len(parts) >= 2:
                 try:
-                    a_val = float(parts[0])
+                    a_val = _eval_expr(parts[0])
                 except Exception:
                     a_val = None
-                mpt = tup_pat_line.match(parts[1])
-                if mpt is not None:
+                # Check if second part is a tuple (x0, y0)
+                tup_pair = _extract_tuple_pair(parts[1])
+                if tup_pair is not None:
                     try:
-                        x0p = float(mpt.group(1))
-                        y0p = float(mpt.group(2))
+                        x0p = _eval_expr(tup_pair[0])
+                        y0p = _eval_expr(tup_pair[1])
                         if a_val is not None:
                             b_val = y0p - a_val * x0p
                     except Exception:
                         pass
                 else:
                     try:
-                        b_val = float(parts[1])
+                        b_val = _eval_expr(parts[1])
                     except Exception:
                         pass
                 for extra in parts[2:]:

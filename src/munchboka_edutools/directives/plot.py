@@ -1528,8 +1528,22 @@ class PlotDirective(SphinxDirective):
             s = str(val or "").strip()
             if not s:
                 return []
-            if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
-                s = s[1:-1].strip()
+            # Only strip outer brackets/parens if they enclose the ENTIRE expression
+            # Check if there's a top-level comma first
+            depth = 0
+            has_top_level_comma = False
+            for ch in s:
+                if ch in "([{":
+                    depth += 1
+                elif ch in ")]}":
+                    depth -= 1
+                elif ch == "," and depth == 0:
+                    has_top_level_comma = True
+                    break
+            # Only strip outer brackets if NO top-level comma exists
+            if not has_top_level_comma:
+                if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
+                    s = s[1:-1].strip()
             out: List[str] = []
             cur: List[str] = []
             depth = 0

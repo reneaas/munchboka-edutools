@@ -178,14 +178,42 @@ Axes & Appearance:
 
 Per-Function / Per-Axis:
 * ``domains`` – list of domain specs with optional exclusions ``(a,b) \ {e1,e2}``.
-* ``points`` – per-axis point lists. Each element can be ``None`` (or omitted) or a
+* ``points`` – (legacy) per-axis point lists. Each element can be ``None`` (or omitted) or a
     single tuple ``(x,y)`` or a list/tuple of tuples ``[(x1,y1),(x2,y2)]``. Examples:
     ``points: [ (0,0), None, [(1,2),(2,3)] ]`` or using bracketless top-level splitting
     ``points: [(0,0), None, ((1,2),(2,3))]``. Points are drawn as filled blue circles
     with black edges after the function curve so they appear on top.
-* ``vlines`` / ``hlines`` – vertical / horizontal reference lines.
-* ``xlims`` / ``ylims`` – per-axis limits.
-* ``lines`` – reference lines y = a*x + b or derived from basepoint.
+* ``point`` – (new) single point with axis targeting. Format: ``point: (x, y), axis_spec``
+    where ``axis_spec`` is either an integer (1-indexed flattened row-major index) or
+    a tuple ``(row, col)`` (1-indexed). Supports expression evaluation and function calls.
+    Examples: ``point: (1, f(2)), 1`` (axis 1) or ``point: (1, h(2)), (2, 1)`` (row 2, col 1).
+    Multiple ``point:`` lines can be used to add points to different axes.
+* ``vlines`` / ``hlines`` – (legacy) per-axis vertical / horizontal reference lines.
+* ``hline`` – (new) single horizontal line with axis targeting. Format: ``hline: y, axis_spec``
+    or ``hline: y, x1, x2, axis_spec`` where y is the line height and optional x1, x2 define
+    the horizontal extent (defaults to global xmin/xmax). Supports expression evaluation.
+    Examples: ``hline: 2, 1`` (full width at y=2 on axis 1) or ``hline: f(3), -2, 2, (1, 2)``
+    (from x=-2 to x=2 at y=f(3) on row 1, col 2).
+* ``vline`` – (new) single vertical line with axis targeting. Format: ``vline: x, axis_spec``
+    or ``vline: x, y1, y2, axis_spec`` where x is the line position and optional y1, y2 define
+    the vertical extent (defaults to global ymin/ymax). Supports expression evaluation.
+    Examples: ``vline: 1, 1`` (full height at x=1 on axis 1) or ``vline: sqrt(2), -3, 3, (2, 1)``
+    (from y=-3 to y=3 at x=sqrt(2) on row 2, col 1).
+* ``lines`` – (legacy) per-axis reference lines y = a*x + b or derived from basepoint.
+* ``line`` – (new) single line with axis targeting. Format: ``line: a, b, axis_spec`` for y = a*x + b
+    or ``line: a, (x0, y0), axis_spec`` for point-slope form y = y0 + a*(x - x0).
+    Supports expression evaluation and function calls.
+    Examples: ``line: 2, 1, 1`` (y = 2x + 1 on axis 1) or ``line: f(3), (1, 2), (2, 1)``
+    (slope f(3) through point (1, 2) on row 2, col 1).
+* ``tangent`` – (new) tangent line with axis targeting. Format: ``tangent: x0, function_label, axis_spec``
+    where x0 is the point of tangency and function_label is one of the function labels (f, g, h, etc.).
+    Computes derivative automatically using SymPy.
+    Examples: ``tangent: 2, f, 1`` (tangent to f at x=2 on axis 1) or ``tangent: sqrt(3), g, (2, 1)``
+    (tangent to g at x=sqrt(3) on row 2, col 1).
+* ``xlims`` / ``ylims`` – (legacy) per-axis limits as tuples.
+* ``xmin`` / ``xmax`` / ``ymin`` / ``ymax`` – (new) per-axis or global limits. Format: ``xmin: value, axis_spec``
+    or ``xmin: value`` (applies to all axes). Supports expression evaluation.
+    Examples: ``xmin: -10, 1`` (set xmin=-10 for axis 1) or ``ymax: 5`` (set ymax=5 for all axes).
 * ``fn_labels`` / ``function-names`` – labels.
 
 Meta / Control:
@@ -404,6 +432,11 @@ class MultiPlotDirective(SphinxDirective):
         "ylims": directives.unchanged,  # per-function ylim tuple or None
         "lines": directives.unchanged,  # per-axis line spec: (a,b) or (a,(x,y)) or None
         "points": directives.unchanged,  # per-axis point lists: [(x,y),(x,y)] or None
+        "point": directives.unchanged,  # single point with axis target: (x,y), axis_spec
+        "hline": directives.unchanged,  # single hline with axis target: y, x1, x2, axis_spec
+        "vline": directives.unchanged,  # single vline with axis target: x, y1, y2, axis_spec
+        "line": directives.unchanged,  # single line with axis target: a, b, axis_spec or a, (x0,y0), axis_spec
+        "tangent": directives.unchanged,  # single tangent line: x0, function_label, axis_spec
         "xmin": directives.unchanged,
         "xmax": directives.unchanged,
         "ymin": directives.unchanged,
@@ -731,12 +764,847 @@ class MultiPlotDirective(SphinxDirective):
         points_vals: List[List[Tuple[float, float]] | None] = [
             _parse_points_entry(s) for s in points_raw[:n]
         ]
+
+        # Parse new-style point keyword with axis targeting
+        # Gather all point: entries from content
+        point_entries_raw = []
+        if "point" in merged:
+            # Single point from options
+            point_entries_raw.append(merged["point"])
+        # Also check content for multiple point: lines
+        for line_idx, line in enumerate(self.content):
+            m = re.match(r"^point\s*:\s*(.+)$", line.strip())
+            if m:
+                point_entries_raw.append(m.group(1))
+
         explicit_name = merged.get("name")
         debug_mode = "debug" in merged
         rows = int(float(merged.get("rows", 1)))
         # If cols not provided, default to enough columns to fit all functions over the given rows
         default_cols = max(1, (len(functions) + rows - 1) // max(1, rows))
         cols = int(float(merged.get("cols", default_cols)))
+
+        # Expression evaluator with function call support (similar to plot directive)
+        def _eval_expr_multiplot(val) -> float:
+            import sympy
+
+            if val is None:
+                raise ValueError("Empty value")
+            if isinstance(val, (int, float)):
+                return float(val)
+            s0 = str(val).strip()
+            if not s0:
+                raise ValueError("Blank numeric expression")
+            s = s0
+
+            # Replace function label calls with their values
+            # e.g., f(2) where 'f' is a function label
+            for _ in range(50):  # iteration limit
+                m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s)
+                if not m:
+                    break
+                lbl = m.group(1)
+                if lbl not in labels_list:
+                    # Skip this label
+                    start_next = m.start() + 1
+                    n = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[start_next:])
+                    if not n:
+                        break
+                    m = n
+                    lbl = m.group(1)
+                    if lbl not in labels_list:
+                        break
+
+                # Find matching closing parenthesis
+                start = m.end() - 1  # position of '('
+                depth = 0
+                end = None
+                for i in range(start, len(s)):
+                    if s[i] == "(":
+                        depth += 1
+                    elif s[i] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            end = i
+                            break
+                if end is None:
+                    break
+
+                arg_expr = s[start + 1 : end]
+                try:
+                    arg_val = _eval_expr_multiplot(arg_expr)
+                    idx = labels_list.index(lbl)
+                    f = functions[idx]
+                    import numpy as np
+
+                    yv = float(f(np.array([arg_val]))[0])
+                    s = s[: m.start()] + f"{yv}" + s[end + 1 :]
+                    continue
+                except Exception:
+                    break
+
+            # Evaluate remaining expression with sympy
+            allowed = {
+                k: getattr(sympy, k)
+                for k in [
+                    "pi",
+                    "E",
+                    "exp",
+                    "sqrt",
+                    "log",
+                    "sin",
+                    "cos",
+                    "tan",
+                    "asin",
+                    "acos",
+                    "atan",
+                    "Rational",
+                    "erf",
+                ]
+                if hasattr(sympy, k)
+            }
+            try:
+                expr = sympy.sympify(s, locals=allowed)
+                return float(expr.evalf())
+            except Exception:
+                raise ValueError(f"Could not evaluate: {s0}")
+
+        # Parse point entries after rows/cols are determined
+        # Format: (x, y), axis_spec where axis_spec is either:
+        #   - integer (1-indexed flattened, row-major)
+        #   - (row, col) tuple (1-indexed)
+        def _parse_point_with_axis(s: str, rows: int, cols: int):
+            """Parse '(x, y), axis_spec' and return (x, y, flat_idx) or None."""
+            if not isinstance(s, str):
+                return None
+            s = s.strip()
+            if not s:
+                return None
+
+            # Split at top-level comma to separate (x,y) from axis_spec
+            parts = []
+            current = []
+            depth = 0
+            for ch in s:
+                if ch in "([{":
+                    depth += 1
+                    current.append(ch)
+                elif ch in ")]}":
+                    depth -= 1
+                    current.append(ch)
+                elif ch == "," and depth == 0:
+                    parts.append("".join(current).strip())
+                    current = []
+                else:
+                    current.append(ch)
+            if current:
+                parts.append("".join(current).strip())
+
+            if len(parts) < 2:
+                return None
+
+            # First part should be (x, y) - can contain expressions or function calls
+            coord_str = parts[0].strip()
+
+            # Extract x and y expressions from (x_expr, y_expr)
+            if not (coord_str.startswith("(") and coord_str.endswith(")")):
+                return None
+
+            inner = coord_str[1:-1].strip()
+            # Split on top-level comma
+            comma_parts = []
+            current_part = []
+            depth = 0
+            for ch in inner:
+                if ch in "([{":
+                    depth += 1
+                    current_part.append(ch)
+                elif ch in ")]}":
+                    depth -= 1
+                    current_part.append(ch)
+                elif ch == "," and depth == 0:
+                    comma_parts.append("".join(current_part).strip())
+                    current_part = []
+                else:
+                    current_part.append(ch)
+            if current_part:
+                comma_parts.append("".join(current_part).strip())
+
+            if len(comma_parts) != 2:
+                return None
+
+            x_expr, y_expr = comma_parts[0], comma_parts[1]
+
+            # Evaluate expressions (supports function calls like f(2))
+            try:
+                x_val = _eval_expr_multiplot(x_expr)
+                y_val = _eval_expr_multiplot(y_expr)
+            except Exception:
+                return None
+
+            # Second part is axis specifier
+            axis_str = parts[1]
+            lit_axis = _safe_literal(axis_str)
+
+            flat_idx = None
+            if isinstance(lit_axis, int):
+                # Direct flattened index (1-indexed)
+                flat_idx = lit_axis - 1  # Convert to 0-indexed
+            elif isinstance(lit_axis, (list, tuple)) and len(lit_axis) == 2:
+                # (row, col) format (1-indexed)
+                try:
+                    row = int(lit_axis[0]) - 1  # Convert to 0-indexed
+                    col = int(lit_axis[1]) - 1
+                    if 0 <= row < rows and 0 <= col < cols:
+                        flat_idx = row * cols + col
+                except Exception:
+                    return None
+            else:
+                # Try to parse as int or (row, col)
+                try:
+                    flat_idx = int(axis_str) - 1
+                except Exception:
+                    # Try tuple
+                    m = re.match(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)", axis_str)
+                    if m:
+                        try:
+                            row = int(m.group(1)) - 1
+                            col = int(m.group(2)) - 1
+                            if 0 <= row < rows and 0 <= col < cols:
+                                flat_idx = row * cols + col
+                        except Exception:
+                            return None
+
+            if flat_idx is not None and 0 <= flat_idx < rows * cols:
+                return (x_val, y_val, flat_idx)
+            return None
+
+        # Process point entries and add to points_vals
+        for pt_entry in point_entries_raw:
+            parsed = _parse_point_with_axis(pt_entry, rows, cols)
+            if parsed:
+                x_val, y_val, flat_idx = parsed
+                # Add point to the appropriate axis
+                if flat_idx < len(points_vals):
+                    if points_vals[flat_idx] is None:
+                        points_vals[flat_idx] = []
+                    points_vals[flat_idx].append((x_val, y_val))
+
+        # Parse new-style hline keyword with axis targeting
+        # Gather all hline: entries from content
+        hline_entries_raw = []
+        if "hline" in merged:
+            hline_entries_raw.append(merged["hline"])
+        for line_idx, line in enumerate(self.content):
+            m = re.match(r"^hline\s*:\s*(.+)$", line.strip())
+            if m:
+                hline_entries_raw.append(m.group(1))
+
+        # Helper to parse axis specifier (used by both point and hline)
+        def _parse_axis_spec(axis_str: str, rows: int, cols: int):
+            """Parse axis specifier and return flat index (0-indexed) or None."""
+            lit_axis = _safe_literal(axis_str)
+            flat_idx = None
+
+            if isinstance(lit_axis, int):
+                flat_idx = lit_axis - 1
+            elif isinstance(lit_axis, (list, tuple)) and len(lit_axis) == 2:
+                try:
+                    row = int(lit_axis[0]) - 1
+                    col = int(lit_axis[1]) - 1
+                    if 0 <= row < rows and 0 <= col < cols:
+                        flat_idx = row * cols + col
+                except Exception:
+                    return None
+            else:
+                try:
+                    flat_idx = int(axis_str) - 1
+                except Exception:
+                    m = re.match(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)", axis_str)
+                    if m:
+                        try:
+                            row = int(m.group(1)) - 1
+                            col = int(m.group(2)) - 1
+                            if 0 <= row < rows and 0 <= col < cols:
+                                flat_idx = row * cols + col
+                        except Exception:
+                            return None
+
+            if flat_idx is not None and 0 <= flat_idx < rows * cols:
+                return flat_idx
+            return None
+
+        # Parse hline entries: y, x1, x2, axis_spec or y, axis_spec
+        # Format: y [, x1, x2], axis_spec
+        def _parse_hline_with_axis(
+            s: str, rows: int, cols: int, xmin_global: float, xmax_global: float
+        ):
+            """Parse 'y, [x1, x2,] axis_spec' and return (y, x1, x2, flat_idx) or None."""
+            if not isinstance(s, str):
+                return None
+            s = s.strip()
+            if not s:
+                return None
+
+            # Split at top-level commas
+            parts = []
+            current = []
+            depth = 0
+            for ch in s:
+                if ch in "([{":
+                    depth += 1
+                    current.append(ch)
+                elif ch in ")]}":
+                    depth -= 1
+                    current.append(ch)
+                elif ch == "," and depth == 0:
+                    parts.append("".join(current).strip())
+                    current = []
+                else:
+                    current.append(ch)
+            if current:
+                parts.append("".join(current).strip())
+
+            if len(parts) < 2:
+                return None
+
+            # Last part is always axis specifier
+            axis_str = parts[-1]
+            flat_idx = _parse_axis_spec(axis_str, rows, cols)
+            if flat_idx is None:
+                return None
+
+            # Parse y value (first part, supports expressions)
+            try:
+                y_val = _eval_expr_multiplot(parts[0])
+            except Exception:
+                return None
+
+            # Parse optional x1, x2
+            x1_val, x2_val = None, None
+            if len(parts) == 4:  # y, x1, x2, axis_spec
+                try:
+                    x1_val = _eval_expr_multiplot(parts[1])
+                    x2_val = _eval_expr_multiplot(parts[2])
+                except Exception:
+                    pass
+            elif (
+                len(parts) == 3
+            ):  # y, x1, axis_spec (treat as y, axis_spec if x1 looks like axis spec)
+                # Check if parts[1] could be axis spec
+                test_idx = _parse_axis_spec(parts[1], rows, cols)
+                if test_idx is not None:
+                    # parts[1] is actually the axis spec, parts[2] is extra
+                    return None
+                # Otherwise parts[1] might be x1 - but we need x2 too for it to make sense
+                # So treat as malformed for now
+                pass
+
+            # Use global xmin/xmax if x1, x2 not specified
+            if x1_val is None:
+                x1_val = xmin_global
+            if x2_val is None:
+                x2_val = xmax_global
+
+            return (y_val, x1_val, x2_val, flat_idx)
+
+        # Convert hline_vals from list of lists to dict for easy axis-specific updates
+        hline_dict: Dict[int, List[Tuple[float, float | None, float | None]]] = {}
+        for idx in range(len(hline_vals)):
+            if hline_vals[idx] is not None:
+                # Legacy hlines are just y values - convert to (y, None, None)
+                hline_dict[idx] = [(y, None, None) for y in hline_vals[idx]]
+            else:
+                hline_dict[idx] = []
+
+        # Process hline entries
+        for hl_entry in hline_entries_raw:
+            parsed = _parse_hline_with_axis(hl_entry, rows, cols, xmin, xmax)
+            if parsed:
+                y_val, x1_val, x2_val, flat_idx = parsed
+                if flat_idx not in hline_dict:
+                    hline_dict[flat_idx] = []
+                hline_dict[flat_idx].append((y_val, x1_val, x2_val))
+
+        # Convert back to list format for plotting code
+        for idx in range(len(hline_vals)):
+            if idx in hline_dict and hline_dict[idx]:
+                # Keep only y values for backward compatibility with existing plotting code
+                # But we need to handle x1, x2 differently - let's store tuples
+                hline_vals[idx] = hline_dict[idx]
+            elif idx in hline_dict:
+                hline_vals[idx] = None
+
+        # Parse new-style vline keyword with axis targeting
+        # Gather all vline: entries from content
+        vline_entries_raw = []
+        if "vline" in merged:
+            vline_entries_raw.append(merged["vline"])
+        for line_idx, line in enumerate(self.content):
+            m = re.match(r"^vline\s*:\s*(.+)$", line.strip())
+            if m:
+                vline_entries_raw.append(m.group(1))
+
+        # Parse vline entries: x, y1, y2, axis_spec or x, axis_spec
+        # Format: x [, y1, y2], axis_spec
+        def _parse_vline_with_axis(
+            s: str, rows: int, cols: int, ymin_global: float, ymax_global: float
+        ):
+            """Parse 'x, [y1, y2,] axis_spec' and return (x, y1, y2, flat_idx) or None."""
+            if not isinstance(s, str):
+                return None
+            s = s.strip()
+            if not s:
+                return None
+
+            # Split at top-level commas
+            parts = []
+            current = []
+            depth = 0
+            for ch in s:
+                if ch in "([{":
+                    depth += 1
+                    current.append(ch)
+                elif ch in ")]}":
+                    depth -= 1
+                    current.append(ch)
+                elif ch == "," and depth == 0:
+                    parts.append("".join(current).strip())
+                    current = []
+                else:
+                    current.append(ch)
+            if current:
+                parts.append("".join(current).strip())
+
+            if len(parts) < 2:
+                return None
+
+            # Last part is always axis specifier
+            axis_str = parts[-1]
+            flat_idx = _parse_axis_spec(axis_str, rows, cols)
+            if flat_idx is None:
+                return None
+
+            # Parse x value (first part, supports expressions)
+            try:
+                x_val = _eval_expr_multiplot(parts[0])
+            except Exception:
+                return None
+
+            # Parse optional y1, y2
+            y1_val, y2_val = None, None
+            if len(parts) == 4:  # x, y1, y2, axis_spec
+                try:
+                    y1_val = _eval_expr_multiplot(parts[1])
+                    y2_val = _eval_expr_multiplot(parts[2])
+                except Exception:
+                    pass
+            elif (
+                len(parts) == 3
+            ):  # x, y1, axis_spec (treat as x, axis_spec if y1 looks like axis spec)
+                # Check if parts[1] could be axis spec
+                test_idx = _parse_axis_spec(parts[1], rows, cols)
+                if test_idx is not None:
+                    # parts[1] is actually the axis spec, parts[2] is extra
+                    return None
+                # Otherwise parts[1] might be y1 - but we need y2 too for it to make sense
+                # So treat as malformed for now
+                pass
+
+            # Use global ymin/ymax if y1, y2 not specified
+            if y1_val is None:
+                y1_val = ymin_global
+            if y2_val is None:
+                y2_val = ymax_global
+
+            return (x_val, y1_val, y2_val, flat_idx)
+
+        # Convert vline_vals from list of lists to dict for easy axis-specific updates
+        vline_dict: Dict[int, List[Tuple[float, float | None, float | None]]] = {}
+        for idx in range(len(vline_vals)):
+            if vline_vals[idx] is not None:
+                # Legacy vlines are just x values - convert to (x, None, None)
+                vline_dict[idx] = [(x, None, None) for x in vline_vals[idx]]
+            else:
+                vline_dict[idx] = []
+
+        # Process vline entries
+        for vl_entry in vline_entries_raw:
+            parsed = _parse_vline_with_axis(vl_entry, rows, cols, ymin, ymax)
+            if parsed:
+                x_val, y1_val, y2_val, flat_idx = parsed
+                if flat_idx not in vline_dict:
+                    vline_dict[flat_idx] = []
+                vline_dict[flat_idx].append((x_val, y1_val, y2_val))
+
+        # Convert back to list format for plotting code
+        for idx in range(len(vline_vals)):
+            if idx in vline_dict and vline_dict[idx]:
+                vline_vals[idx] = vline_dict[idx]
+            elif idx in vline_dict:
+                vline_vals[idx] = None
+
+        # Parse new-style line keyword with axis targeting
+        # Gather all line: entries from content
+        line_entries_raw = []
+        if "line" in merged:
+            line_entries_raw.append(merged["line"])
+        for line_idx, line in enumerate(self.content):
+            m = re.match(r"^line\s*:\s*(.+)$", line.strip())
+            if m:
+                line_entries_raw.append(m.group(1))
+
+        # Parse line entries: a, b, axis_spec or a, (x0, y0), axis_spec
+        # Format: a, b, axis_spec -> y = a*x + b
+        #         a, (x0, y0), axis_spec -> y = y0 + a*(x - x0)
+        def _parse_line_with_axis(s: str, rows: int, cols: int):
+            """Parse 'a, b, axis_spec' or 'a, (x0, y0), axis_spec' and return (a, b, flat_idx) or None."""
+            if not isinstance(s, str):
+                return None
+            s = s.strip()
+            if not s:
+                return None
+
+            # Split at top-level commas
+            parts = []
+            current = []
+            depth = 0
+            for ch in s:
+                if ch in "([{":
+                    depth += 1
+                    current.append(ch)
+                elif ch in ")]}":
+                    depth -= 1
+                    current.append(ch)
+                elif ch == "," and depth == 0:
+                    parts.append("".join(current).strip())
+                    current = []
+                else:
+                    current.append(ch)
+            if current:
+                parts.append("".join(current).strip())
+
+            if len(parts) < 3:
+                return None
+
+            # Last part is always axis specifier
+            axis_str = parts[-1]
+            flat_idx = _parse_axis_spec(axis_str, rows, cols)
+            if flat_idx is None:
+                return None
+
+            # Parse slope a (first part, supports expressions)
+            try:
+                a_val = _eval_expr_multiplot(parts[0])
+            except Exception:
+                return None
+
+            # Parse second part: either b or (x0, y0)
+            second_part = parts[1].strip()
+            b_val = None
+
+            # Check if it's a tuple (x0, y0)
+            if second_part.startswith("(") and second_part.endswith(")"):
+                # Extract x0, y0 from tuple
+                inner = second_part[1:-1].strip()
+                # Split on top-level comma
+                coord_parts = []
+                coord_current = []
+                coord_depth = 0
+                for ch in inner:
+                    if ch in "([{":
+                        coord_depth += 1
+                        coord_current.append(ch)
+                    elif ch in ")]}":
+                        coord_depth -= 1
+                        coord_current.append(ch)
+                    elif ch == "," and coord_depth == 0:
+                        coord_parts.append("".join(coord_current).strip())
+                        coord_current = []
+                    else:
+                        coord_current.append(ch)
+                if coord_current:
+                    coord_parts.append("".join(coord_current).strip())
+
+                if len(coord_parts) == 2:
+                    try:
+                        x0_val = _eval_expr_multiplot(coord_parts[0])
+                        y0_val = _eval_expr_multiplot(coord_parts[1])
+                        # Convert to y = a*x + b form: y = y0 + a*(x - x0) => y = a*x + (y0 - a*x0)
+                        b_val = y0_val - a_val * x0_val
+                    except Exception:
+                        return None
+                else:
+                    return None
+            else:
+                # It's just b
+                try:
+                    b_val = _eval_expr_multiplot(second_part)
+                except Exception:
+                    return None
+
+            if b_val is not None:
+                return (a_val, b_val, flat_idx)
+            return None
+
+        # Convert line_specs from list to dict for easy axis-specific updates
+        # Now each axis can have multiple lines, so we store lists of tuples
+        line_dict: Dict[int, List[Tuple[float, float]]] = {}
+        for idx in range(len(line_specs)):
+            if line_specs[idx] is not None:
+                # Legacy single-line format: convert to list
+                line_dict[idx] = [line_specs[idx]]
+            else:
+                line_dict[idx] = []
+
+        # Process line entries
+        for ln_entry in line_entries_raw:
+            parsed = _parse_line_with_axis(ln_entry, rows, cols)
+            if parsed:
+                a_val, b_val, flat_idx = parsed
+                if flat_idx not in line_dict:
+                    line_dict[flat_idx] = []
+                line_dict[flat_idx].append((a_val, b_val))
+
+        # Convert back to list format for plotting code
+        for idx in range(len(line_specs)):
+            if idx in line_dict and line_dict[idx]:
+                # Store list of lines
+                line_specs[idx] = line_dict[idx]
+            else:
+                # No lines for this axis
+                line_specs[idx] = None
+
+        # Process tangent keyword: tangent: x0, function_label, axis_spec
+        tangent_entries_raw = []
+        if "tangent" in merged:
+            tangent_entries_raw.append(merged["tangent"])
+        for line in self.content:
+            m = re.match(r"^tangent\s*:\s*(.+)$", line.strip())
+            if m:
+                tangent_entries_raw.append(m.group(1))
+
+        def _parse_tangent_with_axis(s: str, rows: int, cols: int):
+            """
+            Parse: x0, function_label, axis_spec
+            Returns (x0_val, func_label, flat_idx) or None
+            """
+            import sympy
+
+            # Split by commas at top level
+            parts = _split_top_level(s)
+            if len(parts) < 3:
+                return None
+
+            # Last part is axis_spec
+            axis_part = parts[-1].strip()
+            flat_idx = _parse_axis_spec(axis_part, rows, cols)
+            if flat_idx is None:
+                return None
+
+            # Second-to-last is function label
+            func_label = parts[-2].strip()
+
+            # Everything before second-to-last is x0 expression
+            x0_str = ",".join(parts[:-2]).strip()
+
+            # Evaluate x0 using expression evaluator
+            try:
+                x0_val = _eval_expr_multiplot(x0_str)
+            except Exception:
+                return None
+
+            return (x0_val, func_label, flat_idx)
+
+        # Process tangent entries and add to line_specs
+        for tg_entry in tangent_entries_raw:
+            parsed = _parse_tangent_with_axis(tg_entry, rows, cols)
+            if parsed:
+                x0_val, func_label, flat_idx = parsed
+
+                # Find the function index matching the label
+                func_idx = None
+                if labels_list:
+                    for i, lbl in enumerate(labels_list):
+                        if lbl.strip() == func_label:
+                            func_idx = i
+                            break
+
+                if func_idx is not None and func_idx < len(functions):
+                    # Compute tangent line: y = f'(x0) * (x - x0) + f(x0)
+                    # Which is: y = f'(x0) * x + (f(x0) - x0 * f'(x0))
+                    import sympy
+
+                    x = sympy.symbols("x")
+                    try:
+                        expr_str = exprs[func_idx]  # Use expression string, not compiled function
+                        sym = sympy.sympify(expr_str)
+                        sym_deriv = sympy.diff(sym, x)
+
+                        # Evaluate f(x0) and f'(x0)
+                        f_x0 = float(sym.subs(x, x0_val))
+                        fp_x0 = float(sym_deriv.subs(x, x0_val))
+
+                        # Tangent line: y = fp_x0 * x + (f_x0 - x0_val * fp_x0)
+                        a_tangent = fp_x0
+                        b_tangent = f_x0 - x0_val * fp_x0
+
+                        # Add to line_specs (append to existing list)
+                        if line_specs[flat_idx] is None:
+                            line_specs[flat_idx] = []
+                        if isinstance(line_specs[flat_idx], tuple):
+                            # Convert legacy single-line format to list
+                            line_specs[flat_idx] = [line_specs[flat_idx]]
+                        line_specs[flat_idx].append((a_tangent, b_tangent))
+                    except Exception:
+                        pass
+
+        # Process per-axis xmin/xmax/ymin/ymax keywords
+        # These can be specified with or without axis targeting
+        # Format: xmin: value, axis_spec OR xmin: value (applies to all)
+
+        def _parse_limit_with_axis(s: str, rows: int, cols: int):
+            """
+            Parse: value, axis_spec OR just value (applies to all)
+            Returns (value, flat_idx) or (value, None) for all axes
+            """
+            parts = _split_top_level(s)
+            if len(parts) == 0:
+                return None
+
+            if len(parts) == 1:
+                # Just a value, applies to all axes
+                try:
+                    val = _eval_expr_multiplot(parts[0])
+                    return (val, None)  # None means apply to all
+                except Exception:
+                    return None
+
+            # Two or more parts: value, axis_spec
+            axis_part = parts[-1].strip()
+            flat_idx = _parse_axis_spec(axis_part, rows, cols)
+            if flat_idx is None:
+                return None
+
+            # Everything before last part is the value
+            val_str = ",".join(parts[:-1]).strip()
+            try:
+                val = _eval_expr_multiplot(val_str)
+                return (val, flat_idx)
+            except Exception:
+                return None
+
+        # Gather xmin entries
+        xmin_entries_raw = []
+        if "xmin" in merged and merged["xmin"]:
+            xmin_entries_raw.append(merged["xmin"])
+        for line in self.content:
+            m = re.match(r"^xmin\s*:\s*(.+)$", line.strip())
+            if m:
+                xmin_entries_raw.append(m.group(1))
+
+        # Gather xmax entries
+        xmax_entries_raw = []
+        if "xmax" in merged and merged["xmax"]:
+            xmax_entries_raw.append(merged["xmax"])
+        for line in self.content:
+            m = re.match(r"^xmax\s*:\s*(.+)$", line.strip())
+            if m:
+                xmax_entries_raw.append(m.group(1))
+
+        # Gather ymin entries
+        ymin_entries_raw = []
+        if "ymin" in merged and merged["ymin"]:
+            ymin_entries_raw.append(merged["ymin"])
+        for line in self.content:
+            m = re.match(r"^ymin\s*:\s*(.+)$", line.strip())
+            if m:
+                ymin_entries_raw.append(m.group(1))
+
+        # Gather ymax entries
+        ymax_entries_raw = []
+        if "ymax" in merged and merged["ymax"]:
+            ymax_entries_raw.append(merged["ymax"])
+        for line in self.content:
+            m = re.match(r"^ymax\s*:\s*(.+)$", line.strip())
+            if m:
+                ymax_entries_raw.append(m.group(1))
+
+        # Process xmin entries
+        for xmin_entry in xmin_entries_raw:
+            parsed = _parse_limit_with_axis(xmin_entry, rows, cols)
+            if parsed:
+                val, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(len(xlim_vals)):
+                        if xlim_vals[idx] is None:
+                            xlim_vals[idx] = (val, xmax)
+                        else:
+                            xlim_vals[idx] = (val, xlim_vals[idx][1])
+                else:
+                    # Apply to specific axis
+                    if xlim_vals[flat_idx] is None:
+                        xlim_vals[flat_idx] = (val, xmax)
+                    else:
+                        xlim_vals[flat_idx] = (val, xlim_vals[flat_idx][1])
+
+        # Process xmax entries
+        for xmax_entry in xmax_entries_raw:
+            parsed = _parse_limit_with_axis(xmax_entry, rows, cols)
+            if parsed:
+                val, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(len(xlim_vals)):
+                        if xlim_vals[idx] is None:
+                            xlim_vals[idx] = (xmin, val)
+                        else:
+                            xlim_vals[idx] = (xlim_vals[idx][0], val)
+                else:
+                    # Apply to specific axis
+                    if xlim_vals[flat_idx] is None:
+                        xlim_vals[flat_idx] = (xmin, val)
+                    else:
+                        xlim_vals[flat_idx] = (xlim_vals[flat_idx][0], val)
+
+        # Process ymin entries
+        for ymin_entry in ymin_entries_raw:
+            parsed = _parse_limit_with_axis(ymin_entry, rows, cols)
+            if parsed:
+                val, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(len(ylim_vals)):
+                        if ylim_vals[idx] is None:
+                            ylim_vals[idx] = (val, ymax)
+                        else:
+                            ylim_vals[idx] = (val, ylim_vals[idx][1])
+                else:
+                    # Apply to specific axis
+                    if ylim_vals[flat_idx] is None:
+                        ylim_vals[flat_idx] = (val, ymax)
+                    else:
+                        ylim_vals[flat_idx] = (val, ylim_vals[flat_idx][1])
+
+        # Process ymax entries
+        for ymax_entry in ymax_entries_raw:
+            parsed = _parse_limit_with_axis(ymax_entry, rows, cols)
+            if parsed:
+                val, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(len(ylim_vals)):
+                        if ylim_vals[idx] is None:
+                            ylim_vals[idx] = (ymin, val)
+                        else:
+                            ylim_vals[idx] = (ylim_vals[idx][0], val)
+                else:
+                    # Apply to specific axis
+                    if ylim_vals[flat_idx] is None:
+                        ylim_vals[flat_idx] = (ymin, val)
+                    else:
+                        ylim_vals[flat_idx] = (ylim_vals[flat_idx][0], val)
 
         # Include per-axis settings in the hash to prevent stale caches
         content_hash = _hash_key(
@@ -761,7 +1629,20 @@ class MultiPlotDirective(SphinxDirective):
             "|".join(["|".join(map(str, hs)) if hs else "" for hs in hline_vals]),
             "|".join(["" if xl is None else f"{xl[0]},{xl[1]}" for xl in xlim_vals]),
             "|".join(["" if yl is None else f"{yl[0]},{yl[1]}" for yl in ylim_vals]),
-            "|".join(["" if ls is None else f"{ls[0]},{ls[1]}" for ls in line_specs]),
+            "|".join(
+                [
+                    (
+                        ""
+                        if ls is None
+                        else (
+                            ";".join([f"{a},{b}" for a, b in ls])
+                            if isinstance(ls, list)
+                            else f"{ls[0]},{ls[1]}"
+                        )
+                    )
+                    for ls in line_specs
+                ]
+            ),
             "|".join(
                 [
                     "" if pv is None else ";".join([f"{p[0]},{p[1]}" for p in pv])
@@ -910,46 +1791,108 @@ class MultiPlotDirective(SphinxDirective):
                             )
                     except Exception:
                         pass
-                    # Optional line y = a*x + b per axis
+                    # Optional line(s) y = a*x + b per axis
                     if line_specs[idx] is not None:
-                        try:
-                            a_l, b_l = line_specs[idx]  # type: ignore[misc]
-                            # Use provided xlim for this axis if any; else global
-                            if xlim_vals[idx] is not None:
-                                x_min_line, x_max_line = xlim_vals[idx]
-                            else:
-                                x_min_line, x_max_line = xmin, xmax
-                            x_line = np.array([float(x_min_line), float(x_max_line)], dtype=float)
-                            y_line = a_l * x_line + b_l
-                            ax.plot(
-                                x_line,
-                                y_line,
-                                linestyle="--",
-                                color=plotmath.COLORS.get("red"),
-                                lw=lw,
-                                alpha=alpha,
-                            )
-                        except Exception:
-                            pass
+                        # Handle both legacy format (single tuple) and new format (list of tuples)
+                        lines_to_plot = []
+                        if isinstance(line_specs[idx], tuple):
+                            lines_to_plot = [line_specs[idx]]
+                        elif isinstance(line_specs[idx], list):
+                            lines_to_plot = line_specs[idx]
+
+                        for line_spec in lines_to_plot:
+                            try:
+                                a_l, b_l = line_spec  # type: ignore[misc]
+                                # Use provided xlim for this axis if any; else global
+                                if xlim_vals[idx] is not None:
+                                    x_min_line, x_max_line = xlim_vals[idx]
+                                else:
+                                    x_min_line, x_max_line = xmin, xmax
+                                x_line = np.array(
+                                    [float(x_min_line), float(x_max_line)], dtype=float
+                                )
+                                y_line = a_l * x_line + b_l
+                                ax.plot(
+                                    x_line,
+                                    y_line,
+                                    linestyle="--",
+                                    color=plotmath.COLORS.get("red"),
+                                    lw=lw,
+                                    alpha=alpha,
+                                )
+                            except Exception:
+                                pass
                     # vlines / hlines (support multiple values per axis)
                     for xv in vline_vals[idx] or []:
                         try:
-                            ax.axvline(
-                                x=float(xv),
-                                color=plotmath.COLORS.get("red"),
-                                linestyle="--",
-                                lw=lw,
-                            )
+                            # Support both old format (float) and new format (tuple)
+                            if isinstance(xv, tuple) and len(xv) == 3:
+                                x_val, y1_val, y2_val = xv
+                                # If y1, y2 specified, use plot line segment
+                                if y1_val is not None and y2_val is not None:
+                                    import numpy as np
+
+                                    x_line = np.array([float(x_val), float(x_val)])
+                                    y_line = np.array([float(y1_val), float(y2_val)])
+                                    ax.plot(
+                                        x_line,
+                                        y_line,
+                                        color=plotmath.COLORS.get("red"),
+                                        linestyle="--",
+                                        lw=lw,
+                                    )
+                                else:
+                                    # Full vertical line
+                                    ax.axvline(
+                                        x=float(x_val),
+                                        color=plotmath.COLORS.get("red"),
+                                        linestyle="--",
+                                        lw=lw,
+                                    )
+                            else:
+                                # Old format: just x value
+                                ax.axvline(
+                                    x=float(xv),
+                                    color=plotmath.COLORS.get("red"),
+                                    linestyle="--",
+                                    lw=lw,
+                                )
                         except Exception:
                             pass
                     for yh in hline_vals[idx] or []:
                         try:
-                            ax.axhline(
-                                y=float(yh),
-                                color=plotmath.COLORS.get("red"),
-                                linestyle="--",
-                                lw=lw,
-                            )
+                            # Support both old format (float) and new format (tuple)
+                            if isinstance(yh, tuple) and len(yh) == 3:
+                                y_val, x1_val, x2_val = yh
+                                # If x1, x2 specified, use axhspan or plot line segment
+                                if x1_val is not None and x2_val is not None:
+                                    import numpy as np
+
+                                    x_line = np.array([float(x1_val), float(x2_val)])
+                                    y_line = np.array([float(y_val), float(y_val)])
+                                    ax.plot(
+                                        x_line,
+                                        y_line,
+                                        color=plotmath.COLORS.get("red"),
+                                        linestyle="--",
+                                        lw=lw,
+                                    )
+                                else:
+                                    # Full horizontal line
+                                    ax.axhline(
+                                        y=float(y_val),
+                                        color=plotmath.COLORS.get("red"),
+                                        linestyle="--",
+                                        lw=lw,
+                                    )
+                            else:
+                                # Old format: just y value
+                                ax.axhline(
+                                    y=float(yh),
+                                    color=plotmath.COLORS.get("red"),
+                                    linestyle="--",
+                                    lw=lw,
+                                )
                         except Exception:
                             pass
                     # x/ylims

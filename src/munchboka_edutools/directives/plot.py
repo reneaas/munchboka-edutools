@@ -1542,7 +1542,9 @@ class PlotDirective(SphinxDirective):
                     break
             # Only strip outer brackets if NO top-level comma exists
             if not has_top_level_comma:
-                if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
+                if (s.startswith("[") and s.endswith("]")) or (
+                    s.startswith("(") and s.endswith(")")
+                ):
                     s = s[1:-1].strip()
             out: List[str] = []
             cur: List[str] = []

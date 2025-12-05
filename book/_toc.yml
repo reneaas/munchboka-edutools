@@ -3,6 +3,7 @@ root: index
 chapters:
   - file: examples/plot.md
   - file: examples/multi_plot.md
+  - file: examples/multi_plot_point.md
   - file: examples/signchart.md
   - file: examples/polydiv.md
   - file: examples/horner.md

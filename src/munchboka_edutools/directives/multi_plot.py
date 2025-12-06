@@ -210,6 +210,16 @@ Per-Function / Per-Axis:
     Computes derivative automatically using SymPy.
     Examples: ``tangent: 2, f, 1`` (tangent to f at x=2 on axis 1) or ``tangent: sqrt(3), g, (2, 1)``
     (tangent to g at x=sqrt(3) on row 2, col 1).
+* ``text`` – (new) text annotation with axis targeting. Format: ``text: x, y, "text"[, placement], axis_spec``
+    where placement is optional (default ``top-left``) and axis_spec is optional (applies to all if omitted).
+    Position tokens: ``top-left``, ``top-right``, ``bottom-left``, ``bottom-right``, ``top-center``, ``bottom-center``,
+    ``center-left``, ``center-right``, ``center-center``. Long variants shift further from point: ``longtop-left``, etc.
+    Supports expression evaluation for x and y coordinates.
+    Examples: ``text: 1, 2, "Point A", 1`` or ``text: pi/2, sin(pi/2), "Peak", top-center, (1, 2)``.
+* ``annotate`` – (new) arrow annotation with axis targeting. Format: ``annotate: (x_text, y_text), (x_target, y_target), "text"[, arc], axis_spec``
+    where arc is optional (default 0.3) and axis_spec is optional (applies to all if omitted).
+    Supports expression evaluation for all coordinates and arc curvature.
+    Examples: ``annotate: (1, 3), (2, 4), "Arrow", 1`` or ``annotate: (0, f(0)), (pi, f(pi)), "Peak", 0.5, (1, 1)``.
 * ``xlims`` / ``ylims`` – (legacy) per-axis limits as tuples.
 * ``xmin`` / ``xmax`` / ``ymin`` / ``ymax`` – (new) per-axis or global limits. Format: ``xmin: value, axis_spec``
     or ``xmin: value`` (applies to all axes). Supports expression evaluation.
@@ -441,6 +451,8 @@ class MultiPlotDirective(SphinxDirective):
         "xmax": directives.unchanged,
         "ymin": directives.unchanged,
         "ymax": directives.unchanged,
+        "text": directives.unchanged,  # text annotation: x, y, "text"[, placement], axis_spec
+        "annotate": directives.unchanged,  # arrow annotation: (xytext), (xy), "text"[, arc], axis_spec
         "xstep": directives.unchanged,
         "ystep": directives.unchanged,
         "fontsize": directives.unchanged,
@@ -1607,6 +1619,316 @@ class MultiPlotDirective(SphinxDirective):
                         ylim_vals[flat_idx] = (ylim_vals[flat_idx][0], val)
 
         # Include per-axis settings in the hash to prevent stale caches
+
+        # ─────────────────────────────────────────────────────────────
+        # Helper for parsing text positioning (copied from plot.py)
+        # ─────────────────────────────────────────────────────────────
+        def _parse_text_positioning(pos: str) -> Tuple[str, str]:
+            """Map positioning string to (va, ha). Default is (top, left)."""
+            if not isinstance(pos, str):
+                return ("top", "left")
+            key = pos.strip().lower().replace("_", "-")
+            mapping = {
+                "top-left": ("bottom", "right"),
+                "top-right": ("bottom", "left"),
+                "bottom-left": ("top", "right"),
+                "bottom-right": ("top", "left"),
+                "top-center": ("bottom", "center"),
+                "bottom-center": ("top", "center"),
+                "center-left": ("center", "right"),
+                "center-right": ("center", "left"),
+                "longtop-left": ("longbottom", "left"),
+                "longtop-longleft": ("longbottom", "longright"),
+                "longbottom-right": ("longtop", "right"),
+                "longbottom-left": ("longtop", "left"),
+                "longtop-center": ("longbottom", "center"),
+                "longbottom-center": ("longtop", "center"),
+                "longtop-longright": ("longbottom", "longleft"),
+                "longbottom-longright": ("longtop", "longleft"),
+                "longtop-longleft": ("longbottom", "longright"),
+                "longbottom-longleft": ("longtop", "longright"),
+                "top-longleft": ("bottom", "longright"),
+                "top-longright": ("bottom", "longleft"),
+                "bottom-longleft": ("top", "longright"),
+                "bottom-longright": ("top", "longleft"),
+                "center-longleft": ("center", "longright"),
+                "center-longright": ("center", "longleft"),
+                "center-center": ("center", "center"),
+            }
+            return mapping.get(key, ("top", "left"))
+
+        # ─────────────────────────────────────────────────────────────
+        # Helper for parsing text annotation with axis specifier
+        # ─────────────────────────────────────────────────────────────
+        def _parse_text_with_axis(
+            entry: str, rows: int, cols: int
+        ) -> Tuple[float, float, str, str, int | None] | None:
+            """
+            Parse: x, y, "text"[, placement], axis_spec
+            Returns: (x_val, y_val, text_str, placement_str, flat_idx) or None
+            If axis_spec is omitted, flat_idx is None (applies to all axes).
+            """
+            parts = _split_top_level(entry)
+            if len(parts) < 3:
+                return None
+
+            # Parse x and y as expressions
+            try:
+                x_val = _eval_expr_multiplot(parts[0].strip())
+                y_val = _eval_expr_multiplot(parts[1].strip())
+            except Exception:
+                return None
+
+            # Parse text string (may be quoted)
+            text_raw = parts[2].strip()
+            text_str = text_raw.strip('"').strip("'")
+
+            # Determine placement and axis_spec based on number of parts
+            placement_str = "top-left"  # default
+            axis_spec_raw = None
+
+            if len(parts) == 3:
+                # No placement or axis_spec
+                flat_idx = None
+            elif len(parts) == 4:
+                # Either placement or axis_spec
+                candidate = parts[3].strip()
+                # Check if it's a valid placement token
+                pos_keys = {
+                    "top-left",
+                    "top-right",
+                    "bottom-left",
+                    "bottom-right",
+                    "top-center",
+                    "bottom-center",
+                    "center-left",
+                    "center-right",
+                    "center-center",
+                    "longtop-left",
+                    "longtop-longleft",
+                    "longbottom-right",
+                    "longbottom-left",
+                    "longtop-center",
+                    "longbottom-center",
+                    "longtop-longright",
+                    "longbottom-longright",
+                    "top-longleft",
+                    "top-longright",
+                    "bottom-longleft",
+                    "bottom-longright",
+                    "center-longleft",
+                    "center-longright",
+                }
+                if candidate.lower().replace("_", "-") in pos_keys:
+                    placement_str = candidate
+                    flat_idx = None
+                else:
+                    # Treat as axis_spec
+                    axis_spec_raw = candidate
+                    parsed_axis = _parse_axis_spec(axis_spec_raw, rows, cols)
+                    flat_idx = parsed_axis if parsed_axis is not None else None
+            elif len(parts) == 5:
+                # Both placement and axis_spec
+                placement_str = parts[3].strip()
+                axis_spec_raw = parts[4].strip()
+                parsed_axis = _parse_axis_spec(axis_spec_raw, rows, cols)
+                flat_idx = parsed_axis if parsed_axis is not None else None
+            else:
+                return None
+
+            return (x_val, y_val, text_str, placement_str, flat_idx)
+
+        # ─────────────────────────────────────────────────────────────
+        # Parse text annotations
+        # ─────────────────────────────────────────────────────────────
+        # Format: text: x, y, "text"[, placement], axis_spec
+        # Storage: per-axis dictionary of lists of (x, y, text, placement) tuples
+        text_dict: Dict[int, List[Tuple[float, float, str, str]]] = {}
+
+        text_entries_raw = []
+        # From option
+        text_opt = self.options.get("text", "").strip()
+        if text_opt:
+            text_entries_raw.append(text_opt)
+        # From content
+        for line in self.content:
+            m = re.match(r"^text\s*:\s*(.+)$", line.strip())
+            if m:
+                text_entries_raw.append(m.group(1))
+
+        for text_entry in text_entries_raw:
+            parsed = _parse_text_with_axis(text_entry, rows, cols)
+            if parsed:
+                x_val, y_val, text_str, placement_str, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(rows * cols):
+                        if idx not in text_dict:
+                            text_dict[idx] = []
+                        text_dict[idx].append((x_val, y_val, text_str, placement_str))
+                else:
+                    # Apply to specific axis
+                    if flat_idx not in text_dict:
+                        text_dict[flat_idx] = []
+                    text_dict[flat_idx].append((x_val, y_val, text_str, placement_str))
+
+        # ─────────────────────────────────────────────────────────────
+        # Helper for parsing annotate with axis specifier
+        # ─────────────────────────────────────────────────────────────
+        def _parse_annotate_with_axis(
+            entry: str, rows: int, cols: int
+        ) -> Tuple[Tuple[float, float], Tuple[float, float], str, float, int | None] | None:
+            """
+            Parse: (x_text, y_text), (x_target, y_target), "text"[, arc], axis_spec
+            Returns: ((x_text, y_text), (x_target, y_target), text_str, arc_val, flat_idx) or None
+            If axis_spec is omitted, flat_idx is None (applies to all axes).
+            """
+            s = entry.strip()
+
+            # Find first two balanced tuples
+            def _grab_tuple(start_index: int) -> Tuple[int, int, str] | None:
+                if start_index >= len(s) or s[start_index] != "(":
+                    return None
+                depth = 0
+                for j in range(start_index, len(s)):
+                    if s[j] == "(":
+                        depth += 1
+                    elif s[j] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            inner = s[start_index + 1 : j]
+                            return (start_index, j, inner)
+                return None
+
+            # Locate first '('
+            i1 = s.find("(")
+            if i1 == -1:
+                return None
+            t1 = _grab_tuple(i1)
+            if not t1:
+                return None
+            i2_search = t1[1] + 1
+            # Skip commas/space
+            while i2_search < len(s) and s[i2_search] in " ,":
+                i2_search += 1
+            if i2_search >= len(s) or s[i2_search] != "(":
+                return None
+            t2 = _grab_tuple(i2_search)
+            if not t2:
+                return None
+            rest = s[t2[1] + 1 :].strip()
+
+            # Split tuple inners on top-level comma
+            def _split_pair(inner: str) -> Tuple[str, str] | None:
+                depth = 0
+                for k, ch in enumerate(inner):
+                    if ch == "(":
+                        depth += 1
+                    elif ch == ")":
+                        depth -= 1
+                    elif ch == "," and depth == 0:
+                        left = inner[:k].strip()
+                        right = inner[k + 1 :].strip()
+                        if left and right:
+                            return (left, right)
+                return None
+
+            p1 = _split_pair(t1[2])
+            p2 = _split_pair(t2[2])
+            if not (p1 and p2):
+                return None
+
+            # Extract quoted text
+            import re
+
+            m_txt = re.search(
+                r"\"([^\"\\]*(?:\\.[^\"\\]*)*)\"|\'([^\'\\]*(?:\\.[^\'\\]*)*)\'",
+                rest,
+            )
+            if not m_txt:
+                return None
+            text_str = m_txt.group(1) if m_txt.group(1) is not None else m_txt.group(2)
+            after = rest[m_txt.end() :].strip().lstrip(",").strip()
+
+            # Parse remaining parts: [arc,] axis_spec
+            remaining_parts = _split_top_level(after) if after else []
+            arc_val = 0.3  # default
+            flat_idx = None
+
+            if len(remaining_parts) == 0:
+                # No arc or axis_spec
+                pass
+            elif len(remaining_parts) == 1:
+                # Could be arc or axis_spec
+                candidate = remaining_parts[0]
+                # Try to parse as axis_spec first
+                parsed_axis = _parse_axis_spec(candidate, rows, cols)
+                if parsed_axis is not None:
+                    flat_idx = parsed_axis
+                else:
+                    # Try as arc value
+                    try:
+                        arc_val = _eval_expr_multiplot(candidate)
+                    except Exception:
+                        pass
+            elif len(remaining_parts) >= 2:
+                # First is arc, second is axis_spec
+                try:
+                    arc_val = _eval_expr_multiplot(remaining_parts[0])
+                except Exception:
+                    pass
+                parsed_axis = _parse_axis_spec(remaining_parts[1], rows, cols)
+                if parsed_axis is not None:
+                    flat_idx = parsed_axis
+
+            # Evaluate coordinates
+            try:
+                x_text = _eval_expr_multiplot(p1[0])
+                y_text = _eval_expr_multiplot(p1[1])
+                x_target = _eval_expr_multiplot(p2[0])
+                y_target = _eval_expr_multiplot(p2[1])
+            except Exception:
+                return None
+
+            return ((x_text, y_text), (x_target, y_target), text_str, arc_val, flat_idx)
+
+        # ─────────────────────────────────────────────────────────────
+        # Parse annotate annotations
+        # ─────────────────────────────────────────────────────────────
+        # Format: annotate: (x_text, y_text), (x_target, y_target), "text"[, arc], axis_spec
+        # Storage: per-axis dictionary of lists of ((xytext), (xy), text, arc) tuples
+        annotate_dict: Dict[
+            int, List[Tuple[Tuple[float, float], Tuple[float, float], str, float]]
+        ] = {}
+
+        annotate_entries_raw = []
+        # From option
+        annotate_opt = self.options.get("annotate", "").strip()
+        if annotate_opt:
+            annotate_entries_raw.append(annotate_opt)
+        # From content
+        for line in self.content:
+            m = re.match(r"^annotate\s*:\s*(.+)$", line.strip())
+            if m:
+                annotate_entries_raw.append(m.group(1))
+
+        for annotate_entry in annotate_entries_raw:
+            parsed = _parse_annotate_with_axis(annotate_entry, rows, cols)
+            if parsed:
+                xytext, xy, text_str, arc_val, flat_idx = parsed
+                if flat_idx is None:
+                    # Apply to all axes
+                    for idx in range(rows * cols):
+                        if idx not in annotate_dict:
+                            annotate_dict[idx] = []
+                        annotate_dict[idx].append((xytext, xy, text_str, arc_val))
+                else:
+                    # Apply to specific axis
+                    if flat_idx not in annotate_dict:
+                        annotate_dict[flat_idx] = []
+                    annotate_dict[flat_idx].append((xytext, xy, text_str, arc_val))
+
+        # Include per-axis settings in the hash to prevent stale caches
         content_hash = _hash_key(
             "|".join(exprs),
             "|".join(labels_list),
@@ -1647,6 +1969,31 @@ class MultiPlotDirective(SphinxDirective):
                 [
                     "" if pv is None else ";".join([f"{p[0]},{p[1]}" for p in pv])
                     for pv in points_vals
+                ]
+            ),
+            "|".join(
+                [
+                    (
+                        ""
+                        if idx not in text_dict
+                        else ";".join([f"{x},{y},{t},{p}" for x, y, t, p in text_dict[idx]])
+                    )
+                    for idx in range(rows * cols)
+                ]
+            ),
+            "|".join(
+                [
+                    (
+                        ""
+                        if idx not in annotate_dict
+                        else ";".join(
+                            [
+                                f"{xt[0]},{xt[1]},{xy[0]},{xy[1]},{t},{a}"
+                                for xt, xy, t, a in annotate_dict[idx]
+                            ]
+                        )
+                    )
+                    for idx in range(rows * cols)
                 ]
             ),
         )
@@ -1895,6 +2242,111 @@ class MultiPlotDirective(SphinxDirective):
                                 )
                         except Exception:
                             pass
+
+                    # Draw text annotations
+                    if idx in text_dict:
+                        # Get axes dimensions for offset calculation
+                        try:
+                            fig.canvas.draw()  # ensure layout is realized
+                            _bbox_px = ax.get_window_extent()
+                            _ax_w_px, _ax_h_px = _bbox_px.width, _bbox_px.height
+                            if _ax_w_px <= 0 or _ax_h_px <= 0:
+                                _ax_w_px = _ax_h_px = None
+                        except Exception:
+                            _ax_w_px = _ax_h_px = None
+
+                        # Get current axis limits for fallback offset calculation
+                        try:
+                            ax_xlim = ax.get_xlim()
+                            ax_ylim = ax.get_ylim()
+                            ax_dx = abs(ax_xlim[1] - ax_xlim[0])
+                            ax_dy = abs(ax_ylim[1] - ax_ylim[0])
+                        except Exception:
+                            ax_dx = ax_dy = 1.0
+
+                        for x0, y0, text_str, pos_str in text_dict[idx]:
+                            va, ha = _parse_text_positioning(pos_str)
+
+                            # Offset factors (matching plot.py)
+                            _fx_short = 0.015
+                            _fy_short = 0.015
+                            _fx_long = 0.03
+                            _fy_long = 0.03
+
+                            # Resolve long* variants
+                            _use_fx = _fx_short
+                            _use_fy = _fy_short
+                            if va == "longbottom":
+                                va = "bottom"
+                                _use_fy = _fy_long
+                            elif va == "longtop":
+                                va = "top"
+                                _use_fy = _fy_long
+                            if ha == "longright":
+                                ha = "right"
+                                _use_fx = _fx_long
+                            elif ha == "longleft":
+                                ha = "left"
+                                _use_fx = _fx_long
+
+                            # Calculate offset
+                            if _ax_w_px and _ax_h_px:
+                                # Pixel-based offsets
+                                dx_px = 0.0
+                                dy_px = 0.0
+                                if ha == "right":
+                                    dx_px = -_ax_w_px * _use_fx
+                                elif ha == "left":
+                                    dx_px = _ax_w_px * _use_fx
+                                if va == "bottom":
+                                    dy_px = _ax_h_px * _use_fy
+                                elif va == "top":
+                                    dy_px = -_ax_h_px * _use_fy
+                                x_disp, y_disp = ax.transData.transform((x0, y0))
+                                x1, y1 = ax.transData.inverted().transform(
+                                    (x_disp + dx_px, y_disp + dy_px)
+                                )
+                                dx = x1 - x0
+                                dy = y1 - y0
+                            else:
+                                # Fallback: data-space offsets
+                                if va == "bottom":
+                                    dy = (_fy_short if _use_fy == _fy_short else _fy_long) * ax_dy
+                                elif va == "top":
+                                    dy = -(_fy_short if _use_fy == _fy_short else _fy_long) * ax_dy
+                                else:
+                                    dy = 0.0
+                                if ha == "right":
+                                    dx = -(_fx_short if _use_fx == _fx_short else _fx_long) * ax_dx
+                                elif ha == "left":
+                                    dx = (_fx_short if _use_fx == _fx_short else _fx_long) * ax_dx
+                                else:
+                                    dx = 0.0
+
+                            # Draw text
+                            ax.text(
+                                x0 + dx,
+                                y0 + dy,
+                                text_str,
+                                fontsize=int(fontsize),
+                                ha=ha,
+                                va=va,
+                            )
+
+                    # Draw arrow annotations
+                    if idx in annotate_dict:
+                        import matplotlib.pyplot as plt
+
+                        plt.sca(ax)  # Set current axes
+                        for xytext, xy, text_str, arc_val in annotate_dict[idx]:
+                            plotmath.annotate(
+                                xy=xy,
+                                xytext=xytext,
+                                s=text_str,
+                                arc=arc_val,
+                                fontsize=int(fontsize),
+                            )
+
                     # x/ylims
                     if xlim_vals[idx] is not None:
                         ax.set_xlim(*xlim_vals[idx])

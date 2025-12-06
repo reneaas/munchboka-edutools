@@ -4,6 +4,9 @@ chapters:
   - file: examples/plot.md
   - file: examples/multi_plot.md
   - file: examples/multi_plot_point.md
+  - file: examples/multi_plot_text.md
+  - file: examples/multi_plot_annotate.md
+  - file: examples/multi_plot2_test.md
   - file: examples/signchart.md
   - file: examples/polydiv.md
   - file: examples/horner.md

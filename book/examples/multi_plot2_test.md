@@ -99,3 +99,61 @@ annotate:
 :::
 
 ::::
+
+## Example 4: Cascading options
+
+::::{multi-plot2}
+---
+rows: 2
+cols: 2
+ticks: off
+ymin: -2
+ymax: 2
+xmin: -4
+xmax: 4
+fontsize: 26
+lw: 3.5
+---
+
+:::{plot}
+function: -(1 - 2*x**2) * exp(-x**2), A
+:::
+
+:::{plot}
+function: (2*x**2 - 1)**2 * exp(-x**2), B
+:::
+
+:::{plot}
+function: (1 - 2*x**2) * exp(-x**2), C
+:::
+
+:::{plot}
+function: -(2*x**2 - 1)**2 * exp(-x**2), D
+:::
+
+::::
+
+## Example 5: Cascading with override
+
+::::{multi-plot2}
+---
+rows: 1
+cols: 2
+xmin: -5
+xmax: 5
+ymin: -5
+ymax: 5
+fontsize: 20
+---
+
+:::{plot}
+function: x**2, f, blue
+:::
+
+:::{plot}
+function: x**3, g, red
+ymin: -10
+ymax: 10
+:::
+
+::::

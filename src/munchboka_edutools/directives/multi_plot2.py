@@ -74,7 +74,7 @@ class MultiPlot2Directive(SphinxDirective):
 
         # Grid layout options
         grid_options = {"rows", "cols", "width", "align", "class", "name"}
-        
+
         # Get options with defaults
         rows = self.options.get("rows", 1)
         cols = self.options.get("cols", 1)
@@ -167,49 +167,49 @@ class MultiPlot2Directive(SphinxDirective):
     def _inject_plot_defaults(self, content, plot_defaults):
         """
         Inject default plot options into child plot directives.
-        
+
         This method parses the content to find plot directives and adds
         default options to them, but only if those options are not already
         specified in the individual plot directive.
-        
+
         Args:
             content: StringList of directive content
             plot_defaults: Dict of default options to inject
-            
+
         Returns:
             Modified StringList with injected defaults
         """
         from docutils.statemachine import StringList
-        
+
         if not plot_defaults:
             return content
-            
+
         new_lines = []
         i = 0
         while i < len(content):
             line = content[i]
-            
+
             # Check if this line starts a plot directive
-            if re.match(r'^\s*:::\{plot\}\s*$', line):
+            if re.match(r"^\s*:::\{plot\}\s*$", line):
                 new_lines.append(line)
                 i += 1
-                
+
                 # Collect existing options in this plot directive
                 existing_options = set()
                 plot_content_start = i
-                
+
                 # Scan ahead to find what options are already defined
                 while i < len(content):
                     next_line = content[i]
                     # Stop if we hit the closing ::: or another directive
-                    if re.match(r'^\s*:::\s*$', next_line) or re.match(r'^\s*:::\{', next_line):
+                    if re.match(r"^\s*:::\s*$", next_line) or re.match(r"^\s*:::\{", next_line):
                         break
                     # Extract option name from lines like "xmin: -4" or "function: x**2"
-                    option_match = re.match(r'^\s*(\w+):\s*', next_line)
+                    option_match = re.match(r"^\s*(\w+):\s*", next_line)
                     if option_match:
                         existing_options.add(option_match.group(1))
                     i += 1
-                
+
                 # Now inject defaults that aren't already present
                 # We need to insert them right after the directive opening
                 defaults_to_inject = []
@@ -221,23 +221,23 @@ class MultiPlot2Directive(SphinxDirective):
                             continue  # Flags are handled differently, skip for now
                         else:
                             defaults_to_inject.append(f"{key}: {value}")
-                
+
                 # Insert the defaults at the beginning of plot content
                 for default_line in defaults_to_inject:
                     new_lines.append(default_line)
-                
+
                 # Now add the original plot content
                 for j in range(plot_content_start, i):
                     new_lines.append(content[j])
             else:
                 new_lines.append(line)
                 i += 1
-        
+
         # Convert back to StringList with proper source tracking
         result = StringList()
         for line in new_lines:
-            result.append(line, source='<multi-plot2>')
-        
+            result.append(line, source="<multi-plot2>")
+
         return result
 
 

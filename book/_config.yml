@@ -10,3 +10,7 @@ sphinx:
   config:
     html_theme: sphinx_book_theme
     html_static_path: ["_static"]
+    html_baseurl: "https://dev.munchboka.no"
+    html_theme_options:
+      pygments_light_style: "github-light"
+      pygments_dark_style: "github-dark-high-contrast"

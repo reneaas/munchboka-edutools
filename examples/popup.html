@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/popup.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="GeoGebra Icon Examples" href="ggb_icon.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -430,13 +423,13 @@ document.write(`
 <section id="popup-role-inline-tooltip">
 <h2>Popup Role (Inline Tooltip)<a class="headerlink" href="#popup-role-inline-tooltip" title="Link to this heading">#</a></h2>
 <p>You can also use the popup role inline: This is some 
-<span class="popup-wrapper" id="popup-role-0423a481">
+<span class="popup-wrapper" id="popup-role-1839e799">
   <span class="popup-trigger">hover text</span>
   <span class="popup-bubble" style="display:none;">This content appears in a tooltip</span>
 </span>
  in a paragraph.</p>
 <p>Another example with 
-<span class="popup-wrapper" id="popup-role-d3c3cc7b">
+<span class="popup-wrapper" id="popup-role-5848afd6">
   <span class="popup-trigger">math</span>
   <span class="popup-bubble" style="display:none;">The formula is $E = mc^2$</span>
 </span>
@@ -447,10 +440,10 @@ document.write(`
 <p>If you don’t specify options, defaults are used:</p>
 
 <!-- Button to open the popup -->
-<button id="button-popup-abbcf17b" class="popup-button">Vis mer</button>
+<button id="button-popup-0921cc49" class="popup-button">Vis mer</button>
 
 <!-- Dialog container -->
-<div id="content-popup-abbcf17b" class="popup-content" style="display:none;">
+<div id="content-popup-0921cc49" class="popup-content" style="display:none;">
     This popup uses all default settings:
 - Default button text: "Vis mer"
 - Default title: "Mer informasjon"
@@ -498,7 +491,7 @@ document.write(`
 
     // Initialize dialog once everything is loaded
     function initializeDialog() {
-        $("#content-popup-abbcf17b").dialog({
+        $("#content-popup-0921cc49").dialog({
             autoOpen: false,
             title: "Mer informasjon",
             width: 500,
@@ -510,7 +503,7 @@ document.write(`
                 // Safety check to ensure KaTeX is available
                 if (window.katex && window.renderMathInElement) {
                     try {
-                        renderMathInElement(document.getElementById('content-popup-abbcf17b'), {
+                        renderMathInElement(document.getElementById('content-popup-0921cc49'), {
                             delimiters: [
                                 {left: "$$", right: "$$", display: true},
                                 {left: "$", right: "$", display: false},
@@ -527,8 +520,8 @@ document.write(`
         });
         
         // Button click handler
-        $("#button-popup-abbcf17b").on("click", function() {
-            $("#content-popup-abbcf17b").dialog("open");
+        $("#button-popup-0921cc49").on("click", function() {
+            $("#content-popup-0921cc49").dialog("open");
         });
     }
     

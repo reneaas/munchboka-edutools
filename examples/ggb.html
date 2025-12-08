@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/ggb.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Polynomial Icon Role" href="poly_icon.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -428,7 +421,7 @@ document.write(`
 <h2>Example 1: Empty Applet (Full Controls)<a class="headerlink" href="#example-1-empty-applet-full-controls" title="Link to this heading">#</a></h2>
 <p>When no <code class="docutils literal notranslate"><span class="pre">material_id</span></code> is provided, an empty applet is created with all controls enabled by default:</p>
 
-<div id="ggb-cas-a80e4182" style="width: 800px; height: 500px;" class="ggb-window"></div>
+<div id="ggb-cas-fb994deb" style="width: 800px; height: 500px;" class="ggb-window"></div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var options = {
@@ -447,13 +440,13 @@ document.addEventListener("DOMContentLoaded", function() {
         rounding: 2,
         showKeyboardOnFocus: false,
         preventFocus: true,
-        id: 'ggb-cas-a80e4182',
+        id: 'ggb-cas-fb994deb',
         '': '',
         '': '',
     };
 
     var applet = new GGBApplet(options, true);
-    applet.inject('ggb-cas-a80e4182');
+    applet.inject('ggb-cas-fb994deb');
 });
 </script>
         </section>
@@ -461,7 +454,7 @@ document.addEventListener("DOMContentLoaded", function() {
 <h2>Example 2: Specific GeoGebra Material<a class="headerlink" href="#example-2-specific-geogebra-material" title="Link to this heading">#</a></h2>
 <p>You can embed existing GeoGebra materials using their material ID:</p>
 
-<div id="ggb-cas-b5e4523a" style="width: 720px; height: 600px;" class="ggb-window"></div>
+<div id="ggb-cas-be039fcc" style="width: 720px; height: 600px;" class="ggb-window"></div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var options = {
@@ -480,13 +473,13 @@ document.addEventListener("DOMContentLoaded", function() {
         rounding: 2,
         showKeyboardOnFocus: false,
         preventFocus: true,
-        id: 'ggb-cas-b5e4523a',
+        id: 'ggb-cas-be039fcc',
         material_id: 'gt63unet',
         '': '',
     };
 
     var applet = new GGBApplet(options, true);
-    applet.inject('ggb-cas-b5e4523a');
+    applet.inject('ggb-cas-be039fcc');
 });
 </script>
         </section>

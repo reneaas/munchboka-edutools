@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/ggb_popup.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="GeoGebra Applet Examples" href="ggb.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -436,9 +429,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-e0893ad2" class="ggb-cas-button">Åpne Geogebra‑vindu</button>
-<div id="dialog-ggb-geogebra-e0893ad2" title="Geogebra‑vindu" style="display:none;">
-    <div id="ggb-geogebra-e0893ad2" class="ggb-window"></div>
+<button id="button-ggb-geogebra-b97a9e29" class="ggb-cas-button">Åpne Geogebra‑vindu</button>
+<div id="dialog-ggb-geogebra-b97a9e29" title="Geogebra‑vindu" style="display:none;">
+    <div id="ggb-geogebra-b97a9e29" class="ggb-window"></div>
 </div>
 
 <style>
@@ -455,12 +448,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-e0893ad2").width(),
-            h = $("#ggb-geogebra-e0893ad2").height();
+      const w = $("#ggb-geogebra-b97a9e29").width(),
+            h = $("#ggb-geogebra-b97a9e29").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-e0893ad2").dialog({
+    $("#dialog-ggb-geogebra-b97a9e29").dialog({
       autoOpen: false,
       width: 740, height: 580,
       resizable: true, draggable: true,
@@ -469,24 +462,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-e0893ad2",
+            appName: "classic", id: "ggb-geogebra-b97a9e29",
             width: 700, height: 500,
             perspective: "AG", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: false,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-e0893ad2");
+          }, true).inject("ggb-geogebra-b97a9e29");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-e0893ad2").button()
+    $("#button-ggb-geogebra-b97a9e29").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-e0893ad2").dialog("open");
+        $("#dialog-ggb-geogebra-b97a9e29").dialog("open");
       });
   });
 })();
@@ -500,9 +493,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-fb04da9a" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-geogebra-fb04da9a" title="Large Calculator" "GeoGebra Calculator"" style="display:none;">
-    <div id="ggb-geogebra-fb04da9a" class="ggb-window"></div>
+<button id="button-ggb-geogebra-3fca959e" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-geogebra-3fca959e" title="Large Calculator" "GeoGebra Calculator"" style="display:none;">
+    <div id="ggb-geogebra-3fca959e" class="ggb-window"></div>
 </div>
 
 <style>
@@ -519,12 +512,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-fb04da9a").width(),
-            h = $("#ggb-geogebra-fb04da9a").height();
+      const w = $("#ggb-geogebra-3fca959e").width(),
+            h = $("#ggb-geogebra-3fca959e").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-fb04da9a").dialog({
+    $("#dialog-ggb-geogebra-3fca959e").dialog({
       autoOpen: false,
       width: 940, height: 780,
       resizable: true, draggable: true,
@@ -533,24 +526,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-fb04da9a",
+            appName: "classic", id: "ggb-geogebra-3fca959e",
             width: 900, height: 700,
             perspective: "AG", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: false,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-fb04da9a");
+          }, true).inject("ggb-geogebra-3fca959e");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-fb04da9a").button()
+    $("#button-ggb-geogebra-3fca959e").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-fb04da9a").dialog("open");
+        $("#dialog-ggb-geogebra-3fca959e").dialog("open");
       });
   });
 })();
@@ -564,9 +557,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-7d87cb75" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-geogebra-7d87cb75" title="Geometry" "Geometry Window"" style="display:none;">
-    <div id="ggb-geogebra-7d87cb75" class="ggb-window"></div>
+<button id="button-ggb-geogebra-47d85d6b" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-geogebra-47d85d6b" title="Geometry" "Geometry Window"" style="display:none;">
+    <div id="ggb-geogebra-47d85d6b" class="ggb-window"></div>
 </div>
 
 <style>
@@ -583,12 +576,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-7d87cb75").width(),
-            h = $("#ggb-geogebra-7d87cb75").height();
+      const w = $("#ggb-geogebra-47d85d6b").width(),
+            h = $("#ggb-geogebra-47d85d6b").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-7d87cb75").dialog({
+    $("#dialog-ggb-geogebra-47d85d6b").dialog({
       autoOpen: false,
       width: 840, height: 680,
       resizable: true, draggable: true,
@@ -597,24 +590,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-7d87cb75",
+            appName: "classic", id: "ggb-geogebra-47d85d6b",
             width: 800, height: 600,
             perspective: "G", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: false,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-7d87cb75");
+          }, true).inject("ggb-geogebra-47d85d6b");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-7d87cb75").button()
+    $("#button-ggb-geogebra-47d85d6b").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-7d87cb75").dialog("open");
+        $("#dialog-ggb-geogebra-47d85d6b").dialog("open");
       });
   });
 })();
@@ -628,9 +621,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-4a029181" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-geogebra-4a029181" title="Graphing Calculator" "Graphing Calculator"" style="display:none;">
-    <div id="ggb-geogebra-4a029181" class="ggb-window"></div>
+<button id="button-ggb-geogebra-35e2cee9" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-geogebra-35e2cee9" title="Graphing Calculator" "Graphing Calculator"" style="display:none;">
+    <div id="ggb-geogebra-35e2cee9" class="ggb-window"></div>
 </div>
 
 <style>
@@ -647,12 +640,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-4a029181").width(),
-            h = $("#ggb-geogebra-4a029181").height();
+      const w = $("#ggb-geogebra-35e2cee9").width(),
+            h = $("#ggb-geogebra-35e2cee9").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-4a029181").dialog({
+    $("#dialog-ggb-geogebra-35e2cee9").dialog({
       autoOpen: false,
       width: 890, height: 730,
       resizable: true, draggable: true,
@@ -661,24 +654,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-4a029181",
+            appName: "classic", id: "ggb-geogebra-35e2cee9",
             width: 850, height: 650,
             perspective: "GS", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: false,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-4a029181");
+          }, true).inject("ggb-geogebra-35e2cee9");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-4a029181").button()
+    $("#button-ggb-geogebra-35e2cee9").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-4a029181").dialog("open");
+        $("#dialog-ggb-geogebra-35e2cee9").dialog("open");
       });
   });
 })();
@@ -692,9 +685,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-2e87d597" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-geogebra-2e87d597" title="with Menu" "GeoGebra with Menu"" style="display:none;">
-    <div id="ggb-geogebra-2e87d597" class="ggb-window"></div>
+<button id="button-ggb-geogebra-f6683f5e" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-geogebra-f6683f5e" title="with Menu" "GeoGebra with Menu"" style="display:none;">
+    <div id="ggb-geogebra-f6683f5e" class="ggb-window"></div>
 </div>
 
 <style>
@@ -711,12 +704,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-2e87d597").width(),
-            h = $("#ggb-geogebra-2e87d597").height();
+      const w = $("#ggb-geogebra-f6683f5e").width(),
+            h = $("#ggb-geogebra-f6683f5e").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-2e87d597").dialog({
+    $("#dialog-ggb-geogebra-f6683f5e").dialog({
       autoOpen: false,
       width: 840, height: 680,
       resizable: true, draggable: true,
@@ -725,24 +718,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-2e87d597",
+            appName: "classic", id: "ggb-geogebra-f6683f5e",
             width: 800, height: 600,
             perspective: "AG", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: None,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-2e87d597");
+          }, true).inject("ggb-geogebra-f6683f5e");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-2e87d597").button()
+    $("#button-ggb-geogebra-f6683f5e").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-2e87d597").dialog("open");
+        $("#dialog-ggb-geogebra-f6683f5e").dialog("open");
       });
   });
 })();
@@ -756,9 +749,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-geogebra-0698fea4" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-geogebra-0698fea4" title="CAS" "CAS Calculator"" style="display:none;">
-    <div id="ggb-geogebra-0698fea4" class="ggb-window"></div>
+<button id="button-ggb-geogebra-0ba33fd8" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-geogebra-0ba33fd8" title="CAS" "CAS Calculator"" style="display:none;">
+    <div id="ggb-geogebra-0ba33fd8" class="ggb-window"></div>
 </div>
 
 <style>
@@ -775,12 +768,12 @@ document.write(`
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-geogebra-0698fea4").width(),
-            h = $("#ggb-geogebra-0698fea4").height();
+      const w = $("#ggb-geogebra-0ba33fd8").width(),
+            h = $("#ggb-geogebra-0ba33fd8").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
-    $("#dialog-ggb-geogebra-0698fea4").dialog({
+    $("#dialog-ggb-geogebra-0ba33fd8").dialog({
       autoOpen: false,
       width: 940, height: 780,
       resizable: true, draggable: true,
@@ -789,24 +782,24 @@ document.write(`
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-geogebra-0698fea4",
+            appName: "classic", id: "ggb-geogebra-0ba33fd8",
             width: 900, height: 700,
             perspective: "CAS", language: "nb",
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: None,
             appletOnLoad: () => { ggbReady = true; applySize(); }
-          }, true).inject("ggb-geogebra-0698fea4");
+          }, true).inject("ggb-geogebra-0ba33fd8");
         } else {
           applySize();
         }
       }
     });
 
-    $("#button-ggb-geogebra-0698fea4").button()
+    $("#button-ggb-geogebra-0ba33fd8").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-geogebra-0698fea4").dialog("open");
+        $("#dialog-ggb-geogebra-0ba33fd8").dialog("open");
       });
   });
 })();

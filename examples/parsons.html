@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/parsons.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Popup Examples" href="popup.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -431,8 +424,8 @@ document.write(`
 <h2>Example 1: Simple Fibonacci Function<a class="headerlink" href="#example-1-simple-fibonacci-function" title="Link to this heading">#</a></h2>
 <p>Try to arrange these lines of code to create a correct Fibonacci function:</p>
 
-        <div id="container-parsons-puzzle-puzzle-634a2558" class="puzzle-container"></div>
-        <div id="container-kode-puzzle-634a2558" style="display: none"></div>
+        <div id="container-parsons-puzzle-puzzle-3c0b4b5a" class="puzzle-container"></div>
+        <div id="container-kode-puzzle-3c0b4b5a" style="display: none"></div>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -443,8 +436,8 @@ document.write(`
     else:
         return fibonacci(n-1) + fibonacci(n-2)`;
 
-                const puzzleContainerId = 'container-parsons-puzzle-puzzle-634a2558';
-                const editorId = 'container-kode-puzzle-634a2558';
+                const puzzleContainerId = 'container-parsons-puzzle-puzzle-3c0b4b5a';
+                const editorId = 'container-kode-puzzle-3c0b4b5a';
 
                 const switchToCodeEditor = makeCallbackFunction(puzzleContainerId, editorId);
                 const puzzle = new ParsonsPuzzle(

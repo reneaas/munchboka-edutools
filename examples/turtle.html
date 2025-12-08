@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/turtle.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Flashcards-eksempel" href="flashcards.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -429,7 +422,7 @@ document.write(`
 <section id="example-1-simple-square">
 <h2>Example 1: Simple Square<a class="headerlink" href="#example-1-simple-square" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-b135b34b"></div>
+        <div id="container-kode-turtle-5633ef98"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `from turtle import *
@@ -437,14 +430,14 @@ document.write(`
 for i in range(4):
     forward(100)
     right(90)`;
-                makeTurtleCode("container-kode-turtle-b135b34b", code);
+                makeTurtleCode("container-kode-turtle-5633ef98", code);
             });
         </script>
         </section>
 <section id="example-2-colorful-spiral">
 <h2>Example 2: Colorful Spiral<a class="headerlink" href="#example-2-colorful-spiral" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-0b857123"></div>
+        <div id="container-kode-turtle-bcc6c20f"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -458,14 +451,14 @@ for i in range(180):
     t.width(i / 100 + 1)
     t.forward(i)
     t.left(59)`;
-                makeTurtleCode("container-kode-turtle-0b857123", code);
+                makeTurtleCode("container-kode-turtle-bcc6c20f", code);
             });
         </script>
         </section>
 <section id="example-3-star-pattern">
 <h2>Example 3: Star Pattern<a class="headerlink" href="#example-3-star-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-2978b68c"></div>
+        <div id="container-kode-turtle-86329859"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -480,14 +473,14 @@ for i in range(5):
     t.right(144)
 
 t.end_fill()`;
-                makeTurtleCode("container-kode-turtle-2978b68c", code);
+                makeTurtleCode("container-kode-turtle-86329859", code);
             });
         </script>
         </section>
 <section id="example-4-circle-flower">
 <h2>Example 4: Circle Flower<a class="headerlink" href="#example-4-circle-flower" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-0c03db02"></div>
+        <div id="container-kode-turtle-1bc7fa8b"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -501,14 +494,14 @@ for i in range(36):
     t.pencolor(colors[i % 6])
     t.circle(100)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-0c03db02", code);
+                makeTurtleCode("container-kode-turtle-1bc7fa8b", code);
             });
         </script>
         </section>
 <section id="example-5-recursive-tree">
 <h2>Example 5: Recursive Tree<a class="headerlink" href="#example-5-recursive-tree" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-77379e4a"></div>
+        <div id="container-kode-turtle-33a1c288"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -529,14 +522,14 @@ t.speed(0)
 t.color('green')
 
 draw_tree(75, t)`;
-                makeTurtleCode("container-kode-turtle-77379e4a", code);
+                makeTurtleCode("container-kode-turtle-33a1c288", code);
             });
         </script>
         </section>
 <section id="example-6-hexagonal-pattern">
 <h2>Example 6: Hexagonal Pattern<a class="headerlink" href="#example-6-hexagonal-pattern" title="Link to this heading">#</a></h2>
 
-        <div id="container-kode-turtle-51ccfe32"></div>
+        <div id="container-kode-turtle-54548501"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -553,7 +546,7 @@ for i in range(36):
         t.forward(100)
         t.right(60)
     t.right(10)`;
-                makeTurtleCode("container-kode-turtle-51ccfe32", code);
+                makeTurtleCode("container-kode-turtle-54548501", code);
             });
         </script>
         </section>
@@ -593,7 +586,7 @@ t.goto(-50, 0)`;
 <section id="multiple-turtles">
 <h3>Multiple Turtles<a class="headerlink" href="#multiple-turtles" title="Link to this heading">#</a></h3>
 
-        <div id="container-kode-turtle-9bd906e7"></div>
+        <div id="container-kode-turtle-720bc372"></div>
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 const code = `import turtle
@@ -616,7 +609,7 @@ t2.pendown()
 # Draw circles
 t1.circle(50)
 t2.circle(50)`;
-                makeTurtleCode("container-kode-turtle-9bd906e7", code);
+                makeTurtleCode("container-kode-turtle-720bc372", code);
             });
         </script>
         </section>

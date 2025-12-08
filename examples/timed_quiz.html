@@ -108,6 +108,7 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/timed_quiz.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Turtle Graphics Examples" href="turtle.html" />
@@ -150,8 +151,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search this book..."
-         aria-label="Search this book..."
+         placeholder="Search..."
+         aria-label="Search..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -215,14 +216,6 @@
  </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        
-        <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1">
-                <a class="reference internal" href="../index.html">
-                    munchboka-edutools demo
-                </a>
-            </li>
-        </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
@@ -445,7 +438,7 @@ document.write(`
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 
         <!-- Container for the timed quiz -->
-        <div id="quiz-container-56bb7981049c4e24b2306e57eebce7f5" class="quiz-main-container"></div>
+        <div id="quiz-container-5abc3d3a46af47c0a2a0c574be9319c3" class="quiz-main-container"></div>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -453,7 +446,7 @@ document.write(`
                 const questionsData = [{"content": "What is 2 + 2?", "answers": [{"content": "4", "isCorrect": true}, {"content": "3", "isCorrect": false}, {"content": "5", "isCorrect": false}, {"content": "6", "isCorrect": false}]}, {"content": "What is 3 × 7?", "answers": [{"content": "21", "isCorrect": true}, {"content": "18", "isCorrect": false}, {"content": "24", "isCorrect": false}, {"content": "28", "isCorrect": false}]}, {"content": "What is 10 - 4?", "answers": [{"content": "6", "isCorrect": true}, {"content": "4", "isCorrect": false}, {"content": "8", "isCorrect": false}, {"content": "5", "isCorrect": false}]}];
 
                 // Initialize the timed multiple-choice quiz
-                const quiz = new TimedMultipleChoiceQuiz('quiz-container-56bb7981049c4e24b2306e57eebce7f5', questionsData);
+                const quiz = new TimedMultipleChoiceQuiz('quiz-container-5abc3d3a46af47c0a2a0c574be9319c3', questionsData);
             });
         </script>
         </section>
@@ -481,7 +474,7 @@ document.write(`
 <p>Questions and answers can include LaTeX math:</p>
 
         <!-- Container for the timed quiz -->
-        <div id="quiz-container-75321d3f8e6f455a9f056022013b262d" class="quiz-main-container"></div>
+        <div id="quiz-container-5e3c3c4b46b242a68c7c1a22347a83fc" class="quiz-main-container"></div>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -489,7 +482,7 @@ document.write(`
                 const questionsData = [{"content": "Solve: $x^2 = 16$", "answers": [{"content": "$x = \\pm 4$", "isCorrect": true}, {"content": "$x = 4$", "isCorrect": false}, {"content": "$x = 8$", "isCorrect": false}, {"content": "$x = 16$", "isCorrect": false}]}, {"content": "What is $\\frac{1}{2} + \\frac{1}{3}$?", "answers": [{"content": "$\\frac{5}{6}$", "isCorrect": true}, {"content": "$\\frac{2}{5}$", "isCorrect": false}, {"content": "$\\frac{3}{5}$", "isCorrect": false}, {"content": "$\\frac{1}{6}$", "isCorrect": false}]}];
 
                 // Initialize the timed multiple-choice quiz
-                const quiz = new TimedMultipleChoiceQuiz('quiz-container-75321d3f8e6f455a9f056022013b262d', questionsData);
+                const quiz = new TimedMultipleChoiceQuiz('quiz-container-5e3c3c4b46b242a68c7c1a22347a83fc', questionsData);
             });
         </script>
         </section>

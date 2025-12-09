@@ -108,12 +108,74 @@ class GGBPopUpDirective(SphinxDirective):
 (function() {{
   $(function() {{
     let ggbReady = false;
+    const storageKey = 'ggb-geogebra-state-{cid}';
 
     function applySize() {{
       if (!ggbReady) return;
       const w = $("#{cid}").width(),
             h = $("#{cid}").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
+    }}
+
+    function saveState() {{
+      if (!ggbReady || !window.ggbApplet) return;
+      try {{
+        const state = window.ggbApplet.getBase64();
+        localStorage.setItem(storageKey, state);
+        // Update timestamp for this state
+        localStorage.setItem(storageKey + '-timestamp', Date.now().toString());
+      }} catch (e) {{
+        // If quota exceeded, try cleaning up old states and retry
+        if (e.name === 'QuotaExceededError') {{
+          cleanupOldStates();
+          try {{
+            const state = window.ggbApplet.getBase64();
+            localStorage.setItem(storageKey, state);
+            localStorage.setItem(storageKey + '-timestamp', Date.now().toString());
+          }} catch (retryError) {{
+            // Still failed after cleanup - silently give up
+          }}
+        }}
+      }}
+    }}
+
+    function cleanupOldStates() {{
+      try {{
+        // Find all GeoGebra states with timestamps (both CAS and regular)
+        const ggbStates = [];
+        for (let i = 0; i < localStorage.length; i++) {{
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('ggb-geogebra-state-') || key.startsWith('ggb-cas-state-')) && key.endsWith('-timestamp')) {{
+            const stateKey = key.replace('-timestamp', '');
+            const timestamp = parseInt(localStorage.getItem(key) || '0', 10);
+            ggbStates.push({{ key: stateKey, timestamp: timestamp }});
+          }}
+        }}
+        
+        // Sort by timestamp (oldest first)
+        ggbStates.sort((a, b) => a.timestamp - b.timestamp);
+        
+        // Delete oldest 25% of states (minimum 1, maximum 10)
+        const numToDelete = Math.max(1, Math.min(10, Math.floor(ggbStates.length * 0.25)));
+        for (let i = 0; i < numToDelete && i < ggbStates.length; i++) {{
+          localStorage.removeItem(ggbStates[i].key);
+          localStorage.removeItem(ggbStates[i].key + '-timestamp');
+        }}
+      }} catch (e) {{
+        // Cleanup failed - silently continue
+      }}
+    }}
+
+    function restoreState() {{
+      if (!ggbReady || !window.ggbApplet) return;
+      try {{
+        const savedState = localStorage.getItem(storageKey);
+        if (savedState) {{
+          window.ggbApplet.setBase64(savedState);
+        }}
+      }} catch (e) {{
+        // Silently fail if restore fails
+      }}
     }}
 
     $("#{dialog_id}").dialog({{
@@ -131,11 +193,28 @@ class GGBPopUpDirective(SphinxDirective):
             showToolBar: true, showAlgebraInput: true,
             borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
             showMenuBar: {menubar},
-            appletOnLoad: () => {{ ggbReady = true; applySize(); }}
+            appletOnLoad: () => {{ 
+              ggbReady = true; 
+              applySize();
+              // Restore state after a short delay to ensure GeoGebra is fully initialized
+              setTimeout(restoreState, 100);
+            }}
           }}, true).inject("{cid}");
         }} else {{
           applySize();
         }}
+      }},
+      close: function() {{
+        // Save state when dialog is closed
+        saveState();
+      }}
+    }});
+
+    // Save state when page is unloaded (refresh, navigate away, close tab)
+    const $dlg = $("#{dialog_id}");
+    $(window).on('beforeunload', function() {{
+      if ($dlg.dialog('isOpen')) {{
+        saveState();
       }}
     }});
 

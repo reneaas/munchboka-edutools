@@ -220,21 +220,10 @@ class CASPopUpDirective(SphinxDirective):
       }}
     }});
 
-    // Auto-save state periodically (every 5 seconds) when dialog is open
-    let autoSaveInterval = null;
-    $dlg.on('dialogopen', function() {{
-      if (autoSaveInterval) clearInterval(autoSaveInterval);
-      autoSaveInterval = setInterval(() => {{
-        if ($dlg.dialog('isOpen')) {{
-          saveState();
-        }}
-      }}, 5000);
-    }});
-
-    $dlg.on('dialogclose', function() {{
-      if (autoSaveInterval) {{
-        clearInterval(autoSaveInterval);
-        autoSaveInterval = null;
+    // Save state when page is unloaded (refresh, navigate away, close tab)
+    $(window).on('beforeunload', function() {{
+      if ($dlg.dialog('isOpen')) {{
+        saveState();
       }}
     }});
 

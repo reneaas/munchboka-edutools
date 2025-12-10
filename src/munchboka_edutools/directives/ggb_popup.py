@@ -101,7 +101,37 @@ class GGBPopUpDirective(SphinxDirective):
 .ui-resizable-handle {{ min-width:16px;min-height:16px; }}
 .ui-dialog-content{{padding:0!important;}}
 .ggb-window       {{width:100%!important;height:100%!important;box-sizing:border-box;}}
-.ggb-cas-button   {{margin-top: 1em; margin-bottom: 1em;}}
+.ggb-popup-button {{margin-top: 1em; margin-bottom: 1em;}}
+.ggb-reset-btn {{
+  position: absolute;
+  right: 2.5em;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2em;
+  height: 2em;
+  padding: 0.25em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  opacity: 0.7;
+}}
+.ggb-reset-btn:hover {{
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}}
+[data-theme="dark"] .ggb-reset-btn:hover,
+html[data-theme="dark"] .ggb-reset-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.1);
+}}
+.ggb-reset-btn svg {{
+  color: inherit;
+}}
 </style>
 
 <script>
@@ -210,8 +240,42 @@ class GGBPopUpDirective(SphinxDirective):
       }}
     }});
 
-    // Save state when page is unloaded (refresh, navigate away, close tab)
+    // Add refresh button to title bar
     const $dlg = $("#{dialog_id}");
+    const titleBar = $dlg.parent().find('.ui-dialog-titlebar');
+    const refreshBtn = $('<button type="button" class="ggb-reset-btn" title="Start på nytt (slett lagret innhold)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.65 2.35C12.2 0.9 10.21 0 8 0 3.58 0 0.01 3.58 0.01 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/></svg></button>');
+    refreshBtn.on('click', function() {{
+      if (confirm('Er du sikker på at du vil slette lagret innhold og starte på nytt?')) {{
+        try {{
+          localStorage.removeItem(storageKey);
+          localStorage.removeItem(storageKey + '-timestamp');
+          if (ggbReady && window.ggbApplet) {{
+            // Clear the container
+            $("#{cid}").empty();
+            // Reset the flag
+            ggbReady = false;
+            // Recreate the applet from scratch
+            new GGBApplet({{
+              appName: "classic", id: "{cid}",
+              width: {width}, height: {height},
+              perspective: "{perspective}", language: "nb",
+              showToolBar: true, showAlgebraInput: true,
+              borderRadius: 8, enableRightClick: true, showKeyboardOnFocus: false,
+              showMenuBar: {menubar},
+              appletOnLoad: () => {{ 
+                ggbReady = true; 
+                applySize();
+              }}
+            }}, true).inject("{cid}");
+          }}
+        }} catch (e) {{
+          console.error('Failed to reset:', e);
+        }}
+      }}
+    }});
+    titleBar.append(refreshBtn);
+
+    // Save state when page is unloaded (refresh, navigate away, close tab)
     $(window).on('beforeunload', function() {{
       if ($dlg.dialog('isOpen')) {{
         saveState();

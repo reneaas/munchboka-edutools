@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Rene Aas" }
+  { name = "René Ask" }
 ]
 keywords = ["sphinx", "jupyter-book", "directives", "education", "munchboka"]
 classifiers = [
@@ -29,7 +29,7 @@ dependencies = [
   "plotmath",
 ]
 
-version = "0.1.27"
+version = "0.1.28"
 
 
 [project.urls]

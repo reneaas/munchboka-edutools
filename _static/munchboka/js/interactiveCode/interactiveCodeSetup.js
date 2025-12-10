@@ -79,6 +79,99 @@ class InteractiveCodeSetup {
         document.getElementById(this.runButtonId).addEventListener("click", () => this.runCode());
         document.getElementById(this.resetButtonId).addEventListener("click", () => this.resetCode());
         document.getElementById(this.cancelButtonId).addEventListener("click", () => this.cancelCodeExecution());
+
+        // Set up localStorage persistence
+        this.setupLocalStoragePersistence();
+    }
+
+    setupLocalStoragePersistence() {
+        const storageKey = `interactive-code-${this.containerId}`;
+        
+        // Restore saved code if available
+        const restoreState = () => {
+            if (this.editorInstance && this.editorInstance.editor) {
+                try {
+                    const savedCode = localStorage.getItem(storageKey);
+                    if (savedCode && savedCode !== this.initialCode) {
+                        this.editorInstance.editor.setValue(savedCode);
+                    }
+                    // Update timestamp
+                    localStorage.setItem(storageKey + '-timestamp', Date.now().toString());
+                } catch (e) {
+                    // Silently fail if restore fails
+                }
+            } else {
+                // Retry if editor not ready
+                setTimeout(restoreState, 100);
+            }
+        };
+        
+        // Start restoration
+        setTimeout(restoreState, 100);
+
+        // Save code when page unloads
+        window.addEventListener('beforeunload', () => {
+            this.saveState(storageKey);
+        });
+
+        // Also save when editor content changes (debounced)
+        let saveTimeout = null;
+        if (this.editorInstance && this.editorInstance.editor) {
+            this.editorInstance.editor.on('change', () => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    this.saveState(storageKey);
+                }, 1000); // Save 1 second after user stops typing
+            });
+        }
+    }
+
+    saveState(storageKey) {
+        if (!this.editorInstance || !this.editorInstance.editor) return;
+        try {
+            const code = this.editorInstance.getValue();
+            localStorage.setItem(storageKey, code);
+            localStorage.setItem(storageKey + '-timestamp', Date.now().toString());
+        } catch (e) {
+            // If quota exceeded, try cleanup and retry
+            if (e.name === 'QuotaExceededError') {
+                this.cleanupOldStates();
+                try {
+                    const code = this.editorInstance.getValue();
+                    localStorage.setItem(storageKey, code);
+                    localStorage.setItem(storageKey + '-timestamp', Date.now().toString());
+                } catch (retryError) {
+                    // Still failed - silently give up
+                }
+            }
+        }
+    }
+
+    cleanupOldStates() {
+        try {
+            // Find all interactive code states with timestamps
+            const codeStates = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('interactive-code-') && key.endsWith('-timestamp')) {
+                    const stateKey = key.replace('-timestamp', '');
+                    const timestamp = parseInt(localStorage.getItem(key) || '0', 10);
+                    codeStates.push({ key: stateKey, timestamp: timestamp });
+                }
+            }
+            
+            // Sort by timestamp (oldest first)
+            codeStates.sort((a, b) => a.timestamp - b.timestamp);
+            
+            // Delete oldest 25% of states (minimum 1, maximum 10)
+            const numToDelete = Math.max(1, Math.min(10, Math.floor(codeStates.length * 0.25)));
+            for (let i = 0; i < numToDelete && i < codeStates.length; i++) {
+                localStorage.removeItem(codeStates[i].key);
+                localStorage.removeItem(codeStates[i].key + '-timestamp');
+            }
+        } catch (e) {
+            // Cleanup failed - silently continue
+        }
     }
 
     

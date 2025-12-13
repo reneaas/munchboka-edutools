@@ -120,7 +120,9 @@ General line and segments
 
 Polygons
 --------
-``polygon: (x1, y1), (x2, y2), ...[, show_vertices]`` — edges.
+``polygon: (x1, y1), (x2, y2), ...[, show_vertices][, color][, alpha]`` — edges with optional fill.
+If color is provided, the polygon interior is filled with the specified color and alpha (default 0.1).
+If no color is provided, only edges are drawn (alpha=0).
 ``fill-polygon: (..)[, color][, alpha]`` — filled interior; first non‑numeric
 extra = color, first numeric extra = alpha (default 0.1).
 Coordinates accept expressions and function label calls.
@@ -1370,9 +1372,9 @@ class PlotDirective(SphinxDirective):
             if x_val is not None:
                 vline_vals.append((x_val, y0_val, y1_val, style, color))
 
-        # polygons: (x,y), (x,y), ... [ , show_vertices]
+        # polygons: (x,y), (x,y), ... [ , show_vertices] [ , color] [ , alpha]
         # Extended: each coordinate may be an expression with user function calls.
-        poly_vals: List[Tuple[List[Tuple[float, float]], bool]] = []
+        poly_vals: List[Tuple[List[Tuple[float, float]], bool, Optional[str], Optional[float]]] = []
 
         # We avoid a complex fragile regex here and instead perform a small
         # balanced-parentheses scan so expressions like (2*sqrt(5), f(3+pi/4)) work.
@@ -1417,10 +1419,49 @@ class PlotDirective(SphinxDirective):
         for p in lists.get("polygon", []):
             s = str(p).strip()
             show_vertices = False
+            poly_color: Optional[str] = None
+            poly_alpha: Optional[float] = None
+
+            # Extract show_vertices flag
             if re.search(r"(^|,)\s*show_vertices\s*(?=,|$)", s, flags=re.IGNORECASE):
                 show_vertices = True
                 s = re.sub(r"(^|,)\s*show_vertices\s*(?=,|$)", ",", s, flags=re.IGNORECASE)
                 s = re.sub(r",{2,}", ",", s).strip().strip(",")
+
+            # Extract alpha if present
+            alpha_match = re.search(r"(^|,)\s*([0-9]*\.?[0-9]+)\s*(?=,|$)", s)
+            if alpha_match:
+                try:
+                    potential_alpha = float(alpha_match.group(2))
+                    if 0 <= potential_alpha <= 1:
+                        poly_alpha = potential_alpha
+                        s = s[: alpha_match.start()] + s[alpha_match.end() :]
+                        s = re.sub(r",{2,}", ",", s).strip().strip(",")
+                except Exception:
+                    pass
+
+            # Extract color (any remaining non-coordinate token)
+            # First extract all coordinates
+            temp_s = s
+            for x_expr, y_expr in _extract_coord_pairs(temp_s):
+                # Remove coordinate pairs from string to find leftover tokens
+                temp_s = re.sub(
+                    r"\(\s*" + re.escape(x_expr) + r"\s*,\s*" + re.escape(y_expr) + r"\s*\)",
+                    "",
+                    temp_s,
+                    count=1,
+                )
+
+            # Look for color token in remaining string
+            remaining = re.sub(r"[(),\s]+", " ", temp_s).strip()
+            tokens = [t.strip() for t in remaining.split() if t.strip()]
+            if tokens:
+                # First non-numeric token is likely the color
+                for token in tokens:
+                    if not re.match(r"^[0-9]*\.?[0-9]+$", token):
+                        poly_color = token
+                        break
+
             pts: List[Tuple[float, float]] = []
             for x_expr, y_expr in _extract_coord_pairs(s):
                 try:
@@ -1431,7 +1472,7 @@ class PlotDirective(SphinxDirective):
                     # Ignore malformed or unevaluable pair
                     pass
             if pts:
-                poly_vals.append((pts, show_vertices))
+                poly_vals.append((pts, show_vertices, poly_color, poly_alpha))
 
         # Re-introduce a plain numeric tuple matcher for other primitives still expecting numeric-only coordinates.
         tup_pat = re.compile(r"\(\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*\)")
@@ -2260,8 +2301,9 @@ class PlotDirective(SphinxDirective):
             ),
             ";".join(
                 [
-                    f"{int(show)}:" + "|".join([f"{x},{y}" for (x, y) in pts])
-                    for (pts, show) in poly_vals
+                    f"{int(show)}:{poly_color or ''}:{poly_alpha or ''}:"
+                    + "|".join([f"{x},{y}" for (x, y) in pts])
+                    for (pts, show, poly_color, poly_alpha) in poly_vals
                 ]
             ),
             ";".join(
@@ -2935,8 +2977,20 @@ class PlotDirective(SphinxDirective):
                         )
 
                 # polygons
-                for pts, show in poly_vals:
+                for pts, show, poly_color, poly_alpha in poly_vals:
                     kwargs = {"show_vertices": True} if show else {}
+
+                    # If color is provided, use it with the specified alpha (or default 0.1)
+                    # If no color is provided, set alpha=0 so the interior is not filled
+                    if poly_color:
+                        # Resolve color through plotmath.COLORS, then fallback to original
+                        _mapped_poly = plotmath.COLORS.get(poly_color)
+                        resolved_color = _mapped_poly if _mapped_poly else poly_color
+                        kwargs["color"] = resolved_color
+                        kwargs["alpha"] = poly_alpha if poly_alpha is not None else 0.3
+                    else:
+                        kwargs["alpha"] = 0
+
                     try:
                         plotmath.polygon(*pts, **kwargs)
                     except Exception:

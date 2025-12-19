@@ -532,3 +532,17 @@ point: (2 - sqrt(3), f(2 - sqrt(3)))
 tangent: 2 + sqrt(3), f
 nocache:
 :::
+
+
+
+---
+
+
+
+:::{plot}
+width: 70%
+function: x**3 * exp(-x), [-1, 3], blue
+function: -x**3 * exp(-x), (-1, 3], red
+endpoint_markers: true
+nocache:
+:::

@@ -69,6 +69,7 @@ usetex         ``true|false`` force LaTeX text rendering via matplotlib (default
 fontsize       Base font size (default 20).
 lw             Default line width for plotted curves (default 2.5).
 alpha          Global alpha for function / curve lines (optional).
+endpoint_markers  ``true|false`` draw markers at function domain endpoints (default ``false``).
 xmin,xmax,ymin,ymax   Axis bounds (defaults ±6).
 xstep,ystep    Tick spacing (default 1).
 ticks          ``true|false`` master toggle for ticks/labels.
@@ -91,9 +92,20 @@ Forms:
 1. ``function: expr`` — variable is ``x``.
 2. ``function: expr, label``
 3. ``function: expr (a,b)`` — domain restriction (open interval).
-4. ``function: expr (a,b) \ {x1, x2}`` — exclusions inside domain.
-5. List / tuple literal mixing expression, label, domain, exclusion set in
+4. ``function: expr [a,b]`` — domain with closed (included) endpoints.
+5. ``function: expr (a,b]`` or ``[a,b)`` — mixed open/closed endpoints.
+6. ``function: expr ⟨a,b⟩`` — domain with angle bracket notation for open endpoints.
+7. ``function: expr (a,b) \ {x1, x2}`` — exclusions inside domain.
+8. List / tuple literal mixing expression, label, domain, exclusion set in
    any order: ``function: [expr, "f(x)", (a,b), {x1, x2}]``.
+
+Endpoint markers:
+* Use ``endpoint_markers: true`` to enable visual markers at function endpoints.
+* ``[`` / ``]`` denote closed (included) endpoints with bracket markers.
+* ``(`` / ``)`` denote open (excluded) endpoints (default, no marker unless enabled).
+* ``⟨`` / ``⟩`` denote open endpoints with angle bracket markers.
+* Markers are drawn orthogonally to the curve and scaled consistently across figure sizes.
+* Default is ``endpoint_markers: false`` (no markers drawn).
 
 Notes:
 * Discontinuities and exclusions are split to avoid vertical strokes.
@@ -417,6 +429,7 @@ class PlotDirective(SphinxDirective):
         "lw": directives.unchanged,
         "alpha": directives.unchanged,
         "figsize": directives.unchanged,
+        "endpoint_markers": directives.unchanged,
         # axis labels
         "xlabel": directives.unchanged,
         "ylabel": directives.unchanged,
@@ -538,6 +551,7 @@ class PlotDirective(SphinxDirective):
 
         ticks_flag = _parse_bool(merged.get("ticks"), default=None)
         grid_flag = _parse_bool(merged.get("grid"), default=None)
+        endpoint_markers_flag = _parse_bool(merged.get("endpoint_markers"), default=False)
 
         # Set defaults: if neither is specified, both default to True
         if ticks_flag is None and grid_flag is None:
@@ -563,6 +577,9 @@ class PlotDirective(SphinxDirective):
         fn_domains_list: List[Tuple[float, float] | None] = []
         fn_exclusions_list: List[List[float]] = []
         fn_colors_list: List[str] = []
+        fn_endpoints_list: List[Tuple[str, str]] = (
+            []
+        )  # (left_type, right_type): "open", "closed", or "none"
         functions: List[Callable] = []
 
         def _parse_function_item(
@@ -573,6 +590,7 @@ class PlotDirective(SphinxDirective):
             Tuple[float, float] | None,
             List[float],
             str | None,
+            Tuple[str, str],  # (left_endpoint_type, right_endpoint_type)
         ]:
             s = str(s).strip()
 
@@ -647,8 +665,8 @@ class PlotDirective(SphinxDirective):
                         elif label is None:
                             lab = tok
                             label = lab if lab else None
-                return expr, label, domain, excludes, color
-            # Fallback: attempt to locate a (domain) pattern (expr_a, expr_b) with fully balanced parentheses
+                return expr, label, domain, excludes, color, ("none", "none")
+            # Fallback: attempt to locate a domain pattern with balanced brackets
             # and optional exclusions of the form \{a,b,c}. Supports nested parentheses in each endpoint
             # (e.g. (0, 2*sqrt(5)) or (pi/4, 3*pi/2 + sqrt(2))).
             domain: Tuple[float, float] | None = None
@@ -680,22 +698,29 @@ class PlotDirective(SphinxDirective):
                 return float(expr.evalf())
 
             def _extract_domain_and_exclusions(text: str):
-                """Return (domain_tuple|None, exclusions_list, text_without_domain).
-                Heuristic: find the first parenthesis block whose top-level content
+                """Return (domain_tuple|None, exclusions_list, text_without_domain, left_bracket, right_bracket).
+                Heuristic: find the first bracket block whose top-level content
                 splits into exactly two parts by a single top-level comma.
+                Supports: ( ), [ ], ⟨ ⟩ (angle brackets for open)
                 """
                 n = len(text)
                 i = 0
                 while i < n:
-                    if text[i] == "(":
+                    left_bracket = None
+                    right_bracket = None
+                    if text[i] in "([⟨":
+                        left_bracket = text[i]
+                        # Accept any closing bracket to support mixed brackets like [-1, 3) or (-1, 3]
                         depth = 1
                         j = i + 1
                         while j < n and depth > 0:
                             ch = text[j]
-                            if ch == "(":
+                            if ch in "([⟨":
                                 depth += 1
-                            elif ch == ")":
+                            elif ch in ")]⟩":
                                 depth -= 1
+                                if depth == 0:
+                                    right_bracket = ch
                             j += 1
                         if depth != 0:
                             # unbalanced, give up
@@ -756,14 +781,19 @@ class PlotDirective(SphinxDirective):
                                     dom_tuple = None
                                 # Remove the consumed substring from original text
                                 new_text = (text[:i] + text[k2:]).strip()
-                                return dom_tuple, excl_list, new_text
-                        # Move past this parenthesis group and continue scanning
+                                # Determine endpoint types from bracket types
+                                left_type = "closed" if left_bracket == "[" else "open"
+                                right_type = "closed" if right_bracket == "]" else "open"
+                                return dom_tuple, excl_list, new_text, left_type, right_type
+                        # Move past this bracket group and continue scanning
                         i = j
                         continue
                     i += 1
-                return None, [], text
+                return None, [], text, "none", "none"
 
-            domain, excludes, s_wo_dom = _extract_domain_and_exclusions(s)
+            domain, excludes, s_wo_dom, left_endpoint, right_endpoint = (
+                _extract_domain_and_exclusions(s)
+            )
             # Tokenize on commas to robustly drop empty segments created by domain removal
             parts = [p.strip() for p in s_wo_dom.split(",") if p.strip()]
             if parts:
@@ -784,12 +814,12 @@ class PlotDirective(SphinxDirective):
                         color = t
                     elif label is None:
                         label = t
-                return expr, label, domain, excludes, color
+                return expr, label, domain, excludes, color, (left_endpoint, right_endpoint)
             # Only expression provided (or empty after cleanup)
-            return s_wo_dom.strip(), None, domain, excludes, None
+            return s_wo_dom.strip(), None, domain, excludes, None, (left_endpoint, right_endpoint)
 
         for item in raw_fn_items:
-            expr, label, domain, excludes, color = _parse_function_item(item)
+            expr, label, domain, excludes, color, endpoints = _parse_function_item(item)
             try:
                 functions.append(_compile_function(expr))
                 fn_exprs.append(expr)
@@ -797,6 +827,7 @@ class PlotDirective(SphinxDirective):
                 fn_domains_list.append(domain)
                 fn_exclusions_list.append(sorted(excludes))
                 fn_colors_list.append(color or "")
+                fn_endpoints_list.append(endpoints)
             except Exception as ex:
                 return [
                     self.state_machine.reporter.error(
@@ -2442,13 +2473,210 @@ class PlotDirective(SphinxDirective):
                 if functions:
                     import numpy as np
 
+                    # Helper function to draw endpoint markers
+                    def _draw_endpoint_marker(
+                        ax, x_arr, y_arr, idx, marker_type, direction, color_use, lw_use
+                    ):
+                        """Draw endpoint marker orthogonal to curve at endpoint.
+
+                        Parameters:
+                        - ax: matplotlib axes
+                        - x_arr, y_arr: full arrays of x and y data for the curve
+                        - idx: index of the endpoint (0 for left, -1 for right)
+                        - marker_type: "closed" (bracket) or "open" (angle bracket)
+                        - direction: "left" or "right" indicating which endpoint
+                        - color_use: line color
+                        - lw_use: line width
+                        """
+                        if marker_type not in ["closed", "open"]:
+                            return
+
+                        x_pt = x_arr[idx]
+                        y_pt = y_arr[idx]
+
+                        # Calculate tangent vector at endpoint using nearby points
+                        if direction == "left":
+                            # Use forward difference for left endpoint
+                            # Find next few finite points
+                            tangent_idx = None
+                            for i in range(1, min(10, len(x_arr))):
+                                if np.isfinite(y_arr[i]):
+                                    tangent_idx = i
+                                    break
+                            if tangent_idx is None:
+                                return  # No valid points to compute tangent
+                            dx = x_arr[tangent_idx] - x_pt
+                            dy = y_arr[tangent_idx] - y_pt
+                        else:  # right endpoint
+                            # Use backward difference for right endpoint
+                            # Find previous few finite points
+                            tangent_idx = None
+                            for i in range(len(x_arr) - 2, max(-1, len(x_arr) - 11), -1):
+                                if np.isfinite(y_arr[i]):
+                                    tangent_idx = i
+                                    break
+                            if tangent_idx is None:
+                                return  # No valid points to compute tangent
+                            dx = x_pt - x_arr[tangent_idx]
+                            dy = y_pt - y_arr[tangent_idx]
+
+                        # Normalize tangent vector
+                        tangent_length = np.sqrt(dx**2 + dy**2)
+                        if tangent_length < 1e-10:
+                            # Fallback to horizontal tangent
+                            tx, ty = 1.0, 0.0
+                        else:
+                            tx = dx / tangent_length
+                            ty = dy / tangent_length
+
+                        # Compute orthogonal vector (rotate tangent 90° CCW)
+                        ortho_x = -ty
+                        ortho_y = tx
+
+                        # Get axes limits and figure dimensions
+                        xlim = ax.get_xlim()
+                        ylim = ax.get_ylim()
+                        x_range = xlim[1] - xlim[0]
+                        y_range = ylim[1] - ylim[0]
+
+                        # Get pixel dimensions of axes
+                        try:
+                            bbox = ax.get_window_extent()
+                            ax_width_px = bbox.width
+                            ax_height_px = bbox.height
+                        except Exception:
+                            # Fallback if we can't get pixel dimensions
+                            ax_width_px = 600
+                            ax_height_px = 600
+
+                        # Increased marker size in pixels (was 10, now 16 for better visibility)
+                        marker_size_px = 16.0
+
+                        # Convert pixel size to data coordinates for proper scaling
+                        # The orthogonal vector needs to be scaled in a visually consistent way
+                        px_to_data_x = x_range / ax_width_px if ax_width_px > 0 else 0.01
+                        px_to_data_y = y_range / ax_height_px if ax_height_px > 0 else 0.01
+
+                        # Scale the orthogonal vector to have consistent pixel length
+                        # Account for different scales in x and y
+                        ortho_x_scaled = ortho_x * px_to_data_x
+                        ortho_y_scaled = ortho_y * px_to_data_y
+                        norm = np.sqrt(ortho_x_scaled**2 + ortho_y_scaled**2)
+
+                        if norm > 1e-10:
+                            ortho_x_scaled = (ortho_x_scaled / norm) * marker_size_px * px_to_data_x
+                            ortho_y_scaled = (ortho_y_scaled / norm) * marker_size_px * px_to_data_y
+                        else:
+                            # Fallback: vertical marker
+                            ortho_x_scaled = 0
+                            ortho_y_scaled = marker_size_px * px_to_data_y
+
+                        if marker_type == "closed":
+                            # Draw bracket: main line perpendicular to curve with short caps along tangent
+                            # The bracket extends along the orthogonal direction
+                            # Half above, half below the endpoint
+
+                            # Main perpendicular line
+                            x_main = [x_pt - ortho_x_scaled / 2, x_pt + ortho_x_scaled / 2]
+                            y_main = [y_pt - ortho_y_scaled / 2, y_pt + ortho_y_scaled / 2]
+                            ax.plot(
+                                x_main,
+                                y_main,
+                                color=color_use,
+                                lw=lw_use * 0.8,
+                                solid_capstyle="butt",
+                                zorder=10,
+                            )
+
+                            # Cap length along the tangent direction
+                            cap_length_px = 5.0  # pixels
+                            cap_tx = tx * cap_length_px * px_to_data_x
+                            cap_ty = ty * cap_length_px * px_to_data_y
+
+                            # Determine cap direction based on endpoint
+                            if direction == "left":
+                                # Caps point inward (to the right/into the curve)
+                                cap_sign = 1.0
+                            else:
+                                # Caps point inward (to the left/into the curve)
+                                cap_sign = -1.0
+
+                            # Top cap (at +ortho end)
+                            x_top_end = x_pt + ortho_x_scaled / 2
+                            y_top_end = y_pt + ortho_y_scaled / 2
+                            ax.plot(
+                                [x_top_end, x_top_end + cap_sign * cap_tx],
+                                [y_top_end, y_top_end + cap_sign * cap_ty],
+                                color=color_use,
+                                lw=lw_use * 0.8,
+                                solid_capstyle="butt",
+                                zorder=10,
+                            )
+
+                            # Bottom cap (at -ortho end)
+                            x_bot_end = x_pt - ortho_x_scaled / 2
+                            y_bot_end = y_pt - ortho_y_scaled / 2
+                            ax.plot(
+                                [x_bot_end, x_bot_end + cap_sign * cap_tx],
+                                [y_bot_end, y_bot_end + cap_sign * cap_ty],
+                                color=color_use,
+                                lw=lw_use * 0.8,
+                                solid_capstyle="butt",
+                                zorder=10,
+                            )
+
+                        elif marker_type == "open":
+                            # Draw angle bracket: two lines forming < or >
+                            # The tip connects to the curve, arms extend outward
+
+                            # Angle opening along tangent direction
+                            angle_length_px = 6.0  # pixels
+                            angle_tx = tx * angle_length_px * px_to_data_x
+                            angle_ty = ty * angle_length_px * px_to_data_y
+
+                            # Determine angle direction based on endpoint
+                            if direction == "left":
+                                # Angle opens to the right (inward toward curve)
+                                angle_sign = 1.0
+                            else:
+                                # Angle opens to the left (inward toward curve)
+                                angle_sign = -1.0
+
+                            # The tip is at the actual curve point (x_pt, y_pt)
+                            # Arms extend from tip along both orthogonal directions and tangent
+
+                            # Upper arm: from the curve point to upper outer position
+                            x_upper_outer = x_pt + angle_sign * angle_tx + ortho_x_scaled / 2
+                            y_upper_outer = y_pt + angle_sign * angle_ty + ortho_y_scaled / 2
+                            ax.plot(
+                                [x_pt, x_upper_outer],
+                                [y_pt, y_upper_outer],
+                                color=color_use,
+                                lw=lw_use * 0.8,
+                                solid_capstyle="butt",
+                                zorder=10,
+                            )
+
+                            # Lower arm: from the curve point to lower outer position
+                            x_lower_outer = x_pt + angle_sign * angle_tx - ortho_x_scaled / 2
+                            y_lower_outer = y_pt + angle_sign * angle_ty - ortho_y_scaled / 2
+                            ax.plot(
+                                [x_pt, x_lower_outer],
+                                [y_pt, y_lower_outer],
+                                color=color_use,
+                                lw=lw_use * 0.8,
+                                solid_capstyle="butt",
+                                zorder=10,
+                            )
+
                     any_label = False
-                    for f, lbl, dom, exs, col_fun in zip(
+                    for f, lbl, dom, exs, col_fun, endpoints in zip(
                         functions,
                         fn_labels_list,
                         fn_domains_list,
                         fn_exclusions_list,
                         fn_colors_list,
+                        fn_endpoints_list,
                     ):
                         x0, x1 = dom if dom is not None else (xmin, xmax)
                         N = int(2**12)
@@ -2533,6 +2761,24 @@ class PlotDirective(SphinxDirective):
                                 alpha=alpha,
                                 **({"color": _col_use} if _col_use else {}),
                             )
+
+                        # Draw endpoint markers if enabled and endpoints are specified
+                        if endpoint_markers_flag and endpoints:
+                            left_type, right_type = endpoints
+                            # Get the actual color used for the function
+                            color_for_marker = _col_use if _col_use else "black"
+
+                            # Draw left endpoint marker (pass full arrays and index)
+                            if left_type in ["closed", "open"] and np.isfinite(y[0]):
+                                _draw_endpoint_marker(
+                                    ax, x, y, 0, left_type, "left", color_for_marker, lw
+                                )
+
+                            # Draw right endpoint marker (pass full arrays and index)
+                            if right_type in ["closed", "open"] and np.isfinite(y[-1]):
+                                _draw_endpoint_marker(
+                                    ax, x, y, -1, right_type, "right", color_for_marker, lw
+                                )
                     if any_label:
                         ax.legend(fontsize=int(fontsize))
 

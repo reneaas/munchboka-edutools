@@ -2550,7 +2550,7 @@ class PlotDirective(SphinxDirective):
                             ax_height_px = 600
 
                         # Increased marker size in pixels (was 10, now 16 for better visibility)
-                        marker_size_px = 16.0
+                        marker_size_px = 25.0
 
                         # Convert pixel size to data coordinates for proper scaling
                         # The orthogonal vector needs to be scaled in a visually consistent way
@@ -2589,7 +2589,7 @@ class PlotDirective(SphinxDirective):
                             )
 
                             # Cap length along the tangent direction
-                            cap_length_px = 5.0  # pixels
+                            cap_length_px = 8.0  # pixels
                             cap_tx = tx * cap_length_px * px_to_data_x
                             cap_ty = ty * cap_length_px * px_to_data_y
 
@@ -2630,7 +2630,7 @@ class PlotDirective(SphinxDirective):
                             # The tip connects to the curve, arms extend outward
 
                             # Angle opening along tangent direction
-                            angle_length_px = 6.0  # pixels
+                            angle_length_px = 8.0  # pixels
                             angle_tx = tx * angle_length_px * px_to_data_x
                             angle_ty = ty * angle_length_px * px_to_data_y
 

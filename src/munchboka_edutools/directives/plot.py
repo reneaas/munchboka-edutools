@@ -69,7 +69,8 @@ usetex         ``true|false`` force LaTeX text rendering via matplotlib (default
 fontsize       Base font size (default 20).
 lw             Default line width for plotted curves (default 2.5).
 alpha          Global alpha for function / curve lines (optional).
-endpoint_markers  ``true|false`` draw markers at function domain endpoints (default ``false``).
+endpoint_markers  ``true|false`` draw markers at function domain endpoints (default ``false``). (legacy, use function-endpoints)
+function-endpoints  ``true|false`` draw markers at function domain endpoints (default ``false``).
 xmin,xmax,ymin,ymax   Axis bounds (defaults ±6).
 xstep,ystep    Tick spacing (default 1).
 ticks          ``true|false`` master toggle for ticks/labels.
@@ -100,12 +101,14 @@ Forms:
    any order: ``function: [expr, "f(x)", (a,b), {x1, x2}]``.
 
 Endpoint markers:
-* Use ``endpoint_markers: true`` to enable visual markers at function endpoints.
+* Use ``function-endpoints: true`` to enable visual markers at function endpoints.
 * ``[`` / ``]`` denote closed (included) endpoints with bracket markers.
 * ``(`` / ``)`` denote open (excluded) endpoints (default, no marker unless enabled).
 * ``⟨`` / ``⟩`` denote open endpoints with angle bracket markers.
 * Markers are drawn orthogonally to the curve and scaled consistently across figure sizes.
-* Default is ``endpoint_markers: false`` (no markers drawn).
+* Marker size automatically adjusts based on axis ranges for consistent appearance.
+* Default is ``function-endpoints: false`` (no markers drawn).
+* Legacy keyword: ``endpoint_markers`` (still supported for backward compatibility).
 
 Notes:
 * Discontinuities and exclusions are split to avoid vertical strokes.
@@ -429,7 +432,8 @@ class PlotDirective(SphinxDirective):
         "lw": directives.unchanged,
         "alpha": directives.unchanged,
         "figsize": directives.unchanged,
-        "endpoint_markers": directives.unchanged,
+        "endpoint_markers": directives.unchanged,  # legacy, use function-endpoints
+        "function-endpoints": directives.unchanged,
         # axis labels
         "xlabel": directives.unchanged,
         "ylabel": directives.unchanged,
@@ -551,7 +555,10 @@ class PlotDirective(SphinxDirective):
 
         ticks_flag = _parse_bool(merged.get("ticks"), default=None)
         grid_flag = _parse_bool(merged.get("grid"), default=None)
-        endpoint_markers_flag = _parse_bool(merged.get("endpoint_markers"), default=False)
+        # Check function-endpoints first, fall back to endpoint_markers for legacy support
+        endpoint_markers_flag = _parse_bool(
+            merged.get("function-endpoints") or merged.get("endpoint_markers"), default=False
+        )
 
         # Set defaults: if neither is specified, both default to True
         if ticks_flag is None and grid_flag is None:
@@ -2549,8 +2556,20 @@ class PlotDirective(SphinxDirective):
                             ax_width_px = 600
                             ax_height_px = 600
 
-                        # Increased marker size in pixels (was 10, now 16 for better visibility)
+                        # Base marker size in pixels
                         marker_size_px = 25.0
+
+                        # Compute a scaling factor based on axis range to ensure consistent visual size
+                        # Normalize by a reference range to make markers scale appropriately
+                        reference_range = 10.0  # reasonable default axis span
+                        range_scale = np.sqrt(
+                            (x_range / reference_range) * (y_range / reference_range)
+                        )
+                        # Clamp the range scaling to avoid extreme sizes
+                        range_scale = np.clip(range_scale, 0.5, 2.0)
+
+                        # Apply range scaling to marker size
+                        adjusted_marker_size_px = marker_size_px * range_scale
 
                         # Convert pixel size to data coordinates for proper scaling
                         # The orthogonal vector needs to be scaled in a visually consistent way
@@ -2564,12 +2583,16 @@ class PlotDirective(SphinxDirective):
                         norm = np.sqrt(ortho_x_scaled**2 + ortho_y_scaled**2)
 
                         if norm > 1e-10:
-                            ortho_x_scaled = (ortho_x_scaled / norm) * marker_size_px * px_to_data_x
-                            ortho_y_scaled = (ortho_y_scaled / norm) * marker_size_px * px_to_data_y
+                            ortho_x_scaled = (
+                                (ortho_x_scaled / norm) * adjusted_marker_size_px * px_to_data_x
+                            )
+                            ortho_y_scaled = (
+                                (ortho_y_scaled / norm) * adjusted_marker_size_px * px_to_data_y
+                            )
                         else:
                             # Fallback: vertical marker
                             ortho_x_scaled = 0
-                            ortho_y_scaled = marker_size_px * px_to_data_y
+                            ortho_y_scaled = adjusted_marker_size_px * px_to_data_y
 
                         if marker_type == "closed":
                             # Draw bracket: main line perpendicular to curve with short caps along tangent
@@ -2589,7 +2612,7 @@ class PlotDirective(SphinxDirective):
                             )
 
                             # Cap length along the tangent direction
-                            cap_length_px = 8.0  # pixels
+                            cap_length_px = 8.0 * range_scale  # pixels, scaled by axis range
                             cap_tx = tx * cap_length_px * px_to_data_x
                             cap_ty = ty * cap_length_px * px_to_data_y
 
@@ -2630,7 +2653,7 @@ class PlotDirective(SphinxDirective):
                             # The tip connects to the curve, arms extend outward
 
                             # Angle opening along tangent direction
-                            angle_length_px = 8.0  # pixels
+                            angle_length_px = 8.0 * range_scale  # pixels, scaled by axis range
                             angle_tx = tx * angle_length_px * px_to_data_x
                             angle_ty = ty * angle_length_px * px_to_data_y
 

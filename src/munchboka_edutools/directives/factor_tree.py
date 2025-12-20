@@ -535,7 +535,10 @@ class FactorTreeDirective(SphinxDirective):
             caption_lines.pop(0)
         if caption_lines:
             caption = nodes.caption()
-            caption += nodes.Text("\n".join(caption_lines))
+            caption_text = "\n".join(caption_lines)
+            # Parse as inline text to support math while avoiding extra paragraph nodes
+            parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
+            caption.extend(parsed_nodes)
             figure += caption
 
         if explicit_name:

@@ -105,8 +105,8 @@ Endpoint markers:
 * ``[`` / ``]`` denote closed (included) endpoints with bracket markers.
 * ``(`` / ``)`` denote open (excluded) endpoints (default, no marker unless enabled).
 * ``⟨`` / ``⟩`` denote open endpoints with angle bracket markers.
-* Markers are drawn orthogonally to the curve and scaled consistently across figure sizes.
-* Marker size automatically adjusts based on axis ranges for consistent appearance.
+* Markers are drawn orthogonally to the curve with fixed pixel sizes.
+* Marker size is invariant to axis limits for consistent appearance.
 * Default is ``function-endpoints: false`` (no markers drawn).
 * Legacy keyword: ``endpoint_markers`` (still supported for backward compatibility).
 
@@ -1516,47 +1516,50 @@ class PlotDirective(SphinxDirective):
         tup_pat = re.compile(r"\(\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*\)")
 
         # bar: (x, y), length, orientation
-        # Accept both literal list/tuple and CSV-like fallback
+        # Accept both literal list/tuple and CSV-like fallback, with expression evaluation
         bar_vals: List[Tuple[Tuple[float, float], float, str]] = []
         for b in lists.get("bar", []):
             lit = _safe_literal(b)
             if isinstance(lit, (list, tuple)) and len(lit) >= 3:
                 try:
                     xy_raw, length_raw, orient_raw = lit[0], lit[1], lit[2]
-                    xy = (float(xy_raw[0]), float(xy_raw[1]))
-                    length = float(length_raw)
+                    # Use _eval_expr to support expressions in coordinates and length
+                    x_val = _eval_expr(xy_raw[0])
+                    y_val = _eval_expr(xy_raw[1])
+                    length = _eval_expr(length_raw)
                     orientation = str(orient_raw).strip().lower()
                     if orientation in {"h", "hor", "horiz", "horizontal"}:
                         orientation = "horizontal"
                     elif orientation in {"v", "vert", "vertical"}:
                         orientation = "vertical"
-                    bar_vals.append((xy, length, orientation))
+                    bar_vals.append(((x_val, y_val), length, orientation))
                     continue
                 except Exception:
                     pass
-            # Fallback CSV: (x,y), length, orientation
+            # Fallback: parse as string with (x,y), length, orientation
             try:
-                import csv as _csv
-
                 s = str(b).strip()
-                # Attempt to peel off the first tuple
-                m = tup_pat.search(s)
-                if not m:
-                    continue
-                x = float(m.group(1))
-                y = float(m.group(2))
-                # Remove tuple substring, then split the rest by commas
-                a, c = m.span()
-                rest = (s[:a] + s[c:]).strip()
-                parts = [p.strip() for p in rest.split(",") if p.strip()]
-                if len(parts) >= 2:
-                    length = float(parts[0])
-                    orientation = parts[1].strip().lower()
-                    if orientation in {"h", "hor", "horiz", "horizontal"}:
-                        orientation = "horizontal"
-                    elif orientation in {"v", "vert", "vertical"}:
-                        orientation = "vertical"
-                    bar_vals.append(((x, y), length, orientation))
+                # Match coordinate pair allowing expressions: (expr, expr)
+                m_coord = re.match(r"^\(\s*([^,]+?)\s*,\s*([^,]+?)\s*\)\s*,\s*(.+)$", s)
+                if m_coord:
+                    x_expr = m_coord.group(1).strip()
+                    y_expr = m_coord.group(2).strip()
+                    rest = m_coord.group(3).strip()
+
+                    # Evaluate x and y as expressions
+                    x_val = _eval_expr(x_expr)
+                    y_val = _eval_expr(y_expr)
+
+                    # Split rest by comma to get length and orientation
+                    parts = [p.strip() for p in rest.split(",")]
+                    if len(parts) >= 2:
+                        length = _eval_expr(parts[0])
+                        orientation = parts[1].strip().lower()
+                        if orientation in {"h", "hor", "horiz", "horizontal"}:
+                            orientation = "horizontal"
+                        elif orientation in {"v", "vert", "vertical"}:
+                            orientation = "vertical"
+                        bar_vals.append(((x_val, y_val), length, orientation))
             except Exception:
                 pass
 
@@ -2527,20 +2530,7 @@ class PlotDirective(SphinxDirective):
                             dx = x_pt - x_arr[tangent_idx]
                             dy = y_pt - y_arr[tangent_idx]
 
-                        # Normalize tangent vector
-                        tangent_length = np.sqrt(dx**2 + dy**2)
-                        if tangent_length < 1e-10:
-                            # Fallback to horizontal tangent
-                            tx, ty = 1.0, 0.0
-                        else:
-                            tx = dx / tangent_length
-                            ty = dy / tangent_length
-
-                        # Compute orthogonal vector (rotate tangent 90° CCW)
-                        ortho_x = -ty
-                        ortho_y = tx
-
-                        # Get axes limits and figure dimensions
+                        # Get axes limits and figure dimensions first
                         xlim = ax.get_xlim()
                         ylim = ax.get_ylim()
                         x_range = xlim[1] - xlim[0]
@@ -2556,43 +2546,50 @@ class PlotDirective(SphinxDirective):
                             ax_width_px = 600
                             ax_height_px = 600
 
-                        # Base marker size in pixels
+                        # Convert tangent vector from data coordinates to display (pixel) coordinates
+                        # This preserves angles visually on screen
+                        data_to_px_x = ax_width_px / x_range if x_range > 0 else 1.0
+                        data_to_px_y = ax_height_px / y_range if y_range > 0 else 1.0
+
+                        dx_px = dx * data_to_px_x
+                        dy_px = dy * data_to_px_y
+
+                        # Normalize tangent vector in pixel space
+                        tangent_length_px = np.sqrt(dx_px**2 + dy_px**2)
+                        if tangent_length_px < 1e-10:
+                            # Fallback to horizontal tangent in pixel space
+                            tx_px, ty_px = 1.0, 0.0
+                        else:
+                            tx_px = dx_px / tangent_length_px
+                            ty_px = dy_px / tangent_length_px
+
+                        # Compute orthogonal vector in pixel space (rotate tangent 90° CCW)
+                        # This ensures the orthogonal is truly perpendicular visually
+                        ortho_x_px = -ty_px
+                        ortho_y_px = tx_px
+
+                        # Base marker size in pixels (invariant to axis limits)
                         marker_size_px = 25.0
 
-                        # Compute a scaling factor based on axis range to ensure consistent visual size
-                        # Normalize by a reference range to make markers scale appropriately
-                        reference_range = 10.0  # reasonable default axis span
-                        range_scale = np.sqrt(
-                            (x_range / reference_range) * (y_range / reference_range)
-                        )
-                        # Clamp the range scaling to avoid extreme sizes
-                        range_scale = np.clip(range_scale, 0.5, 2.0)
+                        # Scale orthogonal vector to desired pixel length
+                        ortho_x_px_scaled = ortho_x_px * marker_size_px
+                        ortho_y_px_scaled = ortho_y_px * marker_size_px
 
-                        # Apply range scaling to marker size
-                        adjusted_marker_size_px = marker_size_px * range_scale
-
-                        # Convert pixel size to data coordinates for proper scaling
-                        # The orthogonal vector needs to be scaled in a visually consistent way
+                        # Convert back to data coordinates for plotting
                         px_to_data_x = x_range / ax_width_px if ax_width_px > 0 else 0.01
                         px_to_data_y = y_range / ax_height_px if ax_height_px > 0 else 0.01
 
-                        # Scale the orthogonal vector to have consistent pixel length
-                        # Account for different scales in x and y
-                        ortho_x_scaled = ortho_x * px_to_data_x
-                        ortho_y_scaled = ortho_y * px_to_data_y
-                        norm = np.sqrt(ortho_x_scaled**2 + ortho_y_scaled**2)
+                        ortho_x_scaled = ortho_x_px_scaled * px_to_data_x
+                        ortho_y_scaled = ortho_y_px_scaled * px_to_data_y
 
-                        if norm > 1e-10:
-                            ortho_x_scaled = (
-                                (ortho_x_scaled / norm) * adjusted_marker_size_px * px_to_data_x
-                            )
-                            ortho_y_scaled = (
-                                (ortho_y_scaled / norm) * adjusted_marker_size_px * px_to_data_y
-                            )
-                        else:
-                            # Fallback: vertical marker
-                            ortho_x_scaled = 0
-                            ortho_y_scaled = adjusted_marker_size_px * px_to_data_y
+                        # Similarly, convert tangent vector for caps
+                        tx = tx_px * px_to_data_x
+                        ty = ty_px * px_to_data_y
+                        # Normalize in data space for unit tangent
+                        t_norm = np.sqrt(tx**2 + ty**2)
+                        if t_norm > 1e-10:
+                            tx = tx / t_norm
+                            ty = ty / t_norm
 
                         if marker_type == "closed":
                             # Draw bracket: main line perpendicular to curve with short caps along tangent
@@ -2611,10 +2608,13 @@ class PlotDirective(SphinxDirective):
                                 zorder=10,
                             )
 
-                            # Cap length along the tangent direction
-                            cap_length_px = 8.0 * range_scale  # pixels, scaled by axis range
-                            cap_tx = tx * cap_length_px * px_to_data_x
-                            cap_ty = ty * cap_length_px * px_to_data_y
+                            # Cap length along the tangent direction (pixel-invariant)
+                            cap_length_px = 8.0
+                            # Scale tangent in pixel space, then convert to data
+                            cap_tx_px = tx_px * cap_length_px
+                            cap_ty_px = ty_px * cap_length_px
+                            cap_tx = cap_tx_px * px_to_data_x
+                            cap_ty = cap_ty_px * px_to_data_y
 
                             # Determine cap direction based on endpoint
                             if direction == "left":
@@ -2652,10 +2652,13 @@ class PlotDirective(SphinxDirective):
                             # Draw angle bracket: two lines forming < or >
                             # The tip connects to the curve, arms extend outward
 
-                            # Angle opening along tangent direction
-                            angle_length_px = 8.0 * range_scale  # pixels, scaled by axis range
-                            angle_tx = tx * angle_length_px * px_to_data_x
-                            angle_ty = ty * angle_length_px * px_to_data_y
+                            # Angle opening along tangent direction (pixel-invariant)
+                            angle_length_px = 8.0
+                            # Scale tangent in pixel space, then convert to data
+                            angle_tx_px = tx_px * angle_length_px
+                            angle_ty_px = ty_px * angle_length_px
+                            angle_tx = angle_tx_px * px_to_data_x
+                            angle_ty = angle_ty_px * px_to_data_y
 
                             # Determine angle direction based on endpoint
                             if direction == "left":
@@ -2702,7 +2705,7 @@ class PlotDirective(SphinxDirective):
                         fn_endpoints_list,
                     ):
                         x0, x1 = dom if dom is not None else (xmin, xmax)
-                        N = int(2**12)
+                        N = int(2**14)  # 16384 points for smooth curves
                         x = np.linspace(x0, x1, N)
                         y = f(x)
                         # Ensure float array and blank out non-finite values
@@ -3530,7 +3533,10 @@ class PlotDirective(SphinxDirective):
             caption_lines.pop(0)
         if caption_lines:
             caption = nodes.caption()
-            caption += nodes.Text("\n".join(caption_lines))
+            caption_text = "\n".join(caption_lines)
+            # Parse as inline text to support math while avoiding extra paragraph nodes
+            parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
+            caption.extend(parsed_nodes)
             figure += caption
 
         if explicit_name:

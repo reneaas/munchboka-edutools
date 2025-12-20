@@ -304,9 +304,11 @@ class HornerDirective(SphinxDirective):
         figure["align"] = self.options.get("align", "center")
 
         if self.content:
-            caption_text = "\n".join(self.content)
             caption_node = nodes.caption()
-            caption_node += nodes.Text(caption_text)
+            caption_text = "\n".join(self.content)
+            # Parse as inline text to support math while avoiding extra paragraph nodes
+            parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
+            caption_node.extend(parsed_nodes)
             figure += caption_node
 
         if explicit_name:

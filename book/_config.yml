@@ -1,6 +1,8 @@
 # Jupyter Book config for developing and testing munchboka-edutools
 title: munchboka-edutools
-author: Rene Aas
+author: René Ask
+copyright: "2025"
+exclude_patterns: [_build, Thumbs.db, .DS_Store, "**.ipynb_checkpoints", README.md, LICENSE.md, LICENSE_CONTENT.md, HOWTOWRITE.md]
 only_build_toc_files: true
 execute:
   execute_notebooks: "off"

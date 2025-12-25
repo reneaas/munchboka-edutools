@@ -68,7 +68,7 @@ a.no-click {
 }
 
 /* Light mode (default) */
-[data-mode="light"] .adaptive-figure img
+[data-mode="light"] .adaptive-figure img,
 [data-mode="light"] .adaptive-figure svg,
 [data-mode="light"] img.adaptive-figure {
     filter: invert(0%); /* Normal */
@@ -86,17 +86,17 @@ a.no-click {
 
 /* Auto mode with system preference */
 @media (prefers-color-scheme: dark) {
-[data-mode="auto"] .adaptive-figure img ,
-[data-mode="auto"] .adaptive-figure svg,
-[data-mode="auto"] img.adaptive-figure {
-    filter: invert(100%) hue-rotate(180deg) !important;
-    background-color: inherit !important;
+    [data-mode="auto"] .adaptive-figure img,
+    [data-mode="auto"] .adaptive-figure svg,
+    [data-mode="auto"] img.adaptive-figure {
+        filter: invert(100%) hue-rotate(180deg) !important;
+        background-color: inherit !important;
     }
 }
 
 /* Auto mode with system preference */
 @media (prefers-color-scheme: light) {
-    [data-mode="auto"] .adaptive-figure img
+    [data-mode="auto"] .adaptive-figure img,
     [data-mode="auto"] .adaptive-figure svg,
     [data-mode="auto"] img.adaptive-figure {
         filter: invert(0%) !important;
@@ -104,7 +104,54 @@ a.no-click {
 }
 
 
+/* Plot-specific SVG styles (graph-inline-svg class) */
+svg.graph-inline-svg {
+    transition: filter 0.1s ease; /* Smooth transition between modes */
+    max-width: 100%;
+    display: block;
+}
 
+/* Light mode for plot SVGs */
+[data-mode="light"] svg.graph-inline-svg {
+    filter: invert(0%); /* Normal */
+}
+
+/* Dark mode for plot SVGs - invert colors for better visibility */
+[data-mode="dark"] svg.graph-inline-svg {
+    filter: invert(100%) hue-rotate(180deg) !important;
+    background-color: inherit !important;
+}
+
+/* Auto mode with system preference for plot SVGs */
+@media (prefers-color-scheme: dark) {
+    [data-mode="auto"] svg.graph-inline-svg {
+        filter: invert(100%) hue-rotate(180deg) !important;
+        background-color: inherit !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    [data-mode="auto"] svg.graph-inline-svg {
+        filter: invert(0%) !important;
+    }
+}
+
+
+/* Additional specificity for plot figures */
+.plot-figure svg.graph-inline-svg {
+    max-width: 100%;
+    height: auto;
+}
+
+[data-mode="dark"] .plot-figure svg.graph-inline-svg {
+    filter: invert(100%) hue-rotate(180deg) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    [data-mode="auto"] .plot-figure svg.graph-inline-svg {
+        filter: invert(100%) hue-rotate(180deg) !important;
+    }
+}
 
 
 

@@ -70,6 +70,7 @@ The plot directive allows you to create figures using a simple markup syntax. Be
 | `hline` | `y [, xmin, xmax] [, style] [, color]` | Horizontal line at y |
 | `line` | `a, (x0, y0) [, style] [, color]` | Line through point with slope: y = a*(x-x0) + y0 |
 | `line` | `a, b [, style] [, color]` | Line with slope-intercept: y = ax + b |
+| `line` | `(x1, y1), (x2, y2) [, style] [, color]` | Line through two points (infinite extent) |
 | `tangent` | `x0, f [, style] [, color]` or `(x0, f(x0)) [, style] [, color]` | Tangent to a previously defined function label at `x0` |
 | `line-segment` | `(x1, y1), (x2, y2) [, style] [, color]` | Finite line segment |
 | `polygon` | `(x1, y1), (x2, y2), ... [, show_vertices]` | Polygon outline |
@@ -546,3 +547,49 @@ function: -x**3 * exp(-x), (-1, 3], red
 endpoint_markers: true
 nocache:
 :::
+
+
+---
+
+### Example 8: Line through two points (new syntax)
+
+The `line` directive now supports a third syntax: passing through two points.
+This example shows all three syntaxes working together:
+
+```markdown
+:::{plot}
+line: 1, 0, solid, black
+line: (0, -2), (4, 2), dashed, blue
+line: -0.5, (2, 1), dotted, red
+point: (0, -2)
+point: (4, 2)
+point: (2, 1)
+xmin: -5
+xmax: 5
+ymin: -5
+ymax: 5
+grid: on
+xlabel: $x$
+ylabel: $y$
+:::
+```
+
+:::{plot}
+line: 1, 0, solid, black
+line: (0, -2), (4, 2), dashed, blue
+line: -0.5, (2, 1), dotted, red
+point: (0, -2)
+point: (4, 2)
+point: (2, 1)
+xmin: -5
+xmax: 5
+ymin: -5
+ymax: 5
+grid: on
+xlabel: $x$
+ylabel: $y$
+:::
+
+- **Black line**: `y = x` using slope-intercept form `line: 1, 0`
+- **Blue line**: through points (0, -2) and (4, 2) using new two-point form `line: (0, -2), (4, 2)`
+- **Red line**: slope -0.5 through point (2, 1) using point-slope form `line: -0.5, (2, 1)`

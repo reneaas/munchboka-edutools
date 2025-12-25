@@ -131,6 +131,7 @@ General line and segments
 -------------------------
 ``line: a, (x0, y0)[, linestyle][, color]`` — draws ``y = a*(x - x0) + y0``.
 ``line: a, b[, linestyle][, color]`` — draws ``y = a*x + b``.
+``line: (x1, y1), (x2, y2)[, linestyle][, color]`` — draws line through two points.
 ``line-segment: (x1, y1), (x2, y2)[, linestyle][, color]`` — finite segment.
 
 Polygons
@@ -149,7 +150,12 @@ Bars
 
 Vectors
 -------
-``vector: x, y, dx, dy[, color]`` — all four numeric fields accept expressions.
+``vector`` supports three syntaxes (all numeric fields accept expressions):
+
+1. ``vector: x, y, dx, dy[, color]`` — start position and components (legacy format)
+2. ``vector: (x, y), dx, dy[, color]`` — start point as tuple, then components
+3. ``vector: (x1, y1), (x2, y2)[, color]`` — start and end points (components computed automatically)
+
 Color mapped through palette then fallback to literal then black.
 
 Angle arcs
@@ -1692,6 +1698,47 @@ class PlotDirective(SphinxDirective):
             style_line: str | None = None
             color_line: str | None = None
             lit_line = _safe_literal(l)
+            
+            # Check for new syntax: line: (x1, y1), (x2, y2)[, linestyle][, color]
+            # First try to extract coordinate pairs to detect this syntax
+            s_line = str(l).strip()
+            coord_pairs = _extract_coord_pairs(s_line)
+            if len(coord_pairs) >= 2:
+                # New syntax detected: line through two points
+                try:
+                    x1 = _eval_expr(coord_pairs[0][0])
+                    y1 = _eval_expr(coord_pairs[0][1])
+                    x2 = _eval_expr(coord_pairs[1][0])
+                    y2 = _eval_expr(coord_pairs[1][1])
+                    
+                    # Calculate slope and intercept
+                    if abs(x2 - x1) > 1e-12:  # avoid division by zero
+                        a_val = (y2 - y1) / (x2 - x1)
+                        b_val = y1 - a_val * x1
+                        
+                        # Extract style and color from remaining parts
+                        # Remove the two coordinate pairs from the string
+                        rest = s_line
+                        for i in range(2):
+                            # Remove first occurrence of coordinate tuple
+                            rest = re.sub(r'\([^()]*,[^()]*\)', '', rest, count=1)
+                        rest = re.sub(r',{2,}', ',', rest).strip().strip(',')
+                        
+                        # Parse style and color from remaining tokens
+                        tokens = [tok.strip().strip("'\"") for tok in rest.split(",") if tok.strip()]
+                        for tok in tokens:
+                            low = tok.lower()
+                            if low in _allowed_styles_line and style_line is None:
+                                style_line = low
+                            elif color_line is None:
+                                color_line = tok
+                        
+                        line_vals.append((a_val, b_val, style_line, color_line))
+                        continue
+                except Exception:
+                    pass  # Fall through to old syntax parsing
+            
+            # Old syntax parsing (backward compatibility)
             if isinstance(lit_line, (list, tuple)) and len(lit_line) >= 2:
                 try:
                     a_val = _eval_expr(lit_line[0])
@@ -1895,22 +1942,64 @@ class PlotDirective(SphinxDirective):
                 if part:
                     axis_cmds.append(part)
 
-        # vectors: x, y, dx, dy[, color] with expression support
+        # vectors: support multiple syntaxes with expression support
+        # 1. Legacy: x, y, dx, dy[, color]
+        # 2. Point + components: (x, y), dx, dy[, color]
+        # 3. Two points: (x1, y1), (x2, y2)[, color]
         vector_vals: List[Tuple[float, float, float, float, str]] = []
         for vline in lists.get("vector", []):
             s = str(vline).strip()
             # allow surrounding brackets/parentheses
             if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
                 s = s[1:-1].strip()
-            # split by top-level commas (vectors unlikely to embed parentheses beyond simple expressions, but keep safe)
+
+            # Try to parse as literal first for tuple support
+            lit = _safe_literal(vline)
+            if isinstance(lit, (list, tuple)):
+                try:
+                    # Check if first element is a tuple/list (coordinate pair format)
+                    if isinstance(lit[0], (list, tuple)) and len(lit[0]) == 2:
+                        # Format: (x, y), ... or [(x, y), ...]
+                        x_v = _eval_expr(lit[0][0])
+                        y_v = _eval_expr(lit[0][1])
+
+                        if len(lit) >= 2 and isinstance(lit[1], (list, tuple)) and len(lit[1]) == 2:
+                            # Format: (x1, y1), (x2, y2)[, color]
+                            x2 = _eval_expr(lit[1][0])
+                            y2 = _eval_expr(lit[1][1])
+                            dx_v = x2 - x_v
+                            dy_v = y2 - y_v
+                            color_v = str(lit[2]).strip() if len(lit) >= 3 and lit[2] else "black"
+                        elif len(lit) >= 3:
+                            # Format: (x, y), dx, dy[, color]
+                            dx_v = _eval_expr(lit[1])
+                            dy_v = _eval_expr(lit[2])
+                            color_v = str(lit[3]).strip() if len(lit) >= 4 and lit[3] else "black"
+                        else:
+                            continue
+                        vector_vals.append((x_v, y_v, dx_v, dy_v, color_v))
+                        continue
+                    elif len(lit) >= 4:
+                        # Legacy format as literal: [x, y, dx, dy, color]
+                        x_v = _eval_expr(lit[0])
+                        y_v = _eval_expr(lit[1])
+                        dx_v = _eval_expr(lit[2])
+                        dy_v = _eval_expr(lit[3])
+                        color_v = str(lit[4]).strip() if len(lit) >= 5 and lit[4] else "black"
+                        vector_vals.append((x_v, y_v, dx_v, dy_v, color_v))
+                        continue
+                except Exception:
+                    pass
+
+            # Parse as string: split by top-level commas
             depth_vec = 0
             cur_tok: List[str] = []
             parts: List[str] = []
             for ch in s:
-                if ch == "(":
+                if ch in "([":
                     depth_vec += 1
                     cur_tok.append(ch)
-                elif ch == ")":
+                elif ch in ")]":
                     depth_vec -= 1
                     cur_tok.append(ch)
                 elif ch == "," and depth_vec == 0:
@@ -1923,14 +2012,63 @@ class PlotDirective(SphinxDirective):
             tail_tok = "".join(cur_tok).strip()
             if tail_tok:
                 parts.append(tail_tok)
-            if len(parts) < 4:
+
+            if len(parts) < 2:
                 continue
+
             try:
-                x_v = float(_eval_expr(parts[0]))
-                y_v = float(_eval_expr(parts[1]))
-                dx_v = float(_eval_expr(parts[2]))
-                dy_v = float(_eval_expr(parts[3]))
-                color_v = parts[4] if len(parts) >= 5 and parts[4] else "black"
+                # Check if first part is a coordinate pair
+                first_part = parts[0].strip()
+                if first_part.startswith("(") and first_part.endswith(")"):
+                    # Extract coordinates from first tuple
+                    coord_str = first_part[1:-1]
+                    coord_parts = coord_str.split(",")
+                    if len(coord_parts) != 2:
+                        continue
+                    x_v = _eval_expr(coord_parts[0].strip())
+                    y_v = _eval_expr(coord_parts[1].strip())
+
+                    # Check second part
+                    if len(parts) >= 2:
+                        second_part = parts[1].strip()
+                        if second_part.startswith("(") and second_part.endswith(")"):
+                            # Format: (x1, y1), (x2, y2)[, color]
+                            coord2_str = second_part[1:-1]
+                            coord2_parts = coord2_str.split(",")
+                            if len(coord2_parts) != 2:
+                                continue
+                            x2 = _eval_expr(coord2_parts[0].strip())
+                            y2 = _eval_expr(coord2_parts[1].strip())
+                            dx_v = x2 - x_v
+                            dy_v = y2 - y_v
+                            color_v = (
+                                parts[2].strip()
+                                if len(parts) >= 3 and parts[2].strip()
+                                else "black"
+                            )
+                        elif len(parts) >= 3:
+                            # Format: (x, y), dx, dy[, color]
+                            dx_v = _eval_expr(parts[1])
+                            dy_v = _eval_expr(parts[2])
+                            color_v = (
+                                parts[3].strip()
+                                if len(parts) >= 4 and parts[3].strip()
+                                else "black"
+                            )
+                        else:
+                            continue
+                    else:
+                        continue
+                elif len(parts) >= 4:
+                    # Legacy format: x, y, dx, dy[, color]
+                    x_v = _eval_expr(parts[0])
+                    y_v = _eval_expr(parts[1])
+                    dx_v = _eval_expr(parts[2])
+                    dy_v = _eval_expr(parts[3])
+                    color_v = parts[4].strip() if len(parts) >= 5 and parts[4].strip() else "black"
+                else:
+                    continue
+
                 vector_vals.append((x_v, y_v, dx_v, dy_v, color_v))
             except Exception:
                 # skip silently to preserve robustness
@@ -3287,11 +3425,69 @@ class PlotDirective(SphinxDirective):
                         except Exception:
                             plotmath.polygon(*pts, edges=False, alpha=a)
 
-                # Vectors (quiver) drawn before points so markers overlay arrow heads
+                # Plot points
+                for x0, y0 in point_vals:
+                    ax.plot(x0, y0, "o", markersize=10, alpha=0.8, color="black")
+
+                # Vectors (quiver) drawn last so they appear on top of all other elements
+                # Made scale-invariant and angle-invariant by working in pixel space
                 if vector_vals:
+                    import numpy as np_vec
+
                     default_vector_color = plotmath.COLORS.get("black") or "black"
+
+                    # Get axes limits and pixel dimensions for invariant scaling
+                    xlim_vec = ax.get_xlim()
+                    ylim_vec = ax.get_ylim()
+                    x_range_vec = xlim_vec[1] - xlim_vec[0]
+                    y_range_vec = ylim_vec[1] - ylim_vec[0]
+
+                    try:
+                        bbox_vec = ax.get_window_extent()
+                        ax_width_px_vec = bbox_vec.width
+                        ax_height_px_vec = bbox_vec.height
+                    except Exception:
+                        ax_width_px_vec = 600
+                        ax_height_px_vec = 600
+
+                    # Conversion factors between data and pixel coordinates
+                    data_to_px_x_vec = ax_width_px_vec / x_range_vec if x_range_vec > 0 else 1.0
+                    data_to_px_y_vec = ax_height_px_vec / y_range_vec if y_range_vec > 0 else 1.0
+                    px_to_data_x_vec = (
+                        x_range_vec / ax_width_px_vec if ax_width_px_vec > 0 else 0.01
+                    )
+                    px_to_data_y_vec = (
+                        y_range_vec / ax_height_px_vec if ax_height_px_vec > 0 else 0.01
+                    )
+
                     try:
                         for x_v, y_v, dx_v, dy_v, col_v in vector_vals:
+                            # Convert vector components from data to pixel space
+                            # This preserves angles visually on screen
+                            dx_px = dx_v * data_to_px_x_vec
+                            dy_px = dy_v * data_to_px_y_vec
+
+                            # Get vector length in pixel space
+                            vec_length_px = np_vec.sqrt(dx_px**2 + dy_px**2)
+
+                            if vec_length_px > 1e-10:
+                                # Normalize in pixel space to preserve direction
+                                dx_px_norm = dx_px / vec_length_px
+                                dy_px_norm = dy_px / vec_length_px
+
+                                # Use the original pixel length (scale-invariant)
+                                # This keeps the arrow at the size specified by the user
+                                dx_px_scaled = dx_px_norm * vec_length_px
+                                dy_px_scaled = dy_px_norm * vec_length_px
+
+                                # Convert back to data coordinates
+                                dx_data = dx_px_scaled * px_to_data_x_vec
+                                dy_data = dy_px_scaled * px_to_data_y_vec
+                            else:
+                                # Zero or near-zero vector
+                                dx_data = 0
+                                dy_data = 0
+
                             # Resolve color through palette first
                             if col_v:
                                 _mapped_vec = plotmath.COLORS.get(col_v)
@@ -3300,25 +3496,24 @@ class PlotDirective(SphinxDirective):
                             color_use = (
                                 _mapped_vec if _mapped_vec else col_v
                             ) or default_vector_color
+
+                            # Draw arrow with scale=1 and scale_units='xy' so our data coordinates are used directly
                             ax.quiver(
                                 x_v,
                                 y_v,
-                                dx_v,
-                                dy_v,
+                                dx_data,
+                                dy_data,
                                 angles="xy",
                                 scale_units="xy",
                                 scale=1,
-                                width=0.0065,
-                                headwidth=4,
-                                headlength=4.5,
+                                width=0.006,
+                                headwidth=5,
+                                headlength=5,
                                 color=color_use,
+                                zorder=100,  # High zorder to ensure vectors are always on top
                             )
                     except Exception:
                         pass
-
-                # Plot points
-                for x0, y0 in point_vals:
-                    ax.plot(x0, y0, "o", markersize=10, alpha=0.8, color="black")
 
                 # axis commands (run sequentially) — retain for legacy commands; we
                 # skip reapplying 'off'/'equal' earlier logic is already applied but

@@ -18,6 +18,7 @@ chapters:
   - file: examples/pair_puzzle.md
   - file: examples/escape_room.md
   - file: examples/escape_room/escape_room.md
+  - file: examples/escape_room2.md
   - file: examples/admonitions.md
   - file: examples/dialogue.md
   - file: examples/clear.md

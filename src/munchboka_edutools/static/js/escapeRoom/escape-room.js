@@ -135,7 +135,7 @@
       }
       controls.style.display = '';
       const step = steps[idx] || {};
-      const title = document.createElement('h3'); title.className='er-title'; title.textContent = step.title || `Oppgave ${idx+1}`;
+      const title = document.createElement('h3'); title.className='er-title'; title.textContent = step.title || `Rom ${idx+1}`;
       const q = document.createElement('div'); q.className='er-q'; q.innerHTML = step.question || '';
       body.appendChild(title); body.appendChild(q);
       renderMathIfAvailable(q); highlightCodeIfAvailable(q);

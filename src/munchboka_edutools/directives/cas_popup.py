@@ -106,6 +106,13 @@ class CASPopUpDirective(SphinxDirective):
 .ui-dialog-content{{padding:0!important;}}
 .ggb-window       {{width:100%!important;height:100%!important;box-sizing:border-box;}}
 .ggb-cas-button   {{margin-top: 1em; margin-bottom: 1em;}}
+/* Ensure CAS dialog appears above jeopardy modal (which has z-index: 9999) */
+.ui-dialog {{
+  z-index: 10000 !important;
+}}
+.ui-widget-overlay {{
+  z-index: 9999 !important;
+}}
 .ggb-reset-btn {{
   position: absolute;
   right: 2.5em;
@@ -223,6 +230,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {{
       width: {width+40}, height: {height+80},
       resizable: true, draggable: true,
       position: {{ my: "center", at: "center", of: window }},
+      zIndex: 10000,
       resize: () => window.requestAnimationFrame(applySize),
       open: function() {{
         if (!ggbReady) {{

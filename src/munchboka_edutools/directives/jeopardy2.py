@@ -139,6 +139,8 @@ class Jeopardy2Directive(SphinxDirective):
         """Generate the HTML for the Jeopardy board."""
         cfg_str_attr = _html.escape(json.dumps(data, ensure_ascii=False), quote=True)
         json_str = json.dumps(data, ensure_ascii=False)
+        # Escape </script> and </style> tags to prevent breaking the JSON script tag
+        json_str = json_str.replace("</script>", "<\\/script>").replace("</style>", "<\\/style>")
 
         html = f"""
         <div id="{container_id}" class="jeopardy2-container jeopardy-container" lang="no" data-config="{cfg_str_attr}">
@@ -376,6 +378,21 @@ class JeopardyQuestionDirective(SphinxDirective):
             content = "".join(self._node_to_html(child) for child in node.children)
             return f"<figcaption>{content}</figcaption>"
 
+        elif isinstance(node, nodes.bullet_list):
+            # Handle bullet (unordered) lists
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<ul>{content}</ul>"
+
+        elif isinstance(node, nodes.enumerated_list):
+            # Handle enumerated (ordered) lists
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<ol>{content}</ol>"
+
+        elif isinstance(node, nodes.list_item):
+            # Handle list items
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<li>{content}</li>"
+
         elif isinstance(node, nodes.container):
             # Recursively process container contents
             content = "".join(self._node_to_html(child) for child in node.children)
@@ -569,6 +586,21 @@ class JeopardyAnswerDirective(SphinxDirective):
             # Handle figure captions
             content = "".join(self._node_to_html(child) for child in node.children)
             return f"<figcaption>{content}</figcaption>"
+
+        elif isinstance(node, nodes.bullet_list):
+            # Handle bullet (unordered) lists
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<ul>{content}</ul>"
+
+        elif isinstance(node, nodes.enumerated_list):
+            # Handle enumerated (ordered) lists
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<ol>{content}</ol>"
+
+        elif isinstance(node, nodes.list_item):
+            # Handle list items
+            content = "".join(self._node_to_html(child) for child in node.children)
+            return f"<li>{content}</li>"
 
         elif isinstance(node, nodes.container):
             # Recursively process container contents

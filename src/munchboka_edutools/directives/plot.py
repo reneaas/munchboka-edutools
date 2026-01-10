@@ -3017,8 +3017,9 @@ class PlotDirective(SphinxDirective):
                             color_use = _mapped_red or "red"
                         _draw_line(a_t, b_t, style_use, color_use)
 
-                    # Reset y-axis limits after drawing tangents to prevent auto-scaling
-                    if tangent_vals:
+                    # Reset axis limits after drawing lines/tangents to prevent auto-scaling
+                    if line_vals or tangent_vals:
+                        ax.set_xlim(xmin, xmax)
                         ax.set_ylim(ymin, ymax)
 
                 # Bars

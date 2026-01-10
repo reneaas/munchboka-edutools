@@ -310,3 +310,68 @@
     padding: 50px;
 }
 
+/* Resume Prompt Styles */
+.quiz-resume-prompt {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--card-border-color);
+    border-radius: 8px;
+    background: var(--card-background-color);
+    box-shadow: var(--card-shadow-color);
+    margin: 0 0 1rem 0;
+}
+
+.quiz-resume-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.quiz-resume-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Light mode specific styling for resume prompt */
+@media (prefers-color-scheme: light) {
+    .quiz-resume-prompt {
+        background: #E8F0FE;
+        color: #000000;
+        border-color: #B3D4FF;
+    }
+}
+
+/* Explicit light theme overrides */
+html.light-mode .quiz-resume-prompt,
+body.light-mode .quiz-resume-prompt,
+html[data-theme='light'] .quiz-resume-prompt,
+body[data-theme='light'] .quiz-resume-prompt,
+[data-mode='light'] .quiz-resume-prompt {
+    background: #E8F0FE !important;
+    color: #000000 !important;
+    border-color: #B3D4FF !important;
+}
+
+/* Dark mode specific styling for resume prompt */
+@media (prefers-color-scheme: dark) {
+    .quiz-resume-prompt {
+        background: var(--card-background-color);
+        color: var(--text-color);
+        border-color: var(--card-border-color);
+    }
+}
+
+/* Explicit dark theme overrides */
+html.dark-mode .quiz-resume-prompt,
+body.dark-mode .quiz-resume-prompt,
+html[data-theme='dark'] .quiz-resume-prompt,
+body[data-theme='dark'] .quiz-resume-prompt,
+[data-mode='dark'] .quiz-resume-prompt {
+    background: var(--card-background-color) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border-color) !important;
+}
+

@@ -200,17 +200,155 @@ class SequentialMultipleChoiceQuiz {
     this.correctlyAnsweredQuestions = new Set(); // Track correctly answered questions
     this.questionInstances = {}; // Store instances of MultipleChoiceQuestion
     this.isFinished = false; // Track completion without destroying UI
+    
+    // Storage key for localStorage
+    this.storageKey = 'quiz:' + (this.container.id || 'default');
+    
     this.init();
   }
 
-  init() {
-    this.generateHTML();
+  buildState() {
+    return {
+      currentQuestionIndex: this.currentQuestionIndex,
+      correctlyAnsweredQuestions: Array.from(this.correctlyAnsweredQuestions),
+      isFinished: this.isFinished,
+      questionStates: Object.keys(this.questionInstances).reduce((acc, key) => {
+        const q = this.questionInstances[key];
+        acc[key] = {
+          selectedAnswers: Array.from(q.selectedAnswers),
+          correctlyAnswered: q.correctlyAnswered
+        };
+        return acc;
+      }, {})
+    };
+  }
+
+  saveState() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.buildState()));
+    } catch (e) {
+      console.warn('Failed to save quiz state:', e);
+    }
+  }
+
+  loadState() {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return null;
+      return obj;
+    } catch (e) {
+      console.warn('Failed to load quiz state:', e);
+      return null;
+    }
+  }
+
+  clearState() {
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch (e) {
+      console.warn('Failed to clear quiz state:', e);
+    }
+  }
+
+  applySavedState(saved) {
+    if (!saved) return;
+    
+    // Restore correctly answered questions
+    if (Array.isArray(saved.correctlyAnsweredQuestions)) {
+      this.correctlyAnsweredQuestions = new Set(saved.correctlyAnsweredQuestions);
+    }
+    
+    // Restore current question index
+    if (typeof saved.currentQuestionIndex === 'number') {
+      this.currentQuestionIndex = saved.currentQuestionIndex;
+    }
+    
+    // Restore finished state
+    if (saved.isFinished) {
+      this.isFinished = true;
+    }
+    
+    // Show the current question
     this.showQuestion();
+  }
+
+  init() {
+    // Check for saved state before generating HTML
+    const saved = this.loadState();
+    
+    this.generateHTML();
+    
+    // Show resume prompt if there's saved progress
+    if (saved && (saved.correctlyAnsweredQuestions && saved.correctlyAnsweredQuestions.length > 0)) {
+      this.showResumePrompt(saved);
+    } else {
+      this.showQuestion();
+    }
+  }
+
+  showResumePrompt(saved) {
+    const resumePrompt = document.createElement('div');
+    resumePrompt.className = 'quiz-resume-prompt';
+    
+    const txt = document.createElement('div');
+    txt.className = 'quiz-resume-text';
+    txt.textContent = 'Fortsett der du slapp?';
+    
+    const actions = document.createElement('div');
+    actions.className = 'quiz-resume-actions';
+    
+    const btnStart = document.createElement('button');
+    btnStart.className = 'button button-prev';
+    btnStart.textContent = 'Start fra begynnelsen';
+    
+    const btnResume = document.createElement('button');
+    btnResume.className = 'button button-next';
+    btnResume.textContent = 'Fortsett';
+    
+    actions.appendChild(btnStart);
+    actions.appendChild(btnResume);
+    resumePrompt.appendChild(txt);
+    resumePrompt.appendChild(actions);
+    
+    // Hide quiz elements while showing resume prompt
+    const questionCounter = document.getElementById(`question-counter-${this.uniqueId}`);
+    const questionContainer = document.getElementById(`question-container-${this.uniqueId}`);
+    const buttonContainer = this.container.querySelector('.button-container');
+    const completionMessage = document.getElementById(`quiz-completion-${this.uniqueId}`);
+    
+    if (questionCounter) questionCounter.style.display = 'none';
+    if (questionContainer) questionContainer.style.display = 'none';
+    if (buttonContainer) buttonContainer.style.display = 'none';
+    if (completionMessage) completionMessage.style.display = 'none';
+    
+    btnStart.addEventListener('click', () => {
+      this.clearState();
+      resumePrompt.remove();
+      // Show quiz elements again
+      if (questionCounter) questionCounter.style.display = '';
+      if (questionContainer) questionContainer.style.display = '';
+      if (buttonContainer) buttonContainer.style.display = '';
+      this.showQuestion();
+    });
+    
+    btnResume.addEventListener('click', () => {
+      resumePrompt.remove();
+      // Show quiz elements again
+      if (questionCounter) questionCounter.style.display = '';
+      if (questionContainer) questionContainer.style.display = '';
+      if (buttonContainer) buttonContainer.style.display = '';
+      this.applySavedState(saved);
+    });
+    
+    // Insert at the beginning of the container
+    this.container.insertBefore(resumePrompt, this.container.firstChild);
   }
 
   generateHTML() {
     // Set up the main structure with Previous and Next buttons
-    this.container.innerHTML = `
+    this.container.innerHTML += `
             <div id="question-counter-${this.uniqueId}" class="question-counter"></div>
             <div id="question-container-${this.uniqueId}" class="mcq-container"></div>
             <div class="button-container">
@@ -301,6 +439,8 @@ class SequentialMultipleChoiceQuiz {
       this.showToast('success');
       // Mark the question as correctly answered
       this.currentQuestion.markAsCorrectlyAnswered();
+      // Save state
+      this.saveState();
       // Update navigation buttons after a short delay
       setTimeout(() => {
         this.updateNavigationButtons();
@@ -348,6 +488,8 @@ class SequentialMultipleChoiceQuiz {
     if (banner) {
       banner.style.display = 'block';
     }
+    // Clear saved state after completion
+    this.clearState();
   }
 
   updateNavigationButtons() {
@@ -385,6 +527,7 @@ class SequentialMultipleChoiceQuiz {
   goToPreviousQuestion() {
     if (this.currentQuestionIndex > 0 && this.correctlyAnsweredQuestions.has(this.currentQuestionIndex - 1)) {
       this.currentQuestionIndex--;
+      this.saveState();
       this.showQuestion();
       // this.scrollToQuizContainer(); // Scroll to the quiz container
     }
@@ -397,6 +540,7 @@ class SequentialMultipleChoiceQuiz {
     if (this.correctlyAnsweredQuestions.has(this.currentQuestionIndex)) {
       if (this.currentQuestionIndex < this.totalQuestions - 1) {
         this.currentQuestionIndex++;
+        this.saveState();
         this.showQuestion();
       } else if (this.currentQuestionIndex === this.totalQuestions - 1) {
         // Move to virtual completion card

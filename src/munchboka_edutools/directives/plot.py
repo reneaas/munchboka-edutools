@@ -1698,7 +1698,7 @@ class PlotDirective(SphinxDirective):
             style_line: str | None = None
             color_line: str | None = None
             lit_line = _safe_literal(l)
-            
+
             # Check for new syntax: line: (x1, y1), (x2, y2)[, linestyle][, color]
             # First try to extract coordinate pairs to detect this syntax
             s_line = str(l).strip()
@@ -1710,34 +1710,36 @@ class PlotDirective(SphinxDirective):
                     y1 = _eval_expr(coord_pairs[0][1])
                     x2 = _eval_expr(coord_pairs[1][0])
                     y2 = _eval_expr(coord_pairs[1][1])
-                    
+
                     # Calculate slope and intercept
                     if abs(x2 - x1) > 1e-12:  # avoid division by zero
                         a_val = (y2 - y1) / (x2 - x1)
                         b_val = y1 - a_val * x1
-                        
+
                         # Extract style and color from remaining parts
                         # Remove the two coordinate pairs from the string
                         rest = s_line
                         for i in range(2):
                             # Remove first occurrence of coordinate tuple
-                            rest = re.sub(r'\([^()]*,[^()]*\)', '', rest, count=1)
-                        rest = re.sub(r',{2,}', ',', rest).strip().strip(',')
-                        
+                            rest = re.sub(r"\([^()]*,[^()]*\)", "", rest, count=1)
+                        rest = re.sub(r",{2,}", ",", rest).strip().strip(",")
+
                         # Parse style and color from remaining tokens
-                        tokens = [tok.strip().strip("'\"") for tok in rest.split(",") if tok.strip()]
+                        tokens = [
+                            tok.strip().strip("'\"") for tok in rest.split(",") if tok.strip()
+                        ]
                         for tok in tokens:
                             low = tok.lower()
                             if low in _allowed_styles_line and style_line is None:
                                 style_line = low
                             elif color_line is None:
                                 color_line = tok
-                        
+
                         line_vals.append((a_val, b_val, style_line, color_line))
                         continue
                 except Exception:
                     pass  # Fall through to old syntax parsing
-            
+
             # Old syntax parsing (backward compatibility)
             if isinstance(lit_line, (list, tuple)) and len(lit_line) >= 2:
                 try:
@@ -3014,6 +3016,10 @@ class PlotDirective(SphinxDirective):
                             )
                             color_use = _mapped_red or "red"
                         _draw_line(a_t, b_t, style_use, color_use)
+
+                    # Reset y-axis limits after drawing tangents to prevent auto-scaling
+                    if tangent_vals:
+                        ax.set_ylim(ymin, ymax)
 
                 # Bars
                 for xy, length, orientation in bar_vals:

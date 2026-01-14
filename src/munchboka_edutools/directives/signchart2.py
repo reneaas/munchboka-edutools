@@ -494,6 +494,7 @@ def draw_factors(
     x,
     dy=-1,
     dx=0.02,
+    fontsize=16,
 ):
     x_min = -0.05
     x_max = 1.05
@@ -525,7 +526,7 @@ def draw_factors(
             x=-0.1,
             y=(i + 1) * dy,
             s=s,
-            fontsize=16,
+            fontsize=fontsize,
             ha="right",
             va="center",
         )
@@ -631,7 +632,7 @@ def draw_factors(
                         x=root_pos + 0.005,
                         y=(i + 1) * dy,
                         s=f"$\\times$",
-                        fontsize=24,
+                        fontsize=fontsize * 1.5,
                         ha="center",
                         va="center",
                     )
@@ -640,7 +641,7 @@ def draw_factors(
                         x=root_pos,
                         y=(i + 1) * dy,
                         s=f"$0$",
-                        fontsize=20,
+                        fontsize=fontsize * 1.25,
                         ha="center",
                         va="center",
                     )
@@ -659,6 +660,7 @@ def draw_function(
     include_factors=True,
     dy=-1,
     dx=0.02,
+    fontsize=16,
 ):
 
     x_min = -0.05
@@ -672,7 +674,7 @@ def draw_function(
         x=-0.1,
         y=y,
         s=f"${fn_name}$" if fn_name else f"$f({str(x)})$",
-        fontsize=16,
+        fontsize=fontsize,
         ha="right",
         va="center",
     )
@@ -748,7 +750,7 @@ def draw_function(
                 x=root_pos,
                 y=y,
                 s=f"$0$",
-                fontsize=20,
+                fontsize=fontsize * 1.25,
                 ha="center",
                 va="center",
             )
@@ -757,7 +759,7 @@ def draw_function(
                 x=root_pos + 0.005,
                 y=y,
                 s=f"$\\times$",
-                fontsize=24,
+                fontsize=fontsize * 1.5,
                 ha="center",
                 va="center",
             )
@@ -833,7 +835,7 @@ def draw_vertical_lines(
                     )
 
 
-def make_axis(x):
+def make_axis(x, fontsize=16):
     fig, ax = plt.subplots()
 
     # Remove y-axis spines
@@ -859,7 +861,7 @@ def make_axis(x):
     ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
 
     # Label the x-axis
-    ax.set_xlabel(f"${str(x)}$", fontsize=16, loc="right")
+    ax.set_xlabel(f"${str(x)}$", fontsize=fontsize, loc="right")
 
     # Remove tick labels on y-axis
     plt.yticks([])
@@ -880,6 +882,7 @@ def plot(
     small_figsize=False,
     figsize=None,
     domain=None,
+    fontsize=16,
 ):
     """Draws a sign chart for a function f (polynomial, rational, or transcendental).
 
@@ -903,6 +906,8 @@ def plot(
         domain (tuple, optional):
             Domain (x_min, x_max) for searching zeros numerically in transcendental functions.
             If None, uses a default range or symbolic solving only. Example: (-10, 10)
+        fontsize (int, optional):
+            Base font size for text in the chart. Default: 16.
 
     Returns:
         fig (plt.figure)
@@ -965,7 +970,7 @@ def plot(
             factors = sort_factors(factors)
 
     # Create figure
-    fig, ax = make_axis(x)
+    fig, ax = make_axis(x, fontsize=fontsize)
 
     # Extract roots - handle both old format (single "root") and new format (multiple "roots")
     roots = []
@@ -997,12 +1002,14 @@ def plot(
             f"${sp.latex(root)}$" if not generic_labels else f"$x_{i + 1}$"
             for i, root in enumerate(roots)
         ],
-        fontsize=16,
+        fontsize=fontsize,
     )
 
     # Draw factors
     if include_factors:
-        draw_factors(f, factors, roots, root_positions, ax, color_pos, color_neg, x)
+        draw_factors(
+            f, factors, roots, root_positions, ax, color_pos, color_neg, x, fontsize=fontsize
+        )
 
     # Draw sign lines for function
     draw_function(
@@ -1016,6 +1023,7 @@ def plot(
         f,
         fn_name,
         include_factors,
+        fontsize=fontsize,
     )
 
     # Remove tick labels on y-axis
@@ -1244,6 +1252,8 @@ class SignChart2Directive(SphinxDirective):
         small_figsize (optional): Use compact figure size (default: false)
         figsize (optional): Custom figure size as tuple (width, height)
                            Example: "(10, 4)" or (10, 4)
+        fontsize (optional): Base font size for text in the chart (default: 16)
+                            Example: "20" or 20
         width (optional): Width of the chart (e.g., "100%", "500px", "500")
         align (optional): Alignment ("left", "center", "right")
         class (optional): Additional CSS classes
@@ -1283,6 +1293,7 @@ class SignChart2Directive(SphinxDirective):
         "generic_labels": directives.unchanged,
         "small_figsize": directives.unchanged,
         "figsize": directives.unchanged,
+        "fontsize": directives.unchanged,
     }
 
     def _parse_kv_block(self) -> Tuple[Dict[str, Any], int]:
@@ -1386,6 +1397,10 @@ class SignChart2Directive(SphinxDirective):
         figsize_val = merged.get("figsize")
         custom_figsize = _parse_tuple(figsize_val, float) if figsize_val else None
 
+        # Parse fontsize
+        fontsize_val = merged.get("fontsize")
+        custom_fontsize = int(fontsize_val) if fontsize_val else 16
+
         # Hash includes all plot parameters
         content_hash = _hash_key(
             f_expr,
@@ -1396,6 +1411,7 @@ class SignChart2Directive(SphinxDirective):
             int(bool(small_figsize)),
             str(custom_domain) if custom_domain else "",
             str(custom_figsize) if custom_figsize else "",
+            str(custom_fontsize),
         )
         base_name = explicit_name or f"signchart2_{content_hash}"
 
@@ -1416,6 +1432,7 @@ class SignChart2Directive(SphinxDirective):
                     "color": bool(use_color),
                     "generic_labels": bool(generic_labels),
                     "small_figsize": bool(small_figsize),
+                    "fontsize": custom_fontsize,
                 }
                 if custom_domain is not None:
                     plot_kwargs["domain"] = custom_domain
@@ -1423,7 +1440,7 @@ class SignChart2Directive(SphinxDirective):
                     plot_kwargs["figsize"] = custom_figsize
 
                 fig, ax = plot(**plot_kwargs)
-                fig.savefig(abs_svg, format="svg", bbox_inches="tight")
+                fig.savefig(abs_svg, format="svg", bbox_inches="tight", transparent=True)
                 plt.close(fig)
             except Exception as e:
                 return [

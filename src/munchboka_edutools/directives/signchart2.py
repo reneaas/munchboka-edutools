@@ -835,7 +835,7 @@ def draw_vertical_lines(
                     )
 
 
-def make_axis(x, fontsize=24, labelpad=-10):
+def make_axis(x, fontsize=24, labelpad=-15):
     fig, ax = plt.subplots()
 
     # Remove y-axis spines
@@ -883,7 +883,7 @@ def plot(
     figsize=None,
     domain=None,
     fontsize=24,
-    labelpad=-10,
+    labelpad=-15,
 ):
     """Draws a sign chart for a function f (polynomial, rational, or transcendental).
 
@@ -910,7 +910,7 @@ def plot(
         fontsize (int, optional):
             Font size for all text in the chart. Default: 24.
         labelpad (float, optional):
-            Padding for the x-axis label. Negative values move it closer to the axis. Default: -10.
+            Padding for the x-axis label. Negative values move it closer to the axis. Default: -15.
 
     Returns:
         fig (plt.figure)
@@ -1257,7 +1257,7 @@ class SignChart2Directive(SphinxDirective):
                            Example: "(10, 4)" or (10, 4)
         fontsize (optional): Font size for all text in the chart (default: 24)
                             Example: "20" or 20
-        labelpad (optional): Padding for x-axis label. Negative moves it closer (default: -10)
+        labelpad (optional): Padding for x-axis label. Negative moves it closer (default: -15)
                             Example: "-15" or -15
         width (optional): Width of the chart (e.g., "100%", "500px", "500")
         align (optional): Alignment ("left", "center", "right")
@@ -1409,7 +1409,7 @@ class SignChart2Directive(SphinxDirective):
 
         # Parse labelpad
         labelpad_val = merged.get("labelpad")
-        custom_labelpad = float(labelpad_val) if labelpad_val else -10
+        custom_labelpad = float(labelpad_val) if labelpad_val else -15
 
         # Hash includes all plot parameters
         content_hash = _hash_key(

@@ -835,7 +835,7 @@ def draw_vertical_lines(
                     )
 
 
-def make_axis(x, fontsize=24):
+def make_axis(x, fontsize=24, labelpad=-10):
     fig, ax = plt.subplots()
 
     # Remove y-axis spines
@@ -861,7 +861,7 @@ def make_axis(x, fontsize=24):
     ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
 
     # Label the x-axis
-    ax.set_xlabel(f"${str(x)}$", fontsize=fontsize, loc="right")
+    ax.set_xlabel(f"${str(x)}$", fontsize=fontsize, loc="right", labelpad=labelpad)
 
     # Remove tick labels on y-axis
     plt.yticks([])
@@ -883,6 +883,7 @@ def plot(
     figsize=None,
     domain=None,
     fontsize=24,
+    labelpad=-10,
 ):
     """Draws a sign chart for a function f (polynomial, rational, or transcendental).
 
@@ -908,6 +909,8 @@ def plot(
             If None, uses a default range or symbolic solving only. Example: (-10, 10)
         fontsize (int, optional):
             Font size for all text in the chart. Default: 24.
+        labelpad (float, optional):
+            Padding for the x-axis label. Negative values move it closer to the axis. Default: -10.
 
     Returns:
         fig (plt.figure)
@@ -970,7 +973,7 @@ def plot(
             factors = sort_factors(factors)
 
     # Create figure
-    fig, ax = make_axis(x, fontsize=fontsize)
+    fig, ax = make_axis(x, fontsize=fontsize, labelpad=labelpad)
 
     # Extract roots - handle both old format (single "root") and new format (multiple "roots")
     roots = []
@@ -1254,6 +1257,8 @@ class SignChart2Directive(SphinxDirective):
                            Example: "(10, 4)" or (10, 4)
         fontsize (optional): Font size for all text in the chart (default: 24)
                             Example: "20" or 20
+        labelpad (optional): Padding for x-axis label. Negative moves it closer (default: -10)
+                            Example: "-15" or -15
         width (optional): Width of the chart (e.g., "100%", "500px", "500")
         align (optional): Alignment ("left", "center", "right")
         class (optional): Additional CSS classes
@@ -1294,6 +1299,7 @@ class SignChart2Directive(SphinxDirective):
         "small_figsize": directives.unchanged,
         "figsize": directives.unchanged,
         "fontsize": directives.unchanged,
+        "labelpad": directives.unchanged,
     }
 
     def _parse_kv_block(self) -> Tuple[Dict[str, Any], int]:
@@ -1401,6 +1407,10 @@ class SignChart2Directive(SphinxDirective):
         fontsize_val = merged.get("fontsize")
         custom_fontsize = int(fontsize_val) if fontsize_val else 24
 
+        # Parse labelpad
+        labelpad_val = merged.get("labelpad")
+        custom_labelpad = float(labelpad_val) if labelpad_val else -10
+
         # Hash includes all plot parameters
         content_hash = _hash_key(
             f_expr,
@@ -1412,6 +1422,7 @@ class SignChart2Directive(SphinxDirective):
             str(custom_domain) if custom_domain else "",
             str(custom_figsize) if custom_figsize else "",
             str(custom_fontsize),
+            str(custom_labelpad),
         )
         base_name = explicit_name or f"signchart2_{content_hash}"
 
@@ -1433,6 +1444,7 @@ class SignChart2Directive(SphinxDirective):
                     "generic_labels": bool(generic_labels),
                     "small_figsize": bool(small_figsize),
                     "fontsize": custom_fontsize,
+                    "labelpad": custom_labelpad,
                 }
                 if custom_domain is not None:
                     plot_kwargs["domain"] = custom_domain

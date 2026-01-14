@@ -494,7 +494,7 @@ def draw_factors(
     x,
     dy=-1,
     dx=0.02,
-    fontsize=16,
+    fontsize=24,
 ):
     x_min = -0.05
     x_max = 1.05
@@ -632,7 +632,7 @@ def draw_factors(
                         x=root_pos + 0.005,
                         y=(i + 1) * dy,
                         s=f"$\\times$",
-                        fontsize=fontsize * 1.5,
+                        fontsize=fontsize,
                         ha="center",
                         va="center",
                     )
@@ -641,7 +641,7 @@ def draw_factors(
                         x=root_pos,
                         y=(i + 1) * dy,
                         s=f"$0$",
-                        fontsize=fontsize * 1.25,
+                        fontsize=fontsize,
                         ha="center",
                         va="center",
                     )
@@ -660,7 +660,7 @@ def draw_function(
     include_factors=True,
     dy=-1,
     dx=0.02,
-    fontsize=16,
+    fontsize=24,
 ):
 
     x_min = -0.05
@@ -750,7 +750,7 @@ def draw_function(
                 x=root_pos,
                 y=y,
                 s=f"$0$",
-                fontsize=fontsize * 1.25,
+                fontsize=fontsize,
                 ha="center",
                 va="center",
             )
@@ -759,7 +759,7 @@ def draw_function(
                 x=root_pos + 0.005,
                 y=y,
                 s=f"$\\times$",
-                fontsize=fontsize * 1.5,
+                fontsize=fontsize,
                 ha="center",
                 va="center",
             )
@@ -835,7 +835,7 @@ def draw_vertical_lines(
                     )
 
 
-def make_axis(x, fontsize=16):
+def make_axis(x, fontsize=24):
     fig, ax = plt.subplots()
 
     # Remove y-axis spines
@@ -882,7 +882,7 @@ def plot(
     small_figsize=False,
     figsize=None,
     domain=None,
-    fontsize=16,
+    fontsize=24,
 ):
     """Draws a sign chart for a function f (polynomial, rational, or transcendental).
 
@@ -907,7 +907,7 @@ def plot(
             Domain (x_min, x_max) for searching zeros numerically in transcendental functions.
             If None, uses a default range or symbolic solving only. Example: (-10, 10)
         fontsize (int, optional):
-            Base font size for text in the chart. Default: 16.
+            Font size for all text in the chart. Default: 24.
 
     Returns:
         fig (plt.figure)
@@ -1252,7 +1252,7 @@ class SignChart2Directive(SphinxDirective):
         small_figsize (optional): Use compact figure size (default: false)
         figsize (optional): Custom figure size as tuple (width, height)
                            Example: "(10, 4)" or (10, 4)
-        fontsize (optional): Base font size for text in the chart (default: 16)
+        fontsize (optional): Font size for all text in the chart (default: 24)
                             Example: "20" or 20
         width (optional): Width of the chart (e.g., "100%", "500px", "500")
         align (optional): Alignment ("left", "center", "right")
@@ -1399,7 +1399,7 @@ class SignChart2Directive(SphinxDirective):
 
         # Parse fontsize
         fontsize_val = merged.get("fontsize")
-        custom_fontsize = int(fontsize_val) if fontsize_val else 16
+        custom_fontsize = int(fontsize_val) if fontsize_val else 24
 
         # Hash includes all plot parameters
         content_hash = _hash_key(

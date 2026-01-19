@@ -58,6 +58,7 @@ def _copy_static(app):
         _register("css/pairPuzzle/style.css")
         _register("css/escapeRoom/escape-room.css")
         _register("css/parsons/parsonsPuzzle.css")
+        _register("css/print_pdf.css")  # Print-friendly PDF styles
 
         # Register JS files with explicit priorities to match matematikk_r1 loading order:
         # 1. utils.js (early - priority 450)
@@ -98,6 +99,7 @@ def _copy_static(app):
         _register("js/pairPuzzle/game.js", priority=720)
         _register("js/escapeRoom/escape-room.js", priority=730)
         _register("js/parsons/parsonsPuzzle.js", priority=740)
+        _register("js/print_answer_key.js", priority=750)  # Print answer key generator
 
         # Add jQuery and jQuery UI for dialog functionality
         app.add_js_file(

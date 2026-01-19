@@ -2,13 +2,26 @@
 
 Reusable Sphinx / Jupyter Book directives and assets for Norwegian educational content.
 
+**NEW**: Includes `muncho` - a command-line tool for building beautiful, print-ready books with enhanced typography, layout, and **automatic LaTeX math rendering for PDFs**. See [CLI_README.md](CLI_README.md) for details.
+
+## Key Features
+
+✨ **Auto-configured Sphinx extensions** for Jupyter Book  
+📚 **Custom educational directives** (quiz, dialogue, plots, etc.)  
+🖨️ **Print-optimized PDF builds** with proper typography  
+🧮 **Automatic PDF math rendering** - LaTeX expressions work seamlessly in PDFs  
+🎨 **Multiple build profiles** (print, web, custom)  
+📄 **Print-friendly CSS** - Browser "Print to PDF" creates clean problem sheets with answer keys
+
 ## Install
 
 ```bash
 pip install munchboka-edutools
 ```
 
-## Usage (Jupyter Book `_config.yml`)
+## Usage
+
+### As Sphinx Extensions (Jupyter Book `_config.yml`)
 
 ```yaml
 sphinx:
@@ -16,7 +29,37 @@ sphinx:
     - munchboka_edutools
 ```
 
-All packaged directives are auto-registered. Static assets are placed under `_static/munchboka/` during the build.
+All packaged directives are auto-registered. Static assets (including print-friendly CSS and JS) are placed under `_static/munchboka/` during the build.
+
+### Print-Friendly PDFs
+
+Simply press **Ctrl+P** (or Cmd+P) in your browser when viewing any page to create a clean PDF with:
+- All tabs flattened with part labels (a, b, c, etc.)
+- Answers and solutions hidden from main content
+- Automatic answer key page at the end
+- CAS popup buttons hidden
+- Better page breaks
+
+See [docs/print_pdf.md](docs/print_pdf.md) for details.
+
+### As Build Tool
+
+Build books with enhanced formatting:
+
+```bash
+# Print-optimized build (includes automatic PDF math rendering)
+muncho build matematikk_1t --profile print
+
+# Web-optimized build
+muncho build matematikk_r1 --profile web
+
+# See all options
+muncho --help
+```
+
+**PDF Math Rendering**: When building PDFs, muncho automatically configures `sphinx.ext.imgmath` to render LaTeX math expressions as high-quality SVG images. No changes to your source files needed!
+
+See [CLI_README.md](CLI_README.md) for full CLI documentation and [QUICKSTART.md](QUICKSTART.md) for a quick start guide.
 
 ## Development
 

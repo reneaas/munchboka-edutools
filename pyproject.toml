@@ -27,9 +27,13 @@ dependencies = [
   "matplotlib>=3.7",
   "signchart",
   "plotmath",
+  "click>=8.0",
+  "beautifulsoup4>=4.11",
+  "pyyaml>=6.0",
+  "lxml>=4.9",
 ]
 
-version = "0.2.7"
+version = "0.2.8"
 
 
 [project.urls]
@@ -48,6 +52,9 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/munchboka_edutools"]
+
+[project.scripts]
+muncho = "munchboka_edutools.cli.build:cli"
 
 [tool.hatch.build.targets.sdist]
 include = [

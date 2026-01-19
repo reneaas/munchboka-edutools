@@ -1,0 +1,72 @@
+# Example Custom Profiles Configuration
+
+profiles:
+  
+  # Advanced print profile with all features enabled
+  advanced_print:
+    description: "Advanced print profile with maximum enhancements"
+    processors:
+      - name: typography
+        enabled: true
+        priority: 20
+        settings:
+          smart_quotes: true
+          non_breaking_spaces: true
+          number_formatting: true
+      
+      - name: math_rendering
+        enabled: true
+        priority: 30
+        settings:
+          enhance_equation_numbers: true
+      
+      - name: page_breaks
+        enabled: true
+        priority: 60
+        settings:
+          break_before_chapters: true
+    
+    build_options:
+      builder: pdfhtml  # Automatic LaTeX math rendering with imgmath
+  
+  # Minimal profile for quick builds
+  minimal:
+    description: "Minimal processing for fast builds"
+    processors:
+      - name: typography
+        enabled: false
+      
+      - name: page_breaks
+        enabled: false
+      
+      - name: math_rendering
+        enabled: true
+        settings:
+          enhance_equation_numbers: false
+    
+    build_options:
+      builder: html  # Uses MathJax for web
+  
+  # Custom profile for matematikk_1t
+  matematikk_1t_print:
+    description: "Optimized specifically for Matematikk 1T book with PDF math rendering"
+    processors:
+      - name: typography
+        enabled: true
+        settings:
+          smart_quotes: true
+          non_breaking_spaces: true
+          number_formatting: true
+      
+      - name: page_breaks
+        enabled: true
+        settings:
+          break_before_chapters: true
+      
+      - name: math_rendering
+        enabled: true
+        settings:
+          enhance_equation_numbers: true
+    
+    build_options:
+      builder: pdfhtml  # LaTeX math auto-configured via imgmath

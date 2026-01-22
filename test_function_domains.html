@@ -1,0 +1,1300 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Test Function Domain and Endpoint Support &#8212; munchboka-edutools</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/flashcards.css?v=9542c1b9" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/general_style.css?v=57d653fb" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/interactive_code.css?v=f903e660" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/jeopardy.css?v=e40b38cf" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/quiz.css?v=3f648898" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/admonitions.css?v=5c924dd9" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/dialogue.css?v=1b585024" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/figures.css?v=5dd46ff0" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/popup.css?v=26181dfd" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/timedQuiz.css?v=89e27729" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/cas_popup.css?v=bae4ad7e" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/github-light.css?v=a6d10b1c" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/github-dark.css?v=2454bc3f" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/github-dark-high-contrast.css?v=4c0c1b0f" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/pairPuzzle/style.css?v=f77426ac" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/parsons/parsonsPuzzle.css?v=9fbab2c7" />
+    <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
+    <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/munchboka/js/utils.js?v=a5b18a1c"></script>
+    <script src="_static/munchboka/js/casThemeManager.js?v=88874cc7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+    <script src="_static/munchboka/js/skulpt/skulpt.js?v=51c28977"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="_static/munchboka/js/flashcards.js?v=28a4399e"></script>
+    <script src="_static/munchboka/js/interactiveCode/interactiveCodeSetup.js?v=733f5585"></script>
+    <script src="_static/munchboka/js/interactiveCode/codeEditor.js?v=30f3f389"></script>
+    <script src="_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
+    <script src="_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
+    <script src="_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
+    <script src="_static/munchboka/js/jeopardy.js?v=e090935c"></script>
+    <script src="_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/munchboka/js/popup.js?v=5db611f4"></script>
+    <script src="_static/munchboka/js/timedQuiz/utils.js?v=2c6f871c"></script>
+    <script src="_static/munchboka/js/timedQuiz/multipleChoiceQuestion.js?v=c6ce1ca2"></script>
+    <script src="_static/munchboka/js/timedQuiz/timedMultipleChoiceQuiz.js?v=9accc73d"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'test_function_domains';</script>
+    <script src="_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
+    <script src="_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
+    <script src="_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
+    <script src="_static/munchboka/js/escapeRoom/escape-room.js?v=e52321b4"></script>
+    <script src="_static/munchboka/js/parsons/parsonsPuzzle.js?v=6e8c8774"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script src="_static/munchboka/js/highlight-init.js?v=6bc17905"></script>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    <script src="_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/test_function_domains.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="plot directive" href="examples/plot.html" />
+    <link rel="prev" title="munchboka-edutools demo" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">munchboka-edutools</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Test Function Domain and Endpoint Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/animate.html">Animate Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/multi_plot_point.html">Multi-Plot Point Keyword Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/multi_plot_text.html">multi-plot text examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/multi_plot_annotate.html">multi-plot annotate examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/multi_plot2_test.html">Multi-Plot2 Test</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/horner.html">Horner Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/quiz/quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/jeopardy/jeopardy.html">Jeopardy example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/interactive_code.html">Interactive Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/cas_popup.html">CAS Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/factor_tree.html">Factor Tree Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/pair_puzzle.html">Pair Puzzle Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/escape_room.html">Escape Room Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/escape_room/escape_room.html">Example: Escape Room</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/escape_room2.html">Escape Room 2 Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/admonitions.html">Custom Admonitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/dialogue.html">Dialogue Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/clear.html">Clear Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/parsons.html">Parsons Puzzle Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/popup.html">Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ggb_icon.html">GeoGebra Icon Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ggb_popup.html">GeoGebra Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ggb.html">GeoGebra Applet Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/poly_icon.html">Polynomial Icon Role</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/timed_quiz.html">Timed Quiz Directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/turtle.html">Turtle Graphics Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/flashcards.html">Flashcards-eksempel</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/test_function_domains.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Test Function Domain and Endpoint Support</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-1-basic-domain-with-closed-endpoints">Test 1: Basic Domain with Closed Endpoints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-2-domain-with-mixed-brackets">Test 2: Domain with Mixed Brackets</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-3-exclusions">Test 3: Exclusions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-4-interactive-graph-with-domain">Test 4: Interactive Graph with Domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-5-animate-with-domain">Test 5: Animate with Domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-6-function-with-label-and-domain">Test 6: Function with Label and Domain</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="test-function-domain-and-endpoint-support">
+<h1>Test Function Domain and Endpoint Support<a class="headerlink" href="#test-function-domain-and-endpoint-support" title="Link to this heading">#</a></h1>
+<section id="test-1-basic-domain-with-closed-endpoints">
+<h2>Test 1: Basic Domain with Closed Endpoints<a class="headerlink" href="#test-1-basic-domain-with-closed-endpoints" title="Link to this heading">#</a></h2>
+</section>
+<section id="test-2-domain-with-mixed-brackets">
+<h2>Test 2: Domain with Mixed Brackets<a class="headerlink" href="#test-2-domain-with-mixed-brackets" title="Link to this heading">#</a></h2>
+</section>
+<section id="test-3-exclusions">
+<h2>Test 3: Exclusions<a class="headerlink" href="#test-3-exclusions" title="Link to this heading">#</a></h2>
+<p>Note: Exclusions use backslash-brace notation: <code class="docutils literal notranslate"><span class="pre">\{0}</span></code> excludes x=0.</p>
+<figure class="adaptive-figure plot-figure no-click align-center">
+<div class="graph-image no-click no-scaled-link"><?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 460.8 345.6" xmlns="http://www.w3.org/2000/svg" version="1.1" class="graph-inline-svg" role="img" aria-label="Tilpasset figur">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-01-22T01:00:42.107646</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.9.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="cpl_0e96aabc360d_9d81da_figure_1">
+  <g id="cpl_0e96aabc360d_9d81da_patch_1">
+   <path d="M 0 345.6 
+L 460.8 345.6 
+L 460.8 0 
+L 0 0 
+L 0 345.6 
+z
+" style="fill: none"/>
+  </g>
+  <g id="cpl_0e96aabc360d_9d81da_axes_1">
+   <g id="cpl_0e96aabc360d_9d81da_patch_2">
+    <path d="M 10.8 334.8 
+L 447 334.8 
+L 447 20.016315 
+L 10.8 20.016315 
+L 10.8 334.8 
+z
+" style="fill: none"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_matplotlib.axis_1">
+    <g id="cpl_0e96aabc360d_9d81da_xtick_1">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_1">
+      <path d="M 54.42 334.8 
+L 54.42 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_2">
+      <defs>
+       <path id="cpl_0e96aabc360d_9d81da_m787fad0034" d="M 0 0 
+L 0 3.5 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="54.42" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_1">
+      <!-- $\mathdefault{−4}$ -->
+      <g transform="translate(42.102209 198.245154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMSY10-0" d="M 4218 1472 
+C 4326 1472 4442 1472 4442 1600 
+C 4442 1728 4326 1728 4218 1728 
+L 755 1728 
+C 646 1728 531 1728 531 1600 
+C 531 1472 646 1472 755 1472 
+L 4218 1472 
+z
+" transform="scale(0.015625)"/>
+        <path id="CMR17-34" d="M 2150 4122 
+C 2150 4256 2144 4256 2029 4256 
+L 128 1254 
+L 128 1088 
+L 1779 1088 
+L 1779 457 
+C 1779 224 1766 160 1318 160 
+L 1197 160 
+L 1197 0 
+C 1402 0 1747 0 1965 0 
+C 2182 0 2528 0 2733 0 
+L 2733 160 
+L 2611 160 
+C 2163 160 2150 224 2150 457 
+L 2150 1088 
+L 2803 1088 
+L 2803 1254 
+L 2150 1254 
+L 2150 4122 
+z
+M 1798 3703 
+L 1798 1254 
+L 256 1254 
+L 1798 3703 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-34" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_2">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_3">
+      <path d="M 98.04 334.8 
+L 98.04 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_4">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="98.04" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_2">
+      <!-- $\mathdefault{−3}$ -->
+      <g transform="translate(85.722209 198.245154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-33" d="M 1414 2157 
+C 1984 2157 2234 1662 2234 1090 
+C 2234 320 1824 25 1453 25 
+C 1114 25 563 194 390 693 
+C 422 680 454 680 486 680 
+C 640 680 755 782 755 948 
+C 755 1133 614 1216 486 1216 
+C 378 1216 211 1165 211 926 
+C 211 335 787 -128 1466 -128 
+C 2176 -128 2720 430 2720 1085 
+C 2720 1707 2208 2157 1600 2227 
+C 2086 2328 2554 2756 2554 3329 
+C 2554 3820 2048 4179 1472 4179 
+C 890 4179 378 3829 378 3329 
+C 378 3110 544 3072 627 3072 
+C 762 3072 877 3155 877 3321 
+C 877 3486 762 3569 627 3569 
+C 602 3569 570 3569 544 3557 
+C 730 3959 1235 4032 1459 4032 
+C 1683 4032 2106 3925 2106 3320 
+C 2106 3143 2080 2828 1862 2550 
+C 1670 2304 1453 2304 1242 2284 
+C 1210 2284 1062 2269 1037 2269 
+C 992 2263 966 2257 966 2208 
+C 966 2163 973 2157 1101 2157 
+L 1414 2157 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-33" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_3">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_5">
+      <path d="M 141.66 334.8 
+L 141.66 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_6">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="141.66" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_3">
+      <!-- $\mathdefault{−2}$ -->
+      <g transform="translate(129.342209 198.245154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-32" d="M 2669 989 
+L 2554 989 
+C 2490 536 2438 459 2413 420 
+C 2381 369 1920 369 1830 369 
+L 602 369 
+C 832 619 1280 1072 1824 1597 
+C 2214 1967 2669 2402 2669 3035 
+C 2669 3790 2067 4224 1395 4224 
+C 691 4224 262 3604 262 3030 
+C 262 2780 448 2748 525 2748 
+C 589 2748 781 2787 781 3010 
+C 781 3207 614 3264 525 3264 
+C 486 3264 448 3258 422 3245 
+C 544 3790 915 4058 1306 4058 
+C 1862 4058 2227 3617 2227 3035 
+C 2227 2479 1901 2000 1536 1584 
+L 262 146 
+L 262 0 
+L 2515 0 
+L 2669 989 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_4">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_7">
+      <path d="M 185.28 334.8 
+L 185.28 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_8">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="185.28" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_4">
+      <!-- $\mathdefault{−1}$ -->
+      <g transform="translate(172.962209 198.245154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-31" d="M 1702 4058 
+C 1702 4192 1696 4192 1606 4192 
+C 1357 3916 979 3827 621 3827 
+C 602 3827 570 3827 563 3808 
+C 557 3795 557 3782 557 3648 
+C 755 3648 1088 3686 1344 3839 
+L 1344 461 
+C 1344 236 1331 160 781 160 
+L 589 160 
+L 589 0 
+C 896 0 1216 0 1523 0 
+C 1830 0 2150 0 2458 0 
+L 2458 160 
+L 2266 160 
+C 1715 160 1702 230 1702 458 
+L 1702 4058 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_5">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_9">
+      <path d="M 272.52 334.8 
+L 272.52 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_10">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="272.52" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_5">
+      <!-- $\mathdefault{1}$ -->
+      <g transform="translate(267.950952 198.245154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_6">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_11">
+      <path d="M 316.14 334.8 
+L 316.14 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_12">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="316.14" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_6">
+      <!-- $\mathdefault{2}$ -->
+      <g transform="translate(311.570952 198.245154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_7">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_13">
+      <path d="M 359.76 334.8 
+L 359.76 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_14">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="359.76" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_7">
+      <!-- $\mathdefault{3}$ -->
+      <g transform="translate(355.190952 198.245154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-33" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_xtick_8">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_15">
+      <path d="M 403.38 334.8 
+L 403.38 20.016315 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_16">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_m787fad0034" x="403.38" y="177.408158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_8">
+      <!-- $\mathdefault{4}$ -->
+      <g transform="translate(398.810952 198.245154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-34" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_text_9">
+     <!-- $x$ -->
+     <g transform="translate(435.913188 219.957785) scale(0.2 -0.2)">
+      <defs>
+       <path id="CMMI12-78" d="M 3034 2606 
+C 2829 2567 2752 2414 2752 2293 
+C 2752 2139 2874 2088 2963 2088 
+C 3155 2088 3290 2254 3290 2427 
+C 3290 2695 2982 2816 2714 2816 
+C 2323 2816 2106 2433 2048 2312 
+C 1901 2816 1504 2816 1389 2816 
+C 736 2816 390 1980 390 1839 
+C 390 1814 416 1782 461 1782 
+C 512 1782 525 1820 538 1846 
+C 755 2555 1184 2689 1370 2689 
+C 1658 2689 1715 2420 1715 2267 
+C 1715 2127 1677 1980 1600 1673 
+L 1382 798 
+C 1286 415 1101 64 762 64 
+C 730 64 570 64 435 147 
+C 666 192 717 383 717 460 
+C 717 588 621 664 499 664 
+C 346 664 179 530 179 326 
+C 179 57 480 -64 755 -64 
+C 1062 -64 1280 179 1414 441 
+C 1517 64 1837 -64 2074 -64 
+C 2726 -64 3072 773 3072 913 
+C 3072 945 3046 971 3008 971 
+C 2950 971 2944 939 2925 888 
+C 2752 326 2381 64 2093 64 
+C 1869 64 1747 230 1747 492 
+C 1747 632 1773 734 1875 1156 
+L 2099 2024 
+C 2195 2408 2413 2689 2707 2689 
+C 2720 2689 2899 2689 3034 2606 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#CMMI12-78" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_matplotlib.axis_2">
+    <g id="cpl_0e96aabc360d_9d81da_ytick_1">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_17">
+      <path d="M 10.8 303.321632 
+L 447 303.321632 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_18">
+      <defs>
+       <path id="cpl_0e96aabc360d_9d81da_ma50be2896d" d="M 0 0 
+L -3.5 0 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="303.321632" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_10">
+      <!-- $\mathdefault{−4}$ -->
+      <g transform="translate(197.264417 310.24013) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-34" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_2">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_19">
+      <path d="M 10.8 271.843263 
+L 447 271.843263 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_20">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="271.843263" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_11">
+      <!-- $\mathdefault{−3}$ -->
+      <g transform="translate(197.264417 278.761761) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-33" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_3">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_21">
+      <path d="M 10.8 240.364895 
+L 447 240.364895 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_22">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="240.364895" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_12">
+      <!-- $\mathdefault{−2}$ -->
+      <g transform="translate(197.264417 247.283393) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_4">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_23">
+      <path d="M 10.8 208.886526 
+L 447 208.886526 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_24">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="208.886526" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_13">
+      <!-- $\mathdefault{−1}$ -->
+      <g transform="translate(197.264417 215.805024) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_5">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_25">
+      <path d="M 10.8 145.929789 
+L 447 145.929789 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_26">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="145.929789" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_14">
+      <!-- $\mathdefault{1}$ -->
+      <g transform="translate(212.761905 152.848287) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_6">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_27">
+      <path d="M 10.8 114.451421 
+L 447 114.451421 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_28">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="114.451421" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_15">
+      <!-- $\mathdefault{2}$ -->
+      <g transform="translate(212.761905 121.369919) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_7">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_29">
+      <path d="M 10.8 82.973052 
+L 447 82.973052 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_30">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="82.973052" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_16">
+      <!-- $\mathdefault{3}$ -->
+      <g transform="translate(212.761905 89.891551) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-33" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_ytick_8">
+     <g id="cpl_0e96aabc360d_9d81da_line2d_31">
+      <path d="M 10.8 51.494684 
+L 447 51.494684 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_line2d_32">
+      <g>
+       <use xlink:href="#cpl_0e96aabc360d_9d81da_ma50be2896d" x="228.9" y="51.494684" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="cpl_0e96aabc360d_9d81da_text_17">
+      <!-- $\mathdefault{4}$ -->
+      <g transform="translate(212.761905 58.413182) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-34" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_text_18">
+     <!-- $y$ -->
+     <g transform="translate(183.751583 16.140682) scale(0.2 -0.2)">
+      <defs>
+       <path id="CMMI12-79" d="M 1683 -700 
+C 1510 -939 1261 -1152 947 -1152 
+C 870 -1152 563 -1152 467 -889 
+C 486 -895 518 -895 531 -895 
+C 723 -895 851 -729 851 -582 
+C 851 -435 730 -384 634 -384 
+C 531 -384 307 -458 307 -759 
+C 307 -1071 582 -1286 947 -1286 
+C 1587 -1286 2234 -700 2413 6 
+L 3040 2485 
+C 3046 2517 3059 2556 3059 2594 
+C 3059 2689 2982 2753 2886 2753 
+C 2829 2753 2694 2727 2643 2535 
+L 2170 658 
+C 2138 543 2138 530 2086 460 
+C 1958 281 1747 64 1440 64 
+C 1082 64 1050 415 1050 588 
+C 1050 952 1222 1443 1395 1903 
+C 1466 2088 1504 2178 1504 2305 
+C 1504 2574 1312 2816 998 2816 
+C 410 2816 173 1890 173 1839 
+C 173 1814 198 1782 243 1782 
+C 301 1782 307 1807 333 1897 
+C 486 2433 730 2689 979 2689 
+C 1037 2689 1146 2689 1146 2478 
+C 1146 2312 1075 2127 979 1884 
+C 666 1047 666 837 666 683 
+C 666 77 1101 -64 1421 -64 
+C 1606 -64 1837 -6 2061 230 
+L 2067 224 
+C 1971 -147 1907 -392 1683 -700 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#CMMI12-79" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_line2d_33">
+    <defs>
+     <path id="cpl_0e96aabc360d_9d81da_m32f0e374fe" d="M 3 0 
+L -3 -3 
+L -3 3 
+z
+" style="stroke: #000000; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#cpl_0e96aabc360d_9d81da_m32f0e374fe" x="447" y="177.408158" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_line2d_34">
+    <defs>
+     <path id="cpl_0e96aabc360d_9d81da_ma05f37d77a" d="M 0 -3 
+L -3 3 
+L 3 3 
+z
+" style="stroke: #000000; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#cpl_0e96aabc360d_9d81da_ma05f37d77a" x="228.9" y="20.016315" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_line2d_35">
+    <path d="M 10.8 183.703831 
+L 37.904413 184.597258 
+L 60.216297 185.548164 
+L 78.827284 186.557632 
+L 94.482879 187.623273 
+L 107.795459 188.746184 
+L 119.217652 189.926913 
+L 129.095587 191.16593 
+L 137.695514 192.463189 
+L 145.257059 193.824204 
+L 151.913349 195.243541 
+L 157.824135 196.726761 
+L 163.095916 198.274438 
+L 167.835195 199.893883 
+L 172.095221 201.580181 
+L 175.982494 203.355836 
+L 179.52364 205.216737 
+L 182.745285 207.157803 
+L 185.727303 209.212666 
+L 188.469694 211.369969 
+L 191.02571 213.661944 
+L 193.421974 216.110605 
+L 195.658487 218.714534 
+L 197.761875 221.50479 
+L 199.758762 224.526487 
+L 201.649149 227.795076 
+L 203.433034 231.324531 
+L 205.137044 235.190803 
+L 206.761179 239.429819 
+L 208.332064 244.166748 
+L 209.823073 249.384447 
+L 211.234206 255.133871 
+L 212.592089 261.605727 
+L 213.896722 268.927254 
+L 215.148105 277.255226 
+L 216.346237 286.784639 
+L 217.464494 297.48036 
+L 218.5295 309.811267 
+L 219.541256 324.125117 
+L 220.499762 340.866196 
+L 220.784422 346.6 
+M 236.596344 -1 
+L 237.56649 18.971872 
+L 238.604871 35.923902 
+L 239.696502 50.229339 
+L 240.841384 62.422626 
+L 242.066142 73.118954 
+L 243.344149 82.346386 
+L 244.675407 90.368476 
+L 246.059916 97.391073 
+L 247.5243 103.682624 
+L 249.041934 109.237621 
+L 250.639443 114.247091 
+L 252.290203 118.704673 
+L 254.020839 122.748898 
+L 255.83135 126.42347 
+L 257.748361 129.81147 
+L 259.745248 132.892826 
+L 261.848636 135.734613 
+L 264.085149 138.383556 
+L 266.454789 140.845938 
+L 268.984179 143.153085 
+L 271.699945 145.326658 
+L 274.602088 147.363875 
+L 277.743856 149.296404 
+L 281.151877 151.129935 
+L 284.879399 152.879734 
+L 288.953049 154.543599 
+L 293.452701 156.137376 
+L 298.431606 157.660499 
+L 303.969639 159.117322 
+L 310.146676 160.507941 
+L 317.095843 161.83955 
+L 324.92364 163.108695 
+L 333.816444 164.320729 
+L 343.987255 165.477328 
+L 355.6757 166.577325 
+L 369.201282 167.621458 
+L 384.990002 168.611397 
+L 403.574364 169.547322 
+L 425.619996 170.428255 
+L 447 171.112484 
+L 447 171.112484 
+" clip-path="url(#cpl_0e96aabc360d_9d81da_p4ddd841ce0)" style="fill: none; stroke: #bbe3ce; stroke-width: 2.5; stroke-linecap: square"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_patch_3">
+    <path d="M 228.9 334.8 
+L 228.9 20.016315 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_patch_4">
+    <path d="M 447 334.8 
+L 447 20.016315 
+" style="fill: none"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_patch_5">
+    <path d="M 10.8 177.408158 
+L 447 177.408158 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_patch_6">
+    <path d="M 10.8 20.016315 
+L 447 20.016315 
+" style="fill: none"/>
+   </g>
+   <g id="cpl_0e96aabc360d_9d81da_legend_1">
+    <g id="cpl_0e96aabc360d_9d81da_patch_7">
+     <path d="M 359.861905 63.891949 
+L 433 63.891949 
+Q 437 63.891949 437 59.891949 
+L 437 34.016315 
+Q 437 30.016315 433 30.016315 
+L 359.861905 30.016315 
+Q 355.861905 30.016315 355.861905 34.016315 
+L 355.861905 59.891949 
+Q 355.861905 63.891949 359.861905 63.891949 
+z
+" style="fill: #ffffff; opacity: 0.8; stroke: #cccccc; stroke-linejoin: miter"/>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_line2d_36">
+     <path d="M 363.861905 45.016315 
+L 383.861905 45.016315 
+L 403.861905 45.016315 
+" style="fill: none; stroke: #bbe3ce; stroke-width: 2.5; stroke-linecap: square"/>
+    </g>
+    <g id="cpl_0e96aabc360d_9d81da_text_19">
+     <!-- $\\{0}$ -->
+     <g transform="translate(419.861905 52.016315) scale(0.2 -0.2)">
+      <defs>
+       <path id="CMR17-30" d="M 2688 2025 
+C 2688 2416 2682 3080 2413 3591 
+C 2176 4039 1798 4198 1466 4198 
+C 1158 4198 768 4058 525 3597 
+C 269 3118 243 2524 243 2025 
+C 243 1661 250 1106 448 619 
+C 723 -39 1216 -128 1466 -128 
+C 1760 -128 2208 -7 2470 600 
+C 2662 1042 2688 1559 2688 2025 
+z
+M 1466 -26 
+C 1056 -26 813 325 723 812 
+C 653 1188 653 1738 653 2096 
+C 653 2588 653 2997 736 3387 
+C 858 3929 1216 4096 1466 4096 
+C 1728 4096 2067 3923 2189 3400 
+C 2272 3036 2278 2607 2278 2096 
+C 2278 1680 2278 1169 2202 792 
+C 2067 95 1690 -26 1466 -26 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="cpl_0e96aabc360d_9d81da_p4ddd841ce0">
+   <rect x="10.8" y="20.016315" width="436.2" height="314.783685"/>
+  </clipPath>
+ </defs>
+</svg>
+</div></figure>
+</section>
+<section id="test-4-interactive-graph-with-domain">
+<h2>Test 4: Interactive Graph with Domain<a class="headerlink" href="#test-4-interactive-graph-with-domain" title="Link to this heading">#</a></h2>
+</section>
+<section id="test-5-animate-with-domain">
+<h2>Test 5: Animate with Domain<a class="headerlink" href="#test-5-animate-with-domain" title="Link to this heading">#</a></h2>
+</section>
+<section id="test-6-function-with-label-and-domain">
+<h2>Test 6: Function with Label and Domain<a class="headerlink" href="#test-6-function-with-label-and-domain" title="Link to this heading">#</a></h2>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">munchboka-edutools demo</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="examples/plot.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-1-basic-domain-with-closed-endpoints">Test 1: Basic Domain with Closed Endpoints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-2-domain-with-mixed-brackets">Test 2: Domain with Mixed Brackets</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-3-exclusions">Test 3: Exclusions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-4-interactive-graph-with-domain">Test 4: Interactive Graph with Domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-5-animate-with-domain">Test 5: Animate with Domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-6-function-with-label-and-domain">Test 6: Function with Label and Domain</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By René Ask
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

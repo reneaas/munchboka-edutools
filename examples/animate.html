@@ -1,0 +1,691 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Animate Directive Examples &#8212; munchboka-edutools</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=9542c1b9" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=e40b38cf" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=3f648898" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=5c924dd9" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=1b585024" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=5dd46ff0" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/timedQuiz.css?v=89e27729" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/cas_popup.css?v=bae4ad7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=a6d10b1c" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=2454bc3f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark-high-contrast.css?v=4c0c1b0f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=f77426ac" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=9fbab2c7" />
+    <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
+    <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/munchboka/js/utils.js?v=a5b18a1c"></script>
+    <script src="../_static/munchboka/js/casThemeManager.js?v=88874cc7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+    <script src="../_static/munchboka/js/skulpt/skulpt.js?v=51c28977"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/munchboka/js/flashcards.js?v=28a4399e"></script>
+    <script src="../_static/munchboka/js/interactiveCode/interactiveCodeSetup.js?v=733f5585"></script>
+    <script src="../_static/munchboka/js/interactiveCode/codeEditor.js?v=30f3f389"></script>
+    <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
+    <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=b934d01d"></script>
+    <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=e090935c"></script>
+    <script src="../_static/munchboka/js/quiz.js?v=a4e1ffeb"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/munchboka/js/popup.js?v=5db611f4"></script>
+    <script src="../_static/munchboka/js/timedQuiz/utils.js?v=2c6f871c"></script>
+    <script src="../_static/munchboka/js/timedQuiz/multipleChoiceQuestion.js?v=c6ce1ca2"></script>
+    <script src="../_static/munchboka/js/timedQuiz/timedMultipleChoiceQuiz.js?v=9accc73d"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/animate';</script>
+    <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
+    <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
+    <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
+    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=e52321b4"></script>
+    <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=6e8c8774"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script src="../_static/munchboka/js/highlight-init.js?v=6bc17905"></script>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/examples/animate.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="multiplot directive" href="multi_plot.html" />
+    <link rel="prev" title="plot directive" href="plot.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">munchboka-edutools</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../test_function_domains.html">Test Function Domain and Endpoint Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Animate Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_plot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_plot_point.html">Multi-Plot Point Keyword Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_plot_text.html">multi-plot text examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_plot_annotate.html">multi-plot annotate examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_plot2_test.html">Multi-Plot2 Test</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="polydiv.html">Polydiv Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="horner.html">Horner Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quiz/quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jeopardy/jeopardy.html">Jeopardy example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive_code.html">Interactive Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cas_popup.html">CAS Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factor_tree.html">Factor Tree Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pair_puzzle.html">Pair Puzzle Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escape_room.html">Escape Room Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escape_room/escape_room.html">Example: Escape Room</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escape_room2.html">Escape Room 2 Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admonitions.html">Custom Admonitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dialogue.html">Dialogue Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clear.html">Clear Directive Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parsons.html">Parsons Puzzle Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="popup.html">Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggb_icon.html">GeoGebra Icon Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggb_popup.html">GeoGebra Popup Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggb.html">GeoGebra Applet Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poly_icon.html">Polynomial Icon Role</a></li>
+<li class="toctree-l1"><a class="reference internal" href="timed_quiz.html">Timed Quiz Directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="turtle.html">Turtle Graphics Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flashcards.html">Flashcards-eksempel</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/examples/animate.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Animate Directive Examples</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-function-animation">Basic Function Animation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rotating-vector">Rotating Vector</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-point-on-parabola">Moving Point on Parabola</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wave-interference">Wave Interference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expanding-circle">Expanding Circle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tangent-line-animation">Tangent Line Animation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options-reference">Options Reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#animation-specific-options">Animation-Specific Options</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#all-plot-options-work">All Plot Options Work</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips-and-best-practices">Tips and Best Practices</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#variable-substitution">Variable Substitution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-with-multi-plot">Combining with Multi-Plot</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-sizes">File Sizes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#browser-compatibility">Browser Compatibility</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="animate-directive-examples">
+<h1>Animate Directive Examples<a class="headerlink" href="#animate-directive-examples" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">animate</span></code> directive extends the <code class="docutils literal notranslate"><span class="pre">plot</span></code> directive to create animations by varying one or more variables across frames.</p>
+<section id="basic-function-animation">
+<h2>Basic Function Animation<a class="headerlink" href="#basic-function-animation" title="Link to this heading">#</a></h2>
+<p>Here’s a simple animation of a sine wave with varying frequency:</p>
+<p>Sinusfunksjon med varierende frekvens <span class="math notranslate nohighlight">\(a\)</span> fra 1 til 5.</p>
+</section>
+<section id="rotating-vector">
+<h2>Rotating Vector<a class="headerlink" href="#rotating-vector" title="Link to this heading">#</a></h2>
+<p>Animate a vector rotating around the origin:</p>
+<p>En vektor som roterer <span class="math notranslate nohighlight">\(360°\)</span> rundt origo.</p>
+</section>
+<section id="moving-point-on-parabola">
+<h2>Moving Point on Parabola<a class="headerlink" href="#moving-point-on-parabola" title="Link to this heading">#</a></h2>
+<p>Animate a point moving along a parabola:</p>
+<p>Et punkt beveger seg langs parabelen <span class="math notranslate nohighlight">\(f(x) = x^2\)</span>.</p>
+</section>
+<section id="wave-interference">
+<h2>Wave Interference<a class="headerlink" href="#wave-interference" title="Link to this heading">#</a></h2>
+<p>Two waves with phase difference:</p>
+<p>Interferens mellom to bølger med faseforskjell <span class="math notranslate nohighlight">\(\phi\)</span>.</p>
+</section>
+<section id="expanding-circle">
+<h2>Expanding Circle<a class="headerlink" href="#expanding-circle" title="Link to this heading">#</a></h2>
+<p>A circle that grows in radius:</p>
+<p>En sirkel som vokser fra radius <span class="math notranslate nohighlight">\(0.5\)</span> til <span class="math notranslate nohighlight">\(4\)</span>.</p>
+</section>
+<section id="tangent-line-animation">
+<h2>Tangent Line Animation<a class="headerlink" href="#tangent-line-animation" title="Link to this heading">#</a></h2>
+<p>A tangent line moving along a curve:</p>
+<p>Tangentlinje til <span class="math notranslate nohighlight">\(f(x) = x^3 - 3x\)</span> i punktet <span class="math notranslate nohighlight">\((a, f(a))\)</span>.</p>
+</section>
+<section id="options-reference">
+<h2>Options Reference<a class="headerlink" href="#options-reference" title="Link to this heading">#</a></h2>
+<section id="animation-specific-options">
+<h3>Animation-Specific Options<a class="headerlink" href="#animation-specific-options" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">animate-var:</span> <span class="pre">name,</span> <span class="pre">start,</span> <span class="pre">end,</span> <span class="pre">frames</span></code> - Define animation variable</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: Variable identifier (must be valid Python identifier)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start</span></code>: Starting value (supports SymPy expressions like <code class="docutils literal notranslate"><span class="pre">pi</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt(2)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end</span></code>: Ending value (supports SymPy expressions)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frames</span></code>: Number of frames (positive integer)</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fps:</span> <span class="pre">10</span></code> - Frames per second (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">duration:</span> <span class="pre">200</span></code> - Frame duration in milliseconds (alternative to fps)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">loop:</span> <span class="pre">true</span></code> - Loop animation infinitely (default: true)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">format:</span> <span class="pre">webp</span></code> - Output format: <code class="docutils literal notranslate"><span class="pre">webp</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">gif</span></code></p></li>
+</ul>
+</section>
+<section id="all-plot-options-work">
+<h3>All Plot Options Work<a class="headerlink" href="#all-plot-options-work" title="Link to this heading">#</a></h3>
+<p>The animate directive supports all options from the plot directive:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">function</span></code>, <code class="docutils literal notranslate"><span class="pre">point</span></code>, <code class="docutils literal notranslate"><span class="pre">vector</span></code>, <code class="docutils literal notranslate"><span class="pre">circle</span></code>, <code class="docutils literal notranslate"><span class="pre">ellipse</span></code>, <code class="docutils literal notranslate"><span class="pre">curve</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">line-segment</span></code>, <code class="docutils literal notranslate"><span class="pre">vline</span></code>, <code class="docutils literal notranslate"><span class="pre">hline</span></code>, <code class="docutils literal notranslate"><span class="pre">polygon</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">annotate</span></code>, <code class="docutils literal notranslate"><span class="pre">text</span></code>, <code class="docutils literal notranslate"><span class="pre">bar</span></code>, <code class="docutils literal notranslate"><span class="pre">angle-arc</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xmin</span></code>, <code class="docutils literal notranslate"><span class="pre">xmax</span></code>, <code class="docutils literal notranslate"><span class="pre">ymin</span></code>, <code class="docutils literal notranslate"><span class="pre">ymax</span></code>, <code class="docutils literal notranslate"><span class="pre">xstep</span></code>, <code class="docutils literal notranslate"><span class="pre">ystep</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">grid</span></code>, <code class="docutils literal notranslate"><span class="pre">ticks</span></code>, <code class="docutils literal notranslate"><span class="pre">xlabel</span></code>, <code class="docutils literal notranslate"><span class="pre">ylabel</span></code>, <code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">width</span></code>, <code class="docutils literal notranslate"><span class="pre">align</span></code>, <code class="docutils literal notranslate"><span class="pre">class</span></code>, <code class="docutils literal notranslate"><span class="pre">alt</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="tips-and-best-practices">
+<h2>Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Link to this heading">#</a></h2>
+<section id="performance">
+<h3>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Keep frame count reasonable (20-50 frames is usually sufficient)</p></li>
+<li><p>Use WebP format for smaller file sizes and better quality</p></li>
+<li><p>Cache is automatic - animations regenerate only when content changes</p></li>
+</ul>
+</section>
+<section id="variable-substitution">
+<h3>Variable Substitution<a class="headerlink" href="#variable-substitution" title="Link to this heading">#</a></h3>
+<p>The animation variable can appear anywhere in plot content:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{animate}
+animate-var: n, 1, 10, 10
+function: x**n
+point: 1, 1**n
+:::
+</pre></div>
+</div>
+<p>Variables support mathematical expressions:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">animate-var:</span> <span class="pre">t,</span> <span class="pre">0,</span> <span class="pre">2*pi,</span> <span class="pre">30</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">animate-var:</span> <span class="pre">a,</span> <span class="pre">-sqrt(5),</span> <span class="pre">sqrt(5),</span> <span class="pre">20</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">animate-var:</span> <span class="pre">n,</span> <span class="pre">1,</span> <span class="pre">E,</span> <span class="pre">15</span></code></p></li>
+</ul>
+</section>
+<section id="combining-with-multi-plot">
+<h3>Combining with Multi-Plot<a class="headerlink" href="#combining-with-multi-plot" title="Link to this heading">#</a></h3>
+<p>Animations work inside <code class="docutils literal notranslate"><span class="pre">multi-plot2</span></code> containers:</p>
+<div class="multi-plot2-container docutils container">
+<p>rows: 1
+cols: 2</p>
+</div>
+</section>
+<section id="file-sizes">
+<h3>File Sizes<a class="headerlink" href="#file-sizes" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>WebP typically produces 30-50% smaller files than GIF</p></li>
+<li><p>Higher FPS = smoother animation but larger file</p></li>
+<li><p>More frames = longer animation and larger file</p></li>
+<li><p>Reduce <code class="docutils literal notranslate"><span class="pre">fontsize</span></code> and <code class="docutils literal notranslate"><span class="pre">lw</span></code> for smaller output</p></li>
+</ul>
+</section>
+<section id="browser-compatibility">
+<h3>Browser Compatibility<a class="headerlink" href="#browser-compatibility" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>WebP: Modern browsers (Chrome, Firefox, Edge, Safari 14+)</p></li>
+<li><p>GIF: Universal compatibility</p></li>
+<li><p>Both formats support transparency</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./examples"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="plot.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="multi_plot.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-function-animation">Basic Function Animation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rotating-vector">Rotating Vector</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-point-on-parabola">Moving Point on Parabola</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wave-interference">Wave Interference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expanding-circle">Expanding Circle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tangent-line-animation">Tangent Line Animation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options-reference">Options Reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#animation-specific-options">Animation-Specific Options</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#all-plot-options-work">All Plot Options Work</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips-and-best-practices">Tips and Best Practices</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#variable-substitution">Variable Substitution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-with-multi-plot">Combining with Multi-Plot</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-sizes">File Sizes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#browser-compatibility">Browser Compatibility</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By René Ask
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

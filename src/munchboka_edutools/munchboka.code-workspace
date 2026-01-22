@@ -1,12 +1,15 @@
 {
 	"folders": [
 		{
+			"name": "munchboka-edutools",
 			"path": "../.."
 		},
 		{
+			"name": "matematikk_1t",
 			"path": "../../../matematikk_1t"
 		},
 		{
+			"name": "matematikk_r1",
 			"path": "../../../matematikk_r1"
 		}
 	],

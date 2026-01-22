@@ -141,15 +141,129 @@ class InteractiveGraphDirective(SphinxDirective):
 
         # Create output paths for frames
         frame_dir = os.path.join(static_dir, base_name)
-        frames_exist = os.path.isdir(frame_dir) and len(os.listdir(frame_dir)) == len(var_values)
+
+        # Check for delta format (preferred) or frame files (fallback)
+        delta_base_path = os.path.join(frame_dir, "base.svg")
+        delta_json_path = os.path.join(frame_dir, "deltas.json")
+        has_delta_format = os.path.isfile(delta_base_path) and os.path.isfile(delta_json_path)
+        has_frame_files = os.path.isdir(frame_dir) and len(os.listdir(frame_dir)) >= len(var_values)
+        frames_exist = has_delta_format or has_frame_files
+
+        def _delta_assets_look_corrupt() -> bool:
+            """Detect legacy/broken cached delta assets.
+
+            We previously had a bug where adding IDs via regex could truncate
+            start tags, producing lines like:
+              " style="..."
+            instead of:
+              " style="..."/>
+            In that case the SVG may parse into DOM but not render.
+            """
+            if not has_delta_format:
+                return False
+            try:
+                with open(delta_base_path, "r", encoding="utf-8") as f:
+                    svg_text = f.read()
+            except Exception:
+                return True
+
+            # Matplotlib SVG emits many self-closing tags. If we see a line that
+            # looks like the end of a <path ...> tag but lacks the closing '/>',
+            # treat as corrupted.
+            if re.search(r'^\s*"\s+style="[^"]*"\s*$', svg_text, flags=re.MULTILINE):
+                return True
+
+            # Also catch truncated <use ...> start tags (missing '/>' or '>').
+            if re.search(r'^\s*<use\b[^>]*"\s*$', svg_text, flags=re.MULTILINE):
+                return True
+
+            return False
+
+        def _delta_assets_look_stale() -> bool:
+            """Detect cached delta assets that are effectively no-ops.
+
+            A common failure mode is that deltas only include non-visual
+            metadata changes (e.g., dc:date tail text), so the slider logs
+            "Applying delta" but the rendered SVG never changes.
+            """
+            if not has_delta_format:
+                return False
+            try:
+                import json
+
+                with open(delta_json_path, "r", encoding="utf-8") as f:
+                    deltas = json.load(f)
+            except Exception:
+                return True
+
+            def _is_noise_only(elem_id: str, changes: Dict[str, Any]) -> bool:
+                # Tail text changes are not applied in the JS runtime.
+                if set(changes.keys()) <= {"tailContent"}:
+                    return True
+
+                # Ignore common Matplotlib metadata ids (dc/rdf/cc) if they only
+                # change tail/text content.
+                if elem_id.startswith(("dc_", "rdf_", "cc_")) and set(changes.keys()) <= {
+                    "tailContent",
+                    "textContent",
+                }:
+                    return True
+
+                return False
+
+            # Look for at least one meaningful change across frames.
+            for frame in deltas:
+                changes = frame.get("changes") or {}
+                for elem_id, ch in changes.items():
+                    if not isinstance(ch, dict):
+                        continue
+
+                    # Marker churn guard:
+                    # Matplotlib regenerates marker <defs> ids per render, which yields
+                    # deltas like xlink:href="#m..." on <use> elements. Those ids do NOT
+                    # exist in base.svg (only base defs are stored), so applying them
+                    # makes markers (including point primitives) disappear.
+                    #
+                    # If we see any such delta, treat cache as stale so we regenerate
+                    # with the fixed delta engine.
+                    for k, v in ch.items():
+                        if (
+                            k
+                            in (
+                                "{http://www.w3.org/1999/xlink}href",
+                                "xlink:href",
+                                "{{http://www.w3.org/1999/xlink}}href",
+                            )
+                            and isinstance(v, str)
+                            and v.startswith("#m")
+                        ):
+                            return True
+
+                    if _is_noise_only(elem_id, ch):
+                        continue
+                    return False
+
+            return True
 
         # Check if regeneration needed
         nocache = "nocache" in merged
-        regenerate = nocache or not frames_exist
+        regenerate = (
+            nocache
+            or not frames_exist
+            or _delta_assets_look_corrupt()
+            or _delta_assets_look_stale()
+        )
 
         if regenerate:
+            from sphinx.util import logging
+
+            logger = logging.getLogger(__name__)
             try:
-                # Generate all frames
+                # Ensure we don't keep broken legacy assets around.
+                if os.path.isdir(frame_dir):
+                    shutil.rmtree(frame_dir)
+
+                # Generate all frames (will create delta format)
                 self._generate_frames(
                     app,
                     var_name,
@@ -189,21 +303,17 @@ class InteractiveGraphDirective(SphinxDirective):
 
         # Create output node
         raw_node = nodes.raw("", html_content, format="html")
-        raw_node.setdefault("classes", []).extend(
-            ["interactive-graph", "no-click", "no-scaled-link"]
-        )
+        raw_node.setdefault("classes", []).extend(["interactive-graph", "no-click"])
 
         align = merged.get("align", "center")
-        
+
         # For left/right alignment, use a simple container to avoid figure width issues
         # For center, use figure for consistency with other directives
         if align in ("left", "right"):
             container = nodes.container()
-            container.setdefault("classes", []).extend(
-                ["interactive-figure", "no-click", "no-scaled-link"]
-            )
+            container.setdefault("classes", []).extend(["interactive-figure", "no-click"])
             container += raw_node
-            
+
             # Add caption if present
             if caption_lines:
                 caption_para = nodes.paragraph()
@@ -212,22 +322,22 @@ class InteractiveGraphDirective(SphinxDirective):
                 caption_para.extend(parsed_nodes)
                 caption_para["classes"].append("caption")
                 container += caption_para
-            
+
             # Handle explicit name
             explicit_name = self.options.get("name")
             if explicit_name:
                 self.add_name(container)
-            
+
             return [container]
         else:
             # Use figure for center alignment
             figure = nodes.figure()
             figure.setdefault("classes", []).extend(
-                ["adaptive-figure", "interactive-figure", "no-click", "no-scaled-link"]
+                ["adaptive-figure", "interactive-figure", "no-click"]
             )
             figure["align"] = align
             figure += raw_node
-            
+
             # Add caption if present
             if caption_lines:
                 caption = nodes.caption()
@@ -235,12 +345,12 @@ class InteractiveGraphDirective(SphinxDirective):
                 parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
                 caption.extend(parsed_nodes)
                 figure += caption
-            
+
             # Handle explicit name
             explicit_name = self.options.get("name")
             if explicit_name:
                 self.add_name(figure)
-            
+
             return [figure]
 
     def _parse_kv_block(self) -> Tuple[Dict[str, Any], Dict[str, List[str]], int]:
@@ -366,7 +476,7 @@ class InteractiveGraphDirective(SphinxDirective):
         output_dir: str,
         merged_options: Dict[str, Any],
     ) -> None:
-        """Generate all frames as SVG images.
+        """Generate all frames as SVG images and compute deltas.
 
         Args:
             app: Sphinx application
@@ -376,10 +486,13 @@ class InteractiveGraphDirective(SphinxDirective):
             output_dir: Directory to save frames
             merged_options: Merged options
         """
+        import tempfile
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Import frame generation from animate
         from .animate import AnimateDirective
+        from .svg_delta import compute_svg_deltas, save_delta_format
         import re
 
         # Create a temporary animate directive instance to reuse its methods
@@ -395,43 +508,107 @@ class InteractiveGraphDirective(SphinxDirective):
             state_machine=self.state_machine,
         )
 
-        # Generate each frame as SVG
-        for i, value in enumerate(var_values):
-            # Substitute variable in content
-            frame_content = "\n".join(plot_content_lines)
-            frame_content = _substitute_variable(frame_content, var_name, value)
+        # Generate all frames in memory first
+        svg_frames = []
 
-            # Generate SVG directly to output directory
-            svg_path = os.path.join(output_dir, f"frame_{i:04d}.svg")
-            temp_directive._generate_frame_svg(
-                app,
-                frame_content,
-                svg_path,
-                merged_options,
-                var_name,
-                value,
+        # Use temporary directory for frame generation
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for i, value in enumerate(var_values):
+                # Substitute variable in content
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variable(frame_content, var_name, value)
+
+                # Generate SVG to temp location
+                svg_path = os.path.join(temp_dir, f"frame_{i:04d}.svg")
+                temp_directive._generate_frame_svg(
+                    app,
+                    frame_content,
+                    svg_path,
+                    merged_options,
+                    var_name,
+                    value,
+                )
+
+                # Read SVG content
+                with open(svg_path, "r", encoding="utf-8") as f:
+                    svg_content = f.read()
+
+                # Add consistent IDs to elements (needed for delta system)
+                # Use simple numeric IDs based on frame to keep deltas small
+                svg_content = self._ensure_element_ids(svg_content, i)
+
+                svg_frames.append(svg_content)
+
+        # Compute deltas
+        try:
+            base_svg, deltas = compute_svg_deltas(svg_frames)
+
+            # Save in delta format
+            save_delta_format(base_svg, deltas, output_dir)
+
+            from sphinx.util import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"✓ Generated delta-based interactive graph: "
+                f"{len(svg_frames)} frames → base.svg + deltas.json"
             )
+        except Exception as e:
+            # Fallback: save individual frames if delta generation fails
+            import traceback
+            from sphinx.util import logging
 
-            # Make SVG IDs unique by adding frame index prefix
-            with open(svg_path, "r", encoding="utf-8") as f:
-                svg_content = f.read()
+            logger = logging.getLogger(__name__)
+            logger.warning(f"⚠ Delta generation failed, using frame-based fallback: {e}")
+            logger.warning(f"   Traceback: {traceback.format_exc()}")
+            for i, svg in enumerate(svg_frames):
+                frame_path = os.path.join(output_dir, f"frame_{i:04d}.svg")
+                with open(frame_path, "w", encoding="utf-8") as f:
+                    f.write(svg)
 
-            # Add unique prefix to all IDs to avoid conflicts
-            import uuid
+    def _ensure_element_ids(self, svg_content: str, frame_idx: int) -> str:
+        """
+        Ensure SVG elements have consistent IDs for delta tracking.
 
-            unique_prefix = f"frame{i:04d}_{uuid.uuid4().hex[:6]}_"
-            svg_content = re.sub(
-                r'id="([^"]+)"', lambda m: f'id="{unique_prefix}{m.group(1)}"', svg_content
-            )
-            svg_content = re.sub(
-                r"url\(#([^)]+)\)", lambda m: f"url(#{unique_prefix}{m.group(1)})", svg_content
-            )
-            svg_content = re.sub(
-                r'href="#([^"]+)"', lambda m: f'href="#{unique_prefix}{m.group(1)}"', svg_content
-            )
+        Uses regex-based approach to avoid XML namespace issues.
+        """
+        import re
 
-            with open(svg_path, "w", encoding="utf-8") as f:
-                f.write(svg_content)
+        # NOTE: this function must preserve SVG validity.
+
+        # Counter for generating IDs
+        id_counters = {}
+
+        def add_id(match):
+            """Add ID to an element that doesn't have one.
+
+            Important: preserve the original tag text exactly (including '/>' and
+            any line breaks), otherwise we risk producing invalid SVG.
+            """
+            tag = match.group("tag")
+            full_tag = match.group(0)
+
+            # Skip if already has an id
+            if "id=" in full_tag or "id =" in full_tag:
+                return full_tag
+
+            # Skip certain tags
+            if tag in ("svg", "defs", "clipPath", "style", "metadata", "title", "desc"):
+                return full_tag
+
+            id_counters[tag] = id_counters.get(tag, 0)
+            elem_id = f"{tag}_{id_counters[tag]}"
+            id_counters[tag] += 1
+
+            # Insert id right after the tag name, preserving everything else.
+            insert_at = len(tag) + 1  # after '<tag'
+            return full_tag[:insert_at] + f' id="{elem_id}"' + full_tag[insert_at:]
+
+        # Match opening tags in a forgiving way. Excludes declarations/comments
+        # because tag must start with a letter/underscore.
+        pattern = r"<(?P<tag>[A-Za-z_][\w.-]*)(?P<rest>[^<>]*?)>"
+
+        return re.sub(pattern, add_id, svg_content)
 
     def _generate_html(
         self,
@@ -452,26 +629,82 @@ class InteractiveGraphDirective(SphinxDirective):
             HTML string
         """
         import uuid
+        import os
 
         unique_id = uuid.uuid4().hex[:8]
         width = options.get("width", "80%")
         height = options.get("height", "auto")
         align = options.get("align", "center")
 
-        # Determine wrapper styling based on alignment
+        # Determine wrapper styling based on alignment.
+        # For floats, prefer an explicit width so responsive sizing works
+        # consistently for inline SVG (delta mode) and <img> (frame mode).
         if align == "left":
-            wrapper_style = f"display: inline-block; max-width: {width}; float: left; clear: left;"
+            wrapper_style = f"width: {width}; float: left; clear: left;"
         elif align == "right":
-            wrapper_style = f"display: inline-block; max-width: {width}; float: right; clear: right;"
+            wrapper_style = f"width: {width}; float: right; clear: right;"
         else:  # center or default
             wrapper_style = f"max-width: {width}; margin: 0 auto; display: block;"
 
         # Calculate relative path based on document depth
-        # self.env.docname gives us the path like "book/omvendte_funksjoner/derivasjon/oppgaver"
-        # The HTML output mirrors this structure, so we count slashes to determine depth
         docname = self.env.docname
-        depth = docname.count("/")  # Number of directory levels from root
-        rel_prefix = "../" * depth  # Each level needs one "../" to reach root
+        depth = docname.count("/")
+        rel_prefix = "../" * depth
+
+        # Check if delta format exists (use env.srcdir, same as in run())
+        srcdir = self.env.srcdir
+        static_dir = os.path.join(srcdir, "_static", "interactive", base_name)
+        delta_base_path = os.path.join(static_dir, "base.svg")
+        delta_json_path = os.path.join(static_dir, "deltas.json")
+        delta_base_exists = os.path.isfile(delta_base_path)
+        delta_json_exists = os.path.isfile(delta_json_path)
+        use_delta_format = delta_base_exists and delta_json_exists
+
+        if use_delta_format:
+            # Use delta-based HTML
+            from .svg_delta import generate_delta_html
+
+            base_svg_url = f"{rel_prefix}_static/interactive/{base_name}/base.svg"
+            deltas_json_url = f"{rel_prefix}_static/interactive/{base_name}/deltas.json"
+            initial_idx = self._get_initial_frame_index(var_values, options)
+
+            return generate_delta_html(
+                base_svg_url,
+                deltas_json_url,
+                unique_id,
+                var_name,
+                var_values,
+                initial_idx,
+                wrapper_style,
+                height,
+            )
+        else:
+            # Fallback: frame-based HTML (old method)
+            return self._generate_frame_based_html(
+                base_name,
+                var_name,
+                var_values,
+                options,
+                unique_id,
+                wrapper_style,
+                rel_prefix,
+            )
+
+    def _generate_frame_based_html(
+        self,
+        base_name: str,
+        var_name: str,
+        var_values: List[float],
+        options: Dict[str, Any],
+        unique_id: str,
+        wrapper_style: str,
+        rel_prefix: str,
+    ) -> str:
+        """Generate HTML for frame-based (non-delta) interactive graph.
+
+        This is the fallback method when delta format is not available.
+        """
+        height = options.get("height", "auto")
 
         # Generate frame paths using relative paths that work from any page depth
         frame_paths = [

@@ -651,6 +651,35 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
     else:
         value_str = f"{var_value:.6e}"
 
+    def _format_text_placeholders(text: str) -> str:
+        """Replace `{var}` / `{var:...}` placeholders inside text.
+
+        We intentionally only support placeholders for the animation variable.
+        This avoids unexpected substitutions inside arbitrary quoted strings.
+        """
+        if "{" not in text or "}" not in text:
+            return text
+
+        # Preserve escaped braces.
+        lbrace_token = "\u0000LBRACE\u0000"
+        rbrace_token = "\u0000RBRACE\u0000"
+        tmp = text.replace("{{", lbrace_token).replace("}}", rbrace_token)
+
+        # Only touch placeholders that reference the variable.
+        pattern = re.compile(r"\{" + re.escape(var_name) + r"(?:\:([^}]+))?\}")
+
+        def repl(m: re.Match[str]) -> str:
+            fmt_spec = m.group(1)
+            if fmt_spec is None or fmt_spec == "":
+                return value_str
+            try:
+                return format(var_value, fmt_spec)
+            except Exception:
+                return value_str
+
+        tmp = pattern.sub(repl, tmp)
+        return tmp.replace(lbrace_token, "{").replace(rbrace_token, "}")
+
     # Process line by line to handle text: lines specially
     lines = content.split("\n")
     result_lines = []
@@ -690,12 +719,16 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
                 else:
                     parts.append(("normal", current))
 
-            # Reconstruct line, substituting only in normal parts
+            # Reconstruct line:
+            # - substitute bare variable names in non-quoted parts
+            # - apply `{var}` / `{var:...}` placeholders inside quoted parts
             pattern = r"\b" + re.escape(var_name) + r"\b"
             reconstructed = ""
             for part_type, part_content in parts:
                 if part_type == "normal":
                     reconstructed += re.sub(pattern, value_str, part_content)
+                elif part_type == "quoted":
+                    reconstructed += _format_text_placeholders(part_content)
                 else:
                     reconstructed += part_content
 
@@ -1179,10 +1212,10 @@ class AnimateDirective(SphinxDirective):
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
-        
+
         # Enable LaTeX rendering for consistent math formatting
-        plt.rcParams['text.usetex'] = True
-        plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+        plt.rcParams["text.usetex"] = True
+        plt.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 
         try:
             import plotmath
@@ -1227,6 +1260,7 @@ class AnimateDirective(SphinxDirective):
         if axis_off:
             # Create a plain figure with axes hidden (no ticks/grid)
             import matplotlib.pyplot as _plt
+
             fig, ax = _plt.subplots()
             fig.set_size_inches(6.0, 6.0)
             ax.set_xlim(xmin, xmax)
@@ -1625,7 +1659,7 @@ class AnimateDirective(SphinxDirective):
                     "dashdot": "-.",
                 }
                 ls_use = style_map_arc.get((style_arc or "solid").lower(), "-")
-                
+
                 # Resolve color via plotmath palette
                 default_arc_color = plotmath.COLORS.get("black") or "black"
                 if color_arc:
@@ -1679,16 +1713,16 @@ class AnimateDirective(SphinxDirective):
                                     cur.append(ch)
                             if cur:
                                 parts_inner.append("".join(cur).strip())
-                            
+
                             if has_comma and len(parts_inner) == 2:
                                 pairs.append((parts_inner[0], parts_inner[1]))
                         i = j
                     else:
                         i += 1
-                
+
                 if len(pairs) < 2:
                     continue
-                
+
                 # Evaluate the two points
                 eval_namespace = _get_safe_namespace(**{var_name: var_value})
                 pcoords = []
@@ -1700,10 +1734,10 @@ class AnimateDirective(SphinxDirective):
                     except Exception:
                         pcoords = []
                         break
-                
+
                 if len(pcoords) != 2:
                     continue
-                
+
                 # Extract style and color from the rest
                 # Find where the second point ends
                 spans = []
@@ -1737,7 +1771,7 @@ class AnimateDirective(SphinxDirective):
                         idx = j
                     else:
                         idx += 1
-                
+
                 # Build rest excluding coordinate tuples
                 if spans:
                     parts_rest = []
@@ -1751,7 +1785,7 @@ class AnimateDirective(SphinxDirective):
                     rest = "".join(parts_rest)
                 else:
                     rest = s
-                
+
                 # Clean and parse tokens
                 rest = re.sub(r",{2,}", ",", rest)
                 tokens = [tok.strip().strip("'\"") for tok in rest.split(",") if tok.strip()]
@@ -1763,7 +1797,7 @@ class AnimateDirective(SphinxDirective):
                         style_seg = low
                     elif color_seg is None:
                         color_seg = tok
-                
+
                 # Render the line segment
                 (x1s, y1s), (x2s, y2s) = pcoords[0], pcoords[1]
                 style_map_seg = {
@@ -1773,14 +1807,14 @@ class AnimateDirective(SphinxDirective):
                     "dashdot": "-.",
                 }
                 ls_use = style_map_seg.get((style_seg or "solid").lower(), "-")
-                
+
                 default_seg_color = plotmath.COLORS.get("black") or "black"
                 if color_seg:
                     mapped_seg = plotmath.COLORS.get(color_seg)
                     col_use = mapped_seg if mapped_seg else color_seg
                 else:
                     col_use = default_seg_color
-                
+
                 ax.plot([x1s, x2s], [y1s, y2s], linestyle=ls_use, color=col_use, lw=lw)
             except Exception:
                 pass
@@ -1793,7 +1827,9 @@ class AnimateDirective(SphinxDirective):
             try:
                 s = str(vline).strip()
                 # Remove surrounding brackets if present
-                if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
+                if (s.startswith("[") and s.endswith("]")) or (
+                    s.startswith("(") and s.endswith(")")
+                ):
                     s = s[1:-1].strip()
 
                 # Parse by splitting on top-level commas
@@ -1822,7 +1858,7 @@ class AnimateDirective(SphinxDirective):
                     continue
 
                 eval_namespace = _get_safe_namespace(**{var_name: var_value})
-                
+
                 # Check if first part is a coordinate pair
                 first_part = parts[0].strip()
                 if first_part.startswith("(") and first_part.endswith(")"):
@@ -1847,12 +1883,20 @@ class AnimateDirective(SphinxDirective):
                             y2 = float(eval(coord2_parts[1].strip(), eval_namespace))
                             dx_v = x2 - x_v
                             dy_v = y2 - y_v
-                            color_v = parts[2].strip() if len(parts) >= 3 and parts[2].strip() else "black"
+                            color_v = (
+                                parts[2].strip()
+                                if len(parts) >= 3 and parts[2].strip()
+                                else "black"
+                            )
                         elif len(parts) >= 3:
                             # Format: (x, y), dx, dy[, color]
                             dx_v = float(eval(parts[1], eval_namespace))
                             dy_v = float(eval(parts[2], eval_namespace))
-                            color_v = parts[3].strip() if len(parts) >= 4 and parts[3].strip() else "black"
+                            color_v = (
+                                parts[3].strip()
+                                if len(parts) >= 4 and parts[3].strip()
+                                else "black"
+                            )
                         else:
                             continue
                     else:
@@ -1880,13 +1924,13 @@ class AnimateDirective(SphinxDirective):
                 ylim = ax.get_ylim()
                 x_range_vec = xlim[1] - xlim[0]
                 y_range_vec = ylim[1] - ylim[0]
-                
+
                 # Get figure size in pixels
                 fig_width_inches = fig.get_figwidth()
                 fig_height_inches = fig.get_figheight()
                 ax_width_px_vec = fig_width_inches * fig.dpi
                 ax_height_px_vec = fig_height_inches * fig.dpi
-                
+
                 # Data to pixel conversion factors
                 data_to_px_x_vec = ax_width_px_vec / x_range_vec if x_range_vec > 0 else 1
                 data_to_px_y_vec = ax_height_px_vec / y_range_vec if y_range_vec > 0 else 1
@@ -1896,19 +1940,19 @@ class AnimateDirective(SphinxDirective):
                 # Convert vector components to pixel space
                 dx_px = dx_v * data_to_px_x_vec
                 dy_px = dy_v * data_to_px_y_vec
-                
+
                 # Get vector length in pixel space
                 vec_length_px = np.sqrt(dx_px**2 + dy_px**2)
-                
+
                 if vec_length_px > 1e-10:
                     # Normalize in pixel space
                     dx_px_norm = dx_px / vec_length_px
                     dy_px_norm = dy_px / vec_length_px
-                    
+
                     # Use the original pixel length
                     dx_px_scaled = dx_px_norm * vec_length_px
                     dy_px_scaled = dy_px_norm * vec_length_px
-                    
+
                     # Convert back to data coordinates
                     dx_data = dx_px_scaled * px_to_data_x_vec
                     dy_data = dy_px_scaled * px_to_data_y_vec
@@ -1955,15 +1999,15 @@ class AnimateDirective(SphinxDirective):
                 y_expr = match.group(2).strip()
                 text_str = match.group(4)  # Text without quotes
                 remaining = match.group(5)  # Everything after the text
-                
+
                 # Parse remaining tokens: can be alignment and/or bbox
                 alignment = "center-center"
                 bbox_flag = False
-                
+
                 if remaining:
                     # Split by commas to get individual tokens
                     tokens = [t.strip() for t in remaining.split(",")]
-                    
+
                     # Check each token
                     for token in tokens:
                         if not token:
@@ -2002,26 +2046,26 @@ class AnimateDirective(SphinxDirective):
 
                 # Format text with variable value - handle both f-string-like formatting and LaTeX
                 formatted_text = text_str
-                
+
                 # Only attempt formatting if there are format placeholders
-                if '{' in text_str and '}' in text_str:
+                if "{" in text_str and "}" in text_str:
                     # Find all LaTeX expressions (anything between $ signs)
-                    latex_pattern = r'\$[^$]+\$'
+                    latex_pattern = r"\$[^$]+\$"
                     latex_matches = []
                     latex_placeholders = []
                     for i, latex_match in enumerate(re.finditer(latex_pattern, text_str)):
                         latex_matches.append(latex_match.group(0))
                         placeholder = f"__LATEX_{i}__"
                         latex_placeholders.append(placeholder)
-                    
+
                     # Replace LaTeX with placeholders
                     temp_text = text_str
                     for i, latex_expr in enumerate(latex_matches):
                         temp_text = temp_text.replace(latex_expr, latex_placeholders[i], 1)
-                    
+
                     # Create namespace for formatting
                     text_namespace = {var_name: var_value, "pi": np.pi, "e": np.e}
-                    
+
                     # Find and evaluate all function calls like g(a) in the temp text
                     func_call_pattern = r"(\w+)\(([^)]+)\)"
                     for func_match in re.finditer(func_call_pattern, temp_text):
@@ -2034,29 +2078,33 @@ class AnimateDirective(SphinxDirective):
                                 text_namespace[func_match.group(0)] = result
                             except:
                                 pass
-                    
+
                     # Format the text (with placeholders instead of LaTeX)
                     try:
                         formatted_text = temp_text.format(**text_namespace)
                     except (KeyError, ValueError):
                         # If formatting fails, use original text
                         formatted_text = text_str
-                    
+
                     # Restore LaTeX expressions
                     try:
                         for i, placeholder in enumerate(latex_placeholders):
                             if i < len(latex_matches):
-                                formatted_text = formatted_text.replace(placeholder, latex_matches[i])
+                                formatted_text = formatted_text.replace(
+                                    placeholder, latex_matches[i]
+                                )
                     except:
                         pass
-                    
+
                     # If the text contains LaTeX and non-LaTeX content mixed, wrap everything in math mode
                     try:
-                        if latex_matches and not (formatted_text.startswith('$') and formatted_text.endswith('$')):
+                        if latex_matches and not (
+                            formatted_text.startswith("$") and formatted_text.endswith("$")
+                        ):
                             # Check if there's text outside of LaTeX expressions
                             temp_check = formatted_text
                             for latex_expr in latex_matches:
-                                temp_check = temp_check.replace(latex_expr, '', 1)
+                                temp_check = temp_check.replace(latex_expr, "", 1)
                             # If there's remaining text (not just whitespace), we have mixed content
                             if temp_check.strip():
                                 # Remove the $ signs from LaTeX parts and wrap the whole thing
@@ -2065,7 +2113,9 @@ class AnimateDirective(SphinxDirective):
                                     if latex_expr in temp_formatted:
                                         # Remove outer $ signs from the LaTeX expression
                                         inner_latex = latex_expr[1:-1]  # Remove first and last $
-                                        temp_formatted = temp_formatted.replace(latex_expr, inner_latex, 1)
+                                        temp_formatted = temp_formatted.replace(
+                                            latex_expr, inner_latex, 1
+                                        )
                                 # Wrap entire text in math mode
                                 formatted_text = f"${temp_formatted}$"
                     except:
@@ -2077,7 +2127,7 @@ class AnimateDirective(SphinxDirective):
                 # Matplotlib expects the position to refer to where the object is relative to the text
                 # We invert it so "top-left" means "place text at top-left of the point"
                 alignment_key = alignment.strip().lower().replace("_", "-")
-                
+
                 # Mapping with inverted logic (same as plot directive)
                 alignment_map = {
                     "top-left": ("bottom", "right"),
@@ -2090,17 +2140,14 @@ class AnimateDirective(SphinxDirective):
                     "center-right": ("center", "left"),
                     "center-center": ("center", "center"),
                 }
-                
+
                 va, ha = alignment_map.get(alignment_key, ("top", "left"))
 
                 # Prepare bbox kwargs if bbox is requested
                 bbox_kwargs = None
                 if bbox_flag:
                     bbox_kwargs = dict(
-                        boxstyle="round,pad=0.3",
-                        facecolor="white",
-                        alpha=0.8,
-                        edgecolor="none"
+                        boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"
                     )
 
                 # Add text to plot

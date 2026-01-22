@@ -195,15 +195,11 @@ class MultiInteractiveGraphDirective(SphinxDirective):
 
         # Create output node
         raw_node = nodes.raw("", html_content, format="html")
-        raw_node.setdefault("classes", []).extend(
-            ["multi-interactive-graph", "no-click", "no-scaled-link"]
-        )
+        raw_node.setdefault("classes", []).extend(["multi-interactive-graph", "no-click"])
 
         # Build container
         container = nodes.container()
-        container.setdefault("classes", []).extend(
-            ["multi-interactive-container", "no-click", "no-scaled-link"]
-        )
+        container.setdefault("classes", []).extend(["multi-interactive-container", "no-click"])
 
         align = merged_options.get("align", "center")
         container["align"] = align
@@ -513,7 +509,9 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         preload_links = []
         for frame_idx in range(max(0, initial_idx - 3), min(len(var_values), initial_idx + 4)):
             for graph_idx in range(num_graphs):
-                preload_links.append(f'<link rel="preload" as="image" href="{all_frame_paths[graph_idx][frame_idx]}">')
+                preload_links.append(
+                    f'<link rel="preload" as="image" href="{all_frame_paths[graph_idx][frame_idx]}">'
+                )
         preload_html = "\n".join(preload_links)
 
         # Generate grid of images

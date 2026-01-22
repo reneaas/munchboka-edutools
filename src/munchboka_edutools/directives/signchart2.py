@@ -287,23 +287,11 @@ def get_transcendental_factors(f, x, zeros, singularities):
     """
     factors = []
 
-    # First check if it's a TRULY rational function (not just something with exp in denominator form)
-    # as_numer_denom() will rewrite exp(-x) as 1/exp(x), which we don't want
+    # First check if it's a rational function with transcendental parts
     try:
         numer, denom = f.as_numer_denom()
-        # Only treat as rational if the ORIGINAL expression has a real denominator
-        # Check if it's a Mul with Pow terms that have negative exponents
-        has_real_denominator = False
-        if f.is_Mul:
-            for arg in f.args:
-                if arg.is_Pow and arg.exp.is_negative:
-                    has_real_denominator = True
-                    break
-        elif f.is_Pow and f.exp.is_negative:
-            has_real_denominator = True
-        
-        if denom != 1 and has_real_denominator and not (denom.is_polynomial() and numer.is_polynomial()):
-            # TRUE transcendental rational function - process numerator and denominator separately
+        if denom != 1 and not (denom.is_polynomial() and numer.is_polynomial()):
+            # Transcendental rational function - process numerator and denominator separately
             # Process numerator
             numer_factors = _extract_factors_from_expression(numer, x, zeros, [])
             factors.extend(numer_factors)
@@ -318,166 +306,6 @@ def get_transcendental_factors(f, x, zeros, singularities):
 
     # Not a rational function, process as a single expression
     return _extract_factors_from_expression(f, x, zeros, singularities)
-
-
-def _extract_polynomial_factors(factored_poly, x, zeros):
-    """Extract factors from a factored polynomial expression.
-    
-    This function builds linear factors (x - root) from the roots,
-    even when roots are irrational numbers.
-    
-    Args:
-        factored_poly: factored polynomial expression from sp.factor()
-        x: variable symbol
-        zeros: list of known zeros
-        
-    Returns:
-        list of factor dictionaries with linear factors
-    """
-    factors = []
-    
-    # Extract factors from the factored polynomial structure
-    # This preserves multiplicities from powers like x**2
-    if factored_poly.is_Mul:
-        # Process each factor in the product
-        for arg in factored_poly.args:
-            if arg.is_Number:
-                # Constant factor (leading coefficient)
-                if arg != 1 and arg != 0:
-                    factors.append({
-                        "expression": arg,
-                        "exponent": 1,
-                        "roots": [],
-                    })
-            elif arg.is_Pow and arg.base.is_polynomial(x):
-                # Power of a polynomial, e.g., x**2 or (x-1)**3
-                base = arg.base
-                exponent = int(arg.exp) if arg.exp.is_integer else 1
-                # Find roots of the base
-                try:
-                    base_zeros = sp.solve(base, x, domain=sp.S.Reals)
-                    for z in base_zeros:
-                        if z.is_real or (hasattr(z, 'is_real') and z.is_real is not False):
-                            # Match with known zeros if available
-                            matched_zero = z
-                            for known_zero in zeros:
-                                try:
-                                    if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
-                                        matched_zero = known_zero
-                                        break
-                                except:
-                                    pass
-                            factors.append({
-                                "expression": base,
-                                "exponent": exponent,
-                                "roots": [matched_zero],
-                            })
-                except:
-                    # If we can't solve, just use the factor as is
-                    factors.append({
-                        "expression": base,
-                        "exponent": exponent,
-                        "roots": [],
-                    })
-            elif arg.is_polynomial(x):
-                # Polynomial factor without power, e.g., (2*x**2 - 3)
-                try:
-                    arg_zeros = sp.solve(arg, x, domain=sp.S.Reals)
-                    for z in arg_zeros:
-                        if z.is_real or (hasattr(z, 'is_real') and z.is_real is not False):
-                            # Match with known zeros if available
-                            matched_zero = z
-                            for known_zero in zeros:
-                                try:
-                                    if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
-                                        matched_zero = known_zero
-                                        break
-                                except:
-                                    pass
-                            # Create linear factor
-                            factors.append({
-                                "expression": x - matched_zero,
-                                "exponent": 1,
-                                "roots": [matched_zero],
-                            })
-                except:
-                    # If we can't solve, keep the factor as is
-                    factors.append({
-                        "expression": arg,
-                        "exponent": 1,
-                        "roots": [],
-                    })
-    elif factored_poly.is_Pow and factored_poly.base.is_polynomial(x):
-        # Single power, e.g., x**2
-        base = factored_poly.base
-        exponent = int(factored_poly.exp) if factored_poly.exp.is_integer else 1
-        try:
-            base_zeros = sp.solve(base, x, domain=sp.S.Reals)
-            for z in base_zeros:
-                if z.is_real or (hasattr(z, 'is_real') and z.is_real is not False):
-                    matched_zero = z
-                    for known_zero in zeros:
-                        try:
-                            if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
-                                matched_zero = known_zero
-                                break
-                        except:
-                            pass
-                    factors.append({
-                        "expression": base,
-                        "exponent": exponent,
-                        "roots": [matched_zero],
-                    })
-        except:
-            factors.append({
-                "expression": base,
-                "exponent": exponent,
-                "roots": [],
-            })
-    elif factored_poly.is_polynomial(x):
-        # Single polynomial factor, find its zeros and create linear factors
-        try:
-            poly_zeros = sp.solve(factored_poly, x, domain=sp.S.Reals)
-            # Extract leading coefficient
-            lc = sp.LC(factored_poly, x)
-            if lc != 1 and lc != 0:
-                factors.append({
-                    "expression": lc,
-                    "exponent": 1,
-                    "roots": [],
-                })
-            
-            for z in poly_zeros:
-                if z.is_real or (hasattr(z, 'is_real') and z.is_real is not False):
-                    matched_zero = z
-                    for known_zero in zeros:
-                        try:
-                            if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
-                                matched_zero = known_zero
-                                break
-                        except:
-                            pass
-                    factors.append({
-                        "expression": x - matched_zero,
-                        "exponent": 1,
-                        "roots": [matched_zero],
-                    })
-        except:
-            # Fallback
-            factors.append({
-                "expression": factored_poly,
-                "exponent": 1,
-                "roots": zeros,
-            })
-    else:
-        # Fallback for unrecognized structure
-        factors.append({
-            "expression": factored_poly,
-            "exponent": 1,
-            "roots": zeros,
-        })
-    
-    return factors
 
 
 def _extract_factors_from_expression(expr, x, zeros, singularities):
@@ -495,83 +323,135 @@ def _extract_factors_from_expression(expr, x, zeros, singularities):
     factors = []
 
     try:
-        # Check if the expression is already a product (Mul)
-        # This preserves exponentials and other transcendental functions
-        if expr.is_Mul:
-            # Already factored - process each factor separately
-            # Separate polynomial factors from transcendental factors
-            poly_factors = []
-            transcendental_factors = []
-            
-            for arg in expr.args:
-                # Check if this is a polynomial expression
-                if arg.is_polynomial(x) or (arg.is_Pow and arg.base.is_polynomial(x)):
-                    poly_factors.append(arg)
+        # Try to factor the expression
+        factored = sp.factor(expr)
+
+        # Check if it's a power expression (e.g., cos(x)**3)
+        if factored.is_Pow:
+            base = factored.base
+            exponent = int(factored.exp) if factored.exp.is_integer else 1
+
+            # Find zeros of the base
+            base_zeros = []
+            try:
+                base_zeros_sym = sp.solve(base, x, domain=sp.S.Reals)
+                for z in base_zeros_sym:
+                    if z.is_real:
+                        # Match with known zeros
+                        for known_zero in zeros:
+                            try:
+                                if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
+                                    base_zeros.append(known_zero)
+                                    break
+                            except:
+                                pass
+            except:
+                # If symbolic solve fails, use all known zeros
+                base_zeros = zeros
+
+            # Create single factor with all zeros
+            if base_zeros:
+                factors.append(
+                    {
+                        "expression": base,
+                        "exponent": exponent,
+                        "roots": base_zeros,  # Changed: store all roots together
+                    }
+                )
+
+        # If it's a product, try to extract individual factors
+        elif factored.is_Mul:
+            # Group factors by (expression, exponent) to avoid duplicates
+            factor_dict = {}
+
+            for arg in factored.args:
+                # Check if this arg is a power
+                if arg.is_Pow:
+                    base = arg.base
+                    exponent = int(arg.exp) if arg.exp.is_integer else 1
+                    expr_to_use = base
                 else:
-                    # It's transcendental (exp, sin, cos, etc.) - keep as atomic
-                    transcendental_factors.append(arg)
-            
-            # Factor the polynomial part
-            if poly_factors:
-                poly_expr = sp.Mul(*poly_factors)
-                factored_poly = sp.factor(poly_expr)
-                
-                # Extract factors from the factored polynomial
-                factors.extend(_extract_polynomial_factors(factored_poly, x, zeros))
-            
-            # Add transcendental factors as atomic factors
-            # Keep them in their original form without any simplification
-            for trans_factor in transcendental_factors:
-                # Check if it's a power
-                if trans_factor.is_Pow:
-                    base = trans_factor.base
-                    exponent = int(trans_factor.exp) if trans_factor.exp.is_integer else 1
-                    factors.append({
-                        "expression": trans_factor,  # Keep full expression, not just base
-                        "exponent": 1,  # Already in the expression
-                        "roots": [],  # Transcendental factors typically don't have simple roots
-                    })
-                else:
-                    factors.append({
-                        "expression": trans_factor,
-                        "exponent": 1,
-                        "roots": [],
-                    })
-            
-            return factors
-        
-        # Expression is not a Mul - try to factor it
-        # For polynomial expressions, factor them
-        if expr.is_polynomial(x) or (expr.is_Pow and expr.base.is_polynomial(x)):
-            # Factor the polynomial expression
-            factored = sp.factor(expr)
-            return _extract_polynomial_factors(factored, x, zeros)
+                    expr_to_use = arg
+                    exponent = 1
+
+                # Create a key for grouping
+                key = (str(expr_to_use), exponent)
+
+                if key not in factor_dict:
+                    factor_dict[key] = {
+                        "expression": expr_to_use,
+                        "exponent": exponent,
+                        "zeros": [],
+                        "singularities": [],
+                    }
+
+                # Find zeros of this factor
+                try:
+                    arg_zeros = sp.solve(expr_to_use, x, domain=sp.S.Reals)
+                    for z in arg_zeros:
+                        if z.is_real:
+                            # Check if this zero is in our list
+                            for known_zero in zeros:
+                                try:
+                                    if abs(float(z.evalf()) - float(known_zero.evalf())) < 1e-8:
+                                        if known_zero not in factor_dict[key]["zeros"]:
+                                            factor_dict[key]["zeros"].append(known_zero)
+                                        break
+                                except:
+                                    pass
+                except:
+                    pass
+
+                # Check for singularities in denominator
+                try:
+                    numer, denom = expr_to_use.as_numer_denom()
+                    if denom != 1:
+                        denom_zeros = sp.solve(denom, x, domain=sp.S.Reals)
+                        for z in denom_zeros:
+                            if z.is_real:
+                                for known_sing in singularities:
+                                    try:
+                                        if abs(float(z.evalf()) - float(known_sing.evalf())) < 1e-8:
+                                            if known_sing not in factor_dict[key]["singularities"]:
+                                                factor_dict[key]["singularities"].append(known_sing)
+                                            break
+                                    except:
+                                        pass
+                except:
+                    pass
+
+            # Convert grouped factors to list
+            # Include ALL factors, even those without zeros/singularities
+            for factor_info in factor_dict.values():
+                all_roots = factor_info["zeros"] + factor_info["singularities"]
+                # Always add the factor, even if it has no roots
+                factors.append(
+                    {
+                        "expression": factor_info["expression"],
+                        "exponent": factor_info["exponent"],
+                        "roots": all_roots if all_roots else [],
+                    }
+                )
         else:
-            # Mixed or transcendental expression - try factoring
-            # This might expose structure like x**2 * exp(...) * (3 - 2*x**2)
-            factored = sp.factor(expr)
-            
-            # Check if factoring produced a product
-            if factored.is_Mul and factored != expr:
-                # Factoring succeeded - recursively process the factored form
-                return _extract_factors_from_expression(factored, x, zeros, singularities)
-            
-            # Couldn't factor or factoring didn't help - keep as atomic factor
+            # Not a product or power, show as single factor
             all_roots = zeros + singularities
-            factors.append({
-                "expression": expr,
-                "exponent": 1,
-                "roots": all_roots if all_roots else [],
-            })
-            
+            factors.append(
+                {
+                    "expression": factored,
+                    "exponent": 1,
+                    "roots": all_roots if all_roots else [],
+                }
+            )
     except:
         # Fallback: just use the original expression
         all_roots = zeros + singularities
-        factors.append({
-            "expression": expr,
-            "exponent": 1,
-            "roots": all_roots if all_roots else [],
-        })
+        factors.append(
+            {
+                "expression": expr,
+                "exponent": 1,
+                "roots": all_roots if all_roots else [],
+            }
+        )
 
     return factors
 
@@ -638,14 +518,7 @@ def draw_factors(
             expression_latex = str(expression)
 
         if exponent > 1:
-            # Only add parentheses if the expression is complex (not a simple symbol or power)
-            # Check if expression is a simple symbol like x, or already has structure
-            if expression.is_Symbol or (expression.is_Pow and expression.base.is_Symbol):
-                # Simple symbol or power of symbol - no parentheses needed
-                s = f"${expression_latex}^{{{exponent}}}$"
-            else:
-                # Complex expression - use parentheses
-                s = f"$({expression_latex})^{{{exponent}}}$"
+            s = f"$({expression_latex})^{{{exponent}}}$"
         else:
             s = f"${expression_latex}$"
 
@@ -851,25 +724,8 @@ def draw_function(
     for i, (x0_interval, pos_interval) in enumerate(zip(intervals, interval_positions)):
         x0 = (x0_interval[0] + x0_interval[1]) / 2
         y0 = sp.sympify(f).evalf(subs={x: x0})
-        
-        # Handle complex results (take real part if imaginary part is small)
-        if hasattr(y0, 'is_real') and not y0.is_real:
-            if hasattr(y0, 'as_real_imag'):
-                re_part, im_part = y0.as_real_imag()
-                if abs(float(im_part.evalf())) < 1e-10:
-                    y0 = re_part
-                else:
-                    # Skip this interval if truly complex
-                    continue
-        
-        # Convert to float for comparison
-        try:
-            y0_float = float(y0.evalf())
-        except (TypeError, ValueError):
-            # Can't convert to float, skip this interval
-            continue
 
-        if y0_float > 0:
+        if y0 > 0:
             ax.plot(
                 [pos_interval[0], pos_interval[1]],
                 [y, y],
@@ -1079,22 +935,10 @@ def plot(
     is_polynomial = f.is_polynomial()
     is_rational = False
 
-    if is_polynomial and include_factors:
+    if is_polynomial:
         # Use existing polynomial factorization
         factors = get_factors(polynomial=f, x=x)
         factors = sort_factors(factors)
-    elif not include_factors:
-        # When factors: false, just find zeros/singularities and create a single factor
-        result = get_zeros_and_singularities(f, x, domain=domain)
-        zeros = result["zeros"]
-        singularities = result["singularities"]
-        
-        # Create a single factor representing the whole function (not factored)
-        factors = [{
-            "expression": f,
-            "exponent": 1,
-            "roots": zeros + singularities,  # Include both for root positions
-        }]
     else:
         # Check if it's a rational function
         try:

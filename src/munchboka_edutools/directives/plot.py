@@ -2644,6 +2644,26 @@ class PlotDirective(SphinxDirective):
                         x_pt = x_arr[idx]
                         y_pt = y_arr[idx]
 
+                        # If the endpoint y-value is NaN (masked due to division by zero),
+                        # find the nearest finite point to use for positioning and tangent calculation
+                        if not np.isfinite(y_pt):
+                            if direction == "left":
+                                # Search forward for first finite point
+                                for i in range(1, min(10, len(y_arr))):
+                                    if np.isfinite(y_arr[i]):
+                                        y_pt = y_arr[i]
+                                        break
+                            else:  # right endpoint
+                                # Search backward for first finite point
+                                for i in range(len(y_arr) - 2, max(-1, len(y_arr) - 11), -1):
+                                    if np.isfinite(y_arr[i]):
+                                        y_pt = y_arr[i]
+                                        break
+
+                            # If still no finite point found, give up
+                            if not np.isfinite(y_pt):
+                                return
+
                         # Calculate tangent vector at endpoint using nearby points
                         if direction == "left":
                             # Use forward difference for left endpoint
@@ -2934,17 +2954,31 @@ class PlotDirective(SphinxDirective):
                             # Get the actual color used for the function
                             color_for_marker = _col_use if _col_use else "black"
 
-                            # Draw left endpoint marker (pass full arrays and index)
-                            if left_type in ["closed", "open"] and np.isfinite(y[0]):
-                                _draw_endpoint_marker(
-                                    ax, x, y, 0, left_type, "left", color_for_marker, lw
+                            # Draw left endpoint marker
+                            # Even if y[0] is masked (NaN), we still want to draw the marker
+                            # if there are nearby finite points (the function approaches the endpoint)
+                            if left_type in ["closed", "open"]:
+                                # Check if there's at least one finite point near the left endpoint
+                                has_nearby_finite = any(
+                                    np.isfinite(y[i]) for i in range(min(10, len(y)))
                                 )
+                                if has_nearby_finite:
+                                    _draw_endpoint_marker(
+                                        ax, x, y, 0, left_type, "left", color_for_marker, lw
+                                    )
 
-                            # Draw right endpoint marker (pass full arrays and index)
-                            if right_type in ["closed", "open"] and np.isfinite(y[-1]):
-                                _draw_endpoint_marker(
-                                    ax, x, y, -1, right_type, "right", color_for_marker, lw
+                            # Draw right endpoint marker
+                            # Even if y[-1] is masked (NaN), we still want to draw the marker
+                            # if there are nearby finite points (the function approaches the endpoint)
+                            if right_type in ["closed", "open"]:
+                                # Check if there's at least one finite point near the right endpoint
+                                has_nearby_finite = any(
+                                    np.isfinite(y[i]) for i in range(max(0, len(y) - 10), len(y))
                                 )
+                                if has_nearby_finite:
+                                    _draw_endpoint_marker(
+                                        ax, x, y, -1, right_type, "right", color_for_marker, lw
+                                    )
                     if any_label:
                         ax.legend(fontsize=int(fontsize))
 

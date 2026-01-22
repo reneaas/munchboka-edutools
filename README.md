@@ -7,10 +7,11 @@ Reusable Sphinx / Jupyter Book directives and assets for Norwegian educational c
 ## Key Features
 
 ✨ **Auto-configured Sphinx extensions** for Jupyter Book  
-📚 **Custom educational directives** (quiz, dialogue, plots, etc.)  
+📚 **Custom educational directives** (quiz, dialogue, plots, animations, etc.)  
 🖨️ **Print-optimized PDF builds** with proper typography  
 🧮 **Automatic PDF math rendering** - LaTeX expressions work seamlessly in PDFs  
 🎨 **Multiple build profiles** (print, web, custom)  
+🎬 **Animated plots** - Create animations with transparent backgrounds (WebP/GIF)  
 📄 **Print-friendly CSS** - Browser "Print to PDF" creates clean problem sheets with answer keys
 
 ## Install
@@ -90,6 +91,14 @@ Run tests:
 ```bash
 pytest -q
 ```
+
+## Quick Links
+
+- **[Animation Quickstart](ANIMATE_QUICKSTART.md)** - Create animated plots
+- **[CLI Documentation](CLI_README.md)** - Build tool guide
+- **[Quick Start](QUICKSTART.md)** - Get started quickly
+- **[Print PDF Guide](docs/print_pdf.md)** - Browser printing features
+- **[Examples](book/examples/)** - See all directive examples
 
 ### Releasing
 

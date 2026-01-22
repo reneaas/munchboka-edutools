@@ -1,7 +1,9 @@
 format: jb-book
 root: index
 chapters:
+  - file: test_function_domains.md
   - file: examples/plot.md
+  - file: examples/animate.md
   - file: examples/multi_plot.md
   - file: examples/multi_plot_point.md
   - file: examples/multi_plot_text.md

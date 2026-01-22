@@ -260,7 +260,51 @@
     }
     
     /* ========================================
-       6. GENERAL PRINT IMPROVEMENTS
+       6. GRID AND CARD LAYOUT FOR PRINT
+       ======================================== */
+    
+    /* Prevent page breaks inside grid items and cards */
+    .sd-card,
+    .sd-card-body,
+    .sd-col {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        -webkit-column-break-inside: avoid !important;
+    }
+    
+    /* Preserve grid layout for print */
+    .sd-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure proper column widths are maintained based on row-cols */
+    .sd-row-cols-lg-1 > .sd-col { flex: 0 0 auto; width: 100% !important; }
+    .sd-row-cols-lg-2 > .sd-col { flex: 0 0 auto; width: 50% !important; }
+    .sd-row-cols-lg-3 > .sd-col { flex: 0 0 auto; width: 33.333333% !important; }
+    .sd-row-cols-lg-4 > .sd-col { flex: 0 0 auto; width: 25% !important; }
+    .sd-row-cols-lg-6 > .sd-col { flex: 0 0 auto; width: 16.666667% !important; }
+    
+    /* Base column styling */
+    .sd-col {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+        box-sizing: border-box;
+    }
+    
+    /* Card styling for print */
+    .sd-card {
+        border: 1px solid #ddd !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem;
+        background-color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    /* ========================================
+       7. GENERAL PRINT IMPROVEMENTS
        ======================================== */
     
     /* Avoid breaking figures and tables */
@@ -315,7 +359,7 @@
     }
     
     /* ========================================
-       7. ALTERNATIVE: SHOW ANSWERS INLINE
+       8. ALTERNATIVE: SHOW ANSWERS INLINE
        ======================================== */
     
     /* If you want to show answers inline but differently styled,

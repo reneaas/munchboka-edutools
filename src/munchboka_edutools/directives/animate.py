@@ -1179,6 +1179,10 @@ class AnimateDirective(SphinxDirective):
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+        
+        # Enable LaTeX rendering for consistent math formatting
+        plt.rcParams['text.usetex'] = True
+        plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 
         try:
             import plotmath
@@ -1214,22 +1218,52 @@ class AnimateDirective(SphinxDirective):
         grid_flag = str(merged.get("grid", "true")).lower() in ("true", "yes", "on", "1")
         ticks_flag = str(merged.get("ticks", "true")).lower() in ("true", "yes", "on", "1")
 
-        # Create figure using plotmath
-        fig, ax = plotmath.plot(
-            functions=[],
-            fn_labels=False,
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax,
-            xstep=xstep,
-            ystep=ystep,
-            ticks=ticks_flag,
-            grid=grid_flag,
-            lw=lw,
-            alpha=alpha_val if alpha_val else 1.0,
-            fontsize=fontsize,
-        )
+        # Parse axis commands (similar to plot directive)
+        axis_cmds = lists_dict.get("axis", [])
+        axis_off = any(str(c).lower() == "off" for c in axis_cmds)
+        axis_equal = any(str(c).lower() == "equal" for c in axis_cmds)
+
+        # Create figure based on axis flags
+        if axis_off:
+            # Create a plain figure with axes hidden (no ticks/grid)
+            import matplotlib.pyplot as _plt
+            fig, ax = _plt.subplots()
+            fig.set_size_inches(6.0, 6.0)
+            ax.set_xlim(xmin, xmax)
+            ax.set_ylim(ymin, ymax)
+            try:
+                ax.axis("off")
+            except Exception:
+                pass
+            # Apply equal aspect if requested
+            if axis_equal:
+                try:
+                    ax.axis("equal")
+                except Exception:
+                    pass
+        else:
+            # Standard path: use plotmath for ticks, grid, labels
+            fig, ax = plotmath.plot(
+                functions=[],
+                fn_labels=False,
+                xmin=xmin,
+                xmax=xmax,
+                ymin=ymin,
+                ymax=ymax,
+                xstep=xstep,
+                ystep=ystep,
+                ticks=ticks_flag,
+                grid=grid_flag,
+                lw=lw,
+                alpha=alpha_val if alpha_val else 1.0,
+                fontsize=fontsize,
+            )
+            # If equal requested (without off), apply after plot creation
+            if axis_equal:
+                try:
+                    ax.axis("equal")
+                except Exception:
+                    pass
 
         # Process functions with robust domain/endpoint support
         function_dict = {}
@@ -1481,14 +1515,435 @@ class AnimateDirective(SphinxDirective):
             except Exception as e:
                 pass
 
+        # Process angle-arcs (circle arcs)
+        # angle-arc: (x, y), radius, start_angle_deg, end_angle_deg[, linestyle][, color]
+        _allowed_arc_styles = {"solid", "dotted", "dashed", "dashdot"}
+        for arc in lists_dict.get("angle-arc", []):
+            try:
+                raw_arc = str(arc).strip()
+                # Find first balanced parenthesis group for center
+                idx_arc = raw_arc.find("(")
+                if idx_arc == -1:
+                    continue
+                depth_arc = 0
+                end_center = -1
+                for j in range(idx_arc, len(raw_arc)):
+                    ch = raw_arc[j]
+                    if ch == "(":
+                        depth_arc += 1
+                    elif ch == ")":
+                        depth_arc -= 1
+                        if depth_arc == 0:
+                            end_center = j
+                            break
+                if end_center == -1:
+                    continue
+                center_inner = raw_arc[idx_arc + 1 : end_center]
+                # Split center_inner by top-level comma
+                depth_c = 0
+                cur_bits = []
+                center_parts = []
+                for ch in center_inner:
+                    if ch == "(":
+                        depth_c += 1
+                        cur_bits.append(ch)
+                    elif ch == ")":
+                        depth_c -= 1
+                        cur_bits.append(ch)
+                    elif ch == "," and depth_c == 0:
+                        token = "".join(cur_bits).strip()
+                        if token:
+                            center_parts.append(token)
+                        cur_bits = []
+                    else:
+                        cur_bits.append(ch)
+                tail_cp = "".join(cur_bits).strip()
+                if tail_cp:
+                    center_parts.append(tail_cp)
+                if len(center_parts) != 2:
+                    continue
+                rest_arc = raw_arc[end_center + 1 :].lstrip(",").strip()
+                if not rest_arc:
+                    continue
+                # Split rest by top-level commas
+                depth_r = 0
+                cur_r = []
+                tokens_r = []
+                for ch in rest_arc:
+                    if ch == "(":
+                        depth_r += 1
+                        cur_r.append(ch)
+                    elif ch == ")":
+                        depth_r -= 1
+                        cur_r.append(ch)
+                    elif ch == "," and depth_r == 0:
+                        tk = "".join(cur_r).strip()
+                        if tk:
+                            tokens_r.append(tk)
+                        cur_r = []
+                    else:
+                        cur_r.append(ch)
+                tail_r = "".join(cur_r).strip()
+                if tail_r:
+                    tokens_r.append(tail_r)
+                if len(tokens_r) < 3:
+                    continue
+                radius_expr = tokens_r[0]
+                start_expr = tokens_r[1]
+                end_expr = tokens_r[2]
+                style_arc = None
+                color_arc = None
+                for extra_tok in tokens_r[3:]:
+                    low = extra_tok.lower()
+                    if low in _allowed_arc_styles and style_arc is None:
+                        style_arc = low
+                    elif color_arc is None:
+                        color_arc = extra_tok
+
+                # Evaluate expressions with current variable value
+                eval_namespace = _get_safe_namespace(**{var_name: var_value})
+                cx_val = float(eval(center_parts[0], eval_namespace))
+                cy_val = float(eval(center_parts[1], eval_namespace))
+                r_val = float(eval(radius_expr, eval_namespace))
+                if r_val <= 0:
+                    continue
+                start_deg_val = float(eval(start_expr, eval_namespace))
+                end_deg_val = float(eval(end_expr, eval_namespace))
+
+                # Render the arc
+                sa = np.deg2rad(start_deg_val)
+                ea = np.deg2rad(end_deg_val)
+                theta = np.linspace(sa, ea, 1024)
+                xs = cx_val + r_val * np.cos(theta)
+                ys = cy_val + r_val * np.sin(theta)
+
+                # Style and color
+                style_map_arc = {
+                    "solid": "-",
+                    "dotted": ":",
+                    "dashed": "--",
+                    "dashdot": "-.",
+                }
+                ls_use = style_map_arc.get((style_arc or "solid").lower(), "-")
+                
+                # Resolve color via plotmath palette
+                default_arc_color = plotmath.COLORS.get("black") or "black"
+                if color_arc:
+                    mapped_color = plotmath.COLORS.get(color_arc)
+                    col_use = mapped_color if mapped_color else color_arc
+                else:
+                    col_use = default_arc_color
+
+                ax.plot(xs, ys, lw=1, color=col_use, linestyle=ls_use)
+            except Exception:
+                pass
+
+        # Process line-segments: (x1,y1), (x2,y2)[, linestyle][, color]
+        _allowed_seg_styles = {"solid", "dotted", "dashed", "dashdot"}
+        for ls in lists_dict.get("line-segment", []):
+            try:
+                s = str(ls).strip()
+                # Extract coordinate pairs using balanced parentheses
+                pairs = []
+                i = 0
+                n = len(s)
+                while i < n and len(pairs) < 2:
+                    if s[i] == "(":
+                        depth = 1
+                        j = i + 1
+                        while j < n and depth > 0:
+                            if s[j] == "(":
+                                depth += 1
+                            elif s[j] == ")":
+                                depth -= 1
+                            j += 1
+                        if depth == 0:
+                            inner = s[i + 1 : j - 1]
+                            # Split inner by top-level comma
+                            d2 = 0
+                            has_comma = False
+                            parts_inner = []
+                            cur = []
+                            for ch in inner:
+                                if ch == "(":
+                                    d2 += 1
+                                    cur.append(ch)
+                                elif ch == ")":
+                                    d2 -= 1
+                                    cur.append(ch)
+                                elif ch == "," and d2 == 0:
+                                    has_comma = True
+                                    parts_inner.append("".join(cur).strip())
+                                    cur = []
+                                else:
+                                    cur.append(ch)
+                            if cur:
+                                parts_inner.append("".join(cur).strip())
+                            
+                            if has_comma and len(parts_inner) == 2:
+                                pairs.append((parts_inner[0], parts_inner[1]))
+                        i = j
+                    else:
+                        i += 1
+                
+                if len(pairs) < 2:
+                    continue
+                
+                # Evaluate the two points
+                eval_namespace = _get_safe_namespace(**{var_name: var_value})
+                pcoords = []
+                for x_expr, y_expr in pairs[:2]:
+                    try:
+                        xv = float(eval(x_expr, eval_namespace))
+                        yv = float(eval(y_expr, eval_namespace))
+                        pcoords.append((xv, yv))
+                    except Exception:
+                        pcoords = []
+                        break
+                
+                if len(pcoords) != 2:
+                    continue
+                
+                # Extract style and color from the rest
+                # Find where the second point ends
+                spans = []
+                depth = 0
+                idx = 0
+                while idx < n and len(spans) < 2:
+                    if s[idx] == "(":
+                        depth = 1
+                        j_start = idx
+                        j = idx + 1
+                        while j < n and depth > 0:
+                            if s[j] == "(":
+                                depth += 1
+                            elif s[j] == ")":
+                                depth -= 1
+                            j += 1
+                        if depth == 0:
+                            inner = s[j_start + 1 : j - 1]
+                            d2 = 0
+                            has_comma = False
+                            for ch in inner:
+                                if ch == "(":
+                                    d2 += 1
+                                elif ch == ")":
+                                    d2 -= 1
+                                elif ch == "," and d2 == 0:
+                                    has_comma = True
+                                    break
+                            if has_comma:
+                                spans.append((j_start, j))
+                        idx = j
+                    else:
+                        idx += 1
+                
+                # Build rest excluding coordinate tuples
+                if spans:
+                    parts_rest = []
+                    last = 0
+                    for a, b in spans:
+                        if a > last:
+                            parts_rest.append(s[last:a])
+                        last = b
+                    if last < len(s):
+                        parts_rest.append(s[last:])
+                    rest = "".join(parts_rest)
+                else:
+                    rest = s
+                
+                # Clean and parse tokens
+                rest = re.sub(r",{2,}", ",", rest)
+                tokens = [tok.strip().strip("'\"") for tok in rest.split(",") if tok.strip()]
+                style_seg = None
+                color_seg = None
+                for tok in tokens:
+                    low = tok.lower()
+                    if low in _allowed_seg_styles and style_seg is None:
+                        style_seg = low
+                    elif color_seg is None:
+                        color_seg = tok
+                
+                # Render the line segment
+                (x1s, y1s), (x2s, y2s) = pcoords[0], pcoords[1]
+                style_map_seg = {
+                    "solid": "-",
+                    "dotted": ":",
+                    "dashed": "--",
+                    "dashdot": "-.",
+                }
+                ls_use = style_map_seg.get((style_seg or "solid").lower(), "-")
+                
+                default_seg_color = plotmath.COLORS.get("black") or "black"
+                if color_seg:
+                    mapped_seg = plotmath.COLORS.get(color_seg)
+                    col_use = mapped_seg if mapped_seg else color_seg
+                else:
+                    col_use = default_seg_color
+                
+                ax.plot([x1s, x2s], [y1s, y2s], linestyle=ls_use, color=col_use, lw=lw)
+            except Exception:
+                pass
+
+        # Process vectors: support multiple syntaxes
+        # 1. Legacy: x, y, dx, dy[, color]
+        # 2. Point + components: (x, y), dx, dy[, color]
+        # 3. Two points: (x1, y1), (x2, y2)[, color]
+        for vline in lists_dict.get("vector", []):
+            try:
+                s = str(vline).strip()
+                # Remove surrounding brackets if present
+                if (s.startswith("[") and s.endswith("]")) or (s.startswith("(") and s.endswith(")")):
+                    s = s[1:-1].strip()
+
+                # Parse by splitting on top-level commas
+                depth_vec = 0
+                cur_tok = []
+                parts = []
+                for ch in s:
+                    if ch in "([":
+                        depth_vec += 1
+                        cur_tok.append(ch)
+                    elif ch in ")]":
+                        depth_vec -= 1
+                        cur_tok.append(ch)
+                    elif ch == "," and depth_vec == 0:
+                        tok = "".join(cur_tok).strip()
+                        if tok:
+                            parts.append(tok)
+                        cur_tok = []
+                    else:
+                        cur_tok.append(ch)
+                tail_tok = "".join(cur_tok).strip()
+                if tail_tok:
+                    parts.append(tail_tok)
+
+                if len(parts) < 2:
+                    continue
+
+                eval_namespace = _get_safe_namespace(**{var_name: var_value})
+                
+                # Check if first part is a coordinate pair
+                first_part = parts[0].strip()
+                if first_part.startswith("(") and first_part.endswith(")"):
+                    # Extract coordinates from first tuple
+                    coord_str = first_part[1:-1]
+                    coord_parts = coord_str.split(",")
+                    if len(coord_parts) != 2:
+                        continue
+                    x_v = float(eval(coord_parts[0].strip(), eval_namespace))
+                    y_v = float(eval(coord_parts[1].strip(), eval_namespace))
+
+                    # Check second part
+                    if len(parts) >= 2:
+                        second_part = parts[1].strip()
+                        if second_part.startswith("(") and second_part.endswith(")"):
+                            # Format: (x1, y1), (x2, y2)[, color]
+                            coord2_str = second_part[1:-1]
+                            coord2_parts = coord2_str.split(",")
+                            if len(coord2_parts) != 2:
+                                continue
+                            x2 = float(eval(coord2_parts[0].strip(), eval_namespace))
+                            y2 = float(eval(coord2_parts[1].strip(), eval_namespace))
+                            dx_v = x2 - x_v
+                            dy_v = y2 - y_v
+                            color_v = parts[2].strip() if len(parts) >= 3 and parts[2].strip() else "black"
+                        elif len(parts) >= 3:
+                            # Format: (x, y), dx, dy[, color]
+                            dx_v = float(eval(parts[1], eval_namespace))
+                            dy_v = float(eval(parts[2], eval_namespace))
+                            color_v = parts[3].strip() if len(parts) >= 4 and parts[3].strip() else "black"
+                        else:
+                            continue
+                    else:
+                        continue
+                elif len(parts) >= 4:
+                    # Legacy format: x, y, dx, dy[, color]
+                    x_v = float(eval(parts[0], eval_namespace))
+                    y_v = float(eval(parts[1], eval_namespace))
+                    dx_v = float(eval(parts[2], eval_namespace))
+                    dy_v = float(eval(parts[3], eval_namespace))
+                    color_v = parts[4].strip() if len(parts) >= 5 and parts[4].strip() else "black"
+                else:
+                    continue
+
+                # Resolve color through palette
+                default_vector_color = plotmath.COLORS.get("black") or "black"
+                if color_v:
+                    mapped_vec = plotmath.COLORS.get(color_v)
+                    color_use = mapped_vec if mapped_vec else color_v
+                else:
+                    color_use = default_vector_color
+
+                # Get axis limits for pixel-to-data conversion
+                xlim = ax.get_xlim()
+                ylim = ax.get_ylim()
+                x_range_vec = xlim[1] - xlim[0]
+                y_range_vec = ylim[1] - ylim[0]
+                
+                # Get figure size in pixels
+                fig_width_inches = fig.get_figwidth()
+                fig_height_inches = fig.get_figheight()
+                ax_width_px_vec = fig_width_inches * fig.dpi
+                ax_height_px_vec = fig_height_inches * fig.dpi
+                
+                # Data to pixel conversion factors
+                data_to_px_x_vec = ax_width_px_vec / x_range_vec if x_range_vec > 0 else 1
+                data_to_px_y_vec = ax_height_px_vec / y_range_vec if y_range_vec > 0 else 1
+                px_to_data_x_vec = x_range_vec / ax_width_px_vec if ax_width_px_vec > 0 else 0.01
+                px_to_data_y_vec = y_range_vec / ax_height_px_vec if ax_height_px_vec > 0 else 0.01
+
+                # Convert vector components to pixel space
+                dx_px = dx_v * data_to_px_x_vec
+                dy_px = dy_v * data_to_px_y_vec
+                
+                # Get vector length in pixel space
+                vec_length_px = np.sqrt(dx_px**2 + dy_px**2)
+                
+                if vec_length_px > 1e-10:
+                    # Normalize in pixel space
+                    dx_px_norm = dx_px / vec_length_px
+                    dy_px_norm = dy_px / vec_length_px
+                    
+                    # Use the original pixel length
+                    dx_px_scaled = dx_px_norm * vec_length_px
+                    dy_px_scaled = dy_px_norm * vec_length_px
+                    
+                    # Convert back to data coordinates
+                    dx_data = dx_px_scaled * px_to_data_x_vec
+                    dy_data = dy_px_scaled * px_to_data_y_vec
+                else:
+                    # Zero or near-zero vector
+                    dx_data = 0
+                    dy_data = 0
+
+                # Draw arrow
+                ax.quiver(
+                    x_v,
+                    y_v,
+                    dx_data,
+                    dy_data,
+                    angles="xy",
+                    scale_units="xy",
+                    scale=1,
+                    width=0.006,
+                    headwidth=5,
+                    headlength=5,
+                    color=color_use,
+                    zorder=100,
+                )
+            except Exception:
+                pass
+
         # Process text annotations with f-string support
         for text_spec in lists_dict.get("text", []):
             try:
-                # Parse text: x, y, "text string", alignment
+                # Parse text: x, y, "text string"[, alignment][, bbox]
                 # Handle quoted strings that may contain commas and format specs like {a:.2f}
+                # bbox can be: "bbox", True, False, or omitted (default False)
 
                 # Find the quoted text section using regex
-                # Match: number/expr, number/expr, "quoted text", optional alignment
+                # Match: number/expr, number/expr, "quoted text"[, optional tokens...]
                 match = re.match(
                     r'^\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(["\'])(.+?)\3\s*(?:,\s*(.+))?\s*$', text_spec
                 )
@@ -1499,7 +1954,30 @@ class AnimateDirective(SphinxDirective):
                 x_expr = match.group(1).strip()
                 y_expr = match.group(2).strip()
                 text_str = match.group(4)  # Text without quotes
-                alignment = match.group(5).strip() if match.group(5) else "center-center"
+                remaining = match.group(5)  # Everything after the text
+                
+                # Parse remaining tokens: can be alignment and/or bbox
+                alignment = "center-center"
+                bbox_flag = False
+                
+                if remaining:
+                    # Split by commas to get individual tokens
+                    tokens = [t.strip() for t in remaining.split(",")]
+                    
+                    # Check each token
+                    for token in tokens:
+                        if not token:
+                            continue
+                        # Check if it's a bbox indicator
+                        if token.lower() == "bbox":
+                            bbox_flag = True
+                        elif token.lower() in ("true", "yes", "1"):
+                            bbox_flag = True
+                        elif token.lower() in ("false", "no", "0"):
+                            bbox_flag = False
+                        else:
+                            # Assume it's an alignment specification
+                            alignment = token
 
                 # Evaluate x and y positions - include function_dict for function references
                 eval_namespace = _get_safe_namespace(**{var_name: var_value})
@@ -1516,55 +1994,114 @@ class AnimateDirective(SphinxDirective):
 
                     eval_namespace[func_name] = make_scalar_func(func)
 
-                x_pos = eval(x_expr, eval_namespace)
-                y_pos = eval(y_expr, eval_namespace)
+                try:
+                    x_pos = eval(x_expr, eval_namespace)
+                    y_pos = eval(y_expr, eval_namespace)
+                except:
+                    continue
 
-                # Format text with variable value using .format()
-                # Create a namespace with the animation variable and function values
-                text_namespace = {var_name: var_value, "pi": np.pi, "e": np.e}
-
-                # Find and evaluate all function calls like g(a) in the text string
-                # and add them to the namespace for formatting
-                func_call_pattern = r"(\w+)\(([^)]+)\)"
-                for match in re.finditer(func_call_pattern, text_str):
-                    func_name = match.group(1)
-                    arg_expr = match.group(2)
-                    if func_name in eval_namespace:
-                        try:
-                            # Evaluate the argument
-                            arg_val = eval(arg_expr, eval_namespace)
-                            # Call the function
-                            result = eval_namespace[func_name](arg_val)
-                            # Add to namespace with the exact match as key
-                            # E.g., "g(a)" -> 12.5
-                            text_namespace[match.group(0)] = result
-                        except:
-                            pass
-
-                formatted_text = text_str.format(**text_namespace)
+                # Format text with variable value - handle both f-string-like formatting and LaTeX
+                formatted_text = text_str
+                
+                # Only attempt formatting if there are format placeholders
+                if '{' in text_str and '}' in text_str:
+                    # Find all LaTeX expressions (anything between $ signs)
+                    latex_pattern = r'\$[^$]+\$'
+                    latex_matches = []
+                    latex_placeholders = []
+                    for i, latex_match in enumerate(re.finditer(latex_pattern, text_str)):
+                        latex_matches.append(latex_match.group(0))
+                        placeholder = f"__LATEX_{i}__"
+                        latex_placeholders.append(placeholder)
+                    
+                    # Replace LaTeX with placeholders
+                    temp_text = text_str
+                    for i, latex_expr in enumerate(latex_matches):
+                        temp_text = temp_text.replace(latex_expr, latex_placeholders[i], 1)
+                    
+                    # Create namespace for formatting
+                    text_namespace = {var_name: var_value, "pi": np.pi, "e": np.e}
+                    
+                    # Find and evaluate all function calls like g(a) in the temp text
+                    func_call_pattern = r"(\w+)\(([^)]+)\)"
+                    for func_match in re.finditer(func_call_pattern, temp_text):
+                        func_name = func_match.group(1)
+                        arg_expr = func_match.group(2)
+                        if func_name in eval_namespace:
+                            try:
+                                arg_val = eval(arg_expr, eval_namespace)
+                                result = eval_namespace[func_name](arg_val)
+                                text_namespace[func_match.group(0)] = result
+                            except:
+                                pass
+                    
+                    # Format the text (with placeholders instead of LaTeX)
+                    try:
+                        formatted_text = temp_text.format(**text_namespace)
+                    except (KeyError, ValueError):
+                        # If formatting fails, use original text
+                        formatted_text = text_str
+                    
+                    # Restore LaTeX expressions
+                    try:
+                        for i, placeholder in enumerate(latex_placeholders):
+                            if i < len(latex_matches):
+                                formatted_text = formatted_text.replace(placeholder, latex_matches[i])
+                    except:
+                        pass
+                    
+                    # If the text contains LaTeX and non-LaTeX content mixed, wrap everything in math mode
+                    try:
+                        if latex_matches and not (formatted_text.startswith('$') and formatted_text.endswith('$')):
+                            # Check if there's text outside of LaTeX expressions
+                            temp_check = formatted_text
+                            for latex_expr in latex_matches:
+                                temp_check = temp_check.replace(latex_expr, '', 1)
+                            # If there's remaining text (not just whitespace), we have mixed content
+                            if temp_check.strip():
+                                # Remove the $ signs from LaTeX parts and wrap the whole thing
+                                temp_formatted = formatted_text
+                                for latex_expr in latex_matches:
+                                    if latex_expr in temp_formatted:
+                                        # Remove outer $ signs from the LaTeX expression
+                                        inner_latex = latex_expr[1:-1]  # Remove first and last $
+                                        temp_formatted = temp_formatted.replace(latex_expr, inner_latex, 1)
+                                # Wrap entire text in math mode
+                                formatted_text = f"${temp_formatted}$"
+                    except:
+                        # If LaTeX wrapping fails, keep the formatted text as-is
+                        pass
 
                 # Parse alignment (e.g., "center-center", "left-bottom", "right-top")
-                # Format: horizontal-vertical or vertical-horizontal (auto-detect)
-                align_parts = alignment.split("-")
-                part1 = align_parts[0] if len(align_parts) > 0 else "center"
-                part2 = align_parts[1] if len(align_parts) > 1 else "center"
+                # Map positioning to matplotlib alignment, inverting for intuitive sense
+                # Matplotlib expects the position to refer to where the object is relative to the text
+                # We invert it so "top-left" means "place text at top-left of the point"
+                alignment_key = alignment.strip().lower().replace("_", "-")
+                
+                # Mapping with inverted logic (same as plot directive)
+                alignment_map = {
+                    "top-left": ("bottom", "right"),
+                    "top-right": ("bottom", "left"),
+                    "bottom-left": ("top", "right"),
+                    "bottom-right": ("top", "left"),
+                    "top-center": ("bottom", "center"),
+                    "bottom-center": ("top", "center"),
+                    "center-left": ("center", "right"),
+                    "center-right": ("center", "left"),
+                    "center-center": ("center", "center"),
+                }
+                
+                va, ha = alignment_map.get(alignment_key, ("top", "left"))
 
-                # Valid horizontal alignments
-                h_aligns = {"left", "center", "right"}
-                # Valid vertical alignments
-                v_aligns = {"top", "center", "bottom"}
-
-                # Auto-detect which part is horizontal and which is vertical
-                if part1 in h_aligns and part2 in v_aligns:
-                    ha, va = part1, part2
-                elif part1 in v_aligns and part2 in h_aligns:
-                    ha, va = part2, part1  # Swap if reversed
-                elif part1 in h_aligns:
-                    ha, va = part1, "center"
-                elif part1 in v_aligns:
-                    ha, va = "center", part1
-                else:
-                    ha, va = "center", "center"
+                # Prepare bbox kwargs if bbox is requested
+                bbox_kwargs = None
+                if bbox_flag:
+                    bbox_kwargs = dict(
+                        boxstyle="round,pad=0.3",
+                        facecolor="white",
+                        alpha=0.8,
+                        edgecolor="none"
+                    )
 
                 # Add text to plot
                 ax.text(
@@ -1574,11 +2111,9 @@ class AnimateDirective(SphinxDirective):
                     horizontalalignment=ha,
                     verticalalignment=va,
                     fontsize=fontsize,
-                    bbox=dict(
-                        boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"
-                    ),
+                    bbox=bbox_kwargs,
                 )
-            except Exception as e:
+            except Exception:
                 # Silently skip text annotations that fail
                 pass
 

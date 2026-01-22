@@ -526,10 +526,8 @@ class MultiInteractiveGraphDirective(SphinxDirective):
                      class="adaptive-figure"
                      src="{all_frame_paths[graph_idx][initial_idx]}" 
                      alt="Interactive graph {graph_idx + 1}"
-                     style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                     style="width: 100%; height: {height}; display: block;"
                      loading="eager">
-                     alt="Interactive graph {graph_idx + 1}"
-                     style="max-width: 100%; height: {height}; display: block; margin: 0 auto;">
             </div>
             """
             )

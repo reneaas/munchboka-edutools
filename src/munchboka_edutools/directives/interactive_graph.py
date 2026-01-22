@@ -193,32 +193,55 @@ class InteractiveGraphDirective(SphinxDirective):
             ["interactive-graph", "no-click", "no-scaled-link"]
         )
 
-        # Build figure container
-        figure = nodes.figure()
-        figure.setdefault("classes", []).extend(
-            ["adaptive-figure", "interactive-figure", "no-click", "no-scaled-link"]
-        )
-
-        width = merged.get("width", "80%")
         align = merged.get("align", "center")
-        figure["align"] = align
-
-        figure += raw_node
-
-        # Add caption if present
-        if caption_lines:
-            caption = nodes.caption()
-            caption_text = "\n".join(caption_lines)
-            parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
-            caption.extend(parsed_nodes)
-            figure += caption
-
-        # Handle explicit name
-        explicit_name = self.options.get("name")
-        if explicit_name:
-            self.add_name(figure)
-
-        return [figure]
+        
+        # For left/right alignment, use a simple container to avoid figure width issues
+        # For center, use figure for consistency with other directives
+        if align in ("left", "right"):
+            container = nodes.container()
+            container.setdefault("classes", []).extend(
+                ["interactive-figure", "no-click", "no-scaled-link"]
+            )
+            container += raw_node
+            
+            # Add caption if present
+            if caption_lines:
+                caption_para = nodes.paragraph()
+                caption_text = "\n".join(caption_lines)
+                parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
+                caption_para.extend(parsed_nodes)
+                caption_para["classes"].append("caption")
+                container += caption_para
+            
+            # Handle explicit name
+            explicit_name = self.options.get("name")
+            if explicit_name:
+                self.add_name(container)
+            
+            return [container]
+        else:
+            # Use figure for center alignment
+            figure = nodes.figure()
+            figure.setdefault("classes", []).extend(
+                ["adaptive-figure", "interactive-figure", "no-click", "no-scaled-link"]
+            )
+            figure["align"] = align
+            figure += raw_node
+            
+            # Add caption if present
+            if caption_lines:
+                caption = nodes.caption()
+                caption_text = "\n".join(caption_lines)
+                parsed_nodes, messages = self.state.inline_text(caption_text, self.lineno)
+                caption.extend(parsed_nodes)
+                figure += caption
+            
+            # Handle explicit name
+            explicit_name = self.options.get("name")
+            if explicit_name:
+                self.add_name(figure)
+            
+            return [figure]
 
     def _parse_kv_block(self) -> Tuple[Dict[str, Any], Dict[str, List[str]], int]:
         """Parse content block into scalars, lists, and caption index.
@@ -433,6 +456,15 @@ class InteractiveGraphDirective(SphinxDirective):
         unique_id = uuid.uuid4().hex[:8]
         width = options.get("width", "80%")
         height = options.get("height", "auto")
+        align = options.get("align", "center")
+
+        # Determine wrapper styling based on alignment
+        if align == "left":
+            wrapper_style = f"display: inline-block; max-width: {width}; float: left; clear: left;"
+        elif align == "right":
+            wrapper_style = f"display: inline-block; max-width: {width}; float: right; clear: right;"
+        else:  # center or default
+            wrapper_style = f"max-width: {width}; margin: 0 auto; display: block;"
 
         # Calculate relative path based on document depth
         # self.env.docname gives us the path like "book/omvendte_funksjoner/derivasjon/oppgaver"
@@ -466,16 +498,17 @@ class InteractiveGraphDirective(SphinxDirective):
 
         html = f"""
 {preload_html}
-<div class="interactive-graph-container" style="width: {width}; margin: 0 auto;">
+<div class="interactive-graph-wrapper" style="{wrapper_style}">
+<div class="interactive-graph-container" style="display: inline-block; width: 100%;">
     <div class="interactive-graph-display" style="text-align: center;">
         <img id="interactive-img-{unique_id}" 
              class="adaptive-figure"
              src="{frame_paths[initial_idx]}" 
              alt="Interactive graph"
-             style="max-width: 100%; height: {height}; display: block; margin: 0 auto;"
+             style="width: 100%; height: {height}; display: block;"
              loading="eager">
     </div>
-    <div class="interactive-graph-controls" style="padding: 15px 10px; text-align: center;">
+    <div class="interactive-graph-controls" style="padding: 8px 0; text-align: center;">
         <div style="display: flex; align-items: center; gap: 10px; max-width: 600px; margin: 0 auto;">
             <span style="font-family: monospace; min-width: 40px; text-align: right; font-size: 14px;">{var_min:.2f}</span>
             <input type="range" 
@@ -551,21 +584,41 @@ class InteractiveGraphDirective(SphinxDirective):
         return;
     }}
     
+    // Create image cache for instant switching
+    const imageCache = {{}};
+    let pendingFrame = null;
+    
     function updateFrame() {{
         const index = parseInt(slider.value);
-        console.log('Updating to frame', index);
-        img.src = frames[index];
-        valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
+        
+        // Cancel any pending frame update
+        if (pendingFrame !== null) {{
+            cancelAnimationFrame(pendingFrame);
+        }}
+        
+        // Use requestAnimationFrame for smoother updates
+        pendingFrame = requestAnimationFrame(() => {{
+            // Use cached image if available for instant display
+            if (imageCache[index]) {{
+                img.src = imageCache[index].src;
+            }} else {{
+                img.src = frames[index];
+            }}
+            valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
+            pendingFrame = null;
+        }});
     }}
     
-    // Preload images with priority
+    // Aggressive preloading strategy
     const preloadedFrames = new Set();
     
     function preloadFrame(index) {{
         if (preloadedFrames.has(index) || index < 0 || index >= frames.length) return;
         preloadedFrames.add(index);
-        const img = new Image();
-        img.src = frames[index];
+        
+        const imgObj = new Image();
+        imgObj.src = frames[index];
+        imageCache[index] = imgObj;
     }}
     
     function preloadNearbyFrames(currentIdx, radius) {{
@@ -581,62 +634,70 @@ class InteractiveGraphDirective(SphinxDirective):
     }}
     
     function preloadAllFrames() {{
-        // Preload all frames progressively in the background
+        // Aggressively preload ALL frames immediately in batches
         const currentIdx = parseInt(slider.value);
         const total = frames.length;
-        
-        // Start from current position and spiral outwards
+        const batchSize = 10; // Larger batches for faster loading
         let loaded = 0;
-        const batchSize = 5;
         
         function loadBatch() {{
-            for (let i = 0; i < batchSize && loaded < total; i++) {{
-                // Alternate between forward and backward from current position
-                const offset = Math.floor(loaded / 2) + 1;
-                const idx = loaded % 2 === 0 
+            const start = loaded;
+            const end = Math.min(loaded + batchSize, total);
+            
+            // Load batch starting from current position and spiraling out
+            for (let i = start; i < end; i++) {{
+                const offset = Math.floor(i / 2) + 1;
+                const idx = i % 2 === 0 
                     ? (currentIdx + offset) % total
                     : (currentIdx - offset + total) % total;
                 preloadFrame(idx);
-                loaded++;
             }}
             
+            loaded = end;
+            
             if (loaded < total) {{
-                // Use requestIdleCallback if available, otherwise setTimeout
-                if (window.requestIdleCallback) {{
-                    requestIdleCallback(loadBatch, {{ timeout: 1000 }});
-                }} else {{
-                    setTimeout(loadBatch, 50);
-                }}
+                // Continue loading immediately - no delays
+                requestAnimationFrame(loadBatch);
+            }} else {{
+                console.log('All {len(var_values)} frames preloaded for {unique_id}');
             }}
         }}
         
         loadBatch();
     }}
     
-    // Function to initialize the graph (force image load)
+    // Function to initialize the graph
     function initializeGraph() {{
         console.log('Initializing graph {unique_id}');
-        // Force reload the current frame to ensure it's displayed
+        // Force reload the current frame
         updateFrame();
-        // Immediately preload nearby frames for smooth interaction
+        
+        // Immediately start aggressive preloading
         const currentIdx = parseInt(slider.value);
-        preloadNearbyFrames(currentIdx, 10);
-        // Then progressively preload all other frames in the background
-        setTimeout(preloadAllFrames, 100);
+        preloadNearbyFrames(currentIdx, 20); // Preload 40 frames around current
+        
+        // Start loading all frames immediately (no delay)
+        preloadAllFrames();
     }}
     
-    // Update nearby preloads when slider changes
-    function onSliderChange() {{
-        updateFrame();
-        const currentIdx = parseInt(slider.value);
-        preloadNearbyFrames(currentIdx, 5);
+    // Optimize slider interaction with debouncing for preloading
+    let preloadTimer = null;
+    function onSliderInput() {{
+        updateFrame(); // Update immediately
+        
+        // Debounce nearby preloading to avoid excessive preload calls
+        if (preloadTimer) clearTimeout(preloadTimer);
+        preloadTimer = setTimeout(() => {{
+            const currentIdx = parseInt(slider.value);
+            preloadNearbyFrames(currentIdx, 10);
+        }}, 50);
     }}
     
-    slider.addEventListener('input', updateFrame);
-    slider.addEventListener('change', onSliderChange);
+    slider.addEventListener('input', onSliderInput);
+    slider.addEventListener('change', updateFrame);
     
     // Touch events for mobile
-    slider.addEventListener('touchmove', updateFrame);
+    slider.addEventListener('touchmove', onSliderInput);
     
     // Keyboard navigation
     slider.addEventListener('keydown', function(e) {{
@@ -715,6 +776,7 @@ class InteractiveGraphDirective(SphinxDirective):
     console.log('Event listeners attached successfully');
 }})();
 </script>
+</div>
 """
         return html
 

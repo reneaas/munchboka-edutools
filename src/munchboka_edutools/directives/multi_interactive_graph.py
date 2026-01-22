@@ -509,6 +509,13 @@ class MultiInteractiveGraphDirective(SphinxDirective):
 
         values_js = "[" + ",".join(f"{v:.10f}" for v in var_values) + "]"
 
+        # Add preload hints for initial frames and nearby frames for faster loading
+        preload_links = []
+        for frame_idx in range(max(0, initial_idx - 3), min(len(var_values), initial_idx + 4)):
+            for graph_idx in range(num_graphs):
+                preload_links.append(f'<link rel="preload" as="image" href="{all_frame_paths[graph_idx][frame_idx]}">')
+        preload_html = "\n".join(preload_links)
+
         # Generate grid of images
         grid_items = []
         for graph_idx in range(num_graphs):
@@ -519,6 +526,9 @@ class MultiInteractiveGraphDirective(SphinxDirective):
                      class="adaptive-figure"
                      src="{all_frame_paths[graph_idx][initial_idx]}" 
                      alt="Interactive graph {graph_idx + 1}"
+                     style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                     loading="eager">
+                     alt="Interactive graph {graph_idx + 1}"
                      style="max-width: 100%; height: {height}; display: block; margin: 0 auto;">
             </div>
             """
@@ -527,6 +537,7 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         grid_html = "\n".join(grid_items)
 
         html = f"""
+{preload_html}
 <div class="multi-interactive-container" style="width: {width}; margin: 0 auto;">
     <div class="multi-interactive-grid" style="display: grid; grid-template-columns: repeat({cols}, 1fr); grid-template-rows: repeat({rows}, auto); gap: 10px; margin-bottom: 15px;">
         {grid_html}
@@ -640,8 +651,74 @@ html[data-theme="dark"] .multi-interactive-item {{
         valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
     }}
     
+    // Preload images with priority
+    const preloadedFrames = new Set();
+    
+    function preloadFrame(index) {{
+        if (preloadedFrames.has(index) || index < 0 || index >= allFrames[0].length) return;
+        preloadedFrames.add(index);
+        // Preload all graph frames for this index
+        for (let graphIdx = 0; graphIdx < allFrames.length; graphIdx++) {{
+            const img = new Image();
+            img.src = allFrames[graphIdx][index];
+        }}
+    }}
+    
+    function preloadNearbyFrames(currentIdx, radius) {{
+        for (let offset = 0; offset <= radius; offset++) {{
+            if (offset === 0) {{
+                preloadFrame(currentIdx);
+            }} else {{
+                preloadFrame(currentIdx + offset);
+                preloadFrame(currentIdx - offset);
+            }}
+        }}
+    }}
+    
+    function preloadAllFrames() {{
+        const currentIdx = parseInt(slider.value);
+        const total = allFrames[0].length;
+        let loaded = 0;
+        const batchSize = 5;
+        
+        function loadBatch() {{
+            for (let i = 0; i < batchSize && loaded < total; i++) {{
+                const offset = Math.floor(loaded / 2) + 1;
+                const idx = loaded % 2 === 0 
+                    ? (currentIdx + offset) % total
+                    : (currentIdx - offset + total) % total;
+                preloadFrame(idx);
+                loaded++;
+            }}
+            
+            if (loaded < total) {{
+                if (window.requestIdleCallback) {{
+                    requestIdleCallback(loadBatch, {{ timeout: 1000 }});
+                }} else {{
+                    setTimeout(loadBatch, 50);
+                }}
+            }}
+        }}
+        
+        loadBatch();
+    }}
+    
+    // Initialize preloading
+    function initializeGraphs() {{
+        updateFrames();
+        const currentIdx = parseInt(slider.value);
+        preloadNearbyFrames(currentIdx, 10);
+        setTimeout(preloadAllFrames, 100);
+    }}
+    
+    function onSliderChange() {{
+        updateFrames();
+        const currentIdx = parseInt(slider.value);
+        preloadNearbyFrames(currentIdx, 5);
+    }}
+    
     slider.addEventListener('input', updateFrames);
-    slider.addEventListener('change', updateFrames);
+    slider.addEventListener('change', onSliderChange);
     slider.addEventListener('touchmove', updateFrames);
     
     // Keyboard navigation
@@ -656,6 +733,9 @@ html[data-theme="dark"] .multi-interactive-item {{
             updateFrames();
         }}
     }});
+    
+    // Start initialization
+    initializeGraphs();
     
     console.log('Event listeners attached successfully');
 }})();

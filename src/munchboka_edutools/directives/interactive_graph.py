@@ -458,14 +458,22 @@ class InteractiveGraphDirective(SphinxDirective):
         initial_idx = self._get_initial_frame_index(var_values, options)
         initial_value = var_values[initial_idx]
 
+        # Add preload hints for initial frame and nearby frames for faster loading
+        preload_links = []
+        for i in range(max(0, initial_idx - 3), min(len(frame_paths), initial_idx + 4)):
+            preload_links.append(f'<link rel="preload" as="image" href="{frame_paths[i]}">')
+        preload_html = "\n".join(preload_links)
+
         html = f"""
+{preload_html}
 <div class="interactive-graph-container" style="width: {width}; margin: 0 auto;">
     <div class="interactive-graph-display" style="text-align: center;">
         <img id="interactive-img-{unique_id}" 
              class="adaptive-figure"
              src="{frame_paths[initial_idx]}" 
              alt="Interactive graph"
-             style="max-width: 100%; height: {height}; display: block; margin: 0 auto;">
+             style="max-width: 100%; height: {height}; display: block; margin: 0 auto;"
+             loading="eager">
     </div>
     <div class="interactive-graph-controls" style="padding: 15px 10px; text-align: center;">
         <div style="display: flex; align-items: center; gap: 10px; max-width: 600px; margin: 0 auto;">
@@ -550,21 +558,82 @@ class InteractiveGraphDirective(SphinxDirective):
         valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
     }}
     
+    // Preload images with priority
+    const preloadedFrames = new Set();
+    
+    function preloadFrame(index) {{
+        if (preloadedFrames.has(index) || index < 0 || index >= frames.length) return;
+        preloadedFrames.add(index);
+        const img = new Image();
+        img.src = frames[index];
+    }}
+    
+    function preloadNearbyFrames(currentIdx, radius) {{
+        // Preload frames in order of importance: current, then alternating left/right
+        for (let offset = 0; offset <= radius; offset++) {{
+            if (offset === 0) {{
+                preloadFrame(currentIdx);
+            }} else {{
+                preloadFrame(currentIdx + offset);
+                preloadFrame(currentIdx - offset);
+            }}
+        }}
+    }}
+    
+    function preloadAllFrames() {{
+        // Preload all frames progressively in the background
+        const currentIdx = parseInt(slider.value);
+        const total = frames.length;
+        
+        // Start from current position and spiral outwards
+        let loaded = 0;
+        const batchSize = 5;
+        
+        function loadBatch() {{
+            for (let i = 0; i < batchSize && loaded < total; i++) {{
+                // Alternate between forward and backward from current position
+                const offset = Math.floor(loaded / 2) + 1;
+                const idx = loaded % 2 === 0 
+                    ? (currentIdx + offset) % total
+                    : (currentIdx - offset + total) % total;
+                preloadFrame(idx);
+                loaded++;
+            }}
+            
+            if (loaded < total) {{
+                // Use requestIdleCallback if available, otherwise setTimeout
+                if (window.requestIdleCallback) {{
+                    requestIdleCallback(loadBatch, {{ timeout: 1000 }});
+                }} else {{
+                    setTimeout(loadBatch, 50);
+                }}
+            }}
+        }}
+        
+        loadBatch();
+    }}
+    
     // Function to initialize the graph (force image load)
     function initializeGraph() {{
         console.log('Initializing graph {unique_id}');
         // Force reload the current frame to ensure it's displayed
         updateFrame();
-        // Preload a few nearby frames
+        // Immediately preload nearby frames for smooth interaction
         const currentIdx = parseInt(slider.value);
-        for (let i = Math.max(0, currentIdx - 2); i <= Math.min(frames.length - 1, currentIdx + 2); i++) {{
-            const preloadImg = new Image();
-            preloadImg.src = frames[i];
-        }}
+        preloadNearbyFrames(currentIdx, 10);
+        // Then progressively preload all other frames in the background
+        setTimeout(preloadAllFrames, 100);
+    }}
+    
+    // Update nearby preloads when slider changes
+    function onSliderChange() {{
+        updateFrame();
+        const currentIdx = parseInt(slider.value);
+        preloadNearbyFrames(currentIdx, 5);
     }}
     
     slider.addEventListener('input', updateFrame);
-    slider.addEventListener('change', updateFrame);
+    slider.addEventListener('change', onSliderChange);
     
     // Touch events for mobile
     slider.addEventListener('touchmove', updateFrame);

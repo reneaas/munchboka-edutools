@@ -46,6 +46,7 @@ from .animate import (
     _hash_key,
     _parse_bool,
     _substitute_variable,
+    _substitute_variables,
 )
 
 
@@ -63,6 +64,8 @@ class InteractiveGraphDirective(SphinxDirective):
     option_spec = {
         # Interactive-specific options
         "interactive-var": directives.unchanged,
+        # Guard for cartesian-product frame grids (only relevant for multi-var)
+        "interactive-max-frames": directives.nonnegative_int,
         "width": directives.unchanged,
         "height": directives.unchanged,
         "align": directives.unchanged,
@@ -85,19 +88,29 @@ class InteractiveGraphDirective(SphinxDirective):
         # Merge directive options and content scalars
         merged = {**scalars_dict, **self.options}
 
-        # Get interactive variable specification
-        var_spec = merged.get("interactive-var")
-        if not var_spec:
+        # Collect interactive variable specs.
+        # Preferred syntax: repeated `interactive-var:` lines in the content.
+        var_specs: List[str] = []
+        if lists_dict.get("interactive-var"):
+            var_specs.extend(lists_dict["interactive-var"])
+        elif merged.get("interactive-var"):
+            # Back-compat: single interactive-var in options/scalars.
+            var_specs.append(str(merged.get("interactive-var")))
+
+        if not var_specs:
             return [
                 self.state_machine.reporter.error(
-                    "interactive-var option is required (format: name, min, max, frames)",
+                    "interactive-var option is required (format: name, min, max, frames). "
+                    "For multiple variables, repeat `interactive-var:` lines.",
                     line=self.lineno,
                 )
             ]
 
-        # Parse interactive variable
+        # Parse interactive variables (order matters)
         try:
-            var_name, var_values = self._parse_interactive_var(var_spec)
+            var_axes: List[Tuple[str, List[float]]] = [
+                self._parse_interactive_var(s) for s in var_specs
+            ]
         except ValueError as e:
             return [
                 self.state_machine.reporter.error(
@@ -105,6 +118,38 @@ class InteractiveGraphDirective(SphinxDirective):
                     line=self.lineno,
                 )
             ]
+
+        # Validate uniqueness
+        seen = set()
+        for vn, _vv in var_axes:
+            if vn in seen:
+                return [
+                    self.state_machine.reporter.error(
+                        f"Duplicate interactive-var name: {vn}",
+                        line=self.lineno,
+                    )
+                ]
+            seen.add(vn)
+
+        is_multi = len(var_axes) > 1
+
+        # Guard against combinatorial explosion.
+        if is_multi:
+            total_frames = 1
+            for _vn, vv in var_axes:
+                total_frames *= max(1, len(vv))
+
+            max_frames = merged.get("interactive-max-frames")
+            if max_frames is None:
+                max_frames = 10000
+            if total_frames > int(max_frames):
+                return [
+                    self.state_machine.reporter.error(
+                        f"interactive-graph would generate {total_frames} frames (product of steps). "
+                        f"Reduce steps or set interactive-max-frames to a higher value.",
+                        line=self.lineno,
+                    )
+                ]
 
         # Determine output directory
         srcdir = env.srcdir
@@ -116,7 +161,7 @@ class InteractiveGraphDirective(SphinxDirective):
         caption_lines = content_lines[caption_idx:] if caption_idx < len(content_lines) else []
 
         # Filter interactive-specific keys from plot content
-        interactive_keys = {"interactive-var"}
+        interactive_keys = {"interactive-var", "interactive-max-frames"}
         plot_content_lines = []
         for i, line in enumerate(content_lines):
             if i >= caption_idx:
@@ -131,8 +176,9 @@ class InteractiveGraphDirective(SphinxDirective):
 
         # Generate hash for caching
         content_for_hash = "\n".join(plot_content_lines)
+        var_specs_for_hash = "\n".join(var_specs)
         hash_key = _hash_key(
-            var_spec,
+            var_specs_for_hash,
             content_for_hash,
             str(merged),
             "interactive",
@@ -145,8 +191,15 @@ class InteractiveGraphDirective(SphinxDirective):
         # Check for delta format (preferred) or frame files (fallback)
         delta_base_path = os.path.join(frame_dir, "base.svg")
         delta_json_path = os.path.join(frame_dir, "deltas.json")
+        meta_json_path = os.path.join(frame_dir, "meta.json")
         has_delta_format = os.path.isfile(delta_base_path) and os.path.isfile(delta_json_path)
-        has_frame_files = os.path.isdir(frame_dir) and len(os.listdir(frame_dir)) >= len(var_values)
+        # Frame-based fallback is only supported for single-variable graphs.
+        var_name, var_values = var_axes[0]
+        has_frame_files = (
+            (not is_multi)
+            and os.path.isdir(frame_dir)
+            and len(os.listdir(frame_dir)) >= len(var_values)
+        )
         frames_exist = has_delta_format or has_frame_files
 
         def _delta_assets_look_corrupt() -> bool:
@@ -254,6 +307,9 @@ class InteractiveGraphDirective(SphinxDirective):
             or _delta_assets_look_stale()
         )
 
+        if is_multi and has_delta_format and not os.path.isfile(meta_json_path):
+            regenerate = True
+
         if regenerate:
             from sphinx.util import logging
 
@@ -264,14 +320,23 @@ class InteractiveGraphDirective(SphinxDirective):
                     shutil.rmtree(frame_dir)
 
                 # Generate all frames (will create delta format)
-                self._generate_frames(
-                    app,
-                    var_name,
-                    var_values,
-                    plot_content_lines,
-                    frame_dir,
-                    merged,
-                )
+                if is_multi:
+                    self._generate_frames_multi(
+                        app,
+                        var_axes,
+                        plot_content_lines,
+                        frame_dir,
+                        merged,
+                    )
+                else:
+                    self._generate_frames(
+                        app,
+                        var_name,
+                        var_values,
+                        plot_content_lines,
+                        frame_dir,
+                        merged,
+                    )
             except Exception as e:
                 return [
                     self.state_machine.reporter.error(
@@ -293,13 +358,20 @@ class InteractiveGraphDirective(SphinxDirective):
         except Exception:
             pass  # Non-fatal if copy fails during build
 
-        # Generate HTML output with slider
-        html_content = self._generate_html(
-            base_name,
-            var_name,
-            var_values,
-            merged,
-        )
+        # Generate HTML output with slider(s)
+        if is_multi:
+            html_content = self._generate_html_multi(
+                base_name,
+                var_axes,
+                merged,
+            )
+        else:
+            html_content = self._generate_html(
+                base_name,
+                var_name,
+                var_values,
+                merged,
+            )
 
         # Create output node
         raw_node = nodes.raw("", html_content, format="html")
@@ -361,6 +433,7 @@ class InteractiveGraphDirective(SphinxDirective):
         """
         scalars_dict = {}
         lists_dict = {
+            "interactive-var": [],
             "function": [],
             "point": [],
             "annotate": [],
@@ -565,6 +638,236 @@ class InteractiveGraphDirective(SphinxDirective):
                 frame_path = os.path.join(output_dir, f"frame_{i:04d}.svg")
                 with open(frame_path, "w", encoding="utf-8") as f:
                     f.write(svg)
+
+    def _compute_strides(self, lengths: List[int]) -> List[int]:
+        """Row-major strides for mapping N-D indices to a 1-D frame index."""
+        strides: List[int] = [1] * len(lengths)
+        acc = 1
+        for i in range(len(lengths) - 1, -1, -1):
+            strides[i] = acc
+            acc *= max(1, int(lengths[i]))
+        return strides
+
+    def _get_initial_indices(
+        self, var_axes: List[Tuple[str, List[float]]], merged_options: Dict[str, Any]
+    ) -> List[int]:
+        """Initial slider indices for each variable.
+
+        Back-compat: for single-var, respects `interactive-var-start`.
+        Multi-var: supports `interactive-var-start: a=0, t=pi` (optional).
+        """
+        if not var_axes:
+            return []
+
+        if len(var_axes) == 1:
+            vn, vv = var_axes[0]
+            return [self._get_initial_frame_index(vv, merged_options)]
+
+        # Default: middle index for each axis.
+        indices = [len(vv) // 2 for _vn, vv in var_axes]
+
+        start_value_str = merged_options.get("interactive-var-start")
+        if not start_value_str:
+            return indices
+
+        # Parse simple name=value pairs.
+        if "=" not in str(start_value_str):
+            return indices
+
+        start_map: Dict[str, float] = {}
+        for part in str(start_value_str).split(","):
+            if "=" not in part:
+                continue
+            k, v = part.split("=", 1)
+            k = k.strip()
+            v = v.strip()
+            if not k:
+                continue
+            try:
+                start_map[k] = _eval_expr(v)
+            except Exception:
+                continue
+
+        if not start_map:
+            return indices
+
+        import numpy as np
+
+        for i, (vn, vv) in enumerate(var_axes):
+            if vn not in start_map:
+                continue
+            try:
+                idx = int(np.argmin(np.abs(np.array(vv) - float(start_map[vn]))))
+                indices[i] = idx
+            except Exception:
+                pass
+        return indices
+
+    def _generate_frames_multi(
+        self,
+        app: Sphinx,
+        var_axes: List[Tuple[str, List[float]]],
+        plot_content_lines: List[str],
+        output_dir: str,
+        merged_options: Dict[str, Any],
+    ) -> None:
+        """Generate a cartesian-product frame grid for multiple variables.
+
+        Output format is always delta-based: base.svg + deltas.json + meta.json.
+        """
+        import itertools
+        import json
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        from .animate import AnimateDirective
+        from .svg_delta import compute_svg_deltas, save_delta_format
+
+        # Create a temporary animate directive instance to reuse its methods
+        temp_directive = AnimateDirective(
+            name=self.name,
+            arguments=self.arguments,
+            options=self.options,
+            content=self.content,
+            lineno=self.lineno,
+            content_offset=self.content_offset,
+            block_text=self.block_text,
+            state=self.state,
+            state_machine=self.state_machine,
+        )
+
+        var_names = [vn for vn, _vv in var_axes]
+        var_values_list = [vv for _vn, vv in var_axes]
+        lengths = [len(vv) for vv in var_values_list]
+        strides = self._compute_strides(lengths)
+        initial_indices = self._get_initial_indices(var_axes, merged_options)
+
+        # Generate all frames in memory first
+        svg_frames: List[str] = []
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            frame_idx = 0
+            for idx_tuple in itertools.product(*[range(n) for n in lengths]):
+                variables = {
+                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
+                }
+
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variables(frame_content, variables)
+
+                # Reuse animate frame rendering. It only accepts a single
+                # (var_name, var_value) pair; we pass the first axis.
+                primary_name = var_names[0]
+                primary_value = variables[primary_name]
+
+                svg_path = os.path.join(temp_dir, f"frame_{frame_idx:04d}.svg")
+                temp_directive._generate_frame_svg(
+                    app,
+                    frame_content,
+                    svg_path,
+                    merged_options,
+                    primary_name,
+                    primary_value,
+                )
+
+                with open(svg_path, "r", encoding="utf-8") as f:
+                    svg_content = f.read()
+
+                svg_content = self._ensure_element_ids(svg_content, frame_idx)
+                svg_frames.append(svg_content)
+                frame_idx += 1
+
+        # Compute deltas and write delta assets
+        base_svg, deltas = compute_svg_deltas(svg_frames)
+        save_delta_format(base_svg, deltas, output_dir)
+
+        meta = {
+            "format_version": "2.0",
+            "frame_count": len(deltas),
+            "variables": [
+                {
+                    "name": vn,
+                    "values": vv,
+                    "min": vv[0] if vv else None,
+                    "max": vv[-1] if vv else None,
+                    "steps": len(vv),
+                }
+                for vn, vv in var_axes
+            ],
+            "lengths": lengths,
+            "strides": strides,
+            "initial_indices": initial_indices,
+        }
+        meta_path = os.path.join(output_dir, "meta.json")
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, separators=(",", ":"))
+
+        from sphinx.util import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(
+            f"✓ Generated multi-var delta-based interactive graph: "
+            f"{len(deltas)} frames ({'×'.join(str(n) for n in lengths)}) → base.svg + deltas.json + meta.json"
+        )
+
+    def _generate_html_multi(
+        self,
+        base_name: str,
+        var_axes: List[Tuple[str, List[float]]],
+        options: Dict[str, Any],
+    ) -> str:
+        """Generate HTML for delta-based multi-variable interactive graph."""
+        import uuid
+        import os
+
+        unique_id = uuid.uuid4().hex[:8]
+        width = options.get("width", "80%")
+        height = options.get("height", "auto")
+        align = options.get("align", "center")
+
+        if align == "left":
+            wrapper_style = f"width: {width}; float: left; clear: left;"
+        elif align == "right":
+            wrapper_style = f"width: {width}; float: right; clear: right;"
+        else:
+            wrapper_style = f"max-width: {width}; margin: 0 auto; display: block;"
+
+        docname = self.env.docname
+        depth = docname.count("/")
+        rel_prefix = "../" * depth
+
+        srcdir = self.env.srcdir
+        static_dir = os.path.join(srcdir, "_static", "interactive", base_name)
+        delta_base_path = os.path.join(static_dir, "base.svg")
+        delta_json_path = os.path.join(static_dir, "deltas.json")
+        meta_json_path = os.path.join(static_dir, "meta.json")
+        use_delta_format = (
+            os.path.isfile(delta_base_path)
+            and os.path.isfile(delta_json_path)
+            and os.path.isfile(meta_json_path)
+        )
+
+        if not use_delta_format:
+            return (
+                f"<div class='interactive-graph-wrapper' style='{wrapper_style}'>"
+                f"<p style='color: red; padding: 10px;'>Failed to load multi-variable interactive graph assets.</p>"
+                f"</div>"
+            )
+
+        from .svg_delta import generate_multi_delta_html
+
+        base_svg_url = f"{rel_prefix}_static/interactive/{base_name}/base.svg"
+        deltas_json_url = f"{rel_prefix}_static/interactive/{base_name}/deltas.json"
+        meta_json_url = f"{rel_prefix}_static/interactive/{base_name}/meta.json"
+
+        return generate_multi_delta_html(
+            base_svg_url,
+            deltas_json_url,
+            meta_json_url,
+            unique_id,
+            wrapper_style=wrapper_style,
+            height=height,
+        )
 
     def _ensure_element_ids(self, svg_content: str, frame_idx: int) -> str:
         """

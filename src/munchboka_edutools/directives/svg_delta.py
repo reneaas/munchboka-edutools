@@ -425,6 +425,7 @@ def generate_delta_html(
     }}
     
     let svgDoc = null;
+    let baseSvgTemplate = null;
     let deltas = null;
     let svgElements = {{}};  // Cache of ID -> element
     let pendingFrame = null;
@@ -490,16 +491,13 @@ def generate_delta_html(
         svgDoc.style.height = '{height}';
         svgDoc.style.display = 'block';
         svgDoc.classList.add('adaptive-figure');
+
+        // Keep an immutable template of the base SVG.
+        // Deltas are computed relative to this base frame.
+        baseSvgTemplate = importedSvg.cloneNode(true);
         
-        console.log('Building element cache...');
-        // Build element cache
-        buildElementCache();
-        
-        console.log('Element cache size:', Object.keys(svgElements).length);
-        console.log('Applying initial frame...');
-        
-        // Apply initial frame
-        applyDelta(parseInt(slider.value));
+        console.log('Rendering initial frame...');
+        renderFrame(parseInt(slider.value));
         
         console.log('Attaching event listeners...');
         console.log('SVG dimensions:', svgDoc.getBoundingClientRect());
@@ -535,6 +533,24 @@ def generate_delta_html(
         svgDoc.querySelectorAll('[id]').forEach(elem => {{
             svgElements[elem.id] = elem;
         }});
+    }}
+
+    function mountFreshBaseSvg() {{
+        // IMPORTANT: Deltas are base-relative (not incremental).
+        // To support random access and ensure frame 0 correctly reverts changes,
+        // we must start from a clean base SVG on every render.
+        if (!baseSvgTemplate) return;
+        const fresh = baseSvgTemplate.cloneNode(true);
+        container.innerHTML = '';
+        container.appendChild(fresh);
+        svgDoc = fresh;
+
+        svgDoc.style.width = '100%';
+        svgDoc.style.height = '{height}';
+        svgDoc.style.display = 'block';
+        svgDoc.classList.add('adaptive-figure');
+
+        buildElementCache();
     }}
     
     function applyDelta(frameIndex) {{
@@ -643,8 +659,11 @@ def generate_delta_html(
         if (didReplaceOuterHtml) {{
             buildElementCache();
         }}
-        
-        // Update value display
+    }}
+
+    function renderFrame(frameIndex) {{
+        mountFreshBaseSvg();
+        applyDelta(frameIndex);
         updateValueDisplay(frameIndex);
     }}
     
@@ -657,10 +676,396 @@ def generate_delta_html(
         }}
         
         pendingFrame = requestAnimationFrame(() => {{
-            applyDelta(index);
+            renderFrame(index);
             pendingFrame = null;
         }});
     }}
+}})();
+</script>
+"""
+
+
+def generate_multi_delta_html(
+    base_svg_url: str,
+    deltas_json_url: str,
+    meta_json_url: str,
+    unique_id: str,
+    wrapper_style: str = "",
+    height: str = "auto",
+) -> str:
+    """Generate HTML for a multi-variable delta-based interactive graph.
+
+    Expects `meta_json_url` to point to a JSON file written by the
+    `interactive-graph` directive containing:
+    - variables: [{name, values, min, max, step}, ...]
+    - strides: [int, ...]
+    - initial_indices: [int, ...]
+    """
+
+    return f"""
+<div class="interactive-graph-wrapper" style="{wrapper_style}">
+    <div class="interactive-graph-container" style="display: inline-block; width: 100%;">
+        <div class="interactive-graph-display" style="text-align: center;">
+            <div id="svg-container-{unique_id}" class="adaptive-figure" style="width: 100%; display: block;"></div>
+        </div>
+        <div class="interactive-graph-controls" style="padding: 8px 0; text-align: center;">
+            <div id="interactive-controls-{unique_id}" style="max-width: 720px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.interactive-slider-row {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+}}
+.interactive-slider-row .label {{
+    font-family: monospace;
+    min-width: 110px;
+    font-size: 14px;
+    text-align: left;
+    white-space: nowrap;
+}}
+.interactive-slider-row .slider-wrap {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}}
+.interactive-slider-row .minmax {{
+    font-family: monospace;
+    min-width: 56px;
+    font-size: 14px;
+}}
+.interactive-slider-row input[type=range] {{
+    flex: 1;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+}}
+.interactive-slider-row input[type=range]::-webkit-slider-thumb {{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #2196F3;
+    cursor: pointer;
+}}
+.interactive-slider-row input[type=range]::-moz-range-thumb {{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #2196F3;
+    cursor: pointer;
+    border: none;
+}}
+</style>
+
+<script>
+(function() {{
+    const uniqueId = '{unique_id}';
+    const baseSvgUrl = '{base_svg_url}';
+    const deltasJsonUrl = '{deltas_json_url}';
+    const metaJsonUrl = '{meta_json_url}';
+
+    const container = document.getElementById('svg-container-' + uniqueId);
+    const controlsRoot = document.getElementById('interactive-controls-' + uniqueId);
+
+    if (!container || !controlsRoot) {{
+        console.error('interactive-graph container/controls not found', uniqueId);
+        return;
+    }}
+
+    function latexForVarName(name) {{
+        const greek = {{
+            alpha: '\\\\alpha', beta: '\\\\beta', gamma: '\\\\gamma', delta: '\\\\delta',
+            epsilon: '\\\\epsilon', zeta: '\\\\zeta', eta: '\\\\eta', theta: '\\\\theta',
+            iota: '\\\\iota', kappa: '\\\\kappa', lambda: '\\\\lambda', mu: '\\\\mu',
+            nu: '\\\\nu', xi: '\\\\xi', pi: '\\\\pi', rho: '\\\\rho', sigma: '\\\\sigma',
+            tau: '\\\\tau', upsilon: '\\\\upsilon', phi: '\\\\phi', chi: '\\\\chi',
+            psi: '\\\\psi', omega: '\\\\omega',
+            varphi: '\\\\varphi', vartheta: '\\\\vartheta'
+        }};
+        if (greek[name]) return greek[name];
+        return name;
+    }}
+
+    function formatValue(v) {{
+        if (typeof v === 'number' && isFinite(v)) return v.toFixed(2);
+        return String(v);
+    }}
+
+    function setLabelHtml(i, latex, fallbackText) {{
+        const el = labels[i];
+        if (!el) return;
+        if (window.katex) {{
+            try {{
+                el.innerHTML = window.katex.renderToString(latex, {{
+                    throwOnError: false,
+                    displayMode: false,
+                }});
+                return;
+            }} catch (e) {{
+                // fall through
+            }}
+        }}
+        el.textContent = fallbackText;
+    }}
+
+    function parseNamespacedAttr(attr) {{
+        // Supports:
+        // - Clark notation from lxml/ElementTree (namespace + localname)
+        // - Double-brace encoding (JSON-safe alternative)
+        if (!attr || attr.length < 3) return null;
+        const LBRACE = 123;
+        const RBRACE = 125;
+        if (attr.charCodeAt(0) !== LBRACE) return null;
+
+        // Double-brace encoding: starts with '{{'
+        if (attr.length >= 4 && attr.charCodeAt(1) === LBRACE) {{
+            for (let i = 2; i < attr.length - 1; i++) {{
+                if (attr.charCodeAt(i) === RBRACE && attr.charCodeAt(i + 1) === RBRACE) {{
+                    const ns = attr.slice(2, i);
+                    const local = attr.slice(i + 2);
+                    if (ns && local) return {{ ns, local }};
+                    return null;
+                }}
+            }}
+            return null;
+        }}
+
+        // Clark notation: starts with '{' and has a single closing '}'
+        const close = attr.indexOf(String.fromCharCode(RBRACE));
+        if (close <= 1) return null;
+        const ns = attr.slice(1, close);
+        const local = attr.slice(close + 1);
+        if (!ns || !local) return null;
+        return {{ ns, local }};
+    }}
+
+    function replaceWithOuterHtml(existingElem, outerHtml) {{
+        try {{
+            const parser = new DOMParser();
+            const wrapper = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' + outerHtml + '</svg>';
+            const doc = parser.parseFromString(wrapper, 'image/svg+xml');
+            const parserError = doc.querySelector('parsererror');
+            if (parserError) {{
+                console.error('outerHTML parse error:', parserError.textContent);
+                return false;
+            }}
+            const replacement = doc.documentElement.firstElementChild;
+            if (!replacement) return false;
+            const imported = document.importNode(replacement, true);
+            existingElem.replaceWith(imported);
+            return true;
+        }} catch (e) {{
+            console.error('Failed to apply outerHTML delta:', e);
+            return false;
+        }}
+    }}
+
+    let svgDoc = null;
+    let baseSvgTemplate = null;
+    let deltas = null;
+    let meta = null;
+    let svgElements = {{}};
+    let sliders = [];
+    let labels = [];
+
+    function buildElementCache() {{
+        if (!svgDoc) return;
+        svgElements = {{}};
+        svgDoc.querySelectorAll('[id]').forEach(elem => {{
+            svgElements[elem.id] = elem;
+        }});
+    }}
+
+    function mountFreshBaseSvg() {{
+        // Deltas are base-relative (not incremental). Re-mounting a clean base
+        // SVG on every update ensures frame 0 (and other endpoints) correctly
+        // revert all changes.
+        if (!baseSvgTemplate) return;
+        const fresh = baseSvgTemplate.cloneNode(true);
+        container.innerHTML = '';
+        container.appendChild(fresh);
+        svgDoc = fresh;
+
+        svgDoc.style.width = '100%';
+        svgDoc.style.height = '{height}';
+        svgDoc.style.display = 'block';
+        svgDoc.classList.add('adaptive-figure');
+
+        buildElementCache();
+    }}
+
+    function applyDelta(frameIndex) {{
+        if (!deltas || frameIndex < 0 || frameIndex >= deltas.length) return;
+        const delta = deltas[frameIndex];
+        let didReplaceOuterHtml = false;
+
+        for (const [elemId, changes] of Object.entries(delta.changes || {{}})) {{
+            const elem = svgElements[elemId];
+            if (!elem) continue;
+            for (const [attr, value] of Object.entries(changes)) {{
+                if (attr === 'outerHTML') {{
+                    didReplaceOuterHtml = replaceWithOuterHtml(elem, value) || didReplaceOuterHtml;
+                }} else if (attr === 'textContent') {{
+                    elem.textContent = value;
+                }} else if (attr === 'tailContent') {{
+                    // skip
+                }} else if (value === null) {{
+                    const nsInfo = parseNamespacedAttr(attr);
+                    if (nsInfo) elem.removeAttributeNS(nsInfo.ns, nsInfo.local);
+                    else elem.removeAttribute(attr);
+                }} else {{
+                    const nsInfo = parseNamespacedAttr(attr);
+                    if (nsInfo) elem.setAttributeNS(nsInfo.ns, nsInfo.local, value);
+                    else elem.setAttribute(attr, value);
+                }}
+            }}
+        }}
+
+        if (didReplaceOuterHtml) buildElementCache();
+    }}
+
+    function computeFrameIndex(indices) {{
+        let idx = 0;
+        for (let i = 0; i < indices.length; i++) {{
+            idx += indices[i] * meta.strides[i];
+        }}
+        return idx;
+    }}
+
+    function currentIndices() {{
+        return sliders.map(s => parseInt(s.value, 10) || 0);
+    }}
+
+    function updateValueDisplay(indices) {{
+        for (let i = 0; i < meta.variables.length; i++) {{
+            const name = meta.variables[i].name;
+            const v = meta.variables[i].values[indices[i]];
+            const vStr = formatValue(v);
+            const text = name + ' = ' + vStr;
+            const latex = latexForVarName(name) + ' = ' + vStr;
+            setLabelHtml(i, latex, text);
+        }}
+    }}
+
+    function updateFrame() {{
+        const indices = currentIndices();
+        const frameIndex = computeFrameIndex(indices);
+        updateValueDisplay(indices);
+        mountFreshBaseSvg();
+        applyDelta(frameIndex);
+    }}
+
+    function buildControls() {{
+        controlsRoot.innerHTML = '';
+        sliders = [];
+        labels = [];
+
+        for (let i = 0; i < meta.variables.length; i++) {{
+            const v = meta.variables[i];
+            const row = document.createElement('div');
+            row.className = 'interactive-slider-row';
+
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.id = 'interactive-label-' + uniqueId + '-' + i;
+            // Will be populated by updateValueDisplay() on first updateFrame()
+            labelSpan.textContent = v.name;
+
+            const sliderWrap = document.createElement('div');
+            sliderWrap.className = 'slider-wrap';
+
+            const minSpan = document.createElement('span');
+            minSpan.className = 'minmax';
+            minSpan.style.textAlign = 'right';
+            minSpan.textContent = formatValue(v.min);
+
+            const maxSpan = document.createElement('span');
+            maxSpan.className = 'minmax';
+            maxSpan.style.textAlign = 'left';
+            maxSpan.textContent = formatValue(v.max);
+
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.className = 'interactive-slider';
+            input.min = '0';
+            input.max = String(Math.max(0, (v.values || []).length - 1));
+            input.step = '1';
+            input.value = String((meta.initial_indices && meta.initial_indices[i] !== undefined) ? meta.initial_indices[i] : Math.floor((v.values || []).length / 2));
+            input.id = 'interactive-slider-' + uniqueId + '-' + i;
+            input.addEventListener('input', updateFrame);
+            input.addEventListener('change', updateFrame);
+
+            sliderWrap.appendChild(minSpan);
+            sliderWrap.appendChild(input);
+            sliderWrap.appendChild(maxSpan);
+
+            row.appendChild(labelSpan);
+            row.appendChild(sliderWrap);
+            controlsRoot.appendChild(row);
+            sliders.push(input);
+            labels.push(labelSpan);
+        }}
+    }}
+
+    Promise.all([
+        fetch(baseSvgUrl).then(r => {{
+            if (!r.ok) throw new Error('Failed to load base SVG: ' + r.status);
+            return r.text();
+        }}),
+        fetch(deltasJsonUrl).then(r => {{
+            if (!r.ok) throw new Error('Failed to load deltas JSON: ' + r.status);
+            return r.json();
+        }}),
+        fetch(metaJsonUrl).then(r => {{
+            if (!r.ok) throw new Error('Failed to load meta JSON: ' + r.status);
+            return r.json();
+        }}),
+    ]).then(([svgText, deltasData, metaData]) => {{
+        // Remove XML declaration, DOCTYPE, and metadata with undeclared namespaces
+        svgText = svgText.replace(/<\\?xml[^?]*\\?>/g, '');
+        svgText = svgText.replace(/<!DOCTYPE[^>]*>/g, '');
+        svgText = svgText.replace(/<metadata>[\\s\\S]*?<\\/metadata>/g, '');
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const parserError = doc.querySelector('parsererror');
+        if (parserError) throw new Error('Failed to parse base.svg as SVG XML');
+        const svgElement = doc.documentElement;
+        if (!svgElement || svgElement.localName !== 'svg') throw new Error('No SVG element found');
+
+        const importedSvg = document.importNode(svgElement, true);
+        container.innerHTML = '';
+        container.appendChild(importedSvg);
+
+        svgDoc = importedSvg;
+        deltas = deltasData;
+        meta = metaData;
+
+        svgDoc.style.width = '100%';
+        svgDoc.style.height = '{height}';
+        svgDoc.style.display = 'block';
+        svgDoc.classList.add('adaptive-figure');
+
+        // Keep an immutable template of the base SVG for base-relative rendering.
+        baseSvgTemplate = importedSvg.cloneNode(true);
+        buildControls();
+        updateFrame();
+    }}).catch(err => {{
+        console.error('Failed to load multi delta graph:', err);
+        container.innerHTML = '<p style="color: red; padding: 20px;">Failed to load interactive graph: ' + err.message + '</p>';
+    }});
 }})();
 </script>
 """

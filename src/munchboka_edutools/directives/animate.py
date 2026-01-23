@@ -869,6 +869,235 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
     return "\n".join(result_lines)
 
 
+def _substitute_variables(content: str, variables: dict[str, float]) -> str:
+    """Substitute multiple interactive variables with their numeric values.
+
+    This is used by the interactive-graph directive when multiple
+    ``interactive-var:`` lines are present.
+
+    Notes:
+    - For ``text:`` lines, quoted segments support `{expr}` / `{expr:fmt}`
+      placeholders evaluated in a namespace containing *all* variables.
+    - For ``curve:`` lines, if the variable set includes `t`, we avoid
+      substituting `t` inside the x/y expressions (where `t` is the curve
+      parameter). We still substitute variables inside the range bounds.
+    """
+
+    if not variables:
+        return content
+
+    # Precompute formatted strings for bare variable substitution.
+    value_strs: dict[str, str] = {}
+    for name, val in variables.items():
+        if abs(val) < 1e10 and (abs(val) > 1e-4 or val == 0):
+            value_strs[name] = f"{val:.10f}".rstrip("0").rstrip(".")
+        else:
+            value_strs[name] = f"{val:.6e}"
+
+    def _apply_word_subs(text: str, *, skip: set[str] | None = None) -> str:
+        out = text
+        for name, val_str in value_strs.items():
+            if skip and name in skip:
+                continue
+            pattern = r"\b" + re.escape(name) + r"\b"
+            out = re.sub(pattern, val_str, out)
+        return out
+
+    def _format_text_placeholders(text: str) -> str:
+        if "{" not in text or "}" not in text:
+            return text
+
+        # Preserve escaped braces.
+        lbrace_token = "\u0000LBRACE\u0000"
+        rbrace_token = "\u0000RBRACE\u0000"
+        tmp = text.replace("{{", lbrace_token).replace("}}", rbrace_token)
+
+        ns = _get_safe_namespace(**variables)
+
+        def _is_latex_command_argument(s: str, lbrace_index: int) -> bool:
+            j = lbrace_index - 1
+            while j >= 0 and s[j].isspace():
+                j -= 1
+            if j < 0:
+                return False
+            k = j
+            while k >= 0 and s[k].isalpha():
+                k -= 1
+            return k >= 0 and s[k] == "\\" and k < j
+
+        def _split_expr_and_format(inner: str) -> tuple[str, str | None]:
+            depth = 0
+            for idx, ch in enumerate(inner):
+                if ch in "([":
+                    depth += 1
+                elif ch in ")]":
+                    depth = max(0, depth - 1)
+                elif ch == ":" and depth == 0:
+                    return inner[:idx].strip(), inner[idx + 1 :].strip()
+            return inner.strip(), None
+
+        out_chars: list[str] = []
+        i = 0
+        while i < len(tmp):
+            ch = tmp[i]
+            if ch != "{":
+                out_chars.append(ch)
+                i += 1
+                continue
+
+            j = tmp.find("}", i + 1)
+            if j == -1:
+                out_chars.append(ch)
+                i += 1
+                continue
+
+            latex_arg = _is_latex_command_argument(tmp, i)
+            inner = tmp[i + 1 : j].strip()
+            if not inner:
+                out_chars.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
+            # If the placeholder contains LaTeX commands, treat it as literal.
+            if "\\" in inner:
+                out_chars.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
+            expr_str, fmt_spec = _split_expr_and_format(inner)
+
+            has_any_var = any(
+                re.search(r"\b" + re.escape(vn) + r"\b", expr_str) for vn in variables
+            )
+            has_ops_or_parens = bool(re.search(r"[+\-*/^()]", expr_str))
+            has_ident = bool(re.search(r"[A-Za-z_]", expr_str))
+            looks_expr = has_any_var or (not latex_arg and (has_ops_or_parens or has_ident))
+            if not looks_expr:
+                out_chars.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
+            try:
+                val = eval(expr_str, ns)
+                try:
+                    val_num = float(val)
+                except Exception:
+                    val_num = val
+
+                if fmt_spec:
+                    rendered = format(val_num, fmt_spec)
+                else:
+                    # If this is exactly a bare variable, match bare substitution formatting.
+                    rendered = value_strs.get(expr_str, str(val_num))
+                out_chars.append("{" + rendered + "}" if latex_arg else rendered)
+            except Exception:
+                # Conservative fallback: only replace `{var}` / `{var:fmt}`.
+                if expr_str in variables:
+                    if fmt_spec:
+                        try:
+                            rendered = format(variables[expr_str], fmt_spec)
+                        except Exception:
+                            rendered = value_strs[expr_str]
+                    else:
+                        rendered = value_strs[expr_str]
+                    out_chars.append("{" + rendered + "}" if latex_arg else rendered)
+                else:
+                    out_chars.append(tmp[i : j + 1])
+
+            i = j + 1
+
+        return "".join(out_chars).replace(lbrace_token, "{").replace(rbrace_token, "}")
+
+    def _substitute_curve_line(line: str) -> str:
+        # Keep this in sync with the `curve:` parsing strategy in AnimateDirective.
+        range_pattern = r",\s*\(([^,]+),\s*([^)]+)\)"
+        m = re.search(range_pattern, line)
+        if not m:
+            return _apply_word_subs(line)
+
+        before_range = line[: m.start()].rstrip()
+        after_range = line[m.end() :]
+
+        # Split before_range into prefix + x,y parts.
+        # Example: "curve: cos(t), sin(a*t)"
+        if ":" not in before_range:
+            return _apply_word_subs(line)
+        prefix, rest = before_range.split(":", 1)
+        before_parts = [p.strip() for p in rest.split(",")]
+        if len(before_parts) < 2:
+            return _apply_word_subs(line)
+
+        x_expr = before_parts[0]
+        y_expr = before_parts[1]
+
+        # Substitute all vars except `t` inside x/y.
+        x_expr_sub = _apply_word_subs(x_expr, skip={"t"})
+        y_expr_sub = _apply_word_subs(y_expr, skip={"t"})
+
+        # Bounds get full substitution (including interactive `t`).
+        t_min_expr = _apply_word_subs(m.group(1).strip())
+        t_max_expr = _apply_word_subs(m.group(2).strip())
+
+        after_sub = _apply_word_subs(after_range)
+
+        # Preserve the original prefix exactly.
+        return f"{prefix}:{x_expr_sub}, {y_expr_sub}, ({t_min_expr}, {t_max_expr}){after_sub}"
+
+    lines = content.split("\n")
+    result_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("text:"):
+            # Match the single-var behavior: do not substitute inside quoted
+            # strings except for `{...}` placeholders.
+            parts: list[tuple[str, str]] = []
+            current = ""
+            in_quotes = False
+            quote_char: str | None = None
+
+            for ch in line:
+                if ch in ('"', "'") and (not in_quotes or ch == quote_char):
+                    if in_quotes:
+                        parts.append(("quoted", current))
+                        current = ""
+                        in_quotes = False
+                        quote_char = None
+                    else:
+                        if current:
+                            parts.append(("normal", current))
+                            current = ""
+                        in_quotes = True
+                        quote_char = ch
+                    parts.append(("quote_char", ch))
+                else:
+                    current += ch
+
+            if current:
+                parts.append(("quoted" if in_quotes else "normal", current))
+
+            reconstructed = ""
+            for kind, txt in parts:
+                if kind == "normal":
+                    reconstructed += _apply_word_subs(txt)
+                elif kind == "quoted":
+                    reconstructed += _format_text_placeholders(txt)
+                else:
+                    reconstructed += txt
+
+            result_lines.append(reconstructed)
+            continue
+
+        if stripped.startswith("curve:") and "t" in variables:
+            result_lines.append(_substitute_curve_line(line))
+            continue
+
+        result_lines.append(_apply_word_subs(line))
+
+    return "\n".join(result_lines)
+
+
 def _hash_key(*parts) -> str:
     """Generate hash key from parts."""
     h = hashlib.sha1()
@@ -1695,6 +1924,168 @@ class AnimateDirective(SphinxDirective):
                 ax.plot(x_vals, y_vals, **plot_kwargs)
             except Exception as e:
                 pass
+
+        # Process vlines/hlines (same semantics as plot directive)
+        # vline: x[, ymin, ymax][, linestyle][, color] (style/color any order)
+        # hline: y[, xmin, xmax][, linestyle][, color] (style/color any order)
+        try:
+            import ast
+
+            def _safe_literal(val: str):
+                try:
+                    return ast.literal_eval(val)
+                except Exception:
+                    return None
+
+            def _build_eval_namespace():
+                ns = _get_safe_namespace(**{var_name: var_value})
+
+                # Provide scalar-friendly wrappers for user-defined functions (from function labels)
+                # so expressions like f(a) can be used in vline/hline specs.
+                for _fname, _f in function_dict.items():
+
+                    def make_scalar_func(f):
+                        def scalar_func(x):
+                            if np.isscalar(x):
+                                return float(f(np.array([x]))[0])
+                            return f(x)
+
+                        return scalar_func
+
+                    ns[_fname] = make_scalar_func(_f)
+                return ns
+
+            _allowed_styles = {"solid", "dotted", "dashed", "dashdot"}
+            style_map = {
+                "solid": "-",
+                "dotted": ":",
+                "dashed": "--",
+                "dashdot": "-.",
+            }
+            default_line_color = plotmath.COLORS.get("red") or "red"
+            eval_namespace_lines = _build_eval_namespace()
+
+            # vlines
+            for v in lists_dict.get("vline", []):
+                try:
+                    lit = _safe_literal(str(v).strip())
+                    if isinstance(lit, (list, tuple)):
+                        tokens = [str(x).strip().strip("\"'") for x in lit]
+                    else:
+                        tokens = [p.strip().strip("\"'") for p in str(v).split(",") if p.strip()]
+
+                    nums: List[float] = []
+                    extras: List[str] = []
+                    for t in tokens:
+                        try:
+                            nums.append(float(eval(t, eval_namespace_lines)))
+                        except Exception:
+                            extras.append(t)
+
+                    if not nums:
+                        continue
+                    x_v = nums[0]
+                    y0 = nums[1] if len(nums) >= 3 else None
+                    y1 = nums[2] if len(nums) >= 3 else None
+
+                    st = None
+                    col = None
+                    for e in extras:
+                        el = e.lower()
+                        if el in _allowed_styles and st is None:
+                            st = e
+                        elif col is None:
+                            col = e
+
+                    y_min = ymin if y0 is None else y0
+                    y_max = ymax if y1 is None else y1
+                    ls_val = style_map.get((st or "dashed").lower(), ":")
+                    mapped = plotmath.COLORS.get(col) if col else None
+                    color_to_try = (mapped if mapped else col) or default_line_color
+                    try:
+                        ax.vlines(
+                            x=x_v,
+                            ymin=y_min,
+                            ymax=y_max,
+                            colors=color_to_try,
+                            lw=lw,
+                            alpha=1,
+                            ls=ls_val,
+                        )
+                    except Exception:
+                        ax.vlines(
+                            x=x_v,
+                            ymin=y_min,
+                            ymax=y_max,
+                            colors=default_line_color,
+                            lw=lw,
+                            alpha=1,
+                            ls=ls_val,
+                        )
+                except Exception:
+                    pass
+
+            # hlines
+            for h in lists_dict.get("hline", []):
+                try:
+                    lit = _safe_literal(str(h).strip())
+                    if isinstance(lit, (list, tuple)):
+                        tokens = [str(x).strip().strip("\"'") for x in lit]
+                    else:
+                        tokens = [p.strip().strip("\"'") for p in str(h).split(",") if p.strip()]
+
+                    nums_h: List[float] = []
+                    extras_h: List[str] = []
+                    for t in tokens:
+                        try:
+                            nums_h.append(float(eval(t, eval_namespace_lines)))
+                        except Exception:
+                            extras_h.append(t)
+
+                    if not nums_h:
+                        continue
+                    y_h = nums_h[0]
+                    x0 = nums_h[1] if len(nums_h) >= 3 else None
+                    x1 = nums_h[2] if len(nums_h) >= 3 else None
+
+                    st_h = None
+                    col_h = None
+                    for e in extras_h:
+                        el = e.lower()
+                        if el in _allowed_styles and st_h is None:
+                            st_h = e
+                        elif col_h is None:
+                            col_h = e
+
+                    x_min = xmin if x0 is None else x0
+                    x_max = xmax if x1 is None else x1
+                    ls_val_h = style_map.get((st_h or "dashed").lower(), ":")
+                    mapped_h = plotmath.COLORS.get(col_h) if col_h else None
+                    color_to_try_h = (mapped_h if mapped_h else col_h) or default_line_color
+                    try:
+                        ax.hlines(
+                            y=y_h,
+                            xmin=x_min,
+                            xmax=x_max,
+                            colors=color_to_try_h,
+                            lw=lw,
+                            alpha=1,
+                            ls=ls_val_h,
+                        )
+                    except Exception:
+                        ax.hlines(
+                            y=y_h,
+                            xmin=x_min,
+                            xmax=x_max,
+                            colors=default_line_color,
+                            lw=lw,
+                            alpha=1,
+                            ls=ls_val_h,
+                        )
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
         # Process angle-arcs (circle arcs)
         # angle-arc: (x, y), radius, start_angle_deg, end_angle_deg[, linestyle][, color]

@@ -163,12 +163,26 @@ def setup(app):
     # Ensure packaged static assets are available for HTML builder
     app.connect("builder-inited", _copy_static)
 
-    # Auto discover and load directive modules
+    # Auto discover and load directive modules.
+    #
+    # Important: not every module under munchboka_edutools.directives is a Sphinx
+    # extension (e.g. helper modules like svg_delta). Sphinx emits a warning if
+    # we ask it to load a module that has no setup(app). To keep builds clean,
+    # only register modules that actually provide a setup() entry point.
     pkg_prefix = __name__ + ".directives"
     try:
         pkg = importlib.import_module(pkg_prefix)
         for modinfo in pkgutil.iter_modules(pkg.__path__, pkg_prefix + "."):
-            app.setup_extension(modinfo.name)
+            try:
+                mod = importlib.import_module(modinfo.name)
+            except Exception:
+                # If a directive module fails to import, let Sphinx surface it
+                # when/if the user explicitly enables that module.
+                continue
+
+            setup_fn = getattr(mod, "setup", None)
+            if callable(setup_fn):
+                app.setup_extension(modinfo.name)
     except Exception as exc:  # pragma: no cover - non-fatal
         try:
             from sphinx.util import logging

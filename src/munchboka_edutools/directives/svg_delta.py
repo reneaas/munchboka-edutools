@@ -19,6 +19,21 @@ from typing import Dict, List, Tuple, Any
 import xml.etree.ElementTree as ET
 
 
+def setup(app):
+    """Sphinx extension entry point.
+
+    This module is primarily a helper (delta computation + HTML generation),
+    but munchboka-edutools auto-discovers modules under
+    `munchboka_edutools.directives`. Providing a no-op setup() prevents Sphinx
+    from emitting warnings if this module is loaded as an extension.
+    """
+
+    return {
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }
+
+
 _SVG_XML_DECL_RE = re.compile(r"<\?xml[^?]*\?>", flags=re.IGNORECASE)
 _SVG_DOCTYPE_RE = re.compile(r"<!DOCTYPE[^>]*>", flags=re.IGNORECASE)
 _SVG_METADATA_RE = re.compile(r"<metadata[\s\S]*?</metadata>", flags=re.IGNORECASE)
@@ -429,6 +444,45 @@ def generate_delta_html(
     let deltas = null;
     let svgElements = {{}};  // Cache of ID -> element
     let pendingFrame = null;
+
+    // Safari performance: keep one mounted SVG and revert only the elements
+    // changed by the previous frame, instead of re-mounting the full SVG.
+    let lastFrameIndex = null;
+    let baseElementsById = {{}};   // ID -> element in baseSvgTemplate
+    let baseOuterHtmlById = {{}};  // ID -> base outerHTML string
+
+    function styleSvg(svg) {{
+        if (!svg) return;
+
+        // Safari can render SVGs blurry if they are scaled from fixed width/height
+        // attributes. Prefer viewBox-driven scaling with CSS sizing.
+        try {{
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
+        }} catch (e) {{
+            // ignore
+        }}
+
+        try {{
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        }} catch (e) {{
+            // ignore
+        }}
+
+        svg.style.width = '100%';
+        const h = '{height}';
+        if (h && h !== 'auto') {{
+            svg.style.height = h;
+        }} else {{
+            svg.style.height = 'auto';
+        }}
+        svg.style.display = 'block';
+
+        // Rendering hints (helps Safari in some cases)
+        svg.style.shapeRendering = 'geometricPrecision';
+        svg.style.textRendering = 'geometricPrecision';
+        svg.classList.add('adaptive-figure');
+    }}
     
     console.log('Starting fetch...');
     
@@ -486,15 +540,13 @@ def generate_delta_html(
         }}
         
         console.log('Styling SVG...');
-        // Style the SVG for responsive sizing
-        svgDoc.style.width = '100%';
-        svgDoc.style.height = '{height}';
-        svgDoc.style.display = 'block';
-        svgDoc.classList.add('adaptive-figure');
+        styleSvg(svgDoc);
 
         // Keep an immutable template of the base SVG.
         // Deltas are computed relative to this base frame.
         baseSvgTemplate = importedSvg.cloneNode(true);
+        buildElementCache();
+        buildBaseCache();
         
         console.log('Rendering initial frame...');
         renderFrame(parseInt(slider.value));
@@ -535,6 +587,67 @@ def generate_delta_html(
         }});
     }}
 
+    function buildBaseCache() {{
+        if (!baseSvgTemplate) return;
+        baseElementsById = {{}};
+        baseOuterHtmlById = {{}};
+        baseSvgTemplate.querySelectorAll('[id]').forEach(elem => {{
+            baseElementsById[elem.id] = elem;
+            try {{
+                baseOuterHtmlById[elem.id] = elem.outerHTML;
+            }} catch (e) {{
+                // ignore
+            }}
+        }});
+    }}
+
+    function parseNamespacedAttrForRevert(attr) {{
+        // Matches the encoding produced by Python-side delta generation.
+        if (!attr || attr.length < 3) return null;
+
+        const LBRACE = 123;
+        const RBRACE = 125;
+        if (attr.charCodeAt(0) !== LBRACE) return null;
+
+        // Double-brace encoding: starts with '{{'
+        if (attr.length >= 4 && attr.charCodeAt(1) === LBRACE) {{
+            for (let i = 2; i < attr.length - 1; i++) {{
+                if (attr.charCodeAt(i) === RBRACE && attr.charCodeAt(i + 1) === RBRACE) {{
+                    const ns = attr.slice(2, i);
+                    const local = attr.slice(i + 2);
+                    if (ns && local) return {{ ns, local }};
+                    return null;
+                }}
+            }}
+            return null;
+        }}
+
+        // Clark notation: starts with '{' and has a single closing '}'
+        const close = attr.indexOf(String.fromCharCode(RBRACE));
+        if (close <= 1) return null;
+        const ns = attr.slice(1, close);
+        const local = attr.slice(close + 1);
+        if (!ns || !local) return null;
+        return {{ ns, local }};
+    }}
+
+    function replaceWithOuterHtmlForRevert(existingElem, outerHtml) {{
+        try {{
+            const parser = new DOMParser();
+            const wrapper = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' + outerHtml + '</svg>';
+            const doc = parser.parseFromString(wrapper, 'image/svg+xml');
+            const parserError = doc.querySelector('parsererror');
+            if (parserError) return false;
+            const replacement = doc.documentElement.firstElementChild;
+            if (!replacement) return false;
+            const imported = document.importNode(replacement, true);
+            existingElem.replaceWith(imported);
+            return true;
+        }} catch (e) {{
+            return false;
+        }}
+    }}
+
     function mountFreshBaseSvg() {{
         // IMPORTANT: Deltas are base-relative (not incremental).
         // To support random access and ensure frame 0 correctly reverts changes,
@@ -545,12 +658,76 @@ def generate_delta_html(
         container.appendChild(fresh);
         svgDoc = fresh;
 
-        svgDoc.style.width = '100%';
-        svgDoc.style.height = '{height}';
-        svgDoc.style.display = 'block';
-        svgDoc.classList.add('adaptive-figure');
+        styleSvg(svgDoc);
 
         buildElementCache();
+    }}
+
+    function revertLastFrameToBase() {{
+        if (lastFrameIndex === null) return;
+        if (!deltas || lastFrameIndex < 0 || lastFrameIndex >= deltas.length) {{
+            lastFrameIndex = null;
+            return;
+        }}
+
+        const lastDelta = deltas[lastFrameIndex] || {{}};
+        const changesByElem = lastDelta.changes || {{}};
+
+        let needFullReset = false;
+        let didReplaceOuterHtml = false;
+
+        for (const [elemId, changes] of Object.entries(changesByElem)) {{
+            const liveElem = svgElements[elemId];
+            const baseElem = baseElementsById[elemId];
+            if (!liveElem || !baseElem) {{
+                needFullReset = true;
+                break;
+            }}
+
+            if (Object.prototype.hasOwnProperty.call(changes, 'outerHTML')) {{
+                const baseOuter = baseOuterHtmlById[elemId];
+                if (!baseOuter) {{
+                    needFullReset = true;
+                    break;
+                }}
+                const ok = replaceWithOuterHtmlForRevert(liveElem, baseOuter);
+                if (!ok) {{
+                    needFullReset = true;
+                    break;
+                }}
+                didReplaceOuterHtml = true;
+                continue;
+            }}
+
+            for (const attr of Object.keys(changes)) {{
+                if (attr === 'textContent') {{
+                    liveElem.textContent = baseElem.textContent || '';
+                }} else if (attr === 'tailContent') {{
+                    // skip
+                }} else {{
+                    const nsInfo = parseNamespacedAttrForRevert(attr);
+                    const baseVal = nsInfo
+                        ? baseElem.getAttributeNS(nsInfo.ns, nsInfo.local)
+                        : baseElem.getAttribute(attr);
+
+                    if (baseVal === null || baseVal === undefined) {{
+                        if (nsInfo) liveElem.removeAttributeNS(nsInfo.ns, nsInfo.local);
+                        else liveElem.removeAttribute(attr);
+                    }} else {{
+                        if (nsInfo) liveElem.setAttributeNS(nsInfo.ns, nsInfo.local, baseVal);
+                        else liveElem.setAttribute(attr, baseVal);
+                    }}
+                }}
+            }}
+        }}
+
+        if (needFullReset) {{
+            mountFreshBaseSvg();
+        }} else if (didReplaceOuterHtml) {{
+            buildElementCache();
+        }}
+
+        lastFrameIndex = null;
     }}
     
     function applyDelta(frameIndex) {{
@@ -662,8 +839,18 @@ def generate_delta_html(
     }}
 
     function renderFrame(frameIndex) {{
-        mountFreshBaseSvg();
+        if (!svgDoc || !deltas) return;
+        if (!baseSvgTemplate) return;
+
+        if (!svgElements || Object.keys(svgElements).length === 0) buildElementCache();
+        if (!baseElementsById || Object.keys(baseElementsById).length === 0) buildBaseCache();
+
+        if (lastFrameIndex !== null) {{
+            revertLastFrameToBase();
+        }}
+
         applyDelta(frameIndex);
+        lastFrameIndex = frameIndex;
         updateValueDisplay(frameIndex);
     }}
     
@@ -879,12 +1066,58 @@ def generate_multi_delta_html(
     let svgElements = {{}};
     let sliders = [];
     let labels = [];
+    let pendingFrame = null;
+
+    // Safari performance: keep one mounted SVG and revert only changed nodes.
+    let lastFrameIndex = null;
+    let baseElementsById = {{}};
+    let baseOuterHtmlById = {{}};
+
+    function styleSvg(svg) {{
+        if (!svg) return;
+        try {{
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
+        }} catch (e) {{
+            // ignore
+        }}
+        try {{
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        }} catch (e) {{
+            // ignore
+        }}
+        svg.style.width = '100%';
+        const h = '{height}';
+        if (h && h !== 'auto') {{
+            svg.style.height = h;
+        }} else {{
+            svg.style.height = 'auto';
+        }}
+        svg.style.display = 'block';
+        svg.style.shapeRendering = 'geometricPrecision';
+        svg.style.textRendering = 'geometricPrecision';
+        svg.classList.add('adaptive-figure');
+    }}
 
     function buildElementCache() {{
         if (!svgDoc) return;
         svgElements = {{}};
         svgDoc.querySelectorAll('[id]').forEach(elem => {{
             svgElements[elem.id] = elem;
+        }});
+    }}
+
+    function buildBaseCache() {{
+        if (!baseSvgTemplate) return;
+        baseElementsById = {{}};
+        baseOuterHtmlById = {{}};
+        baseSvgTemplate.querySelectorAll('[id]').forEach(elem => {{
+            baseElementsById[elem.id] = elem;
+            try {{
+                baseOuterHtmlById[elem.id] = elem.outerHTML;
+            }} catch (e) {{
+                // ignore
+            }}
         }});
     }}
 
@@ -898,12 +1131,76 @@ def generate_multi_delta_html(
         container.appendChild(fresh);
         svgDoc = fresh;
 
-        svgDoc.style.width = '100%';
-        svgDoc.style.height = '{height}';
-        svgDoc.style.display = 'block';
-        svgDoc.classList.add('adaptive-figure');
+        styleSvg(svgDoc);
 
         buildElementCache();
+    }}
+
+    function revertLastFrameToBase() {{
+        if (lastFrameIndex === null) return;
+        if (!deltas || lastFrameIndex < 0 || lastFrameIndex >= deltas.length) {{
+            lastFrameIndex = null;
+            return;
+        }}
+
+        const lastDelta = deltas[lastFrameIndex] || {{}};
+        const changesByElem = lastDelta.changes || {{}};
+
+        let needFullReset = false;
+        let didReplaceOuterHtml = false;
+
+        for (const [elemId, changes] of Object.entries(changesByElem)) {{
+            const liveElem = svgElements[elemId];
+            const baseElem = baseElementsById[elemId];
+            if (!liveElem || !baseElem) {{
+                needFullReset = true;
+                break;
+            }}
+
+            if (Object.prototype.hasOwnProperty.call(changes, 'outerHTML')) {{
+                const baseOuter = baseOuterHtmlById[elemId];
+                if (!baseOuter) {{
+                    needFullReset = true;
+                    break;
+                }}
+                const ok = replaceWithOuterHtml(liveElem, baseOuter);
+                if (!ok) {{
+                    needFullReset = true;
+                    break;
+                }}
+                didReplaceOuterHtml = true;
+                continue;
+            }}
+
+            for (const attr of Object.keys(changes)) {{
+                if (attr === 'textContent') {{
+                    liveElem.textContent = baseElem.textContent || '';
+                }} else if (attr === 'tailContent') {{
+                    // skip
+                }} else {{
+                    const nsInfo = parseNamespacedAttr(attr);
+                    const baseVal = nsInfo
+                        ? baseElem.getAttributeNS(nsInfo.ns, nsInfo.local)
+                        : baseElem.getAttribute(attr);
+
+                    if (baseVal === null || baseVal === undefined) {{
+                        if (nsInfo) liveElem.removeAttributeNS(nsInfo.ns, nsInfo.local);
+                        else liveElem.removeAttribute(attr);
+                    }} else {{
+                        if (nsInfo) liveElem.setAttributeNS(nsInfo.ns, nsInfo.local, baseVal);
+                        else liveElem.setAttribute(attr, baseVal);
+                    }}
+                }}
+            }}
+        }}
+
+        if (needFullReset) {{
+            mountFreshBaseSvg();
+        }} else if (didReplaceOuterHtml) {{
+            buildElementCache();
+        }}
+
+        lastFrameIndex = null;
     }}
 
     function applyDelta(frameIndex) {{
@@ -962,9 +1259,26 @@ def generate_multi_delta_html(
     function updateFrame() {{
         const indices = currentIndices();
         const frameIndex = computeFrameIndex(indices);
+
+        // Update labels immediately (cheap)
         updateValueDisplay(indices);
-        mountFreshBaseSvg();
-        applyDelta(frameIndex);
+
+        // Throttle expensive DOM work for Safari/slow browsers
+        if (pendingFrame !== null) {{
+            cancelAnimationFrame(pendingFrame);
+        }}
+        pendingFrame = requestAnimationFrame(() => {{
+            if (!svgElements || Object.keys(svgElements).length === 0) buildElementCache();
+            if (!baseElementsById || Object.keys(baseElementsById).length === 0) buildBaseCache();
+
+            if (lastFrameIndex !== null) {{
+                revertLastFrameToBase();
+            }}
+
+            applyDelta(frameIndex);
+            lastFrameIndex = frameIndex;
+            pendingFrame = null;
+        }});
     }}
 
     function buildControls() {{
@@ -1053,13 +1367,12 @@ def generate_multi_delta_html(
         deltas = deltasData;
         meta = metaData;
 
-        svgDoc.style.width = '100%';
-        svgDoc.style.height = '{height}';
-        svgDoc.style.display = 'block';
-        svgDoc.classList.add('adaptive-figure');
+        styleSvg(svgDoc);
 
         // Keep an immutable template of the base SVG for base-relative rendering.
         baseSvgTemplate = importedSvg.cloneNode(true);
+        buildElementCache();
+        buildBaseCache();
         buildControls();
         updateFrame();
     }}).catch(err => {{

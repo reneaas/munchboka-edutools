@@ -611,8 +611,44 @@ html[data-theme="dark"] .multi-interactive-item {{
     
     const allFrames = {frames_arrays_js};
     const values = {values_js};
+    const varName = '{var_name}';
     const slider = document.getElementById('multi-interactive-slider-{unique_id}');
     const valueDisplay = document.getElementById('multi-interactive-value-{unique_id}');
+
+    function latexForVarName(name) {{
+        const greek = {{
+            alpha: '\\\\alpha', beta: '\\\\beta', gamma: '\\\\gamma', delta: '\\\\delta',
+            epsilon: '\\\\epsilon', zeta: '\\\\zeta', eta: '\\\\eta', theta: '\\\\theta',
+            iota: '\\\\iota', kappa: '\\\\kappa', lambda: '\\\\lambda', mu: '\\\\mu',
+            nu: '\\\\nu', xi: '\\\\xi', pi: '\\\\pi', rho: '\\\\rho', sigma: '\\\\sigma',
+            tau: '\\\\tau', upsilon: '\\\\upsilon', phi: '\\\\phi', chi: '\\\\chi',
+            psi: '\\\\psi', omega: '\\\\omega',
+            varphi: '\\\\varphi', vartheta: '\\\\vartheta'
+        }};
+        if (greek[name]) return greek[name];
+        if (name.includes('_') || /\\d/.test(name)) return name;
+        if (/^[A-Za-z]$/.test(name)) return name;
+        return name;
+    }}
+
+    const varLatex = latexForVarName(varName);
+
+    function updateValueDisplay(index) {{
+        const v = values[index];
+        const vStr = (typeof v === 'number' ? v.toFixed(2) : String(v));
+        if (window.katex && valueDisplay) {{
+            try {{
+                valueDisplay.innerHTML = window.katex.renderToString(varLatex + ' = ' + vStr, {{
+                    throwOnError: false,
+                    displayMode: false,
+                }});
+                return;
+            }} catch (e) {{
+                // fall through
+            }}
+        }}
+        valueDisplay.textContent = varName + ' = ' + vStr;
+    }}
     
     // Get all image elements
     const images = [];
@@ -643,8 +679,8 @@ html[data-theme="dark"] .multi-interactive-item {{
         for (let i = 0; i < images.length; i++) {{
             images[i].src = allFrames[i][index];
         }}
-        
-        valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
+
+        updateValueDisplay(index);
     }}
     
     // Preload images with priority

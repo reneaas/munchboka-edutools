@@ -1,5 +1,4 @@
-"""
-SVG Delta Engine
+"""SVG Delta Engine
 ================
 
 Computes differences between SVG frames to minimize storage and enable
@@ -16,6 +15,7 @@ For typical interactive graphs: 100MB → 2-5MB (95-98% reduction).
 import json
 import re
 from typing import Dict, List, Tuple, Any
+
 import xml.etree.ElementTree as ET
 
 
@@ -388,6 +388,41 @@ def generate_delta_html(
         console.error('Slider not found:', 'interactive-slider-' + uniqueId);
         return;
     }}
+
+    function latexForVarName(name) {{
+        const greek = {{
+            alpha: '\\\\alpha', beta: '\\\\beta', gamma: '\\\\gamma', delta: '\\\\delta',
+            epsilon: '\\\\epsilon', zeta: '\\\\zeta', eta: '\\\\eta', theta: '\\\\theta',
+            iota: '\\\\iota', kappa: '\\\\kappa', lambda: '\\\\lambda', mu: '\\\\mu',
+            nu: '\\\\nu', xi: '\\\\xi', pi: '\\\\pi', rho: '\\\\rho', sigma: '\\\\sigma',
+            tau: '\\\\tau', upsilon: '\\\\upsilon', phi: '\\\\phi', chi: '\\\\chi',
+            psi: '\\\\psi', omega: '\\\\omega',
+            varphi: '\\\\varphi', vartheta: '\\\\vartheta'
+        }};
+        if (greek[name]) return greek[name];
+        if (name.includes('_') || /\\d/.test(name)) return name;
+        if (/^[A-Za-z]$/.test(name)) return name;
+        return name;
+    }}
+
+    const varLatex = latexForVarName(varName);
+
+    function updateValueDisplay(index) {{
+        const v = values[index];
+        const vStr = (typeof v === 'number' ? v.toFixed(2) : String(v));
+        if (window.katex && valueDisplay) {{
+            try {{
+                valueDisplay.innerHTML = window.katex.renderToString(varLatex + ' = ' + vStr, {{
+                    throwOnError: false,
+                    displayMode: false,
+                }});
+                return;
+            }} catch (e) {{
+                // fall through
+            }}
+        }}
+        valueDisplay.textContent = varName + ' = ' + vStr;
+    }}
     
     let svgDoc = null;
     let deltas = null;
@@ -610,7 +645,7 @@ def generate_delta_html(
         }}
         
         // Update value display
-        valueDisplay.textContent = varName + ' = ' + values[frameIndex].toFixed(2);
+        updateValueDisplay(frameIndex);
     }}
     
     function updateFrame() {{

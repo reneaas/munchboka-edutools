@@ -804,6 +804,45 @@ class InteractiveGraphDirective(SphinxDirective):
     const img = document.getElementById('interactive-img-{unique_id}');
     const slider = document.getElementById('interactive-slider-{unique_id}');
     const valueDisplay = document.getElementById('interactive-value-{unique_id}');
+
+    function latexForVarName(name) {{
+        const greek = {{
+            alpha: '\\\\alpha', beta: '\\\\beta', gamma: '\\\\gamma', delta: '\\\\delta',
+            epsilon: '\\\\epsilon', zeta: '\\\\zeta', eta: '\\\\eta', theta: '\\\\theta',
+            iota: '\\\\iota', kappa: '\\\\kappa', lambda: '\\\\lambda', mu: '\\\\mu',
+            nu: '\\\\nu', xi: '\\\\xi', pi: '\\\\pi', rho: '\\\\rho', sigma: '\\\\sigma',
+            tau: '\\\\tau', upsilon: '\\\\upsilon', phi: '\\\\phi', chi: '\\\\chi',
+            psi: '\\\\psi', omega: '\\\\omega',
+            // Common variants
+            varphi: '\\\\varphi', vartheta: '\\\\vartheta'
+        }};
+        if (greek[name]) return greek[name];
+        // Preserve subscripts like a_1
+        if (name.includes('_') || /\\d/.test(name)) return name;
+        // Single-letter names are fine in math mode
+        if (/^[A-Za-z]$/.test(name)) return name;
+        // Multi-letter identifiers: keep as-is (e.g. "speed")
+        return name;
+    }}
+
+    const varLatex = latexForVarName('{var_name}');
+
+    function updateValueDisplay(index) {{
+        const v = values[index];
+        const vStr = (typeof v === 'number' ? v.toFixed(2) : String(v));
+        if (window.katex && valueDisplay) {{
+            try {{
+                valueDisplay.innerHTML = window.katex.renderToString(varLatex + ' = ' + vStr, {{
+                    throwOnError: false,
+                    displayMode: false,
+                }});
+                return;
+            }} catch (e) {{
+                // fall through
+            }}
+        }}
+        valueDisplay.textContent = '{var_name} = ' + vStr;
+    }}
     
     console.log('Elements found:', {{
         img: !!img,
@@ -837,7 +876,7 @@ class InteractiveGraphDirective(SphinxDirective):
             }} else {{
                 img.src = frames[index];
             }}
-            valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
+            updateValueDisplay(index);
             pendingFrame = null;
         }});
     }}

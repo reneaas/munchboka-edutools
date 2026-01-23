@@ -652,10 +652,16 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
         value_str = f"{var_value:.6e}"
 
     def _format_text_placeholders(text: str) -> str:
-        """Replace `{var}` / `{var:...}` placeholders inside text.
+        """Evaluate `{...}` placeholders inside quoted text.
 
-        We intentionally only support placeholders for the animation variable.
-        This avoids unexpected substitutions inside arbitrary quoted strings.
+        Supports:
+        - `{phi}` / `{phi:.2f}`
+        - `{2 * 1.5 * cos(phi*pi/180):.2f}` (expression + optional format)
+
+        Safety/robustness goals:
+        - Preserve escaped braces `{{` / `}}`
+        - Avoid rewriting normal LaTeX braces used as command arguments
+          like `\\frac{1}{2}` or `\\vec{a}`.
         """
         if "{" not in text or "}" not in text:
             return text
@@ -665,20 +671,115 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
         rbrace_token = "\u0000RBRACE\u0000"
         tmp = text.replace("{{", lbrace_token).replace("}}", rbrace_token)
 
-        # Only touch placeholders that reference the variable.
-        pattern = re.compile(r"\{" + re.escape(var_name) + r"(?:\:([^}]+))?\}")
+        ns = _get_safe_namespace(**{var_name: var_value})
 
-        def repl(m: re.Match[str]) -> str:
-            fmt_spec = m.group(1)
-            if fmt_spec is None or fmt_spec == "":
-                return value_str
+        def _is_latex_command_argument(s: str, lbrace_index: int) -> bool:
+            # If the brace is immediately an argument to a LaTeX command, skip.
+            # Example: "\\frac{1}{2}" or "\\vec{a}".
+            j = lbrace_index - 1
+            while j >= 0 and s[j].isspace():
+                j -= 1
+            if j < 0:
+                return False
+            k = j
+            while k >= 0 and s[k].isalpha():
+                k -= 1
+            return k >= 0 and s[k] == "\\" and k < j
+
+        def _split_expr_and_format(inner: str) -> tuple[str, str | None]:
+            # Split `expr:format` at a top-level ':' (not inside parentheses).
+            depth = 0
+            for idx, ch in enumerate(inner):
+                if ch in "([":
+                    depth += 1
+                elif ch in ")]":
+                    depth = max(0, depth - 1)
+                elif ch == ":" and depth == 0:
+                    return inner[:idx].strip(), inner[idx + 1 :].strip()
+            return inner.strip(), None
+
+        out: list[str] = []
+        i = 0
+        while i < len(tmp):
+            ch = tmp[i]
+            if ch != "{":
+                out.append(ch)
+                i += 1
+                continue
+
+            # Find matching '}' (no nesting expected in placeholders).
+            j = tmp.find("}", i + 1)
+            if j == -1:
+                out.append(ch)
+                i += 1
+                continue
+
+            latex_arg = _is_latex_command_argument(tmp, i)
+
+            inner = tmp[i + 1 : j].strip()
+            if not inner:
+                out.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
+            # If the placeholder contains LaTeX commands, treat it as literal.
+            if "\\" in inner:
+                out.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
+            expr_str, fmt_spec = _split_expr_and_format(inner)
+
+            # Only attempt evaluation if it mentions the animation variable
+            # or looks like a numeric expression.
+            # Avoid eating common LaTeX argument braces like `\frac{1}{2}`.
+            # Only treat `{...}` as a placeholder if it references the animation
+            # variable, or if it looks like a real expression (operators, parens,
+            # or function/identifier names). Plain numeric literals are left as-is.
+            has_var = bool(re.search(r"\b" + re.escape(var_name) + r"\b", expr_str))
+            has_ops_or_parens = bool(re.search(r"[+\-*/^()]", expr_str))
+            has_ident = bool(re.search(r"[A-Za-z_]", expr_str))
+            # If this is a LaTeX command argument (e.g. \sqrt{...}), only
+            # substitute when the placeholder actually references the animation
+            # variable. This preserves common constructs like \frac{1}{2}.
+            looks_expr = has_var or (not latex_arg and (has_ops_or_parens or has_ident))
+
+            if not looks_expr:
+                out.append(tmp[i : j + 1])
+                i = j + 1
+                continue
+
             try:
-                return format(var_value, fmt_spec)
-            except Exception:
-                return value_str
+                val = eval(expr_str, ns)
+                # Normalize numpy scalars etc.
+                try:
+                    val_num = float(val)
+                except Exception:
+                    val_num = val
 
-        tmp = pattern.sub(repl, tmp)
-        return tmp.replace(lbrace_token, "{").replace(rbrace_token, "}")
+                if fmt_spec:
+                    rendered = format(val_num, fmt_spec)
+                else:
+                    # Match the main substitution formatting.
+                    rendered = value_str if expr_str == var_name else str(val_num)
+                out.append("{" + rendered + "}" if latex_arg else rendered)
+            except Exception:
+                # As a conservative fallback: only replace `{var}` / `{var:fmt}`.
+                if expr_str == var_name:
+                    if fmt_spec:
+                        try:
+                            rendered = format(var_value, fmt_spec)
+                        except Exception:
+                            rendered = value_str
+                    else:
+                        rendered = value_str
+                    out.append("{" + rendered + "}" if latex_arg else rendered)
+                else:
+                    out.append(tmp[i : j + 1])
+
+            i = j + 1
+
+        return "".join(out).replace(lbrace_token, "{").replace(rbrace_token, "}")
 
     # Process line by line to handle text: lines specially
     lines = content.split("\n")
@@ -733,6 +834,33 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
                     reconstructed += part_content
 
             result_lines.append(reconstructed)
+        elif line.strip().startswith("curve:") and var_name == "t":
+            # Special case: when the interactive variable is named `t`, it
+            # collides with the curve parameter `t`. We must NOT substitute
+            # inside the x/y expressions of a `curve:` line, otherwise the
+            # curve degenerates into a moving single point per frame.
+            #
+            # We still want bounds like `(0, t)` to use the interactive value.
+            range_pattern = r",\s*\(([^,]+),\s*([^)]+)\)"
+            range_match = re.search(range_pattern, line)
+            if not range_match:
+                pattern = r"\b" + re.escape(var_name) + r"\b"
+                result_lines.append(re.sub(pattern, value_str, line))
+                continue
+
+            before_range = line[: range_match.start()]
+            after_range = line[range_match.end() :]
+            t_min_expr = range_match.group(1)
+            t_max_expr = range_match.group(2)
+
+            pattern = r"\b" + re.escape(var_name) + r"\b"
+            t_min_expr_sub = re.sub(pattern, value_str, t_min_expr)
+            t_max_expr_sub = re.sub(pattern, value_str, t_max_expr)
+            after_range_sub = re.sub(pattern, value_str, after_range)
+
+            result_lines.append(
+                f"{before_range}, ({t_min_expr_sub.strip()}, {t_max_expr_sub.strip()}){after_range_sub}"
+            )
         else:
             # For non-text lines, do normal substitution
             pattern = r"\b" + re.escape(var_name) + r"\b"
@@ -1495,6 +1623,18 @@ class AnimateDirective(SphinxDirective):
                 y_expr = before_parts[1]
                 param_var = "t"  # Default parameter name
 
+                # If the interactive variable is also named "t", it collides with
+                # the curve parameter and turns the curve into a single point.
+                # In that case, interpret "t" inside x/y expressions as the curve
+                # parameter, while allowing bounds like (0, t) to still refer to
+                # the interactive variable.
+                x_expr_eval = x_expr
+                y_expr_eval = y_expr
+                if var_name == param_var:
+                    param_var = "__curve_t"
+                    x_expr_eval = re.sub(r"\bt\b", param_var, x_expr)
+                    y_expr_eval = re.sub(r"\bt\b", param_var, y_expr)
+
                 # Parse range
                 t_min_expr = range_match.group(1).strip()
                 t_max_expr = range_match.group(2).strip()
@@ -1509,29 +1649,36 @@ class AnimateDirective(SphinxDirective):
                 t_min = eval(t_min_expr, eval_namespace)
                 t_max = eval(t_max_expr, eval_namespace)
 
-                # Generate parameter values
-                t_vals = np.linspace(t_min, t_max, 200)
+                # Generate parameter values and evaluate vectorized.
+                # Vectorized eval avoids per-point eval failures and produces
+                # a proper polyline in the SVG (instead of a degenerate single point).
+                t_vals = np.linspace(t_min, t_max, 1024)
+                param_namespace = _get_safe_namespace(
+                    **{
+                        param_var: t_vals,
+                        var_name: var_value,
+                    }
+                )
+                x_vals = eval(x_expr_eval, param_namespace)
+                y_vals = eval(y_expr_eval, param_namespace)
 
-                # Evaluate x and y for each parameter value
-                x_vals = []
-                y_vals = []
-                for t_val in t_vals:
-                    param_namespace = _get_safe_namespace(
-                        **{
-                            param_var: t_val,
-                            var_name: var_value,
-                        }
-                    )
-                    try:
-                        x_val = eval(x_expr, param_namespace)
-                        y_val = eval(y_expr, param_namespace)
-                        x_vals.append(x_val)
-                        y_vals.append(y_val)
-                    except:
-                        continue
+                # Normalize to 1D numpy arrays.
+                x_vals = np.asarray(x_vals)
+                y_vals = np.asarray(y_vals)
+                if x_vals.shape == ():
+                    x_vals = np.full_like(t_vals, float(x_vals))
+                if y_vals.shape == ():
+                    y_vals = np.full_like(t_vals, float(y_vals))
 
-                if not x_vals:
+                if x_vals.shape != y_vals.shape or x_vals.size < 2:
                     continue
+
+                # Drop non-finite points.
+                mask = np.isfinite(x_vals) & np.isfinite(y_vals)
+                if mask.sum() < 2:
+                    continue
+                x_vals = x_vals[mask]
+                y_vals = y_vals[mask]
 
                 # Plot the curve
                 style_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}

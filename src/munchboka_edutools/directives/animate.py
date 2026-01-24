@@ -1127,6 +1127,10 @@ class AnimateDirective(SphinxDirective):
         "duration": directives.positive_int,
         "loop": lambda x: _parse_bool(x, default=True),
         "format": lambda x: directives.choice(x.lower(), ["webp", "gif"]),
+        # Back-compat: some users/tests expect plot primitives as directive options.
+        # The directive still primarily parses primitives from the content block.
+        "function": directives.unchanged,
+        "functions": directives.unchanged,
         # Inherit all plot options
         **PlotDirective.option_spec,
     }
@@ -1824,6 +1828,213 @@ class AnimateDirective(SphinxDirective):
                     ax.plot(x_line, y_line, **plot_kwargs)
             except Exception as e:
                 pass
+
+        # Process general lines (same semantics as plot directive)
+        # line: a, b[, linestyle][, color]               -> y = a*x + b
+        # line: a, (x0, y0)[, linestyle][, color]        -> y = a*(x - x0) + y0
+        # line: (x1, y1), (x2, y2)[, linestyle][, color] -> line through two points
+        try:
+            _allowed_styles_line = {"solid", "dotted", "dashed", "dashdot"}
+            style_map_line = {
+                "solid": "-",
+                "dotted": ":",
+                "dashed": "--",
+                "dashdot": "-.",
+            }
+
+            def _build_eval_namespace_lines():
+                ns = _get_safe_namespace(**{var_name: var_value})
+
+                # Provide scalar-friendly wrappers for user-defined functions (from function labels)
+                for _fname, _f in function_dict.items():
+
+                    def make_scalar_func(f):
+                        def scalar_func(x):
+                            if np.isscalar(x):
+                                return float(f(np.array([x]))[0])
+                            return f(x)
+
+                        return scalar_func
+
+                    ns[_fname] = make_scalar_func(_f)
+                return ns
+
+            eval_namespace_lines = _build_eval_namespace_lines()
+
+            def _split_top_level_commas(s: str) -> List[str]:
+                s = str(s or "").strip()
+                if not s:
+                    return []
+                # Only strip outer brackets/parens if they enclose the entire expression
+                depth = 0
+                has_top_level_comma = False
+                for ch in s:
+                    if ch in "([{":
+                        depth += 1
+                    elif ch in ")]}":
+                        depth = max(0, depth - 1)
+                    elif ch == "," and depth == 0:
+                        has_top_level_comma = True
+                        break
+                if not has_top_level_comma:
+                    if (s.startswith("[") and s.endswith("]")) or (
+                        s.startswith("(") and s.endswith(")")
+                    ):
+                        s = s[1:-1].strip()
+
+                out: List[str] = []
+                cur: List[str] = []
+                depth = 0
+                for ch in s:
+                    if ch in "([{":
+                        depth += 1
+                        cur.append(ch)
+                    elif ch in ")]}":
+                        depth = max(0, depth - 1)
+                        cur.append(ch)
+                    elif ch == "," and depth == 0:
+                        part = "".join(cur).strip()
+                        if part:
+                            out.append(part)
+                        cur = []
+                    else:
+                        cur.append(ch)
+                tail = "".join(cur).strip()
+                if tail:
+                    out.append(tail)
+                return out
+
+            def _extract_coord_pairs_from_line(s: str) -> List[Tuple[str, str]]:
+                """Extract up to 2 coordinate pairs (x_expr, y_expr) from a line spec."""
+                s = str(s or "")
+                pairs: List[Tuple[str, str]] = []
+                i = 0
+                n = len(s)
+                while i < n and len(pairs) < 2:
+                    if s[i] != "(":
+                        i += 1
+                        continue
+                    depth = 1
+                    j = i + 1
+                    while j < n and depth > 0:
+                        if s[j] == "(":
+                            depth += 1
+                        elif s[j] == ")":
+                            depth -= 1
+                        j += 1
+                    if depth != 0:
+                        break
+                    inner = s[i + 1 : j - 1]
+                    # Split inner by top-level comma
+                    d2 = 0
+                    cur = []
+                    parts_inner: List[str] = []
+                    for ch in inner:
+                        if ch in "([":
+                            d2 += 1
+                            cur.append(ch)
+                        elif ch in ")]":
+                            d2 = max(0, d2 - 1)
+                            cur.append(ch)
+                        elif ch == "," and d2 == 0:
+                            parts_inner.append("".join(cur).strip())
+                            cur = []
+                        else:
+                            cur.append(ch)
+                    if cur:
+                        parts_inner.append("".join(cur).strip())
+                    if len(parts_inner) == 2 and all(p.strip() for p in parts_inner):
+                        pairs.append((parts_inner[0], parts_inner[1]))
+                    i = j
+                return pairs
+
+            default_line_color = plotmath.COLORS.get("red") or "red"
+            x_line = np.array([xmin, xmax], dtype=float)
+
+            for l in lists_dict.get("line", []):
+                try:
+                    raw = str(l).strip()
+                    if not raw:
+                        continue
+
+                    a_val: float | None = None
+                    b_val: float | None = None
+                    style_line: str | None = None
+                    color_line: str | None = None
+
+                    # Detect new syntax: two coordinate pairs
+                    pairs = _extract_coord_pairs_from_line(raw)
+                    if len(pairs) >= 2:
+                        x1 = float(eval(pairs[0][0], eval_namespace_lines))
+                        y1 = float(eval(pairs[0][1], eval_namespace_lines))
+                        x2 = float(eval(pairs[1][0], eval_namespace_lines))
+                        y2 = float(eval(pairs[1][1], eval_namespace_lines))
+                        if abs(x2 - x1) <= 1e-12:
+                            # Vertical line is handled by vline; skip here.
+                            continue
+                        a_val = (y2 - y1) / (x2 - x1)
+                        b_val = y1 - a_val * x1
+
+                        # Remove the two coordinate tuples and parse remaining extras
+                        rest = raw
+                        for _ in range(2):
+                            rest = re.sub(r"\([^()]*?,[^()]*?\)", "", rest, count=1)
+                        rest = re.sub(r",{2,}", ",", rest).strip().strip(",")
+                        tokens = [t.strip().strip("\"'") for t in rest.split(",") if t.strip()]
+                        for tok in tokens:
+                            low = tok.lower()
+                            if low in _allowed_styles_line and style_line is None:
+                                style_line = low
+                            elif color_line is None:
+                                color_line = tok
+                    else:
+                        # Old syntax: a, b OR a, (x0, y0)
+                        parts = _split_top_level_commas(raw)
+                        if len(parts) < 2:
+                            continue
+
+                        a_val = float(eval(parts[0], eval_namespace_lines))
+                        second = parts[1].strip()
+                        if second.startswith("(") and second.endswith(")"):
+                            inner = second[1:-1]
+                            inner_parts = _split_top_level_commas(inner)
+                            if len(inner_parts) != 2:
+                                continue
+                            x0 = float(eval(inner_parts[0], eval_namespace_lines))
+                            y0 = float(eval(inner_parts[1], eval_namespace_lines))
+                            b_val = y0 - a_val * x0
+                        else:
+                            b_val = float(eval(second, eval_namespace_lines))
+
+                        for extra in parts[2:]:
+                            tok = str(extra).strip().strip("\"'")
+                            if not tok:
+                                continue
+                            low = tok.lower()
+                            if low in _allowed_styles_line and style_line is None:
+                                style_line = low
+                            elif color_line is None:
+                                color_line = tok
+
+                    if a_val is None or b_val is None:
+                        continue
+
+                    ls = style_map_line.get((style_line or "dashed").lower(), "--")
+                    mapped = plotmath.COLORS.get(color_line) if color_line else None
+                    col_use = (mapped if mapped else color_line) or default_line_color
+                    y_line = a_val * x_line + b_val
+                    ax.plot(x_line, y_line, linestyle=ls, color=col_use, lw=lw, alpha=alpha_val)
+                except Exception:
+                    pass
+
+            if lists_dict.get("line"):
+                try:
+                    ax.set_xlim(xmin, xmax)
+                    ax.set_ylim(ymin, ymax)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
         # Process parametric curves
         for curve_spec in lists_dict.get("curve", []):

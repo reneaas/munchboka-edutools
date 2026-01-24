@@ -4,6 +4,39 @@ from pathlib import Path
 from sphinx.application import Sphinx
 
 
+def _make_source(src: Path) -> None:
+    """Create a minimal Sphinx project source tree."""
+    # Minimal conf.py enabling the extension under test.
+    (src / "conf.py").write_text(
+        """
+project = 'test'
+extensions = [
+    'munchboka_edutools',
+]
+
+# Keep the build lean and deterministic
+exclude_patterns = []
+html_theme = 'basic'
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    # Root document with a quiz block.
+    (src / "index.rst").write_text(
+        """
+Quiz test
+=========
+
+.. quiz::
+
+   Q: Hva er $2+2$?
+   + 4
+   - 5
+""".lstrip(),
+        encoding="utf8",
+    )
+
+
 def test_quiz_build(tmp_path):
     src = tmp_path / "src"
     build = tmp_path / "build"

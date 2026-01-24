@@ -186,19 +186,18 @@ grid: true
 
 ### Frame Generation
 
-- Frames are pre-rendered as PNG images
-- Default: 50 frames per graph
-- Storage: `_static/multi_interactive/<hash>/graph_<n>/frame_<nnnn>.png`
-- Caching: Frames are reused unless content changes or `nocache` is specified
+- Graphs are pre-rendered as SVG frames and stored in a delta-compressed format
+- Storage (per tile): `_static/multi_interactive/<hash>/graph_<n>/base.svg` + `deltas.json`
+- Multi-variable graphs also include: `meta.json`
+- Caching: Assets are reused unless content changes or `nocache` is specified
 
 ### Performance
 
 For `n` graphs with `f` frames each:
-- Total frames: `n × f` PNG images
-- Build time: ~1-2 seconds per 50 frames per graph
-- File size: ~50-100KB per frame (depends on complexity)
+- Total frames: `n × f` (generated at build time)
+- Runtime payload: `n` base SVGs + `n` delta JSON files (typically much smaller than full-frame assets)
 
-Example: 4 graphs × 50 frames = 200 frames (~10-20MB total)
+Example: 4 graphs × 50 frames = 200 frames (but shipped as deltas)
 
 ### Browser Compatibility
 
@@ -222,7 +221,7 @@ Example: 4 graphs × 50 frames = 200 frames (~10-20MB total)
 | Interaction | User-controlled exploration | Watch animation loop |
 | Frame access | Any frame instantly | Sequential playback |
 | Best for | Comparing functions | Showing time evolution |
-| File format | PNG frames | WebP/GIF animation |
+| File format | SVG + delta JSON | WebP/GIF animation |
 
 ## See Also
 

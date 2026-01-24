@@ -236,16 +236,29 @@ def get_factors(polynomial, x):
     """Get factors for polynomial functions (legacy support)."""
     polynomial = sp.expand(polynomial)
     factor_list = sp.factor_list(polynomial)
+    # SymPy's factor_list may leave leading coefficients inside factors (e.g., 2*x*(2*x**2-3*a**2)),
+    # which makes the displayed overall coefficient misleading. We normalize factors to be monic in `x`
+    # by absorbing each factor's leading coefficient into the overall coefficient.
     leading_coeff = factor_list[0]
 
-    linear_factors = (
-        [{"expression": leading_coeff, "exponent": 1, "root": -np.inf}]
-        if leading_coeff != 1
-        else []
-    )
+    # We'll add the overall coefficient as its own factor after we've normalized the remaining
+    # factors (so the displayed coefficient is the true leading coefficient in x).
+    linear_factors: List[Dict[str, Any]] = []
 
     for linear_factor, exponent in factor_list[1]:
         exponent = int(exponent)
+
+        # Normalize factor to be monic in x (when possible), and move its leading coefficient into
+        # the overall coefficient so the leading coefficient shown matches sp.LC(polynomial, x).
+        try:
+            factor_lc = sp.LC(linear_factor, x)
+        except Exception:
+            factor_lc = 1
+
+        if factor_lc not in (0, 1, sp.Integer(1)):
+            leading_coeff = sp.simplify(leading_coeff * (factor_lc ** exponent))
+            linear_factor = sp.simplify(linear_factor / factor_lc)
+
         roots = sp.solve(linear_factor, x)
 
         # Handle factors that may have multiple real roots (e.g., quadratics like x^2 - 2)
@@ -260,15 +273,31 @@ def get_factors(polynomial, x):
         else:
             # For each root of the factor, create a separate entry with the correct exponent
             for root_value in roots:
-                # Only include real roots
-                if root_value.is_real:
+                # Only include roots that are real or not provably non-real.
+                # For parameter-dependent roots (e.g. involving `a`), SymPy often
+                # returns `is_real is None` unless assumptions are attached.
+                if root_value.is_real is not False:
+                    # Store both the expression (for evaluation) and a display LaTeX string.
+                    # SymPy's default latex() often reorders addition as `c + x`, which is
+                    # visually unusual in this context; we want `x + c` / `x - c`.
+                    if root_value == 0:
+                        expression_latex = sp.latex(x)
+                    elif getattr(root_value, "could_extract_minus_sign", lambda: False)():
+                        expression_latex = f"{sp.latex(x)} + {sp.latex(-root_value)}"
+                    else:
+                        expression_latex = f"{sp.latex(x)} - {sp.latex(root_value)}"
+
                     linear_factors.append(
                         {
-                            "expression": sp.simplify(x - root_value),
+                            "expression": x - root_value,
+                            "expression_latex": expression_latex,
                             "exponent": exponent,  # Use the actual exponent from factorization
                             "root": root_value,
                         }
                     )
+
+    if leading_coeff != 1:
+        linear_factors.insert(0, {"expression": leading_coeff, "exponent": 1, "root": -np.inf})
 
     return linear_factors
 
@@ -457,7 +486,7 @@ def _extract_factors_from_expression(expr, x, zeros, singularities):
 
 
 def sort_factors(factors):
-    def get_numeric_root(factor):
+    def get_numeric_root(factor, subs: Dict[sp.Symbol, float] | None = None):
         # Handle both old format ("root") and new format ("roots")
         if "roots" in factor and factor["roots"]:
             # For new format, use the first root for sorting
@@ -472,15 +501,129 @@ def sort_factors(factors):
             return -np.inf
         try:
             # Try to convert symbolic roots to float for comparison
-            return float(root.evalf())
+            if subs:
+                return float(sp.N(sp.sympify(root).subs(subs)))
+            return float(sp.N(sp.sympify(root)))
         except (AttributeError, TypeError):
             try:
                 return float(root)
             except:
                 return -np.inf
 
-    factors = sorted(factors, key=get_numeric_root)
+    factors = sorted(factors, key=lambda f: get_numeric_root(f, subs=None))
     return factors
+
+
+def _parse_domain_option(domain_val: Any) -> Tuple[Tuple[float, float] | None, str | None]:
+    """Parse the directive `domain:` option.
+
+    Back-compat: if `domain` parses as a 2-tuple of floats, treat it as x-domain
+    for numerical zero finding.
+
+    New: otherwise treat it as parameter assumptions, e.g. `a > 0`.
+    """
+    if domain_val is None:
+        return None, None
+
+    s = str(domain_val).strip()
+    if not s:
+        return None, None
+
+    tup = _parse_tuple(s, float)
+    if tup and len(tup) == 2:
+        return tup, None
+
+    return None, s
+
+
+_ASSUMPTION_RE = re.compile(
+    r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(<=|>=|!=|==|=|<|>)\s*(.+?)\s*$"
+)
+
+
+def _choose_param_subs(
+    symbols: List[sp.Symbol],
+    assumptions: str | None,
+) -> Dict[sp.Symbol, float]:
+    """Choose a numeric substitution for parameter symbols.
+
+    Intended to allow ordering/evaluating expressions like roots that depend on
+    parameters under simple constraints, e.g. `a > 0`.
+
+    Supported constraints (conjunctions via `and` or comma):
+    - `a > 0`, `a >= 0`, `a < 0`, `a <= 0`
+    - `a != 0`
+    - `a = 2` / `a == 2`
+
+    For anything more complex, this falls back to defaults (1.0).
+    """
+
+    subs: Dict[sp.Symbol, float] = {s: 1.0 for s in symbols}
+    if not assumptions:
+        return subs
+
+    parts = [p.strip() for p in re.split(r"\band\b|,", assumptions) if p.strip()]
+    if not parts:
+        return subs
+
+    name_to_sym = {s.name: s for s in symbols}
+
+    # Collect constraints per symbol
+    constraints: Dict[sp.Symbol, List[Tuple[str, str]]] = {}
+    for part in parts:
+        m = _ASSUMPTION_RE.match(part)
+        if not m:
+            continue
+        name, op, rhs_txt = m.group(1), m.group(2), m.group(3)
+        sym = name_to_sym.get(name)
+        if sym is None:
+            continue
+        constraints.setdefault(sym, []).append((op, rhs_txt))
+
+    # Apply constraints
+    for sym, cs in constraints.items():
+        # Prefer explicit equality if present
+        eq = [c for c in cs if c[0] in {"=", "=="}]
+        if eq:
+            op, rhs_txt = eq[-1]
+            try:
+                rhs = float(sp.N(sp.sympify(rhs_txt, locals=name_to_sym)))
+                subs[sym] = rhs
+                continue
+            except Exception:
+                pass
+
+        # Otherwise take the last inequality-ish constraint
+        op, rhs_txt = cs[-1]
+        try:
+            rhs_val = float(sp.N(sp.sympify(rhs_txt, locals=name_to_sym)))
+        except Exception:
+            rhs_val = 0.0
+
+        if op in {">", ">="}:
+            subs[sym] = rhs_val + (1.0 if rhs_val != 0.0 else 1.0)
+        elif op in {"<", "<="}:
+            subs[sym] = rhs_val - (1.0 if rhs_val != 0.0 else 1.0)
+        elif op == "!=":
+            # Pick something different from rhs_val
+            candidate = 1.0
+            if abs(candidate - rhs_val) < 1e-9:
+                candidate = 2.0
+            subs[sym] = candidate
+
+    return subs
+
+
+def _numeric(expr: Any, subs: Dict[sp.Symbol, float] | None = None) -> float:
+    """Best-effort numeric evaluation for sorting and sampling."""
+    e = sp.sympify(expr)
+    if subs:
+        e = e.subs(subs)
+    v = sp.N(e)
+    # Only accept real-ish numbers
+    if getattr(v, "is_real", None) is False:
+        raise ValueError("non-real")
+    return float(v)
 
 
 def draw_factors(
@@ -495,6 +638,8 @@ def draw_factors(
     dy=-1,
     dx=0.02,
     fontsize=24,
+    subs: Dict[sp.Symbol, float] | None = None,
+    root_numeric: Dict[Any, float] | None = None,
 ):
     x_min = -0.05
     x_max = 1.05
@@ -510,12 +655,17 @@ def draw_factors(
             else []
         )
 
-        # Use LaTeX rendering for proper mathematical notation
-        try:
-            expression_latex = sp.latex(expression)
-        except:
-            # Fallback to string representation if latex fails
-            expression_latex = str(expression)
+        # Use LaTeX rendering for proper mathematical notation.
+        # Prefer a precomputed override (keeps `x` first for linear factors).
+        expression_latex_override = factor.get("expression_latex")
+        if expression_latex_override:
+            expression_latex = expression_latex_override
+        else:
+            try:
+                expression_latex = sp.latex(expression)
+            except:
+                # Fallback to string representation if latex fails
+                expression_latex = str(expression)
 
         if exponent > 1:
             s = f"$({expression_latex})^{{{exponent}}}$"
@@ -533,7 +683,10 @@ def draw_factors(
 
         # If no real roots (constant factor)
         if -np.inf in factor_roots or not factor_roots:
-            y_value = sp.sympify(expression).evalf(subs={x: 0})
+            submap = {x: 0}
+            if subs:
+                submap.update(subs)
+            y_value = sp.sympify(expression).evalf(subs=submap)
             if y_value > 0:
                 ax.plot(
                     [x_min, x_max],
@@ -552,10 +705,10 @@ def draw_factors(
                 )
         else:
             # Sort roots for drawing
-            sorted_roots = sorted(
-                [r for r in factor_roots if r != -np.inf],
-                key=lambda r: float(r.evalf()),
-            )
+            symbolic_roots = [r for r in factor_roots if r != -np.inf]
+            if root_numeric is None:
+                root_numeric = {r: _numeric(r, subs) for r in symbolic_roots}
+            sorted_roots = sorted(symbolic_roots, key=lambda r: root_numeric.get(r, _numeric(r, subs)))
 
             # Determine if even exponent (doesn't change sign) or odd (changes sign)
             is_even_exponent = exponent % 2 == 0
@@ -586,19 +739,20 @@ def draw_factors(
                 if j < len(sorted_roots):
                     if j == 0:
                         # Before first root
-                        test_x = float(sorted_roots[0].evalf()) - 1
+                        test_x = root_numeric[sorted_roots[0]] - 1
                     else:
                         # Between roots
-                        test_x = (
-                            float(sorted_roots[j - 1].evalf()) + float(sorted_roots[j].evalf())
-                        ) / 2
+                        test_x = (root_numeric[sorted_roots[j - 1]] + root_numeric[sorted_roots[j]]) / 2
                 else:
                     # After last root
-                    test_x = float(sorted_roots[-1].evalf()) + 1
+                    test_x = root_numeric[sorted_roots[-1]] + 1
 
                 # Evaluate sign at test point
                 try:
-                    y_val = sp.sympify(full_expr).evalf(subs={x: test_x})
+                    submap = {x: test_x}
+                    if subs:
+                        submap.update(subs)
+                    y_val = sp.sympify(full_expr).evalf(subs=submap)
                     is_positive = y_val > 0
                     color = color_pos if is_positive else color_neg
                     linestyle = "-" if is_positive else "--"
@@ -622,8 +776,12 @@ def draw_factors(
 
                 # Check if it's a zero or singularity
                 try:
-                    f_at_root = str(f.subs(x, root))
-                    is_singularity = f_at_root == "zoo" or "zoo" in f_at_root
+                    if subs:
+                        f_eval = sp.sympify(f).subs(subs)
+                    else:
+                        f_eval = sp.sympify(f)
+                    f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
+                    is_singularity = (not getattr(f_at_root, "is_finite", True)) or ("zoo" in str(f_at_root))
                 except:
                     is_singularity = False
 
@@ -661,6 +819,8 @@ def draw_function(
     dy=-1,
     dx=0.02,
     fontsize=24,
+    subs: Dict[sp.Symbol, float] | None = None,
+    root_numeric: Dict[Any, float] | None = None,
 ):
 
     x_min = -0.05
@@ -682,7 +842,10 @@ def draw_function(
     # Case 1: the polynomial has no roots.
     if len(roots) == 0:
         x0 = 0
-        y0 = sp.sympify(f).evalf(subs={x: x0})
+        submap = {x: x0}
+        if subs:
+            submap.update(subs)
+        y0 = sp.sympify(f).evalf(subs=submap)
 
         if y0 > 0:
             ax.plot(
@@ -706,24 +869,30 @@ def draw_function(
     intervals = []
     interval_positions = []
 
+    if root_numeric is None:
+        root_numeric = {r: _numeric(r, subs) for r in roots}
+
     # Intervals before first root
-    intervals.append((roots[0] - 1, roots[0] - 0.1))
+    intervals.append((root_numeric[roots[0]] - 1, root_numeric[roots[0]] - 0.1))
     interval_positions.append((x_min, root_positions[roots[0]] - dx))
 
     # Intervals between roots
     for i in range(len(roots) - 1):
-        intervals.append((roots[i] + 0.1, roots[i + 1] - 0.1))
+        intervals.append((root_numeric[roots[i]] + 0.1, root_numeric[roots[i + 1]] - 0.1))
         interval_positions.append(
             (root_positions[roots[i]] + dx, root_positions[roots[i + 1]] - dx)
         )
 
     # Interval after last root
-    intervals.append((roots[-1] + 0.1, roots[-1] + 1))
+    intervals.append((root_numeric[roots[-1]] + 0.1, root_numeric[roots[-1]] + 1))
     interval_positions.append((root_positions[roots[-1]] + dx, x_max))
 
     for i, (x0_interval, pos_interval) in enumerate(zip(intervals, interval_positions)):
         x0 = (x0_interval[0] + x0_interval[1]) / 2
-        y0 = sp.sympify(f).evalf(subs={x: x0})
+        submap = {x: x0}
+        if subs:
+            submap.update(subs)
+        y0 = sp.sympify(f).evalf(subs=submap)
 
         if y0 > 0:
             ax.plot(
@@ -745,7 +914,17 @@ def draw_function(
     # Plot zeros at root positions
     for root in roots:
         root_pos = root_positions[root]
-        if str(f.subs(x, root)) != "zoo":
+        try:
+            if subs:
+                f_eval = sp.sympify(f).subs(subs)
+            else:
+                f_eval = sp.sympify(f)
+            f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
+            is_singularity = (not getattr(f_at_root, "is_finite", True)) or ("zoo" in str(f_at_root))
+        except Exception:
+            is_singularity = False
+
+        if not is_singularity:
             plt.text(
                 x=root_pos,
                 y=y,
@@ -882,6 +1061,7 @@ def plot(
     small_figsize=False,
     figsize=None,
     domain=None,
+    assumptions=None,
     fontsize=24,
     labelpad=-15,
 ):
@@ -921,9 +1101,27 @@ def plot(
     if isinstance(f, str):
         f = sp.sympify(f)
 
-    original_variable = list(f.free_symbols)[0]
-    x = sp.symbols(str(original_variable), real=True)
-    f = f.subs(original_variable, x)
+    # Robust variable selection: prefer symbol named 'x' if present.
+    if x is None:
+        free = list(f.free_symbols)
+        sym_x = None
+        for s in free:
+            if s.name == "x":
+                sym_x = s
+                break
+        if sym_x is None and free:
+            sym_x = sorted(free, key=lambda s: s.name)[0]
+        if sym_x is None:
+            sym_x = sp.Symbol("x")
+        x = sp.Symbol(sym_x.name, real=True)
+        f = f.subs(sym_x, x)
+    else:
+        if isinstance(x, str):
+            x = sp.Symbol(x, real=True)
+
+    # Parameter symbols are everything except x
+    param_symbols = sorted([s for s in f.free_symbols if s != x], key=lambda s: s.name)
+    param_subs = _choose_param_subs(param_symbols, str(assumptions).strip() if assumptions else None)
 
     if color:
         color_pos = "red"
@@ -988,8 +1186,16 @@ def plot(
             if factor["root"] not in roots:
                 roots.append(factor["root"])
 
-    # Sort roots
-    roots = sorted(roots, key=lambda r: float(r.evalf()))
+    # Sort roots (support parameter-dependent roots)
+    root_numeric: Dict[Any, float] = {}
+    for r in roots:
+        try:
+            root_numeric[r] = _numeric(r, param_subs)
+        except Exception:
+            # If a root can't be evaluated numerically, keep it but sort to the end
+            root_numeric[r] = float("inf")
+
+    roots = sorted(roots, key=lambda r: root_numeric.get(r, float("inf")))
 
     # Map roots to positions
     num_roots = len(roots)
@@ -1012,6 +1218,7 @@ def plot(
     if include_factors:
         draw_factors(
             f, factors, roots, root_positions, ax, color_pos, color_neg, x, fontsize=fontsize
+            , subs=param_subs, root_numeric=root_numeric
         )
 
     # Draw sign lines for function
@@ -1027,6 +1234,8 @@ def plot(
         fn_name,
         include_factors,
         fontsize=fontsize,
+        subs=param_subs,
+        root_numeric=root_numeric,
     )
 
     # Remove tick labels on y-axis
@@ -1248,8 +1457,9 @@ class SignChart2Directive(SphinxDirective):
                             Format: "expression, label" or ("expression", "label")
                             Example: "sin(x)*cos(x), f(x)"
         factors (optional): Whether to show factored form (default: true)
-        domain (optional): Domain tuple (xmin, xmax) for numerical zero finding
-                          Example: "(-10, 10)" or (-10, 10)
+        domain (optional): Either
+            - an x-domain tuple (xmin, xmax) for numerical zero finding, e.g. "(-10, 10)", or
+            - parameter assumptions, e.g. "a > 0" to handle indeterminate constants.
         color (optional): Enable colored sign chart (default: true)
         generic_labels (optional): Use x₁, x₂ labels instead of actual values (default: false)
         small_figsize (optional): Use compact figure size (default: false)
@@ -1395,9 +1605,9 @@ class SignChart2Directive(SphinxDirective):
         explicit_name = merged.get("name")
         debug_mode = "debug" in merged
 
-        # Parse domain
+        # Parse domain: either numeric x-domain tuple OR parameter assumptions.
         domain_val = merged.get("domain")
-        custom_domain = _parse_tuple(domain_val, float) if domain_val else None
+        custom_domain, domain_assumptions = _parse_domain_option(domain_val)
 
         # Parse figsize
         figsize_val = merged.get("figsize")
@@ -1420,6 +1630,7 @@ class SignChart2Directive(SphinxDirective):
             int(bool(generic_labels)),
             int(bool(small_figsize)),
             str(custom_domain) if custom_domain else "",
+            str(domain_assumptions) if domain_assumptions else "",
             str(custom_figsize) if custom_figsize else "",
             str(custom_fontsize),
             str(custom_labelpad),
@@ -1445,6 +1656,7 @@ class SignChart2Directive(SphinxDirective):
                     "small_figsize": bool(small_figsize),
                     "fontsize": custom_fontsize,
                     "labelpad": custom_labelpad,
+                    "assumptions": domain_assumptions,
                 }
                 if custom_domain is not None:
                     plot_kwargs["domain"] = custom_domain

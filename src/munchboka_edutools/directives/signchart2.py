@@ -624,6 +624,100 @@ def _numeric(expr: Any, subs: Dict[sp.Symbol, float] | None = None) -> float:
     return float(v)
 
 
+def _eval_sign_at(
+    expr: Any,
+    x: sp.Symbol,
+    x0: float,
+    subs: Dict[sp.Symbol, float] | None = None,
+    *,
+    zero_tol: float = 1e-10,
+) -> int | None:
+    """Return sign of expr(x0) over reals.
+
+    Returns:
+        +1, -1, 0 for real finite values; None when undefined/non-real/non-finite.
+    """
+    submap = {x: x0}
+    if subs:
+        submap.update(subs)
+
+    try:
+        v = sp.N(sp.sympify(expr).subs(submap))
+    except Exception:
+        return None
+
+    # Non-real or non-finite => undefined on reals at this point.
+    if getattr(v, "is_real", None) is False:
+        return None
+    if getattr(v, "is_finite", None) is False:
+        return None
+
+    try:
+        fv = float(v)
+    except Exception:
+        return None
+    if not np.isfinite(fv):
+        return None
+
+    if abs(fv) <= zero_tol:
+        return 0
+    return 1 if fv > 0 else -1
+
+
+def _domain_breakpoints_real(
+    f: sp.Expr, x: sp.Symbol
+) -> tuple[list[Any], sp.Set | None]:
+    """Best-effort extraction of real-domain boundary points.
+
+    This is used to split the sign chart into intervals where a function like log(x)
+    is (not) defined over the reals.
+    """
+    try:
+        from sympy.calculus.util import continuous_domain
+
+        dom = continuous_domain(f, x, sp.S.Reals)
+    except Exception:
+        return [], None
+
+    breaks: list[Any] = []
+
+    def add_endpoint(e):
+        if e in (sp.S.NegativeInfinity, sp.S.Infinity, sp.S.ComplexInfinity):
+            return
+        try:
+            e_s = sp.sympify(e)
+        except Exception:
+            return
+        if e_s.is_real is False:
+            return
+        if e_s.is_finite is False:
+            return
+        breaks.append(e_s)
+
+    def walk(s: sp.Set):
+        if isinstance(s, sp.Interval):
+            add_endpoint(s.start)
+            add_endpoint(s.end)
+            return
+        if isinstance(s, sp.Union):
+            for arg in s.args:
+                walk(arg)
+            return
+        # FiniteSet: boundary points may matter for splitting
+        if isinstance(s, sp.FiniteSet):
+            for pt in s:
+                add_endpoint(pt)
+
+    walk(dom)
+
+    # Deduplicate while preserving order (symbolic equality)
+    out: list[Any] = []
+    for b in breaks:
+        if b not in out:
+            out.append(b)
+    return out, dom
+
+
 def draw_factors(
     f,
     factors,
@@ -825,15 +919,28 @@ def draw_function(
         va="center",
     )
 
-    # Case 1: the polynomial has no roots.
+    # Case 1: the function has no explicit roots/breakpoints.
     if len(roots) == 0:
         x0 = 0
-        submap = {x: x0}
-        if subs:
-            submap.update(subs)
-        y0 = sp.sympify(f).evalf(subs=submap)
-
-        if y0 > 0:
+        sgn = _eval_sign_at(f, x, x0, subs)
+        if sgn is None:
+            ax.plot(
+                [x_min, x_max],
+                [y, y],
+                color="black",
+                linestyle=":",
+                lw=2,
+                alpha=0.6,
+            )
+            plt.text(
+                x=(x_min + x_max) / 2,
+                y=y,
+                s=f"$\\times$",
+                fontsize=fontsize,
+                ha="center",
+                va="center",
+            )
+        elif sgn > 0:
             ax.plot(
                 [x_min, x_max],
                 [y, y],
@@ -875,12 +982,25 @@ def draw_function(
 
     for i, (x0_interval, pos_interval) in enumerate(zip(intervals, interval_positions)):
         x0 = (x0_interval[0] + x0_interval[1]) / 2
-        submap = {x: x0}
-        if subs:
-            submap.update(subs)
-        y0 = sp.sympify(f).evalf(subs=submap)
-
-        if y0 > 0:
+        sgn = _eval_sign_at(f, x, x0, subs)
+        if sgn is None:
+            ax.plot(
+                [pos_interval[0], pos_interval[1]],
+                [y, y],
+                color="black",
+                linestyle=":",
+                lw=2,
+                alpha=0.6,
+            )
+            plt.text(
+                x=(pos_interval[0] + pos_interval[1]) / 2,
+                y=y,
+                s=f"$\\times$",
+                fontsize=fontsize,
+                ha="center",
+                va="center",
+            )
+        elif sgn > 0:
             ax.plot(
                 [pos_interval[0], pos_interval[1]],
                 [y, y],
@@ -1181,6 +1301,9 @@ def plot(
             factors = get_transcendental_factors(f, x, zeros, singularities)
             factors = sort_factors(factors)
 
+    # Add real-domain breakpoints for functions like log(x) and sqrt(x)
+    domain_breaks, domain_set = _domain_breakpoints_real(sp.sympify(f), x)
+
     # Create figure
     fig, ax = make_axis(x, fontsize=fontsize, labelpad=labelpad)
 
@@ -1196,6 +1319,11 @@ def plot(
             # Old format: single root per factor
             if factor["root"] not in roots:
                 roots.append(factor["root"])
+
+    # Ensure domain boundary points (finite endpoints) are included to split intervals
+    for b in domain_breaks:
+        if b != -np.inf and b not in roots:
+            roots.append(b)
 
     # Sort roots (support parameter-dependent roots)
     root_numeric: Dict[Any, float] = {}
@@ -1226,6 +1354,16 @@ def plot(
                         singularities_set.add(r)
                 except Exception:
                     continue
+
+    # Mark out-of-domain boundary points as singularities (shown as \times on the f(x) row)
+    if domain_set is not None:
+        for r in roots:
+            try:
+                contains = domain_set.contains(r)
+            except Exception:
+                continue
+            if contains is sp.S.false:
+                singularities_set.add(r)
 
     # Map roots to positions
     num_roots = len(roots)

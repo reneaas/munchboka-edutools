@@ -1605,6 +1605,41 @@ class AnimateDirective(SphinxDirective):
         ystep = _f("ystep", 1)
         fontsize = int(_f("fontsize", 20))
         lw = _f("lw", 2.5)
+        figsize_raw = merged.get("figsize")
+
+        def _parse_figsize(val):
+            if val in (None, ""):
+                return None
+            # Already a 2-tuple/list
+            if isinstance(val, (list, tuple)) and len(val) == 2:
+                try:
+                    return (float(val[0]), float(val[1]))
+                except Exception:
+                    return None
+            if not isinstance(val, str):
+                return None
+            s = val.strip()
+            if not s:
+                return None
+            # Allow "6,4" shorthand
+            if re.match(r"^[-+]?\d+(?:\.\d+)?\s*,\s*[-+]?\d+(?:\.\d+)?$", s):
+                try:
+                    a, b = s.split(",", 1)
+                    return (float(a.strip()), float(b.strip()))
+                except Exception:
+                    return None
+            # Allow literal tuple/list like "(6, 4)" or "[6,4]"
+            try:
+                import ast
+
+                lit = ast.literal_eval(s)
+                if isinstance(lit, (list, tuple)) and len(lit) == 2:
+                    return (float(lit[0]), float(lit[1]))
+            except Exception:
+                return None
+            return None
+
+        parsed_figsize = _parse_figsize(figsize_raw)
         alpha_val = merged.get("alpha", 1.0)
         if alpha_val:
             alpha_val = float(alpha_val)
@@ -2932,6 +2967,14 @@ class AnimateDirective(SphinxDirective):
         # Save to SVG
         fig.patch.set_alpha(0)
         ax.patch.set_alpha(0)
+
+        # Apply user figsize at the very end if provided
+        if parsed_figsize is not None:
+            try:
+                fig.set_size_inches(*parsed_figsize)
+            except Exception:
+                pass
+
         fig.savefig(
             output_path,
             format="svg",

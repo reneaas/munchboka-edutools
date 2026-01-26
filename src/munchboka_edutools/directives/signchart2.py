@@ -256,7 +256,7 @@ def get_factors(polynomial, x):
             factor_lc = 1
 
         if factor_lc not in (0, 1, sp.Integer(1)):
-            leading_coeff = sp.simplify(leading_coeff * (factor_lc ** exponent))
+            leading_coeff = sp.simplify(leading_coeff * (factor_lc**exponent))
             linear_factor = sp.simplify(linear_factor / factor_lc)
 
         roots = sp.solve(linear_factor, x)
@@ -536,9 +536,7 @@ def _parse_domain_option(domain_val: Any) -> Tuple[Tuple[float, float] | None, s
     return None, s
 
 
-_ASSUMPTION_RE = re.compile(
-    r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(<=|>=|!=|==|=|<|>)\s*(.+?)\s*$"
-)
+_ASSUMPTION_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(<=|>=|!=|==|=|<|>)\s*(.+?)\s*$")
 
 
 def _choose_param_subs(
@@ -708,7 +706,9 @@ def draw_factors(
             symbolic_roots = [r for r in factor_roots if r != -np.inf]
             if root_numeric is None:
                 root_numeric = {r: _numeric(r, subs) for r in symbolic_roots}
-            sorted_roots = sorted(symbolic_roots, key=lambda r: root_numeric.get(r, _numeric(r, subs)))
+            sorted_roots = sorted(
+                symbolic_roots, key=lambda r: root_numeric.get(r, _numeric(r, subs))
+            )
 
             # Determine if even exponent (doesn't change sign) or odd (changes sign)
             is_even_exponent = exponent % 2 == 0
@@ -742,7 +742,9 @@ def draw_factors(
                         test_x = root_numeric[sorted_roots[0]] - 1
                     else:
                         # Between roots
-                        test_x = (root_numeric[sorted_roots[j - 1]] + root_numeric[sorted_roots[j]]) / 2
+                        test_x = (
+                            root_numeric[sorted_roots[j - 1]] + root_numeric[sorted_roots[j]]
+                        ) / 2
                 else:
                     # After last root
                     test_x = root_numeric[sorted_roots[-1]] + 1
@@ -781,7 +783,9 @@ def draw_factors(
                     else:
                         f_eval = sp.sympify(f)
                     f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
-                    is_singularity = (not getattr(f_at_root, "is_finite", True)) or ("zoo" in str(f_at_root))
+                    is_singularity = (not getattr(f_at_root, "is_finite", True)) or (
+                        "zoo" in str(f_at_root)
+                    )
                 except:
                     is_singularity = False
 
@@ -920,7 +924,9 @@ def draw_function(
             else:
                 f_eval = sp.sympify(f)
             f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
-            is_singularity = (not getattr(f_at_root, "is_finite", True)) or ("zoo" in str(f_at_root))
+            is_singularity = (not getattr(f_at_root, "is_finite", True)) or (
+                "zoo" in str(f_at_root)
+            )
         except Exception:
             is_singularity = False
 
@@ -1121,7 +1127,9 @@ def plot(
 
     # Parameter symbols are everything except x
     param_symbols = sorted([s for s in f.free_symbols if s != x], key=lambda s: s.name)
-    param_subs = _choose_param_subs(param_symbols, str(assumptions).strip() if assumptions else None)
+    param_subs = _choose_param_subs(
+        param_symbols, str(assumptions).strip() if assumptions else None
+    )
 
     if color:
         color_pos = "red"
@@ -1217,8 +1225,17 @@ def plot(
     # Draw factors
     if include_factors:
         draw_factors(
-            f, factors, roots, root_positions, ax, color_pos, color_neg, x, fontsize=fontsize
-            , subs=param_subs, root_numeric=root_numeric
+            f,
+            factors,
+            roots,
+            root_positions,
+            ax,
+            color_pos,
+            color_neg,
+            x,
+            fontsize=fontsize,
+            subs=param_subs,
+            root_numeric=root_numeric,
         )
 
     # Draw sign lines for function

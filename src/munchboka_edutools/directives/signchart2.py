@@ -638,6 +638,7 @@ def draw_factors(
     fontsize=24,
     subs: Dict[sp.Symbol, float] | None = None,
     root_numeric: Dict[Any, float] | None = None,
+    singularities_set: set[Any] | None = None,
 ):
     x_min = -0.05
     x_max = 1.05
@@ -776,37 +777,17 @@ def draw_factors(
             for root in sorted_roots:
                 root_pos = root_positions[root]
 
-                # Check if it's a zero or singularity
-                try:
-                    if subs:
-                        f_eval = sp.sympify(f).subs(subs)
-                    else:
-                        f_eval = sp.sympify(f)
-                    f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
-                    is_singularity = (not getattr(f_at_root, "is_finite", True)) or (
-                        "zoo" in str(f_at_root)
-                    )
-                except:
-                    is_singularity = False
-
-                if is_singularity:
-                    plt.text(
-                        x=root_pos + 0.005,
-                        y=(i + 1) * dy,
-                        s=f"$\\times$",
-                        fontsize=fontsize,
-                        ha="center",
-                        va="center",
-                    )
-                else:
-                    plt.text(
-                        x=root_pos,
-                        y=(i + 1) * dy,
-                        s=f"$0$",
-                        fontsize=fontsize,
-                        ha="center",
-                        va="center",
-                    )
+                # Factor rows represent the factor itself, so at its roots it is 0.
+                # Poles (undefined values) are a property of the full function f(x)
+                # and should be rendered only on the f(x) row.
+                plt.text(
+                    x=root_pos,
+                    y=(i + 1) * dy,
+                    s=f"$0$",
+                    fontsize=fontsize,
+                    ha="center",
+                    va="center",
+                )
 
 
 def draw_function(
@@ -825,6 +806,7 @@ def draw_function(
     fontsize=24,
     subs: Dict[sp.Symbol, float] | None = None,
     root_numeric: Dict[Any, float] | None = None,
+    singularities_set: set[Any] | None = None,
 ):
 
     x_min = -0.05
@@ -918,17 +900,21 @@ def draw_function(
     # Plot zeros at root positions
     for root in roots:
         root_pos = root_positions[root]
-        try:
-            if subs:
-                f_eval = sp.sympify(f).subs(subs)
-            else:
-                f_eval = sp.sympify(f)
-            f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
-            is_singularity = (not getattr(f_at_root, "is_finite", True)) or (
-                "zoo" in str(f_at_root)
-            )
-        except Exception:
-            is_singularity = False
+        # Prefer explicit pole tracking.
+        if singularities_set is not None:
+            is_singularity = root in singularities_set
+        else:
+            try:
+                if subs:
+                    f_eval = sp.sympify(f).subs(subs)
+                else:
+                    f_eval = sp.sympify(f)
+                f_at_root = f_eval.evalf(subs={x: root_numeric[root]})
+                is_singularity = (not getattr(f_at_root, "is_finite", True)) or (
+                    "zoo" in str(f_at_root)
+                )
+            except Exception:
+                is_singularity = False
 
         if not is_singularity:
             plt.text(
@@ -1140,6 +1126,7 @@ def plot(
     # Determine function type and extract zeros/singularities
     is_polynomial = f.is_polynomial()
     is_rational = False
+    singularities: List[Any] = []
 
     if is_polynomial:
         # Use existing polynomial factorization
@@ -1151,9 +1138,25 @@ def plot(
             numer, denom = f.as_numer_denom()
             if denom != 1 and denom.is_polynomial() and numer.is_polynomial():
                 is_rational = True
-                # Handle as rational function
-                p_factors = get_factors(polynomial=numer, x=x) if numer != 1 else []
-                q_factors = get_factors(polynomial=denom, x=x) if denom != 1 else []
+                # Handle as rational function. Use a cancelled form so removable
+                # discontinuities don't get marked as poles.
+                f = sp.cancel(f)
+                numer_c, denom_c = f.as_numer_denom()
+
+                p_factors = get_factors(polynomial=numer_c, x=x) if numer_c != 1 else []
+                q_factors = get_factors(polynomial=denom_c, x=x) if denom_c != 1 else []
+
+                for fac in p_factors:
+                    fac["is_denominator"] = False
+                for fac in q_factors:
+                    fac["is_denominator"] = True
+
+                singularities = [
+                    fac.get("root")
+                    for fac in q_factors
+                    if fac.get("root") is not None and fac.get("root") != -np.inf
+                ]
+
                 factors = p_factors + q_factors
                 factors = sort_factors(factors)
             else:
@@ -1205,6 +1208,25 @@ def plot(
 
     roots = sorted(roots, key=lambda r: root_numeric.get(r, float("inf")))
 
+    # Convert singularities (often computed separately) into the canonical root objects
+    # we use for positioning/labeling, by matching numerically.
+    singularities_set: set[Any] = set()
+    if singularities:
+        for s in singularities:
+            try:
+                s_num = _numeric(s, param_subs)
+            except Exception:
+                continue
+            for r in roots:
+                if r == s:
+                    singularities_set.add(r)
+                    continue
+                try:
+                    if abs(root_numeric.get(r, float("inf")) - s_num) < 1e-6:
+                        singularities_set.add(r)
+                except Exception:
+                    continue
+
     # Map roots to positions
     num_roots = len(roots)
     x_min = -0.05
@@ -1236,6 +1258,7 @@ def plot(
             fontsize=fontsize,
             subs=param_subs,
             root_numeric=root_numeric,
+            singularities_set=singularities_set,
         )
 
     # Draw sign lines for function
@@ -1253,6 +1276,7 @@ def plot(
         fontsize=fontsize,
         subs=param_subs,
         root_numeric=root_numeric,
+        singularities_set=singularities_set,
     )
 
     # Remove tick labels on y-axis

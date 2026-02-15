@@ -13,5 +13,12 @@
 			"path": "../../../matematikk_r1"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"/^python - <<'PY'\nimport schemdraw\nimport schemdraw\\.elements as elm\n\nd=schemdraw\\.Drawing\\(show=False\\)\nprint\\('has push/pop', hasattr\\(d,'push'\\), hasattr\\(d,'pop'\\)\\)\nprint\\('has here', hasattr\\(d,'here'\\)\\)\nprint\\('here', d\\.here\\)\n# add and check anchors\nr=elm\\.Resistor\\(\\)\\.right\\(\\)\\.label\\('R'\\)\nd \\+= r\nprint\\('after add here', d\\.here\\)\nprint\\('r\\.start', r\\.start, 'r\\.end', r\\.end, 'r\\.center', getattr\\(r,'center',None\\)\\)\nPY$/": {
+				"approve": true,
+				"matchCommandLine": true
+			}
+		}
+	}
 }

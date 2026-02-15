@@ -66,6 +66,56 @@ def test_quiz_build(tmp_path):
     # Quiz CSS copied
     assert (build / "_static" / "munchboka" / "css" / "quiz.css").exists()
 
+    def test_circuit_build_inline_svg(tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+
+        (src / "conf.py").write_text(
+            """
+    extensions = [
+        'munchboka_edutools',
+    ]
+
+    master_doc = 'index'
+    """.lstrip(),
+            encoding="utf-8",
+        )
+
+        (src / "index.rst").write_text(
+            """
+    Circuit
+    =======
+
+    .. circuit::
+       :width: 70%
+
+       component: V1, battery, 12 V
+       component: R1, resistor, 1 kΩ
+       component: L1, lamp
+
+       circuit: series(V1, parallel(R1, L1))
+    """.lstrip(),
+            encoding="utf-8",
+        )
+
+        build = tmp_path / "_build"
+
+        from sphinx.application import Sphinx
+
+        app = Sphinx(
+            srcdir=str(src),
+            confdir=str(src),
+            outdir=str(build / "html"),
+            doctreedir=str(build / "doctree"),
+            buildername="html",
+            warningiserror=True,
+        )
+        app.build()
+
+        html = (build / "html" / "index.html").read_text(encoding="utf-8")
+        assert '<svg class="graph-inline-svg' in html
+        assert "circuit-inline-svg" in html
+
     # Smoke test plot directive: create a tiny additional page using plot
     (src / "plotpage.rst").write_text(
         """

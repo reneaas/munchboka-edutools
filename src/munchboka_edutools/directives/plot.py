@@ -66,6 +66,9 @@ alt            Alt text (accessibility).
 nocache        Force regeneration (ignore cache).
 debug          Keep raw SVG size & emit sidecar PDF if possible.
 usetex         ``true|false`` force LaTeX text rendering via matplotlib (default ``true``; can be set globally via ``plot_default_usetex`` in ``conf.py``).
+handdrawn      ``true|false`` apply Matplotlib's XKCD-style for a hand-drawn look (default ``false``).
+              Note: Matplotlib's XKCD mode is incompatible with ``usetex: true``.
+              When ``handdrawn: true`` is enabled, this directive forces ``usetex`` off for that figure.
 fontsize       Base font size (default 20).
 lw             Default line width for plotted curves (default 2.5).
 alpha          Global alpha for function / curve lines (optional).
@@ -216,6 +219,7 @@ Norwegian examples.
 from __future__ import annotations
 
 import ast
+import contextlib
 import hashlib
 import os
 import re
@@ -423,6 +427,7 @@ class PlotDirective(SphinxDirective):
         "alt": directives.unchanged,
         # text rendering
         "usetex": directives.unchanged,
+        "handdrawn": directives.unchanged,
         # axes options (optional in YAML too)
         "xmin": directives.unchanged,
         "xmax": directives.unchanged,
@@ -2456,6 +2461,15 @@ class PlotDirective(SphinxDirective):
         default_cfg = getattr(env.config, "plot_default_usetex", True)
         use_usetex = bool(usetex_opt) if usetex_opt is not None else bool(default_cfg)
 
+        # Optional XKCD/hand-drawn look (matplotlib pyplot.xkcd())
+        handdrawn = _parse_bool(merged.get("handdrawn"), default=False)
+
+        # Matplotlib raises at runtime if xkcd mode is enabled while text.usetex is True.
+        # Since our default is usetex=True, make `handdrawn: true` work out-of-the-box by
+        # forcing usetex off for this specific figure.
+        if handdrawn and use_usetex:
+            use_usetex = False
+
         # Hash includes all content affecting the image
         content_hash = _hash_key(
             "|".join(fn_exprs),
@@ -2545,6 +2559,7 @@ class PlotDirective(SphinxDirective):
             str(merged.get("yticks", "")),
             str(parsed_figsize),
             int(bool(use_usetex)),
+            int(bool(handdrawn)),
         )
         base_name = explicit_name or f"plot_{content_hash}"
 
@@ -2553,16 +2568,49 @@ class PlotDirective(SphinxDirective):
         os.makedirs(abs_dir, exist_ok=True)
         svg_name = f"{base_name}.svg"
         abs_svg = os.path.join(abs_dir, svg_name)
+        abs_meta = os.path.join(abs_dir, f"{base_name}.sha1")
 
         regenerate = ("nocache" in merged) or not os.path.exists(abs_svg)
+        # If the author specifies a stable `name:`, the SVG filename stays the same.
+        # In that case we still need a way to detect content changes to avoid
+        # reusing an old cached SVG (e.g. when toggling `handdrawn`).
+        if (not regenerate) and explicit_name:
+            try:
+                prev = open(abs_meta, "r", encoding="utf-8").read().strip()
+            except Exception:
+                prev = None
+            if prev != str(content_hash):
+                regenerate = True
         if regenerate:
             import matplotlib
 
             matplotlib.use("Agg")
+            import matplotlib.pyplot as _plt
+
+            fig = None
+            _old_usetex = None
+            _old_mathtext = None
+            _xkcd_cm = None
+
             try:
-                # Ensure consistent text rendering from drawing through save.
+                # Snapshot relevant rcParams before any modifications so we can restore
+                # global state even when we temporarily disable usetex for XKCD mode.
                 _old_usetex = matplotlib.rcParams.get("text.usetex")
                 _old_mathtext = matplotlib.rcParams.get("mathtext.fontset")
+
+                if handdrawn:
+                    try:
+                        # xkcd mode is incompatible with text.usetex=True.
+                        # Even though we force `use_usetex=False` above, rcParams may
+                        # still be True from global configuration; disable before entering.
+                        if matplotlib.rcParams.get("text.usetex"):
+                            matplotlib.rcParams["text.usetex"] = False
+                        _xkcd_cm = _plt.xkcd()
+                        _xkcd_cm.__enter__()
+                    except Exception:
+                        _xkcd_cm = None
+
+                # Ensure consistent text rendering from drawing through save.
                 try:
                     matplotlib.rcParams["text.usetex"] = use_usetex
                     # Prefer Computer Modern math text when not using external LaTeX
@@ -3666,25 +3714,55 @@ class PlotDirective(SphinxDirective):
                     except Exception:
                         pass
 
-                matplotlib.pyplot.close(fig)
-                # Restore rcParams modified for this figure
-                try:
-                    matplotlib.rcParams["text.usetex"] = _old_usetex
-                    matplotlib.rcParams["mathtext.fontset"] = _old_mathtext
-                except Exception:
-                    pass
+                # Update cache metadata for stable `name:` outputs.
+                if explicit_name:
+                    try:
+                        with open(abs_meta, "w", encoding="utf-8") as f:
+                            f.write(str(content_hash))
+                    except Exception:
+                        pass
             except Exception as e:
-                # Best-effort rcParams restoration on error
+                # Optional rich traceback for debugging hard-to-reproduce rendering issues.
+                # Enable by setting `MUNCHBOKA_EDUTOOLS_PLOT_TRACEBACK=1`.
+                tb = ""
                 try:
-                    matplotlib.rcParams["text.usetex"] = _old_usetex
-                    matplotlib.rcParams["mathtext.fontset"] = _old_mathtext
+                    if os.environ.get("MUNCHBOKA_EDUTOOLS_PLOT_TRACEBACK"):
+                        import traceback
+
+                        tb = "\n\n" + traceback.format_exc()
                 except Exception:
-                    pass
+                    tb = ""
                 return [
                     self.state_machine.reporter.error(
-                        f"Feil under generering av figur: {e}", line=self.lineno
+                        f"Feil under generering av figur: {e}{tb}", line=self.lineno
                     )
                 ]
+            finally:
+                try:
+                    if fig is not None:
+                        _plt.close(fig)
+                except Exception:
+                    pass
+
+                # Exit XKCD context if entered (this restores Matplotlib rcParams
+                # to their values at XKCD entry).
+                if _xkcd_cm is not None:
+                    try:
+                        import sys
+
+                        exc_type, exc, tb = sys.exc_info()
+                        _xkcd_cm.__exit__(exc_type, exc, tb)
+                    except Exception:
+                        pass
+
+                # Restore rcParams modified for this figure
+                try:
+                    if _old_usetex is not None:
+                        matplotlib.rcParams["text.usetex"] = _old_usetex
+                    if _old_mathtext is not None:
+                        matplotlib.rcParams["mathtext.fontset"] = _old_mathtext
+                except Exception:
+                    pass
 
         if not os.path.exists(abs_svg):
             return [self.state_machine.reporter.error("plot: SVG mangler.", line=self.lineno)]

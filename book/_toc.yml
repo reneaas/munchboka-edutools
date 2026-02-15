@@ -1,35 +1,88 @@
 format: jb-book
 root: index
 chapters:
-  - file: test_function_domains.md
-  - file: examples/plot.md
-  - file: examples/animate.md
-  - file: examples/multi_plot.md
-  - file: examples/multi_plot_point.md
-  - file: examples/multi_plot_text.md
-  - file: examples/multi_plot_annotate.md
-  - file: examples/multi_plot2_test.md
-  - file: examples/signchart.md
-  - file: examples/polydiv.md
-  - file: examples/horner.md
-  - file: examples/quiz/quiz.md
-  - file: examples/jeopardy/jeopardy.md
-  - file: examples/interactive_code.md
-  - file: examples/cas_popup.md
-  - file: examples/factor_tree.md
-  - file: examples/pair_puzzle.md
-  - file: examples/escape_room.md
-  - file: examples/escape_room/escape_room.md
-  - file: examples/escape_room2.md
-  - file: examples/admonitions.md
-  - file: examples/dialogue.md
-  - file: examples/clear.md
-  - file: examples/parsons.md
-  - file: examples/popup.md
-  - file: examples/ggb_icon.md
-  - file: examples/ggb_popup.md
-  - file: examples/ggb.md
-  - file: examples/poly_icon.md
-  - file: examples/timed_quiz.md
-  - file: examples/turtle.md
-  - file: examples/flashcards.md
+  - file: docs/index.md
+  - file: docs/animate.md
+  - file: docs/answer.md
+  - file: docs/cas-popup.md
+  - file: docs/clear.md
+  - file: docs/circuit.md
+  - file: docs/dialogue.md
+  - file: docs/escape-room.md
+  - file: docs/escape-room-2.md
+  - file: docs/escaperoom.md
+  - file: docs/example.md
+  - file: docs/exercise.md
+  - file: docs/explore.md
+  - file: docs/factor-tree.md
+  - file: docs/flashcards.md
+  - file: docs/ggb.md
+  - file: docs/ggb-popup.md
+  - file: docs/ggbpopup.md
+  - file: docs/goals.md
+  - file: docs/hints.md
+  - file: docs/horner.md
+  - file: docs/interactive-code.md
+  - file: docs/interactive-graph.md
+  - file: docs/jeopardy.md
+  - file: docs/jeopardy-2.md
+  - file: docs/jeopardy-answer.md
+  - file: docs/jeopardy-question.md
+  - file: docs/multi-interactive-graph.md
+  - file: docs/multi-plot.md
+  - file: docs/multi-plot2.md
+  - file: docs/multiplot.md
+  - file: docs/pair-puzzle.md
+  - file: docs/pairpuzzle.md
+  - file: docs/parsons-puzzle.md
+  - file: docs/parsonspuzzle.md
+  - file: docs/plot.md
+  - file: docs/polydiv.md
+  - file: docs/popup.md
+  - file: docs/quiz.md
+  - file: docs/quiz-2.md
+  - file: docs/quiz-answer.md
+  - file: docs/quiz-question.md
+  - file: docs/room.md
+  - file: docs/sign-chart.md
+  - file: docs/signchart.md
+  - file: docs/signchart-2.md
+  - file: docs/signchart2.md
+  - file: docs/solution.md
+  - file: docs/summary.md
+  - file: docs/theory.md
+  - file: docs/timed-quiz.md
+  - file: docs/timedquiz.md
+  - file: docs/turtle.md
+  # - file: test_function_domains.md
+  # - file: examples/plot.md
+  # - file: examples/animate.md
+  # - file: examples/multi_plot.md
+  # - file: examples/multi_plot_point.md
+  # - file: examples/multi_plot_text.md
+  # - file: examples/multi_plot_annotate.md
+  # - file: examples/multi_plot2_test.md
+  # - file: examples/signchart.md
+  # - file: examples/polydiv.md
+  # - file: examples/horner.md
+  # - file: examples/quiz/quiz.md
+  # - file: examples/jeopardy/jeopardy.md
+  # - file: examples/interactive_code.md
+  # - file: examples/cas_popup.md
+  # - file: examples/factor_tree.md
+  # - file: examples/pair_puzzle.md
+  # - file: examples/escape_room.md
+  # - file: examples/escape_room/escape_room.md
+  # - file: examples/escape_room2.md
+  # - file: examples/admonitions.md
+  # - file: examples/dialogue.md
+  # - file: examples/clear.md
+  # - file: examples/parsons.md
+  # - file: examples/popup.md
+  # - file: examples/ggb_icon.md
+  # - file: examples/ggb_popup.md
+  # - file: examples/ggb.md
+  # - file: examples/poly_icon.md
+  # - file: examples/timed_quiz.md
+  # - file: examples/turtle.md
+  # - file: examples/flashcards.md

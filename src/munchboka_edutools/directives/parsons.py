@@ -32,12 +32,14 @@ Features:
     - Theme-aware styling (light/dark mode)
 """
 
+import json
 from docutils import nodes
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import directives
+from sphinx.util.docutils import SphinxDirective
 import uuid
 
 
-class ParsonsPuzzleDirective(Directive):
+class ParsonsPuzzleDirective(SphinxDirective):
     """
     Directive for creating Parsons puzzles (code reordering exercises).
 
@@ -50,6 +52,7 @@ class ParsonsPuzzleDirective(Directive):
     final_argument_whitespace = True
     option_spec = {
         "lang": directives.unchanged,
+        "chunk-marker": directives.unchanged,
     }
 
     def run(self):
@@ -63,11 +66,32 @@ class ParsonsPuzzleDirective(Directive):
         puzzle_container_id = f"container-parsons-puzzle-{identifier}"
         editor_container_id = f"container-kode-{identifier}"
 
-        # Get code content from the directive content
-        code_content = "\n".join(self.content)
+        # Prefer a nested {code-block} source if present; otherwise fall back to
+        # using the raw directive body.
+        parsed = nodes.container()
+        self.state.nested_parse(self.content, self.content_offset, parsed)
 
-        # Escape code for JavaScript
-        escaped_code = code_content.replace("`", "\\`").replace("$", "\\$")
+        literal_blocks = list(parsed.findall(nodes.literal_block))
+        literal_block = literal_blocks[0] if literal_blocks else None
+
+        if literal_block is not None:
+            code_content = literal_block.astext()
+            inferred_lang = literal_block.get("language") or literal_block.get("lang")
+        else:
+            code_content = "\n".join(self.content)
+            inferred_lang = None
+
+        # Determine language (explicit option wins)
+        lang = (self.options.get("lang") or inferred_lang or "python").strip()
+
+        # Chunk marker used to split blocks; marker lines are excluded from the
+        # final solved code (injected into interactive-code).
+        chunk_marker = (self.options.get("chunk-marker") or "# chunk").strip()
+
+        # Safely embed strings in JS (handles backslashes, quotes, etc.)
+        code_json = json.dumps(code_content)
+        lang_json = json.dumps(lang)
+        chunk_marker_json = json.dumps(chunk_marker)
 
         # Create the HTML with the template
         html = f"""
@@ -76,17 +100,21 @@ class ParsonsPuzzleDirective(Directive):
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {{
-                const code = 
-`{escaped_code}`;
+                const code = {code_json};
 
                 const puzzleContainerId = '{puzzle_container_id}';
                 const editorId = '{editor_container_id}';
+                const options = {{
+                    lang: {lang_json},
+                    chunkMarker: {chunk_marker_json},
+                }};
 
                 const switchToCodeEditor = makeCallbackFunction(puzzleContainerId, editorId);
                 const puzzle = new ParsonsPuzzle(
                     puzzleContainerId,
                     code,
                     switchToCodeEditor,
+                    options,
                 );
             }});    
         </script>

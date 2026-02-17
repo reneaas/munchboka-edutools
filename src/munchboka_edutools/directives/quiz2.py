@@ -45,7 +45,6 @@ from sphinx.util.docutils import SphinxDirective
 from docutils.parsers.rst import directives
 import json
 import uuid
-import html as _html
 
 
 class Quiz2Directive(SphinxDirective):
@@ -61,60 +60,53 @@ class Quiz2Directive(SphinxDirective):
     }
 
     def run(self):
-        # Generate unique ID for this quiz
-        self.quiz_id = f"quiz-{uuid.uuid4().hex[:8]}"
+        quiz_id = f"quiz-{uuid.uuid4().hex[:8]}"
 
-        # Store quiz ID in environment for nested directives
         if not hasattr(self.env, "temp"):
             self.env.temp = {}
+        self.env.temp["current_quiz2_id"] = quiz_id
 
-        self.env.temp["current_quiz2_id"] = self.quiz_id
+        # Parse nested quiz-question content into native docutils nodes
+        parsed = nodes.container()
+        self.state.nested_parse(self.content, self.content_offset, parsed)
 
-        # Parse nested content (quiz-question directives)
-        container = nodes.container()
-        self.state.nested_parse(self.content, self.content_offset, container)
+        # Clean up environment marker
+        self.env.temp.pop("current_quiz2_id", None)
 
-        # Get questions from environment
-        questions_key = f"quiz2_questions_{self.quiz_id}"
-        questions = self.env.temp.get(questions_key, [])
+        container_id = f"quiz-container-{quiz_id}"
+        source_id = f"quiz-source-{quiz_id}"
 
-        # Generate HTML output
-        container_id = f"quiz-container-{self.quiz_id}"
-        html = self._generate_quiz_html(container_id, questions)
+        # Hidden DOM source that contains fully-rendered question + answer markup
+        source = nodes.container(classes=["quiz2-source"])
+        source["ids"].append(source_id)
+        source += parsed.children
 
-        # Clean up environment
-        self.env.temp.pop(questions_key, None)
-        if "current_quiz2_id" in self.env.temp:
-            self.env.temp.pop("current_quiz2_id")
+        # Visible quiz mount point
+        mount_html = f'<div id="{container_id}" class="quiz-main-container" data-quiz2-source="{source_id}"></div>'
 
-        return [nodes.raw("", html, format="html")]
+        # Init script: parse source DOM into questionsData and boot the quiz
+        init_html = f"""
+        <script type=\"text/javascript\">
+            document.addEventListener(\"DOMContentLoaded\", () => {{
+                const sourceEl = document.getElementById({json.dumps(source_id)});
+                const parseFn = (typeof window !== 'undefined') ? window.quiz2ParseDomSource : null;
+                const questionsData = (typeof parseFn === 'function' && sourceEl) ? parseFn(sourceEl) : [];
 
-    def _generate_quiz_html(self, container_id: str, questions: list) -> str:
-        """Generate the HTML for the quiz."""
-        # Escape </script> and </style> tags to prevent breaking the JSON script tag
-        json_str = json.dumps(questions, ensure_ascii=False)
-        json_str = json_str.replace("</script>", "<\\/script>").replace("</style>", "<\\/style>")
+                // Remove the source markup to avoid duplicate IDs/classes in the DOM.
+                if (sourceEl && sourceEl.parentNode) {{
+                    sourceEl.parentNode.removeChild(sourceEl);
+                }}
 
-        html = f"""
-        <!-- Container for the quiz -->
-        <div id="{container_id}" class="quiz-main-container"></div>
-        <!-- Include KaTeX for LaTeX rendering -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
-        <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
-
-        <script type="text/javascript">
-            document.addEventListener("DOMContentLoaded", () => {{
-                // Define your questions and answers
-                const questionsData = {json_str};
-
-                // Initialize the multiple-choice quiz
-                const quiz = new SequentialMultipleChoiceQuiz('{container_id}', questionsData);
+                const quiz = new SequentialMultipleChoiceQuiz({json.dumps(container_id)}, questionsData);
             }});
         </script>
         """
 
-        return html
+        return [
+            nodes.raw("", mount_html, format="html"),
+            source,
+            nodes.raw("", init_html, format="html"),
+        ]
 
 
 class QuizQuestionDirective(SphinxDirective):
@@ -129,12 +121,10 @@ class QuizQuestionDirective(SphinxDirective):
     option_spec = {}
 
     def run(self):
-        # Get the current quiz ID from the environment
         if not hasattr(self.env, "temp"):
             self.env.temp = {}
 
-        quiz_id = self.env.temp.get("current_quiz2_id")
-        if quiz_id is None:
+        if self.env.temp.get("current_quiz2_id") is None:
             error_msg = self.state_machine.reporter.error(
                 "quiz-question directive must be used inside a quiz-2 directive",
                 nodes.literal_block(self.block_text, self.block_text),
@@ -142,126 +132,37 @@ class QuizQuestionDirective(SphinxDirective):
             )
             return [error_msg]
 
-        # Generate unique ID for this question
         question_id = f"question-{uuid.uuid4().hex[:8]}"
         self.env.temp["current_quiz_question_id"] = question_id
 
-        # Parse and render question content
-        question_html = self._render_to_html(self.content)
-
-        # Get answers from environment
-        answers_key = f"quiz2_answers_{question_id}"
-        answers = self.env.temp.get(answers_key, [])
-
-        # Store question in environment
-        questions_key = f"quiz2_questions_{quiz_id}"
-        if questions_key not in self.env.temp:
-            self.env.temp[questions_key] = []
-
-        self.env.temp[questions_key].append({"content": question_html, "answers": answers})
-
-        # Clean up
-        self.env.temp.pop(answers_key, None)
+        # Parse content to native nodes, including nested quiz-answer directives.
+        parsed = nodes.container()
+        self.state.nested_parse(self.content, self.content_offset, parsed)
         self.env.temp.pop("current_quiz_question_id", None)
 
-        # Return empty list - the parent quiz-2 directive will render everything
-        return []
+        question_children: list[nodes.Node] = []
+        answer_blocks: list[nodes.Node] = []
+        for child in parsed.children:
+            if isinstance(child, nodes.container) and "quiz2-answer-source" in child.get(
+                "classes", []
+            ):
+                answer_blocks.append(child)
+            else:
+                question_children.append(child)
 
-    def _render_to_html(self, content_lines: StringList) -> str:
-        """Render content lines to HTML, processing any nested directives."""
-        if not content_lines:
-            return ""
+        wrapper = nodes.container(classes=["quiz2-question-source"])
+        wrapper["data-question-id"] = question_id
 
-        # Create a container node for the content
-        container = nodes.container()
+        question_content = nodes.container(classes=["quiz2-question-content"])
+        question_content += question_children
 
-        # Parse the content, which will process nested directives
-        self.state.nested_parse(content_lines, self.content_offset, container)
+        answers_container = nodes.container(classes=["quiz2-answers-source"])
+        answers_container += answer_blocks
 
-        # Convert to HTML
-        html_parts = []
-        for node in container.children:
-            html_parts.append(self._node_to_html(node))
+        wrapper += question_content
+        wrapper += answers_container
 
-        return "\n".join(html_parts)
-
-    def _node_to_html(self, node) -> str:
-        """Convert a docutils node to HTML string."""
-        if isinstance(node, nodes.paragraph):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<p>{content}</p>"
-
-        elif isinstance(node, nodes.Text):
-            return _html.escape(str(node))
-
-        elif isinstance(node, nodes.raw):
-            if node.get("format") == "html":
-                return node.astext()
-            return ""
-
-        elif isinstance(node, nodes.math):
-            # Render inline math using KaTeX-compatible format
-            math_text = node.astext()
-            return f"${math_text}$"
-
-        elif isinstance(node, nodes.math_block):
-            # Render display math ($$...$$) using KaTeX-compatible format
-            math_text = node.astext()
-            return f"$${math_text}$$"
-
-        elif isinstance(node, nodes.image):
-            uri = node.get("uri", "")
-            alt = node.get("alt", "")
-            return f'<img src="{uri}" alt="{alt}" />'
-
-        elif isinstance(node, nodes.literal_block):
-            content = _html.escape(node.astext())
-            language = node.get("language", "")
-            return f'<pre><code class="{language}">{content}</code></pre>'
-
-        elif isinstance(node, nodes.figure):
-            # Handle figure nodes (e.g., from plot directive)
-            content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            align = node.get("align", "center")
-
-            attrs = []
-            if classes:
-                attrs.append(f'class="{classes}"')
-            if align:
-                attrs.append(f'align="{align}"')
-
-            attrs_str = " ".join(attrs) if attrs else ""
-            return f"<figure {attrs_str}>{content}</figure>"
-
-        elif isinstance(node, nodes.caption):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<figcaption>{content}</figcaption>"
-
-        elif isinstance(node, nodes.bullet_list):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<ul>{content}</ul>"
-
-        elif isinstance(node, nodes.enumerated_list):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<ol>{content}</ol>"
-
-        elif isinstance(node, nodes.list_item):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<li>{content}</li>"
-
-        elif isinstance(node, nodes.container):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            if classes:
-                return f'<div class="{classes}">{content}</div>'
-            return content
-
-        elif hasattr(node, "children"):
-            return "".join(self._node_to_html(child) for child in node.children)
-
-        else:
-            return ""
+        return [wrapper]
 
 
 class QuizAnswerDirective(SphinxDirective):
@@ -297,18 +198,14 @@ class QuizAnswerDirective(SphinxDirective):
         if "correct" in self.options:
             is_correct = True
 
-        # Render content to HTML
-        answer_html = self._render_to_html(content_lines)
+        parsed = nodes.container()
+        self.state.nested_parse(content_lines, self.content_offset, parsed)
 
-        # Store answer in environment
-        answers_key = f"quiz2_answers_{question_id}"
-        if answers_key not in self.env.temp:
-            self.env.temp[answers_key] = []
+        wrapper = nodes.container(classes=["quiz2-answer-source"])
+        wrapper["data-correct"] = "true" if is_correct else "false"
+        wrapper += parsed.children
 
-        self.env.temp[answers_key].append({"content": answer_html, "isCorrect": is_correct})
-
-        # Return empty list
-        return []
+        return [wrapper]
 
     def _parse_content(self):
         """Parse front matter and content from the directive body."""
@@ -342,99 +239,6 @@ class QuizAnswerDirective(SphinxDirective):
         content_lines = self.content[content_start:] if content_start < len(self.content) else []
 
         return is_correct, content_lines
-
-    def _render_to_html(self, content_lines: StringList) -> str:
-        """Render content lines to HTML, processing any nested directives."""
-        if not content_lines:
-            return ""
-
-        # Create a container node for the content
-        container = nodes.container()
-
-        # Parse the content, which will process nested directives
-        self.state.nested_parse(content_lines, self.content_offset, container)
-
-        # Convert to HTML
-        html_parts = []
-        for node in container.children:
-            html_parts.append(self._node_to_html(node))
-
-        return "\n".join(html_parts)
-
-    def _node_to_html(self, node) -> str:
-        """Convert a docutils node to HTML string."""
-        if isinstance(node, nodes.paragraph):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<p>{content}</p>"
-
-        elif isinstance(node, nodes.Text):
-            return _html.escape(str(node))
-
-        elif isinstance(node, nodes.raw):
-            if node.get("format") == "html":
-                return node.astext()
-            return ""
-
-        elif isinstance(node, nodes.math):
-            math_text = node.astext()
-            return f"${math_text}$"
-
-        elif isinstance(node, nodes.math_block):
-            math_text = node.astext()
-            return f"$${math_text}$$"
-
-        elif isinstance(node, nodes.image):
-            uri = node.get("uri", "")
-            alt = node.get("alt", "")
-            return f'<img src="{uri}" alt="{alt}" />'
-
-        elif isinstance(node, nodes.literal_block):
-            content = _html.escape(node.astext())
-            language = node.get("language", "")
-            return f'<pre><code class="{language}">{content}</code></pre>'
-
-        elif isinstance(node, nodes.figure):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            align = node.get("align", "center")
-
-            attrs = []
-            if classes:
-                attrs.append(f'class="{classes}"')
-            if align:
-                attrs.append(f'align="{align}"')
-
-            attrs_str = " ".join(attrs) if attrs else ""
-            return f"<figure {attrs_str}>{content}</figure>"
-
-        elif isinstance(node, nodes.caption):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<figcaption>{content}</figcaption>"
-
-        elif isinstance(node, nodes.bullet_list):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<ul>{content}</ul>"
-
-        elif isinstance(node, nodes.enumerated_list):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<ol>{content}</ol>"
-
-        elif isinstance(node, nodes.list_item):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            return f"<li>{content}</li>"
-
-        elif isinstance(node, nodes.container):
-            content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            if classes:
-                return f'<div class="{classes}">{content}</div>'
-            return content
-
-        elif hasattr(node, "children"):
-            return "".join(self._node_to_html(child) for child in node.children)
-
-        else:
-            return ""
 
 
 def setup(app):

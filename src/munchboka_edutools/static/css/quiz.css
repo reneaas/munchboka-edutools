@@ -108,6 +108,16 @@
     position: relative;
 }
 
+/* Hidden source markup for native-rendered quiz content (harvested by JS) */
+.quiz2-source {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 /* Question Card Styles */
 .question-card {
     background-color: var(--card-background-color);
@@ -127,14 +137,20 @@
 
 /* Answers Grid */
 .answers-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 15px;
+}
+
+@media (max-width: 700px) {
+    .answers-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Answer Card Styles */
 .answer-card {
-    flex: 1 1 calc(50% - 15px);
+    min-width: 0;
     background-color: var(--answer-background-color);
     padding: 15px;
     border-radius: 8px;
@@ -145,11 +161,15 @@
     line-height: 1.4;
 }
 
-.answer-card pre,
-.answer-card code {
-    margin: 0;
-    padding: 0;
-    line-height: 1.4;
+/* Add a little breathing room for code blocks inside answer tiles */
+.answer-card pre {
+    padding: 0.5rem;
+}
+
+/* Disable Sphinx copybutton inside quiz answer tiles */
+.answer-card button.copybtn,
+.answer-card .copybtn {
+    display: none !important;
 }
 
 .answer-card:hover {

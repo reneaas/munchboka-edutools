@@ -72,6 +72,22 @@ def factorial(n):
         return n * factorial(n - 1)
 ```
 
+## Example 6: Chunk markers
+
+Use `# chunk` to group multiple lines into larger draggable blocks.
+The `# chunk` lines are not included in the solved output.
+
+:::{parsons-puzzle} chunk-demo
+:::{code-block} python
+total = 0
+# chunk
+for i in range(1, 6):
+    total += i
+# chunk
+print(total)
+:::
+:::
+
 ## How to Use
 
 1. **Drag** code lines from the top area

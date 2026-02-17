@@ -1,9 +1,18 @@
 class ParsonsPuzzle {
-    constructor(puzzleContainerId, codeString, onSolvedCallback = null) {
+    constructor(puzzleContainerId, codeString, onSolvedCallback = null, options = {}) {
+        // Backwards compatibility: allow third arg to be options
+        if (onSolvedCallback && typeof onSolvedCallback === 'object') {
+            options = onSolvedCallback;
+            onSolvedCallback = null;
+        }
+
         this.puzzleContainerId = puzzleContainerId;
         this.puzzleContainer = document.getElementById(puzzleContainerId);
         this.codeString = codeString;
         this.onSolvedCallback = onSolvedCallback;
+
+        this.lang = (options && options.lang) ? options.lang : 'python';
+        this.chunkMarker = (options && options.chunkMarker) ? options.chunkMarker : null;
 
         this.generateHTML();
 
@@ -99,18 +108,208 @@ class ParsonsPuzzle {
 
     preprocessCode(codeString) {
         const lines = codeString.split('\n');
-        return lines.map((line, index) => {
-            let trimmedLine = line.trim();
-            if (line.includes(';')) {
-                const parts = line.split(';');
-                trimmedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+
+        const markerPatterns = this.buildChunkMarkerPatterns(this.chunkMarker);
+
+        const hasStartEndMarkers = markerPatterns
+            ? lines.some((line) => markerPatterns.start.test(line) || markerPatterns.end.test(line))
+            : false;
+
+        const hasSeparatorMarkers = markerPatterns
+            ? lines.some((line) => markerPatterns.separator.test(line))
+            : false;
+
+        // Default behavior (no markers): keep the current one-line-per-block approach.
+        if (!hasStartEndMarkers && !hasSeparatorMarkers) {
+            return lines.map((line, index) => {
+                let renderedLine = line;
+                if (line.includes(';')) {
+                    const parts = line.split(';');
+                    renderedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                }
+
+                return {
+                    block: renderedLine,
+                    output: renderedLine,
+                    order: index,
+                    isEmpty: line.trim() === ''
+                };
+            });
+        }
+
+        // Prefer explicit start/end chunking when present.
+        if (hasStartEndMarkers) {
+            const pieces = [];
+            let inChunk = false;
+            let currentChunk = [];
+
+            for (const line of lines) {
+                if (markerPatterns.start.test(line)) {
+                    // Starting a new chunk: flush any existing chunk first.
+                    if (inChunk) {
+                        pieces.push({ type: 'chunk', lines: currentChunk });
+                        currentChunk = [];
+                    }
+                    inChunk = true;
+                    continue;
+                }
+
+                if (markerPatterns.end.test(line)) {
+                    if (inChunk) {
+                        pieces.push({ type: 'chunk', lines: currentChunk });
+                        currentChunk = [];
+                        inChunk = false;
+                    }
+                    continue;
+                }
+
+                if (inChunk) {
+                    currentChunk.push(line);
+                } else {
+                    pieces.push({ type: 'line', line });
+                }
             }
+
+            // Unclosed chunk: treat remainder as chunk.
+            if (inChunk) {
+                pieces.push({ type: 'chunk', lines: currentChunk });
+            }
+
+            const blocks = [];
+            let order = 0;
+
+            for (const piece of pieces) {
+                if (piece.type === 'line') {
+                    const line = piece.line;
+                    let renderedLine = line;
+                    if (line.includes(';')) {
+                        const parts = line.split(';');
+                        renderedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                    }
+
+                    blocks.push({
+                        block: renderedLine,
+                        output: renderedLine,
+                        order: order++,
+                        isEmpty: line.trim() === ''
+                    });
+                    continue;
+                }
+
+                // piece.type === 'chunk'
+                const expandedLines = [];
+                for (const chunkLine of piece.lines) {
+                    if (chunkLine.includes(';')) {
+                        const parts = chunkLine.split(';');
+                        const expanded = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                        expandedLines.push(...expanded.split('\n'));
+                    } else {
+                        expandedLines.push(chunkLine);
+                    }
+                }
+
+                const outputText = expandedLines.join('\n');
+                const blockText = expandedLines
+                    .filter((l) => l.trim() !== '')
+                    .join('\n');
+
+                blocks.push({
+                    block: blockText,
+                    output: outputText,
+                    order: order++,
+                    isEmpty: blockText.trim() === ''
+                });
+            }
+
+            return blocks;
+        }
+
+        // Separator behavior: group multiple lines into chunks separated by marker lines.
+        const chunks = [];
+        let current = [];
+
+        for (const line of lines) {
+            if (markerPatterns.separator.test(line)) {
+                chunks.push(current);
+                current = [];
+                continue;
+            }
+            current.push(line);
+        }
+        chunks.push(current);
+
+        return chunks.map((chunkLines, chunkIndex) => {
+            const expandedLines = [];
+
+            // Keep the existing ";" convenience inside chunks.
+            for (const line of chunkLines) {
+                if (line.includes(';')) {
+                    const parts = line.split(';');
+                    const expanded = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                    expandedLines.push(...expanded.split('\n'));
+                } else {
+                    expandedLines.push(line);
+                }
+            }
+
+            const outputText = expandedLines.join('\n');
+            const blockText = expandedLines
+                .filter((line) => line.trim() !== '')
+                .join('\n');
+
             return {
-                block: line.includes(';') ? trimmedLine : line,
-                order: index,
-                isEmpty: line.trim() === ''
+                block: blockText,
+                output: outputText,
+                order: chunkIndex,
+                isEmpty: blockText.trim() === ''
             };
         });
+    }
+
+    buildChunkMarkerPatterns(marker) {
+        if (!marker) {
+            return null;
+        }
+
+        const trimmed = String(marker).trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Normalize base token to support explicit "-start"/"-end" variants.
+        const stripSuffix = (token) => token.replace(/(?:-start|-end)\s*$/i, '').trim();
+
+        if (trimmed.startsWith('#')) {
+            const afterHashRaw = trimmed.slice(1).trim();
+            const baseToken = stripSuffix(afterHashRaw);
+            const baseEscaped = escapeRegex(baseToken);
+
+            // If marker is just '#', treat it as a generic comment marker.
+            if (!baseToken) {
+                return {
+                    separator: /^\s*#\s*$/, // unlikely but keeps behavior predictable
+                    start: /^\s*#\s*-start\s*$/,
+                    end: /^\s*#\s*-end\s*$/,
+                };
+            }
+
+            return {
+                separator: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*$`),
+                start: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*-start\\s*$`),
+                end: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*-end\\s*$`),
+            };
+        }
+
+        // Non-comment markers: exact match + "-start"/"-end" variants.
+        const baseToken = stripSuffix(trimmed);
+        const baseEscaped = escapeRegex(baseToken);
+        return {
+            separator: new RegExp(`^\\s*${baseEscaped}\\s*$`),
+            start: new RegExp(`^\\s*${baseEscaped}\\s*-start\\s*$`),
+            end: new RegExp(`^\\s*${baseEscaped}\\s*-end\\s*$`),
+        };
     }
 
     shuffleArray(array) {
@@ -129,7 +328,7 @@ class ParsonsPuzzle {
                 lineElement.className = 'draggable';
                 lineElement.draggable = true;
                 lineElement.dataset.order = obj.order;
-                lineElement.innerHTML = `<pre class="highlight python"><code>${this.escapeHTML(obj.block)}</code></pre>`;
+                lineElement.innerHTML = `<pre class="highlight ${this.escapeHTML(this.lang)}"><code>${this.escapeHTML(obj.block)}</code></pre>`;
                 container.appendChild(lineElement);
                 hljs.highlightElement(lineElement.querySelector('code'));
             }
@@ -147,13 +346,22 @@ class ParsonsPuzzle {
     checkSolution() {
         const droppedItems = Array.from(this.dropArea.children).filter(item => !item.classList.contains('placeholder'));
         const droppedOrder = droppedItems.map(item => parseInt(item.dataset.order));
-        const fullCode = this.codeBlocks.sort((a, b) => a.order - b.order).map(obj => obj.block).join('\n');
+        // Build the full code in original order, INCLUDING empty blocks.
+        // Empty blocks are not draggable tiles, but represent blank lines/spacing in the authored code.
+        const fullCode = this.codeBlocks
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map(obj => obj.output ?? obj.block)
+            .join('\n');
         this.fullCodeElement.textContent = fullCode;
         console.log("fullCode: \n", fullCode);
 
 
         hljs.highlightElement(this.fullCodeElement);
-        const correctOrder = this.codeBlocks.filter(obj => !obj.isEmpty).sort((a, b) => a.order - b.order).map(obj => obj.order);
+        const correctOrder = this.codeBlocks
+            .filter(obj => !obj.isEmpty)
+            .sort((a, b) => a.order - b.order)
+            .map(obj => obj.order);
         if (JSON.stringify(droppedOrder) === JSON.stringify(correctOrder)) {
             this.showToast('success');
             console.log("onSolvedCallback: ", this.onSolvedCallback);
@@ -210,7 +418,7 @@ class ParsonsPuzzle {
         modal.innerHTML = `
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <pre><code id="fullCode-${puzzleContainerId}" class="highlight python"></code></pre>
+                <pre><code id="fullCode-${puzzleContainerId}" class="highlight ${this.escapeHTML(this.lang)}"></code></pre>
                 <button id="copyCodeButton-${puzzleContainerId}" class="button button-check-solution">Riktig! 🔥 Kopier koden!</button>
             </div>
         `;

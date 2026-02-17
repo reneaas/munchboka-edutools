@@ -17,6 +17,44 @@ function shuffleArray(array) {
   }
 }
 
+// Parse native-rendered quiz DOM source into the questionsData shape expected by SequentialMultipleChoiceQuiz.
+// The source markup is produced by the quiz-2/quiz-question/quiz-answer directives.
+function quiz2ParseDomSource(sourceEl) {
+  const questions = [];
+  if (!sourceEl) return questions;
+
+  const questionEls = sourceEl.querySelectorAll('.quiz2-question-source');
+  questionEls.forEach((qEl) => {
+    const qid = qEl.getAttribute('data-question-id') || generateUUID();
+    const contentEl = qEl.querySelector('.quiz2-question-content');
+    const answersWrap = qEl.querySelector('.quiz2-answers-source');
+    const answerEls = answersWrap ? answersWrap.querySelectorAll('.quiz2-answer-source') : [];
+
+    const answers = [];
+    answerEls.forEach((aEl) => {
+      const correctAttr = (aEl.getAttribute('data-correct') || '').toLowerCase();
+      const isCorrect = correctAttr === 'true' || correctAttr === '1' || correctAttr === 'yes';
+      answers.push({
+        content: aEl.innerHTML,
+        isCorrect,
+      });
+    });
+
+    questions.push({
+      id: qid,
+      content: contentEl ? contentEl.innerHTML : qEl.innerHTML,
+      answers,
+    });
+  });
+
+  return questions;
+}
+
+// Expose parser for the inline init script emitted by the directive.
+if (typeof window !== 'undefined') {
+  window.quiz2ParseDomSource = quiz2ParseDomSource;
+}
+
 class MultipleChoiceQuestion {
   constructor({ id, content, answers }) {
     this.id = id;
@@ -178,8 +216,10 @@ class MultipleChoiceQuestion {
   applySyntaxHighlighting(element) {
     // Apply syntax highlighting to code blocks if highlight.js is present
     if (typeof window !== 'undefined' && window.hljs && typeof window.hljs.highlightElement === 'function') {
-      const codeBlocks = element.querySelectorAll('code');
+      const codeBlocks = element.querySelectorAll('pre code');
       codeBlocks.forEach((block) => {
+        // Skip Pygments/Sphinx-rendered code blocks (already highlighted)
+        if (block.closest('.highlight')) return;
         window.hljs.highlightElement(block);
       });
     }

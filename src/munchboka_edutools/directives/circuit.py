@@ -1,6 +1,9 @@
 """Circuit directive
 
-Generates simple electric circuit diagrams as inline SVG using `schemdraw`.
+Generates simple electric circuit diagrams as inline SVG.
+
+Primary backend: LaTeX `circuitikz` compiled to SVG.
+Optional fallback backend: `schemdraw`.
 
 Design goals
 ------------
@@ -37,9 +40,11 @@ Repeated keys:
 Options
 -------
 - `width`, `align`, `class`, `name`, `alt`, `nocache`, `debug` (like `plot`)
-- `symbols`: `iec` (default) or `ieee`
-- `unit`: schemdraw unit size (float, default 1.2)
-- `layout`: `ladder` (default) or `loop` (rectangular/perimeter layout for typical series circuits)
+- `backend`: `circuitikz` (default) or `schemdraw`
+- `symbols`: `iec` (default) or `ieee` (schemdraw-only)
+- `style`: `european` (default) or `american` (circuitikz-only)
+- `unit`: scale factor (float, default 1.2)
+- `layout`: `ladder` (default) or `loop`
 - `branch`: `auto|up|down|both` (default auto)
 - `junctions`: `true|false` (default true)
 
@@ -58,6 +63,8 @@ import math
 import os
 import re
 import shutil
+import subprocess
+import tempfile
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
@@ -108,36 +115,33 @@ def _strip_root_svg_size(svg_text: str) -> str:
 
 
 def _rewrite_ids(txt: str, prefix: str) -> str:
-    ids = re.findall(r'\bid="([^"]+)"', txt)
+    """Rewrite SVG IDs and common references to avoid collisions when inlined.
+
+    This mirrors the approach in the `polydiv` directive (also LaTeX->SVG).
+    """
+
+    ids = set(re.findall(r'\bid="([^"]+)"', txt))
     if not ids:
         return txt
 
-    mapping: Dict[str, str] = {}
-    for i in ids:
-        mapping[i] = f"{prefix}{i}"
+    mapping: Dict[str, str] = {old: f"{prefix}{old}" for old in ids}
 
-    def repl_id(m: re.Match) -> str:
-        old = m.group(1)
-        new = mapping.get(old, old)
-        return f'id="{new}"'
+    for old, new in mapping.items():
+        txt = re.sub(rf'\bid="{re.escape(old)}"', f'id="{new}"', txt)
 
-    txt = re.sub(r'\bid="([^"]+)"', repl_id, txt)
+    for old, new in mapping.items():
+        # href / xlink:href
+        txt = re.sub(rf'(?:xlink:)?href="#?{re.escape(old)}"', f'href="#{new}"', txt)
+        txt = re.sub(rf'xlink:href="#?{re.escape(old)}"', f'xlink:href="#{new}"', txt)
 
-    def repl_url(m: re.Match) -> str:
-        old = m.group(1).strip()
-        new = mapping.get(old, old)
-        return f"url(#{new})"
+    for old, new in mapping.items():
+        # url(#id)
+        txt = re.sub(rf"url\(#\s*{re.escape(old)}\s*\)", f"url(#{new})", txt)
 
-    txt = re.sub(r"url\(#\s*([^\)\s]+)\s*\)", repl_url, txt)
+    for old, new in mapping.items():
+        # Bare #id occurrences in CSS/attributes
+        txt = re.sub(rf"#({re.escape(old)})\b", f"#{new}", txt)
 
-    def repl_href(m: re.Match) -> str:
-        attr = m.group(1)
-        quote = m.group(2)
-        old = m.group(3).strip()
-        new = mapping.get(old, old)
-        return f"{attr}={quote}#{new}{quote}"
-
-    txt = re.sub(r'(xlink:href|href)\s*=\s*(["\"])#\s*([^"\"]+)\s*\2', repl_href, txt)
     return txt
 
 
@@ -208,7 +212,8 @@ def _infer_component_type(component_id: str) -> str:
         return "led"
     if up.startswith("L"):
         return "lamp"
-    if up.startswith("V"):
+    # In many European/Norwegian contexts, voltage is commonly denoted by U.
+    if up.startswith("V") or up.startswith("U"):
         return "battery"
     return "wire"
 
@@ -307,7 +312,7 @@ def _parse_topology(expr: str) -> Topo:
 
 
 # ------------------------------------
-# Rendering (simple ladder layout)
+# Rendering (simple ladder + loop/perimeter)
 # ------------------------------------
 
 
@@ -317,8 +322,449 @@ def _slot_count(node: Topo) -> int:
     if isinstance(node, Series):
         return sum(_slot_count(x) for x in node.items)
     if isinstance(node, Parallel):
+        # NOTE: keep as max branch length for stable width allocation.
+        # If you want parallels to "consume" a bit more perimeter space, change to:
+        # return max((_slot_count(b) for b in node.branches), default=1) + 1
         return max((_slot_count(b) for b in node.branches), default=1)
     return 1
+
+
+# ------------------------------------
+# circuitikz backend (LaTeX -> SVG)
+# ------------------------------------
+
+
+def _which(cmd: str) -> Optional[str]:
+    import shutil as _sh
+
+    return _sh.which(cmd)
+
+
+def _latex_escape_text(s: str) -> str:
+    """Best-effort LaTeX escaping for plain-text values (not math labels)."""
+
+    if s is None:
+        return ""
+    txt = str(s)
+    txt = txt.replace("Ω", r"\\Omega")
+    return txt
+
+
+def _tikz_elem_type(ctype: str) -> str:
+    c = (ctype or "wire").strip().lower()
+    if c in {"battery", "source", "dc", "ac", "outlet", "vsource"}:
+        return "battery1"
+    if c in {"resistor", "r", "res"}:
+        return "R"
+    if c in {"var_resistor", "pot", "potmeter", "variable_resistor", "variabel_resistor"}:
+        # circuitikz has variable resistor symbols, but keep it simple.
+        return "R"
+    if c in {"lamp", "bulb"}:
+        return "lamp"
+    if c in {"led"}:
+        return "led"
+    if c in {"diode"}:
+        return "diode"
+    return "short"
+
+
+def _tikz_to_opts(comp: Component) -> str:
+    parts: List[str] = []
+    if comp.label:
+        parts.append(f"l={{{comp.label}}}")
+    if comp.value:
+        parts.append(f"l_={{{_latex_escape_text(comp.value)}}}")
+    return ", ".join(parts)
+
+
+def _vec(flow: str) -> Tuple[float, float]:
+    f = (flow or "right").strip().lower()
+    if f == "right":
+        return (1.0, 0.0)
+    if f == "left":
+        return (-1.0, 0.0)
+    if f == "up":
+        return (0.0, 1.0)
+    if f == "down":
+        return (0.0, -1.0)
+    return (1.0, 0.0)
+
+
+def _add(p: Tuple[float, float], q: Tuple[float, float]) -> Tuple[float, float]:
+    return (p[0] + q[0], p[1] + q[1])
+
+
+def _mul(v: Tuple[float, float], k: float) -> Tuple[float, float]:
+    return (v[0] * k, v[1] * k)
+
+
+def _fmt_pt(p: Tuple[float, float]) -> str:
+    return f"({p[0]:.4f},{p[1]:.4f})"
+
+
+@dataclass
+class _TikzCtx:
+    here: Tuple[float, float]
+    cmds: List[str]
+    junctions: bool
+    slot: float
+
+
+def _tikz_dot(ctx: _TikzCtx, at: Tuple[float, float]) -> None:
+    if not ctx.junctions:
+        return
+    ctx.cmds.append(f"\\node[circ] at {_fmt_pt(at)} {{}};")
+
+
+def _tikz_wire(ctx: _TikzCtx, a: Tuple[float, float], b: Tuple[float, float]) -> None:
+    ctx.cmds.append(f"\\draw {_fmt_pt(a)} to[short] {_fmt_pt(b)};")
+
+
+def _tikz_component(
+    ctx: _TikzCtx, comp: Component, a: Tuple[float, float], b: Tuple[float, float]
+) -> None:
+    et = _tikz_elem_type(comp.type)
+    opts = _tikz_to_opts(comp)
+    # Match schemdraw default polarity: flip battery symbol orientation by default.
+    if et == "battery1":
+        opts = ("invert, " + opts) if opts else "invert"
+    opt_str = (", " + opts) if opts else ""
+    ctx.cmds.append(f"\\draw {_fmt_pt(a)} to[{et}{opt_str}] {_fmt_pt(b)};")
+
+
+def _tikz_draw_node(
+    ctx: _TikzCtx,
+    node: Topo,
+    comps: Dict[str, Component],
+    flow: str,
+    branch_mode: str,
+    outward: Optional[Tuple[float, float]] = None,
+) -> int:
+    if isinstance(node, Ref):
+        comp = comps.get(node.id)
+        if comp is None:
+            comp = Component(
+                id=node.id, type=_infer_component_type(node.id), label=_auto_tex_label(node.id)
+            )
+        start = ctx.here
+        end = _add(start, _mul(_vec(flow), ctx.slot))
+        _tikz_component(ctx, comp, start, end)
+        ctx.here = end
+        return 1
+
+    if isinstance(node, Series):
+        total = 0
+        for it in node.items:
+            total += _tikz_draw_node(ctx, it, comps, flow, branch_mode, outward=outward)
+        return total
+
+    if isinstance(node, Parallel):
+        branches = list(node.branches)
+        if not branches:
+            return 0
+
+        left = ctx.here
+        _tikz_dot(ctx, left)
+
+        width_slots = max(_slot_count(b) for b in branches)
+        far = _add(left, _mul(_vec(flow), width_slots * ctx.slot))
+        _tikz_dot(ctx, far)
+
+        mode = (branch_mode or "auto").strip().lower()
+        if mode not in {"auto", "both", "up", "down"}:
+            mode = "auto"
+        if mode == "auto":
+            mode = "both"
+
+        # Offset axis for branches.
+        if outward is None:
+            vf = _vec(flow)
+            outward = (-vf[1], vf[0])
+
+        step = ctx.slot * 1.15
+        n_br = len(branches)
+
+        if mode == "up":
+            lane_factors = [1.0 + i for i in range(n_br)]
+        elif mode == "down":
+            lane_factors = [-(1.0 + i) for i in range(n_br)]
+        else:
+            center = (n_br - 1) / 2.0
+            lane_factors = [-(i - center) for i in range(n_br)]
+
+        for br, fac in zip(branches, lane_factors):
+            off = fac * step
+            lane_start = _add(left, _mul(outward, off))
+            if abs(off) > 1e-9:
+                _tikz_wire(ctx, left, lane_start)
+
+            expected = max(0, _slot_count(br))
+            extra = max(0, width_slots - expected)
+            lead = extra // 2
+            cur = lane_start
+            if lead:
+                lead_end = _add(cur, _mul(_vec(flow), lead * ctx.slot))
+                _tikz_wire(ctx, cur, lead_end)
+                cur = lead_end
+
+            sub = _TikzCtx(here=cur, cmds=ctx.cmds, junctions=ctx.junctions, slot=ctx.slot)
+            used = _tikz_draw_node(sub, br, comps, flow, branch_mode, outward=outward)
+            cur = sub.here
+
+            remaining = max(0, width_slots - lead - used)
+            if remaining:
+                rem_end = _add(cur, _mul(_vec(flow), remaining * ctx.slot))
+                _tikz_wire(ctx, cur, rem_end)
+                cur = rem_end
+
+            if abs(off) > 1e-9:
+                _tikz_wire(ctx, cur, far)
+
+        ctx.here = far
+        return width_slots
+
+    return 0
+
+
+def _tikz_draw_series_wrapped(
+    ctx: _TikzCtx,
+    items: Sequence[Topo],
+    comps: Dict[str, Component],
+    flow: str,
+    branch_mode: str,
+    max_run_slots: int,
+    row_step: float,
+) -> int:
+    """Draw a series list, wrapping into multiple rows to reduce width."""
+
+    run_slots = 0
+    total = 0
+    cur_flow = flow
+
+    for it in items:
+        need = _slot_count(it)
+        if run_slots > 0 and (run_slots + need) > max_run_slots:
+            start = ctx.here
+            end = _add(start, (0.0, -row_step))
+            _tikz_wire(ctx, start, end)
+            ctx.here = end
+            cur_flow = "left" if cur_flow == "right" else "right"
+            run_slots = 0
+            _tikz_dot(ctx, ctx.here)
+
+        used = _tikz_draw_node(ctx, it, comps, cur_flow, branch_mode)
+        run_slots += used
+        total += used
+
+    return total
+
+
+def _tikz_draw_loop_return(
+    ctx: _TikzCtx,
+    start: Tuple[float, float],
+    end: Tuple[float, float],
+    branch_mode: str,
+    max_parallel_branches: int = 0,
+) -> None:
+    """Draw a rectangular return wire from end back to start."""
+
+    mode = (branch_mode or "auto").strip().lower()
+    route = "down"
+    if mode == "down":
+        route = "up"
+    elif mode == "up":
+        route = "down"
+
+    # Choose a tight return-wire offset. The main thing we must avoid is
+    # cutting through any parallel-branch lanes.
+    slot = float(ctx.slot)
+    # Parallel lane spacing in _tikz_draw_node(): step = slot * 1.15
+    branch_step = slot * 1.15
+    m = max(0, int(max_parallel_branches))
+    max_branch_spread = ((m - 1) / 2.0) * branch_step if m > 0 else 0.0
+    margin = slot * 0.9
+    min_offset = slot * 1.2
+    loop_offset = max(min_offset, max_branch_spread + margin)
+    if route == "up":
+        loop_offset = -loop_offset
+
+    sx, sy = start
+    ex, ey = end
+
+    c1 = (ex, ey + loop_offset)
+    _tikz_wire(ctx, (ex, ey), c1)
+
+    c2 = (sx, c1[1])
+    _tikz_wire(ctx, c1, c2)
+
+    c3 = (sx, sy)
+    _tikz_wire(ctx, c2, c3)
+
+    _tikz_dot(ctx, (ex, ey))
+    _tikz_dot(ctx, (sx, sy))
+
+
+def _tikz_draw_loop_perimeter_series(
+    ctx: _TikzCtx,
+    items: Sequence[Topo],
+    comps: Dict[str, Component],
+    flow: str,
+    branch_mode: str,
+) -> None:
+    if len(items) < 3:
+        _tikz_draw_node(ctx, Series(tuple(items)), comps, flow, branch_mode)
+        return
+
+    start = ctx.here
+    _tikz_dot(ctx, start)
+
+    total_slots = sum(_slot_count(it) for it in items)
+    horiz_slots = int(math.ceil(total_slots / 2))
+    vert_slots = max(1, total_slots - horiz_slots)
+    top_slots = int(math.ceil(horiz_slots / 2))
+    right_slots = int(math.ceil(vert_slots / 2))
+    bottom_slots = max(1, horiz_slots - top_slots)
+    left_slots = max(1, vert_slots - right_slots)
+
+    side_budgets = [top_slots, right_slots, bottom_slots, left_slots]
+    sides: List[List[Topo]] = [[], [], [], []]
+    side_idx = 0
+    used_in_side = 0
+    for it in items:
+        need = _slot_count(it)
+        if side_idx < 3 and used_in_side > 0 and (used_in_side + need) > side_budgets[side_idx]:
+            side_idx += 1
+            used_in_side = 0
+        sides[side_idx].append(it)
+        used_in_side += need
+
+    dir1 = flow
+    dir2 = "down"
+    dir3 = "left" if dir1 == "right" else "right"
+    dir4 = "up"
+
+    outward_by_dir: Dict[str, Tuple[float, float]] = {
+        dir1: (0.0, 1.0),
+        dir2: (1.0, 0.0),
+        dir3: (0.0, -1.0),
+        dir4: (-1.0, 0.0),
+    }
+
+    def draw_side(side_items: Sequence[Topo], direction: str) -> int:
+        used = 0
+        outv = outward_by_dir[direction]
+        for it in side_items:
+            used += _tikz_draw_node(ctx, it, comps, direction, branch_mode, outward=outv)
+        return used
+
+    def pad_to(target_slots: int, used_slots: int, direction: str) -> None:
+        rem = max(0, int(target_slots) - int(used_slots))
+        if rem:
+            a = ctx.here
+            b = _add(a, _mul(_vec(direction), rem * ctx.slot))
+            _tikz_wire(ctx, a, b)
+            ctx.here = b
+
+    side1, side2, side3, side4 = sides
+    side1_target = max(top_slots, sum(_slot_count(it) for it in side1) or 1)
+    side2_target = max(right_slots, sum(_slot_count(it) for it in side2) or 1)
+    side3_target = max(bottom_slots, sum(_slot_count(it) for it in side3) or 1)
+    side4_target = max(left_slots, sum(_slot_count(it) for it in side4) or 1)
+
+    used1 = draw_side(side1, dir1)
+    pad_to(side1_target, used1, dir1)
+    _tikz_dot(ctx, ctx.here)
+
+    used2 = draw_side(side2, dir2)
+    pad_to(side2_target, used2, dir2)
+    _tikz_dot(ctx, ctx.here)
+
+    used3 = draw_side(side3, dir3)
+    pad_to(side3_target, used3, dir3)
+    _tikz_dot(ctx, ctx.here)
+
+    used4 = draw_side(side4, dir4)
+    pad_to(side4_target, used4, dir4)
+
+    end = ctx.here
+    if abs(end[0] - start[0]) > 1e-6 or abs(end[1] - start[1]) > 1e-6:
+        _tikz_wire(ctx, end, start)
+    _tikz_dot(ctx, start)
+
+
+def _compile_circuitikz_to_svg(tex: str, out_svg: str) -> None:
+    latexmk = _which("latexmk")
+    if not latexmk:
+        raise RuntimeError("latexmk not found; install TeX Live / latexmk")
+
+    dvisvgm = _which("dvisvgm")
+    pdf2svg = _which("pdf2svg")
+    pdfcrop = _which("pdfcrop")
+    if not dvisvgm and not pdf2svg:
+        raise RuntimeError("No PDF->SVG converter found (need dvisvgm or pdf2svg)")
+
+    out_dir = os.path.dirname(out_svg)
+    os.makedirs(out_dir, exist_ok=True)
+
+    with tempfile.TemporaryDirectory(prefix="circuitikz_") as td:
+        tex_path = os.path.join(td, "circuit.tex")
+        pdf_path = os.path.join(td, "circuit.pdf")
+        svg_path = os.path.join(td, "circuit.svg")
+        with open(tex_path, "w", encoding="utf-8") as f:
+            f.write(tex)
+
+        cmd = [
+            latexmk,
+            "-pdf",
+            "-interaction=nonstopmode",
+            "-halt-on-error",
+            "-output-directory=" + td,
+            tex_path,
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0 or not os.path.exists(pdf_path):
+            raise RuntimeError(
+                "LaTeX compilation failed\n\nSTDOUT:\n"
+                + proc.stdout
+                + "\n\nSTDERR:\n"
+                + proc.stderr
+            )
+
+        # Tighten the PDF bounding box before converting to SVG.
+        # Some toolchains otherwise keep a full-page (e.g. Letter/A4) canvas.
+        pdf_for_svg = pdf_path
+        if pdfcrop:
+            cropped_pdf = os.path.join(td, "circuit_cropped.pdf")
+            cmd_crop = [pdfcrop, "--margins", "2", pdf_path, cropped_pdf]
+            proc_crop = subprocess.run(cmd_crop, capture_output=True, text=True)
+            if proc_crop.returncode == 0 and os.path.exists(cropped_pdf):
+                pdf_for_svg = cropped_pdf
+
+        conv_errors: List[str] = []
+
+        # Prefer dvisvgm when it works (good SVG output), but fall back to pdf2svg
+        # because some dvisvgm builds cannot parse PDF reliably.
+        if dvisvgm:
+            cmd2 = [dvisvgm, "--pdf", "--bbox=min", "-n", "-o", svg_path, pdf_for_svg]
+            proc2 = subprocess.run(cmd2, capture_output=True, text=True)
+            if proc2.returncode == 0 and os.path.exists(svg_path):
+                shutil.copy2(svg_path, out_svg)
+                return
+            conv_errors.append(
+                "dvisvgm failed\nSTDOUT:\n" + proc2.stdout + "\nSTDERR:\n" + proc2.stderr
+            )
+
+        if pdf2svg:
+            cmd3 = [pdf2svg, pdf_for_svg, svg_path]
+            proc3 = subprocess.run(cmd3, capture_output=True, text=True)
+            if proc3.returncode == 0 and os.path.exists(svg_path):
+                shutil.copy2(svg_path, out_svg)
+                return
+            conv_errors.append(
+                "pdf2svg failed\nSTDOUT:\n" + proc3.stdout + "\nSTDERR:\n" + proc3.stderr
+            )
+
+        raise RuntimeError("SVG conversion failed\n\n" + "\n\n".join(conv_errors))
 
 
 def _resolve_symbol_classes(symbols: str):
@@ -382,7 +828,6 @@ def _draw_component(d, comp: Component, clsmap: Dict[str, Any], flow: str, slot_
     e = _dir_apply(e, flow)
 
     # Flip voltage source polarity without changing path direction.
-    # (schemdraw Battery/BatteryCell supports reverse())
     if ctype == "battery":
         try:
             e = e.reverse()
@@ -480,29 +925,31 @@ def _draw_node(
         if junctions:
             _draw_dot(d, far, clsmap)
 
-        # Determine branch offsets
+        # Determine branch offsets (perpendicular to main flow).
         n_br = len(branches)
         mode = (branch_mode or "auto").strip().lower()
-        if mode not in {"auto", "both", "up", "down"}:
+        if mode not in {"auto", "both", "up", "down", "left", "right"}:
             mode = "auto"
         if mode == "auto":
             mode = "both"
 
-        # Separation between branches (perpendicular to main flow).
         step = float(slot_len) * 1.15
-        offsets: List[float] = []
-        if mode == "up":
-            offsets = [step * (i + 1) for i in range(n_br)]
-        elif mode == "down":
-            offsets = [-step * (i + 1) for i in range(n_br)]
-        else:
+
+        def make_offsets(sign: int) -> List[float]:
+            # sign=+1 means "positive side" (up for horizontal, left for vertical)
+            # sign=-1 means "negative side" (down for horizontal, right for vertical)
+            return [sign * step * (i + 1) for i in range(n_br)]
+
+        if mode == "both":
             center = (n_br - 1) / 2.0
             offsets = [-(i - center) * step for i in range(n_br)]
-
-        # For vertical main flow, interpret up/down as left/right offsets.
-        if not is_horizontal:
-            # Keep offsets sign meaning consistent visually: positive -> left.
-            offsets = offsets
+        else:
+            if is_horizontal:
+                # up/down
+                offsets = make_offsets(+1) if mode == "up" else make_offsets(-1)
+            else:
+                # left/right
+                offsets = make_offsets(+1) if mode == "left" else make_offsets(-1)
 
         # Draw each branch
         for br, off in zip(branches, offsets):
@@ -515,7 +962,6 @@ def _draw_node(
                 if is_horizontal:
                     seg = seg.up() if off > 0 else seg.down()
                 else:
-                    # Vertical main flow: offset left/right
                     seg = seg.left() if off > 0 else seg.right()
                 seg = seg.length(abs(off))
                 d += seg
@@ -556,12 +1002,7 @@ def _draw_node(
 
 
 def _normalize_loop_topology(topo: Topo) -> Topo:
-    """If user writes series(V1, ..., V1) in loop layout, drop the last V1.
-
-    This matches the author intent: V1 at the end is a "close the loop" marker,
-    not a second voltage source.
-    """
-
+    """If user writes series(V1, ..., V1) in loop layout, drop the last V1."""
     if isinstance(topo, Series) and len(topo.items) >= 2:
         first = topo.items[0]
         last = topo.items[-1]
@@ -612,15 +1053,18 @@ def _draw_loop_return(
     elif mode == "up":
         route = "down"
 
-    # Keep loop closure compact, but increase offset when parallel groups exist
-    # so the return wire doesn't cut through branch space.
-    base = float(slot_len) * 1.8
-    extra = float(slot_len) * 1.2 * max(0, int(max_parallel_branches) - 1)
-    loop_offset = base + extra
+    # Keep loop closure tight while ensuring it clears any parallel branch lanes.
+    slot = float(slot_len)
+    # Parallel lane spacing in _draw_node(): step = slot_len * 1.15
+    branch_step = slot * 1.15
+    m = max(0, int(max_parallel_branches))
+    max_branch_spread = ((m - 1) / 2.0) * branch_step if m > 0 else 0.0
+    margin = slot * 0.9
+    min_offset = slot * 1.2
+    loop_offset = max(min_offset, max_branch_spread + margin)
     if route == "up":
         loop_offset = -loop_offset
 
-    # We draw using absolute coordinates so it works for both right/left flow.
     sx, sy = start
     ex, ey = end
 
@@ -657,16 +1101,9 @@ def _draw_loop_return(
 
 
 def _choose_wrap_width(total_slots: int) -> int:
-    """Choose a series wrap width (in slots) that yields a compact loop.
-
-    We prefer widths near sqrt(total_slots) and slightly prefer an even number
-    of rows (snake ends near start), which usually reduces the return segment.
-    """
-
+    """Choose a series wrap width (in slots) that yields a compact loop."""
     if total_slots <= 0:
         return 1
-
-    # For short circuits, wrapping usually wastes space.
     if total_slots <= 6:
         return total_slots
 
@@ -689,9 +1126,7 @@ def _choose_wrap_width(total_slots: int) -> int:
     row_penalty = 10.0
     for w in candidates:
         rows = int(math.ceil(total_slots / w))
-        # Estimated cost: strongly penalize extra rows to avoid huge vertical whitespace.
         cost = w + rows * row_penalty
-        # Slight preference for even rows (snake ends closer to start).
         if rows % 2 == 1 and rows > 1:
             cost += w * 0.35
         if cost < best_cost:
@@ -713,11 +1148,7 @@ def _draw_series_wrapped(
     branch_mode: str,
     junctions: bool,
 ) -> int:
-    """Draw a series list, wrapping into multiple rows to reduce width.
-
-    Returns the total slots consumed.
-    """
-
+    """Draw a series list, wrapping into multiple rows to reduce width."""
     run_slots = 0
     total = 0
     cur_flow = flow
@@ -725,7 +1156,6 @@ def _draw_series_wrapped(
     for it in items:
         need = _slot_count(it)
         if run_slots > 0 and (run_slots + need) > max_run_slots:
-            # Move to next row and reverse direction.
             _draw_wire(d, tuple(d.here), "down", row_step, clsmap)
             cur_flow = "left" if cur_flow == "right" else "right"
             run_slots = 0
@@ -748,10 +1178,6 @@ def _draw_series_wrapped(
     return total
 
 
-def _is_simple_series_of_refs(node: Topo) -> bool:
-    return isinstance(node, Series) and all(isinstance(x, Ref) for x in node.items)
-
-
 def _draw_loop_perimeter_series(
     d,
     items: Sequence[Topo],
@@ -763,6 +1189,10 @@ def _draw_loop_perimeter_series(
     junctions: bool,
 ) -> None:
     """Draw a compact rectangular loop with components distributed around the perimeter.
+
+    Patch: Parallel groups are allowed on any side. When a Parallel group is placed
+    on a perimeter side, we force its branches to expand *inward* to avoid colliding
+    with the outer rectangle wires.
     """
 
     if len(items) < 3:
@@ -784,8 +1214,7 @@ def _draw_loop_perimeter_series(
 
     # Distribute items by slot-count budget across 4 sides.
     total_slots = sum(_slot_count(it) for it in items)
-    # Aim for a near-square loop: top and bottom share half the slots,
-    # vertical sides share the other half.
+
     horiz_slots = int(math.ceil(total_slots / 2))
     vert_slots = max(1, total_slots - horiz_slots)
     top_slots = int(math.ceil(horiz_slots / 2))
@@ -817,9 +1246,10 @@ def _draw_loop_perimeter_series(
 
     min_side = slot_len * 0.9
 
-    def draw_side(side_items: Sequence[Topo], direction: str) -> int:
+    def draw_side(side_items: Sequence[Topo], direction: str, inward_branch: str) -> int:
         used = 0
         for it in side_items:
+            bm = inward_branch if isinstance(it, Parallel) else branch_mode
             used += _draw_node(
                 d,
                 it,
@@ -827,7 +1257,7 @@ def _draw_loop_perimeter_series(
                 clsmap,
                 flow=direction,
                 slot_len=slot_len,
-                branch_mode=branch_mode,
+                branch_mode=bm,
                 junctions=junctions,
             )
         return used
@@ -837,47 +1267,45 @@ def _draw_loop_perimeter_series(
         if remaining:
             _draw_wire(d, tuple(d.here), direction, remaining * slot_len, clsmap)
 
-    # Target side lengths (in slots). Use the budget, but never shorter than what
-    # actually got placed on that side (items may overflow a budget boundary).
+    # Target side lengths (in slots).
     side1_target = max(top_slots, sum(_slot_count(it) for it in side1) or 1)
     side2_target = max(right_slots, sum(_slot_count(it) for it in side2) or 1)
     side3_target = max(bottom_slots, sum(_slot_count(it) for it in side3) or 1)
     side4_target = max(left_slots, sum(_slot_count(it) for it in side4) or 1)
 
-    # Side 1 (top)
-    used1 = draw_side(side1, dir1)
+    # Side 1 (top) - inward is down
+    used1 = draw_side(side1, dir1, inward_branch="down")
     pad_to(side1_target, used1, dir1)
     if junctions:
         _draw_dot(d, tuple(d.here), clsmap)
 
-    # Side 2 (right vertical)
+    # Side 2 (right vertical) - inward is left
     if side2:
-        used2 = draw_side(side2, dir2)
+        used2 = draw_side(side2, dir2, inward_branch="left")
         pad_to(side2_target, used2, dir2)
     else:
         _draw_wire(d, tuple(d.here), dir2, max(min_side, side2_target * slot_len), clsmap)
     if junctions:
         _draw_dot(d, tuple(d.here), clsmap)
 
-    # Side 3 (bottom)
+    # Side 3 (bottom) - inward is up
     if side3:
-        used3 = draw_side(side3, dir3)
+        used3 = draw_side(side3, dir3, inward_branch="up")
         pad_to(side3_target, used3, dir3)
     else:
         _draw_wire(d, tuple(d.here), dir3, max(min_side, side3_target * slot_len), clsmap)
     if junctions:
         _draw_dot(d, tuple(d.here), clsmap)
 
-    # Side 4 (left vertical up)
+    # Side 4 (left vertical up) - inward is right
     if side4:
-        used4 = draw_side(side4, dir4)
+        used4 = draw_side(side4, dir4, inward_branch="right")
         pad_to(side4_target, used4, dir4)
     else:
         _draw_wire(d, tuple(d.here), dir4, max(min_side, side4_target * slot_len), clsmap)
     bottom_end = tuple(d.here)
 
     # Close loop back to start with wires.
-    # First, ensure we're at start.x
     dx = start[0] - bottom_end[0]
     if abs(dx) > 1e-6:
         horiz = clsmap.get("wire")().at(bottom_end)
@@ -914,7 +1342,9 @@ class CircuitDirective(SphinxDirective):
         "debug": directives.flag,
         "alt": directives.unchanged,
         # circuit-specific
+        "backend": directives.unchanged,
         "symbols": directives.unchanged,
+        "style": directives.unchanged,
         "unit": directives.unchanged,
         "flow": directives.unchanged,
         "layout": directives.unchanged,
@@ -927,8 +1357,6 @@ class CircuitDirective(SphinxDirective):
     _repeated_keys = {"component", "comp"}
 
     def _strip_inline_comment(self, val: str) -> str:
-        # Treat '#' as comment starter for simple config-like values.
-        # This matches how our docs are written (e.g. `flow: right  # comment`).
         if "#" not in val:
             return val.strip()
         return val.split("#", 1)[0].strip()
@@ -970,13 +1398,6 @@ class CircuitDirective(SphinxDirective):
         env = self.state.document.settings.env
         app = env.app
 
-        try:
-            import schemdraw
-        except Exception as e:
-            err = nodes.error()
-            err += nodes.paragraph(text=f"circuit: kunne ikke importere schemdraw: {e}")
-            return [err]
-
         scalars, lists, caption_text = self._parse_kv_block()
         merged: Dict[str, Any] = {**scalars, **self.options}
 
@@ -1008,6 +1429,10 @@ class CircuitDirective(SphinxDirective):
             ]
 
         # Options
+        backend = str(merged.get("backend", "circuitikz")).strip().lower()
+        if backend not in {"circuitikz", "schemdraw"}:
+            backend = "circuitikz"
+
         symbols = str(merged.get("symbols", "iec"))
         flow = str(merged.get("flow", "right")).strip().lower()
         if flow not in {"right", "left"}:
@@ -1021,6 +1446,9 @@ class CircuitDirective(SphinxDirective):
         layout = str(merged.get("layout", "ladder")).strip().lower()
         branch_mode = str(merged.get("branch", "auto")).strip().lower()
         junctions = _parse_bool(merged.get("junctions"), default=True)
+        style = str(merged.get("style", "european")).strip().lower()
+        if style not in {"european", "american"}:
+            style = "european"
         try:
             unit = float(merged.get("unit", 1.2))
         except Exception:
@@ -1042,10 +1470,13 @@ class CircuitDirective(SphinxDirective):
         explicit_name = merged.get("name")
         content_hash = _hash_key(
             expr,
+            "circuit_render_v3",
+            backend,
             symbols,
             flow,
             layout,
             branch_mode,
+            style,
             unit,
             fontsize,
             transparent,
@@ -1064,13 +1495,6 @@ class CircuitDirective(SphinxDirective):
 
         if regenerate:
             try:
-                clsmap = _resolve_symbol_classes(symbols)
-                d = schemdraw.Drawing(show=False)
-                d.config(unit=unit, fontsize=fontsize)
-
-                # fixed slot length for stable layout
-                slot_len = 3.0
-
                 if layout not in {"ladder", "loop"}:
                     layout = "ladder"
 
@@ -1078,69 +1502,188 @@ class CircuitDirective(SphinxDirective):
                 if layout == "loop":
                     topo_to_draw = _normalize_loop_topology(topo)
 
-                start = tuple(d.here)
+                if backend == "schemdraw":
+                    try:
+                        import schemdraw
+                    except Exception as e:
+                        raise RuntimeError(f"kunne ikke importere schemdraw: {e}")
 
-                did_close_loop = False
+                    clsmap = _resolve_symbol_classes(symbols)
+                    d = schemdraw.Drawing(show=False)
+                    d.config(unit=unit, fontsize=fontsize)
 
-                if layout == "loop" and isinstance(topo_to_draw, Series):
-                    total_slots = _slot_count(topo_to_draw)
-                    has_parallel = _contains_parallel(topo_to_draw)
-                    if total_slots <= 32 and not has_parallel:
-                        _draw_loop_perimeter_series(
-                            d,
-                            topo_to_draw.items,
-                            comps,
-                            clsmap,
-                            flow=flow,
-                            slot_len=slot_len,
-                            branch_mode=branch_mode,
-                            junctions=bool(junctions),
-                        )
-                        did_close_loop = True
+                    slot_len = 3.0
+                    start = tuple(d.here)
+                    did_close_loop = False
+
+                    if layout == "loop" and isinstance(topo_to_draw, Series):
+                        # Perimeter/wrapping loop layouts don't play well with 2D
+                        # parallel branch geometry. In that case, render as a
+                        # simple run and add an explicit return wire.
+                        if not _contains_parallel(topo_to_draw):
+                            total_slots = _slot_count(topo_to_draw)
+                            if total_slots <= 32:
+                                _draw_loop_perimeter_series(
+                                    d,
+                                    topo_to_draw.items,
+                                    comps,
+                                    clsmap,
+                                    flow=flow,
+                                    slot_len=slot_len,
+                                    branch_mode=branch_mode,
+                                    junctions=bool(junctions),
+                                )
+                                did_close_loop = True
+                            else:
+                                wrap_w = _choose_wrap_width(total_slots)
+                                row_step = slot_len * 3.2
+                                _draw_series_wrapped(
+                                    d,
+                                    topo_to_draw.items,
+                                    comps,
+                                    clsmap,
+                                    flow=flow,
+                                    slot_len=slot_len,
+                                    max_run_slots=wrap_w,
+                                    row_step=row_step,
+                                    branch_mode=branch_mode,
+                                    junctions=bool(junctions),
+                                )
+                        else:
+                            _draw_node(
+                                d,
+                                topo_to_draw,
+                                comps,
+                                clsmap,
+                                flow=flow,
+                                slot_len=slot_len,
+                                branch_mode=branch_mode,
+                                junctions=bool(junctions),
+                            )
                     else:
-                        wrap_w = _choose_wrap_width(total_slots)
-                        row_step = slot_len * 3.2
-                        _draw_series_wrapped(
+                        _draw_node(
                             d,
-                            topo_to_draw.items,
+                            topo_to_draw,
                             comps,
                             clsmap,
                             flow=flow,
                             slot_len=slot_len,
-                            max_run_slots=wrap_w,
-                            row_step=row_step,
                             branch_mode=branch_mode,
                             junctions=bool(junctions),
                         )
+
+                    if layout == "loop" and not did_close_loop:
+                        end = tuple(d.here)
+                        max_br = _max_parallel_branches(topo_to_draw) if layout == "loop" else 0
+                        _draw_loop_return(
+                            d,
+                            start=start,
+                            end=end,
+                            flow=flow,
+                            slot_len=slot_len,
+                            clsmap=clsmap,
+                            branch_mode=branch_mode,
+                            junctions=bool(junctions),
+                            max_parallel_branches=max_br,
+                        )
+
+                    d.save(abs_svg, transparent=bool(transparent))
+
                 else:
-                    _draw_node(
-                        d,
-                        topo_to_draw,
-                        comps,
-                        clsmap,
-                        flow=flow,
-                        slot_len=slot_len,
-                        branch_mode=branch_mode,
-                        junctions=bool(junctions),
+                    # circuitikz backend
+                    cmds: List[str] = []
+                    ctx = _TikzCtx(here=(0.0, 0.0), cmds=cmds, junctions=bool(junctions), slot=2.0)
+                    start = ctx.here
+                    did_close_loop = False
+
+                    if layout == "loop" and isinstance(topo_to_draw, Series):
+                        # Perimeter/wrapping loop layouts don't play well with 2D
+                        # parallel branch geometry. In that case, render as a
+                        # simple run and add an explicit return wire.
+                        if not _contains_parallel(topo_to_draw):
+                            total_slots = _slot_count(topo_to_draw)
+                            if total_slots <= 32:
+                                _tikz_draw_loop_perimeter_series(
+                                    ctx,
+                                    topo_to_draw.items,
+                                    comps,
+                                    flow=flow,
+                                    branch_mode=branch_mode,
+                                )
+                                did_close_loop = True
+                            else:
+                                wrap_w = _choose_wrap_width(total_slots)
+                                row_step = ctx.slot * 3.2
+                                _tikz_draw_series_wrapped(
+                                    ctx,
+                                    topo_to_draw.items,
+                                    comps,
+                                    flow=flow,
+                                    branch_mode=branch_mode,
+                                    max_run_slots=wrap_w,
+                                    row_step=row_step,
+                                )
+                        else:
+                            _tikz_draw_node(
+                                ctx,
+                                topo_to_draw,
+                                comps,
+                                flow=flow,
+                                branch_mode=branch_mode,
+                            )
+                    else:
+                        _tikz_draw_node(
+                            ctx, topo_to_draw, comps, flow=flow, branch_mode=branch_mode
+                        )
+
+                    if layout == "loop" and not did_close_loop:
+                        end = ctx.here
+                        max_br = _max_parallel_branches(topo_to_draw) if layout == "loop" else 0
+                        _tikz_draw_loop_return(
+                            ctx,
+                            start=start,
+                            end=end,
+                            branch_mode=branch_mode,
+                            max_parallel_branches=max_br,
+                        )
+
+                    leading = fontsize if fontsize is not None else None
+                    if leading is not None:
+                        leading = float(leading) * 1.2
+
+                    font_line = (
+                        f"\\tikzset{{font=\\fontsize{{{float(fontsize):.1f}}}{{{float(leading):.1f}}}\\selectfont}}"
+                        if fontsize is not None
+                        else ""
                     )
 
-                if layout == "loop" and not did_close_loop:
-                    end = tuple(d.here)
-                    max_br = _max_parallel_branches(topo_to_draw) if layout == "loop" else 0
-                    _draw_loop_return(
-                        d,
-                        start=start,
-                        end=end,
-                        flow=flow,
-                        slot_len=slot_len,
-                        clsmap=clsmap,
-                        branch_mode=branch_mode,
-                        junctions=bool(junctions),
-                        max_parallel_branches=max_br,
+                    # Ensure European symbols by default (rectangle resistors etc.).
+                    # Use circuitikz's documented environment options.
+                    if style == "european":
+                        style_opt = "european, european resistors"
+                    else:
+                        style_opt = "american, american resistors"
+
+                    tex = "\n".join(
+                        [
+                            r"\documentclass{article}",
+                            r"\usepackage[active,tightpage]{preview}",
+                            r"\setlength{\PreviewBorder}{2pt}",
+                            r"\pagestyle{empty}",
+                            r"\usepackage{circuitikz}",
+                            r"\begin{document}",
+                            r"\begin{preview}",
+                            font_line,
+                            rf"\begin{{circuitikz}}[scale={float(unit):.4f}, transform shape, {style_opt}]",
+                            *cmds,
+                            r"\end{circuitikz}",
+                            r"\end{preview}",
+                            r"\end{document}",
+                            "",
+                        ]
                     )
 
-                # Use schemdraw's save() so matplotlib export can be transparent.
-                d.save(abs_svg, transparent=bool(transparent))
+                    _compile_circuitikz_to_svg(tex, abs_svg)
             except Exception as e:
                 return [
                     self.state_machine.reporter.error(
@@ -1152,6 +1695,20 @@ class CircuitDirective(SphinxDirective):
             return [self.state_machine.reporter.error("circuit: SVG mangler.", line=self.lineno)]
 
         env.note_dependency(abs_svg)
+
+        # Post-process like `polydiv`: strip width/height for responsiveness if viewBox present.
+        if not debug_mode:
+            try:
+                with open(abs_svg, "r", encoding="utf-8") as f_svg:
+                    tmp = f_svg.read()
+                if "viewBox" in tmp:
+                    cleaned = re.sub(r'\swidth="[^"]+"', "", tmp)
+                    cleaned = re.sub(r'\sheight="[^"]+"', "", cleaned)
+                    if cleaned != tmp:
+                        with open(abs_svg, "w", encoding="utf-8") as f_out:
+                            f_out.write(cleaned)
+            except Exception:
+                pass
 
         # Copy to build _static
         try:
@@ -1170,9 +1727,6 @@ class CircuitDirective(SphinxDirective):
                 )
             ]
 
-        if not debug_mode and "viewBox" in raw_svg:
-            raw_svg = _strip_root_svg_size(raw_svg)
-
         if not debug_mode:
             raw_svg = _rewrite_ids(raw_svg, f"circuit_{content_hash}_{uuid.uuid4().hex[:6]}_")
 
@@ -1180,22 +1734,25 @@ class CircuitDirective(SphinxDirective):
         alt = merged.get("alt", alt_default)
 
         width_opt = merged.get("width")
-        percent = isinstance(width_opt, str) and width_opt.strip().endswith("%")
+        percentage_width = isinstance(width_opt, str) and width_opt.strip().endswith("%")
 
         def _augment(m: re.Match) -> str:
             tag = m.group(0)
-            cls_add = "graph-inline-svg circuit-inline-svg"
             if "class=" not in tag:
-                tag = tag[:-1] + f' class="{cls_add}"' + ">"
+                tag = tag[:-1] + ' class="circuit-inline-svg"' + ">"
             else:
-                tag = tag.replace('class="', f'class="{cls_add} ')
+                tag = tag.replace('class="', 'class="circuit-inline-svg ')
             if alt and "aria-label=" not in tag:
                 tag = tag[:-1] + f' role="img" aria-label="{alt}"' + ">"
             if width_opt:
-                wval = width_opt.strip() if isinstance(width_opt, str) else str(width_opt)
-                if not percent and wval.isdigit():
-                    wval += "px"
-                style_frag = f"width:{wval}; height:auto; display:block; margin:0 auto;"
+                w_raw = width_opt.strip() if isinstance(width_opt, str) else str(width_opt)
+                if percentage_width:
+                    w_css = w_raw
+                    margin = "margin:0 auto;" if "margin:" not in tag else ""
+                    style_frag = f"width:{w_css}; height:auto; display:block; {margin}".strip()
+                else:
+                    w_css = (w_raw + "px") if w_raw.isdigit() else w_raw
+                    style_frag = f"width:{w_css}; height:auto; display:block;"
                 if "style=" in tag:
                     tag = re.sub(
                         r'style="([^"]*)"',
@@ -1212,7 +1769,7 @@ class CircuitDirective(SphinxDirective):
         figure = nodes.figure()
         figure.setdefault("classes", []).extend(["adaptive-figure", "circuit-figure", "no-click"])
         raw_node = nodes.raw("", raw_svg, format="html")
-        raw_node.setdefault("classes", []).extend(["graph-image", "no-click", "no-scaled-link"])
+        raw_node.setdefault("classes", []).extend(["circuit-image", "no-click", "no-scaled-link"])
         figure += raw_node
 
         extra_classes = merged.get("class")

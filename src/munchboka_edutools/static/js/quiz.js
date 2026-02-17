@@ -25,7 +25,7 @@ function quiz2ParseDomSource(sourceEl) {
 
   const questionEls = sourceEl.querySelectorAll('.quiz2-question-source');
   questionEls.forEach((qEl) => {
-    const qid = qEl.getAttribute('data-question-id') || generateUUID();
+    const qid = qEl.getAttribute('data-question-id') || qEl.id || generateUUID();
     const contentEl = qEl.querySelector('.quiz2-question-content');
     const answersWrap = qEl.querySelector('.quiz2-answers-source');
     const answerEls = answersWrap ? answersWrap.querySelectorAll('.quiz2-answer-source') : [];
@@ -33,7 +33,12 @@ function quiz2ParseDomSource(sourceEl) {
     const answers = [];
     answerEls.forEach((aEl) => {
       const correctAttr = (aEl.getAttribute('data-correct') || '').toLowerCase();
-      const isCorrect = correctAttr === 'true' || correctAttr === '1' || correctAttr === 'yes';
+      let isCorrect = correctAttr === 'true' || correctAttr === '1' || correctAttr === 'yes';
+
+      // Fallback for HTML writers that strip data-* attributes on docutils nodes.
+      if (!correctAttr) {
+        isCorrect = aEl.classList.contains('quiz2-correct');
+      }
       answers.push({
         content: aEl.innerHTML,
         isCorrect,

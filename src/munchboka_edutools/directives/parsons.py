@@ -90,7 +90,7 @@ class ParsonsPuzzleDirective(SphinxDirective):
         # final solved code (injected into interactive-code).
         chunk_marker = (self.options.get("chunk-marker") or "# chunk").strip()
 
-        indentation_mode = (self.options.get("indentation") or "fixed").strip().lower()
+        indentation_mode = (self.options.get("indentation") or "student").strip().lower()
         if indentation_mode not in {"fixed", "student"}:
             indentation_mode = "fixed"
 

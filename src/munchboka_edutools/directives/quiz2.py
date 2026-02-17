@@ -152,6 +152,9 @@ class QuizQuestionDirective(SphinxDirective):
 
         wrapper = nodes.container(classes=["quiz2-question-source"])
         wrapper["data-question-id"] = question_id
+        # Use a real HTML id attribute (via docutils 'ids') since some HTML writers
+        # do not preserve arbitrary data-* attributes.
+        wrapper["ids"].append(question_id)
 
         question_content = nodes.container(classes=["quiz2-question-content"])
         question_content += question_children
@@ -203,6 +206,10 @@ class QuizAnswerDirective(SphinxDirective):
 
         wrapper = nodes.container(classes=["quiz2-answer-source"])
         wrapper["data-correct"] = "true" if is_correct else "false"
+
+        # Also encode correctness as a class, since some HTML writers do not
+        # preserve arbitrary data-* attributes.
+        wrapper["classes"].append("quiz2-correct" if is_correct else "quiz2-incorrect")
         wrapper += parsed.children
 
         return [wrapper]

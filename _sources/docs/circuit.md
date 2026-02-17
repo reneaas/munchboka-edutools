@@ -1,35 +1,49 @@
 # `circuit`
 
 
+
 :::{circuit}
-width: 70%
-fontsize: 30
-flow: right          # right|left|up|down
-layout: loop       # ladder|loop
-unit: 1.1
-circuit: series(V1, R1, parallel(L1, series(D1, R2)), RV1)
+width: 40%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, R)
+nocache:
+:::
+
+
+:::{circuit}
+width: 40%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, R1, R2)
 nocache:
 :::
 
 
 
 :::{circuit}
-width: 70%
-fontsize: 26
+width: 50%
+fontsize: 18
 flow: right
 layout: loop
-unit: 1
-circuit: series(V, R1, R2, R3, R4, R5, R6, L1)
-nocache:
-:::
-
-
-:::{circuit}
-width: 70%
-fontsize: 26
-flow: right
-layout: loop
-unit: 1
+unit: 0.5
 circuit: series(V, R1, parallel(R2, R3), R4, R5, L1)
 nocache:
 :::
+
+
+
+:::{circuit}
+width: 30%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, parallel(R1, R2))
+nocache:
+:::
+

@@ -423,6 +423,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chunking-with-chunk">Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>
@@ -473,6 +474,35 @@ def fib(n):
         return n
     return fib(n-1) + fib(n-2)
 ```
+</pre></div>
+</div>
+</section>
+<section id="chunking-with-chunk">
+<h2>Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code><a class="headerlink" href="#chunking-with-chunk" title="Link to this heading">#</a></h2>
+<p>If you want fewer (larger) draggable blocks, you can separate code into chunks
+using a marker comment line. Marker lines are <strong>not</strong> included in the final
+solved code (so they won’t appear when the solution is injected into
+<code class="docutils literal notranslate"><span class="pre">interactive-code</span></code>).</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{parsons-puzzle}
+:::{code-block} python
+s = 0
+<span class="gh"># chunk</span>
+for i in range(5):
+    s += i
+<span class="gh"># chunk</span>
+print(s)
+:::
+:::
+</pre></div>
+</div>
+<p>You can also override the marker:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{parsons-puzzle}
+:chunk-marker: # chunk
+
+:::{code-block} python
+...
+:::
+:::
 </pre></div>
 </div>
 </section>
@@ -555,6 +585,7 @@ def fib(n):
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chunking-with-chunk">Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>

@@ -53,6 +53,8 @@ class ParsonsPuzzleDirective(SphinxDirective):
     option_spec = {
         "lang": directives.unchanged,
         "chunk-marker": directives.unchanged,
+        "indentation": directives.unchanged,
+        "indent-size": directives.nonnegative_int,
     }
 
     def run(self):
@@ -88,10 +90,18 @@ class ParsonsPuzzleDirective(SphinxDirective):
         # final solved code (injected into interactive-code).
         chunk_marker = (self.options.get("chunk-marker") or "# chunk").strip()
 
+        indentation_mode = (self.options.get("indentation") or "fixed").strip().lower()
+        if indentation_mode not in {"fixed", "student"}:
+            indentation_mode = "fixed"
+
+        indent_size = self.options.get("indent-size")
+
         # Safely embed strings in JS (handles backslashes, quotes, etc.)
         code_json = json.dumps(code_content)
         lang_json = json.dumps(lang)
         chunk_marker_json = json.dumps(chunk_marker)
+        indentation_mode_json = json.dumps(indentation_mode)
+        indent_size_json = json.dumps(indent_size)
 
         # Create the HTML with the template
         html = f"""
@@ -107,6 +117,8 @@ class ParsonsPuzzleDirective(SphinxDirective):
                 const options = {{
                     lang: {lang_json},
                     chunkMarker: {chunk_marker_json},
+                    indentationMode: {indentation_mode_json},
+                    indentSize: {indent_size_json},
                 }};
 
                 const switchToCodeEditor = makeCallbackFunction(puzzleContainerId, editorId);

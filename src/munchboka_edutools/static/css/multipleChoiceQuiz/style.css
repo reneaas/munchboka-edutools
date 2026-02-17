@@ -20,9 +20,9 @@
     --button-hover-background-color: #0b5ed7;
     --toast-background-color: rgba(33, 37, 41, 0.9);
     --toast-text-color: #ffffff;
-    --toast-success-background-color: rgba(25, 135, 84, 0.9);
+    --toast-success-background-color: rgba(25, 135, 84, 0.9); /* Green */
     --toast-success-text-color: #ffffff;
-    --toast-error-background-color: rgba(220, 53, 69, 0.9);
+    --toast-error-background-color: rgba(220, 53, 69, 0.9); /* Red */
     --toast-error-text-color: #ffffff;
 
     /* Timer Variables */
@@ -36,6 +36,7 @@
 
 /* Dark Mode Variables */
 [data-mode="dark"] {
+    /* --background-color: #121212; */
     --text-color: #e9ecef !important;
     --card-background-color: #111522a4;
     --card-border-color: #343640;
@@ -53,9 +54,9 @@
     --button-hover-background-color: #0b5ed7;
     --toast-background-color: rgba(248, 249, 250, 0.9);
     --toast-text-color: #212529;
-    --toast-success-background-color: rgba(25, 135, 84, 0.9);
+    --toast-success-background-color: rgba(25, 135, 84, 0.9); /* Green */
     --toast-success-text-color: #ffffff;
-    --toast-error-background-color: rgba(220, 53, 69, 0.9);
+    --toast-error-background-color: rgba(220, 53, 69, 0.9); /* Red */
     --toast-error-text-color: #ffffff;
 
     /* Timer variables */
@@ -68,10 +69,14 @@
 }
 
 /* Auto Mode Variables */
-[data-mode="auto"] { /* inherits light variables by default */ }
+[data-mode="auto"] {
+    /* Defaults to light mode variables */
+}
 
 @media (prefers-color-scheme: dark) {
     [data-mode="auto"] {
+        /* Variables for dark mode */
+        /* --background-color: #121212; */
         --text-color: #e9ecef !important;
         --card-background-color: #111522a4;
         --card-border-color: #343a40;
@@ -89,18 +94,21 @@
         --button-hover-background-color: #0b5ed7;
         --toast-background-color: rgba(248, 249, 250, 0.9);
         --toast-text-color: #212529;
-        --toast-success-background-color: rgba(25, 135, 84, 0.9);
+        --toast-success-background-color: rgba(25, 135, 84, 0.9); /* Green */
         --toast-success-text-color: #ffffff;
-        --toast-error-background-color: rgba(220, 53, 69, 0.9);
+        --toast-error-background-color: rgba(220, 53, 69, 0.9); /* Red */
         --toast-error-text-color: #ffffff;
+
+        /* Timer Variables */
         --timer-background-color: #343a40;
         --timer-text-color: #f8f9fa;
-        --progress-bar-background-color: #28a745;
-        --progress-bar-warning-color: #ffc107;
-        --progress-bar-danger-color: #dc3545;
+        --progress-bar-background-color: #28a745; /* Green */
+        --progress-bar-warning-color: #ffc107;    /* Yellow */
+        --progress-bar-danger-color: #dc3545;     /* Red */
         --progress-bar-transition: width 1s linear;
     }
 }
+
 
 /* Multiple Choice Quiz Container */
 .mcq-container {
@@ -108,31 +116,22 @@
     position: relative;
 }
 
-/* Hidden source markup for native-rendered quiz content (harvested by JS) */
-.quiz2-source {
-    position: absolute;
-    left: -10000px;
-    top: auto;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-}
-
 /* Question Card Styles */
 .question-card {
     background-color: var(--card-background-color);
-    padding: 25px;
-    border-radius: 12px;
+    padding: 25px; /* Increased padding */
+    border-radius: 12px; /* Increased border radius */
     margin-bottom: 20px;
     border: 1px solid var(--card-border-color);
+    /* font-size: 18px;  */
     line-height: 1.6;
-    box-shadow: 0 4px 10px var(--card-shadow-color);
+    box-shadow: 0 4px 10px var(--card-shadow-color); /* Added shadow */
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .question-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px var(--card-shadow-color);
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 6px 15px var(--card-shadow-color); /* Enhanced shadow on hover */
 }
 
 /* Answers Grid */
@@ -152,25 +151,14 @@
 .answer-card {
     min-width: 0;
     background-color: var(--answer-background-color);
-    padding: 15px;
+    padding: 15px 15px 15px 15px; /* Equal padding on all sides */
     border-radius: 8px;
     cursor: pointer;
     text-align: left;
     border: 1px solid var(--answer-border-color);
     transition: background-color 0.3s, border-color 0.3s;
+    /* font-size: 18px; */
     line-height: 1.4;
-}
-
-/*
- * Display-math answers use Sphinx's `div.math` wrapper.
- * The PyData theme styles `div.math` as a flex row-reverse container to
- * support equation numbers, which can push a single KaTeX-rendered display
- * equation to the right edge.
- *
- * Neutralize this *only* inside quiz answer tiles.
- */
-.answer-card div.math {
-    display: block;
 }
 
 /* Add a little breathing room for code blocks inside answer tiles */
@@ -204,27 +192,22 @@
 }
 
 /* Buttons */
-.quiz-main-container .button-container {
+.button-container {
     margin-top: 20px;
-    text-align: center; /* match original */
-}
-
-/* Ensure inline layout and spacing like original */
-.quiz-main-container .button { display: inline-block; margin: 5px; }
-
-.button {
-    color: teal;
-    border: none;
-    padding: 8px 20px;
     text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background-color 0.3s, transform 0.2s;
 }
+
+/* .button {
+    margin: 5px;
+    padding: 12px 24px;
+    background-color: var(--button-background-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.2s;
+} */
 
 .button:hover {
     background-color: var(--button-hover-background-color);
@@ -235,53 +218,55 @@
     transform: translateY(0);
 }
 
-/* Run (Check) button aligns with interactive code style */
-.button-run {
-    background-color: #28a745;
-    color: black;
+
+.button-check-answers {
+    background-color: #28a745; /* Green background */
+    color: black !important; /* Black text */
 }
 
-.button-run:hover {
-    background-color: #218838;
+.button-submit-answers {
+    background-color: #28a745; /* Green background */
+    color: black !important; /* Black text */
 }
 
-.button-run:active {
-    background-color: #1e7e34;
-    box-shadow: 0 5px #666;
-    transform: translateY(4px);
+.button-reset-quiz {
+    background-color: #28a745; /* Green background */
+    color: black !important; /* Black text */
 }
+
 
 /* Next button */
 .button-next {
-    background-color: #00ffb7bd;
-    color: black !important;
+    background-color: #00ffb7bd; /* Green background */
+    color: black !important; /* Black text */
 }
-
+    
 .button-next:hover {
-    background-color: #02cbbe;
+    background-color: #02cbbe; /* Darker green on hover */
 }
 
 .button-next:active {
-    background-color: #00a095;
-    box-shadow: 0 5px #666;
-    transform: translateY(4px);
+    background-color: #00a095; /* Even darker green on click */
+    box-shadow: 0 5px #666; /* Shadow effect */
+    transform: translateY(4px); /* Move button down */
 }
 
 /* Previous button */
 .button-prev {
-    background-color: #ff8800;
-    color: black !important;
+    background-color: #ff8800; /* Green background */
+    color: black !important; /* Black text */
 }
-
+    
 .button-prev:hover {
-    background-color: #c66900;
+    background-color: #c66900; /* Darker green on hover */
 }
 
 .button-prev:active {
-    background-color: #ad5d01;
-    box-shadow: 0 5px #666;
-    transform: translateY(4px);
+    background-color: #ad5d01; /* Even darker green on click */
+    box-shadow: 0 5px #666; /* Shadow effect */
+    transform: translateY(4px); /* Move button down */
 }
+
 
 /* Toast Notification */
 .toast {
@@ -291,7 +276,9 @@
     z-index: 1000;
     display: none;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* transform: translate(-50%, -50%); */
 }
+
 
 .toast p {
     margin: 0;
@@ -321,8 +308,9 @@
     .answer-card {
         flex: 1 1 100%;
     }
-    .quiz-main-container .button-container { text-align: center; }
 }
+
+
 
 /* Question Counter */
 .question-counter {
@@ -342,68 +330,56 @@
     padding: 50px;
 }
 
-/* Resume Prompt Styles */
-.quiz-resume-prompt {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--card-border-color);
-    border-radius: 8px;
-    background: var(--card-background-color);
-    box-shadow: var(--card-shadow-color);
-    margin: 0 0 1rem 0;
+
+.pre.img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.quiz-resume-text {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-color);
+
+
+/* Styles for the timed multiple choice quiz */
+
+/* Timer Container */
+.timer-container {
+    position: relative;
+    width: 100%;
+    height: 30px;
+    background-color: var(--timer-background-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 15px;
 }
 
-.quiz-resume-actions {
-    display: flex;
-    gap: 0.5rem;
+/* Progress Bar */
+.progress-bar {
+    height: 100%;
+    background-color: var(--progress-bar-background-color);
+    width: 100%;
+    transition: var(--progress-bar-transition);
 }
 
-/* Light mode specific styling for resume prompt */
-@media (prefers-color-scheme: light) {
-    .quiz-resume-prompt {
-        background: #E8F0FE;
-        color: #000000;
-        border-color: #B3D4FF;
-    }
+/* Timer Text */
+.timer-text {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    line-height: 30px;
+    font-weight: bold;
+    color: var(--timer-text-color);
 }
 
-/* Explicit light theme overrides */
-html.light-mode .quiz-resume-prompt,
-body.light-mode .quiz-resume-prompt,
-html[data-theme='light'] .quiz-resume-prompt,
-body[data-theme='light'] .quiz-resume-prompt,
-[data-mode='light'] .quiz-resume-prompt {
-    background: #E8F0FE !important;
-    color: #000000 !important;
-    border-color: #B3D4FF !important;
+
+/* Warning State */
+.progress-bar-warning {
+    background-color: var(--progress-bar-warning-color) !important;
 }
 
-/* Dark mode specific styling for resume prompt */
-@media (prefers-color-scheme: dark) {
-    .quiz-resume-prompt {
-        background: var(--card-background-color);
-        color: var(--text-color);
-        border-color: var(--card-border-color);
-    }
+/* Danger State */
+.progress-bar-danger {
+    background-color: var(--progress-bar-danger-color) !important;
 }
 
-/* Explicit dark theme overrides */
-html.dark-mode .quiz-resume-prompt,
-body.dark-mode .quiz-resume-prompt,
-html[data-theme='dark'] .quiz-resume-prompt,
-body[data-theme='dark'] .quiz-resume-prompt,
-[data-mode='dark'] .quiz-resume-prompt {
-    background: var(--card-background-color) !important;
-    color: var(--text-color) !important;
-    border-color: var(--card-border-color) !important;
-}
 

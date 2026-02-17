@@ -42,6 +42,35 @@ def _copy_static(app):
         app.add_css_file("https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css")
         # KaTeX CSS for math rendering (required by pair-puzzle directive)
         app.add_css_file("https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css")
+
+        # --- matematikk_1t compatibility layer (loaded EARLIER than edutools defaults) ---
+        # These files bring in CSS that exists in matematikk_1t but isn't part of the core
+        # edutools styling. We load them with a lower priority number so that the existing
+        # edutools CSS (registered below, default priority=500) wins when selectors overlap.
+        _register("css/legacy_1t/general_style.css", priority=350)
+        _register("css/legacy_1t/admonitions.css", priority=350)
+        _register("css/legacy_1t/popup.css", priority=350)
+        _register("css/legacy_1t/escape-room.css", priority=350)
+        _register("css/legacy_1t/interactive_code.css", priority=350)
+        _register("css/legacy_1t/jeopardy.css", priority=350)
+        _register("css/legacy_1t/parsonsPuzzle.css", priority=350)
+
+        # Additional 1T-only CSS modules
+        _register("css/static_code_blocks.css", priority=400)
+        _register("css/clickable_figures/style.css", priority=400)
+        _register("css/escapeRoom/style.css", priority=400)
+        _register("css/mathjax/style.css", priority=400)
+        _register("css/misc_styles/figures.css", priority=400)
+        _register("css/misc_styles/geogebra.css", priority=400)
+        _register("css/misc_styles/grids.css", priority=400)
+        _register("css/misc_styles/misc.css", priority=400)
+        _register("css/misc_styles/popup_code.css", priority=400)
+        _register("css/misc_styles/tabs.css", priority=400)
+        _register("css/multipleChoiceQuiz/style.css", priority=400)
+
+        # Optional accessibility font styles (requires fonts packaged under munchboka/fonts/...)
+        _register("fonts/opendyslexic/dyslexic.css", priority=400)
+
         _register("css/admonitions.css")
         _register("css/dialogue.css")
         _register("css/figures.css")

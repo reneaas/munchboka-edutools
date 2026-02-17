@@ -64,28 +64,28 @@ div.quiz > .admonition-title {
 }
 
 [data-mode=light] div.quiz > .admonition-title::after {
-  content: url("../icons/outline/light_mode/question.svg");
+  content: url("../../icons/outline/light_mode/question.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: light) {
   div.quiz > .admonition-title::after {
-    content: url("../icons/outline/light_mode/question.svg");
+    content: url("../../icons/outline/light_mode/question.svg");
     width: 20px;
     height: 20px;
   }
 }
 
 [data-mode=dark] div.quiz > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/question.svg");
+  content: url("../../icons/outline/dark_mode/question.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.quiz > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/question.svg");
+    content: url("../../icons/outline/dark_mode/question.svg");
     width: 20px;
     height: 20px;
   }
@@ -130,28 +130,28 @@ div.reminder > .admonition-title {
 }
 
 [data-mode=light] div.reminder > .admonition-title::after {
-  content: url("../icons/outline/light_mode/backward.svg");
+  content: url("../../icons/outline/light_mode/backward.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: light) {
   div.reminder > .admonition-title::after {
-    content: url("../icons/outline/light_mode/backward.svg");
+    content: url("../../icons/outline/light_mode/backward.svg");
     width: 20px;
     height: 20px;
   }
 }
 
 [data-mode=dark] div.reminder > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/backward.svg");
+  content: url("../../icons/outline/dark_mode/backward.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.reminder > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/backward.svg");
+    content: url("../../icons/outline/dark_mode/backward.svg");
     width: 20px;
     height: 20px;
   }
@@ -196,14 +196,14 @@ div.summary > .admonition-title {
 }
 
 [data-mode=light] div.summary > .admonition-title::after {
-  content: url("../icons/outline/light_mode/summary.svg");
+  content: url("../../icons/outline/light_mode/summary.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: light) {
   div.summary > .admonition-title::after {
-    content: url("../icons/outline/light_mode/summary.svg");
+    content: url("../../icons/outline/light_mode/summary.svg");
     width: 20px;
     height: 20px;
   }
@@ -211,14 +211,14 @@ div.summary > .admonition-title {
 
 
 [data-mode=dark] div.summary > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/summary.svg");
+  content: url("../../icons/outline/dark_mode/summary.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.summary > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/summary.svg");
+    content: url("../../icons/outline/dark_mode/summary.svg");
     width: 20px;
     height: 20px;
   }
@@ -264,28 +264,28 @@ div.theory > .admonition-title {
   
 
 [data-mode=light] div.theory > .admonition-title::after {
-  content: url("../icons/outline/light_mode/book.svg");
+  content: url("../../icons/outline/light_mode/book.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: light) {
   div.theory > .admonition-title::after {
-    content: url("../icons/outline/light_mode/book.svg");
+    content: url("../../icons/outline/light_mode/book.svg");
     width: 20px;
     height: 20px;
   }
 }
 
 [data-mode=dark] div.theory > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/book.svg");
+  content: url("../../icons/outline/dark_mode/book.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.theory > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/book.svg");
+    content: url("../../icons/outline/dark_mode/book.svg");
     width: 20px;
     height: 20px;
   }
@@ -349,28 +349,28 @@ div.explore > .admonition-title:before {
 
 
 [data-mode=light] div.explore > .admonition-title::after {
-  content: url("../icons/outline/light_mode/magnifying.svg");
+  content: url("../../icons/outline/light_mode/magnifying.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: light) {
   div.explore > .admonition-title::after {
-    content: url("../icons/outline/light_mode/magnifying.svg");
+    content: url("../../icons/outline/light_mode/magnifying.svg");
     width: 20px;
     height: 20px;
   }
 }
 
 [data-mode=dark] div.explore > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/magnifying.svg");
+  content: url("../../icons/outline/dark_mode/magnifying.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.explore > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/magnifying.svg");
+    content: url("../../icons/outline/dark_mode/magnifying.svg");
     width: 20px;
     height: 20px;
   }
@@ -434,28 +434,28 @@ div.example > .admonition-title:before {
 
 
 [data-mode=light] div.example > .admonition-title::after {
-  content: url("../icons/outline/light_mode/pencil_square.svg");
+  content: url("../../icons/outline/light_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.example > .admonition-title::after {
-    content: url("../icons/outline/light_mode/pencil_square.svg");
+    content: url("../../icons/outline/light_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.example > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/pencil_square.svg");
+  content: url("../../icons/outline/dark_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.example > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/pencil_square.svg");
+    content: url("../../icons/outline/dark_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
@@ -507,7 +507,7 @@ div.answer > .admonition-title::before {
 
 
 [data-mode=light] div.answer > .admonition-title::after {
-  content: url("../icons/outline/light_mode/square_check.svg");
+  content: url("../../icons/outline/light_mode/square_check.svg");
   width: 20px;
   height: 20px;
 }
@@ -515,21 +515,21 @@ div.answer > .admonition-title::before {
   
 @media (prefers-color-scheme: light) {
   div.answer > .admonition-title::after {
-    content: url("../icons/outline/light_mode/square_check.svg");
+    content: url("../../icons/outline/light_mode/square_check.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.answer > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/square_check.svg");
+  content: url("../../icons/outline/dark_mode/square_check.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.answer > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/square_check.svg");
+    content: url("../../icons/outline/dark_mode/square_check.svg");
     width: 20px;
     height: 20px;
   }
@@ -603,35 +603,35 @@ div.solution > .admonition-title::before {
 }
 
 div.solution > .admonition-title::after {
-  content: url("../icons/outline/light_mode/unlock.svg");
+  content: url("../../icons/outline/light_mode/unlock.svg");
   width: 20px;
   height: 20px;
 }
 
 
 [data-mode=light] div.solution > .admonition-title::after {
-  content: url("../icons/outline/light_mode/unlock.svg");
+  content: url("../../icons/outline/light_mode/unlock.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.solution > .admonition-title::after {
-    content: url("../icons/outline/light_mode/unlock.svg");
+    content: url("../../icons/outline/light_mode/unlock.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.solution > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/unlock.svg");
+  content: url("../../icons/outline/dark_mode/unlock.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.solution > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/unlock.svg");
+    content: url("../../icons/outline/dark_mode/unlock.svg");
     width: 20px;
     height: 20px;
   }
@@ -716,7 +716,7 @@ div.problem-level-1 > .admonition-title {
 
 div.problem-level-1 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -725,7 +725,7 @@ div.problem-level-1 > .admonition-title::after {
 
 [data-mode=light] div.problem-level-1 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -734,7 +734,7 @@ div.problem-level-1 > .admonition-title::after {
 
 [data-mode=dark] div.problem-level-1 > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -744,7 +744,7 @@ div.problem-level-1 > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.problem-level-1 > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -755,7 +755,7 @@ div.problem-level-1 > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.problem-level-1 > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -822,8 +822,8 @@ div.problem-level-1 > .admonition-title::after {
   
 div.problem-level-2 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -832,8 +832,8 @@ div.problem-level-2 > .admonition-title::after {
 
 [data-mode=light] div.problem-level-2 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -842,8 +842,8 @@ div.problem-level-2 > .admonition-title::after {
 
 [data-mode=dark] div.problem-level-2 > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -853,8 +853,8 @@ div.problem-level-2 > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.problem-level-2 > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -866,8 +866,8 @@ div.problem-level-2 > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.problem-level-2 > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -933,9 +933,9 @@ div.problem-level-2 > .admonition-title::after {
   
 div.problem-level-3 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -944,9 +944,9 @@ div.problem-level-3 > .admonition-title::after {
 
 [data-mode=light] div.problem-level-3 > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -955,9 +955,9 @@ div.problem-level-3 > .admonition-title::after {
 
 [data-mode=dark] div.problem-level-3 > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -967,9 +967,9 @@ div.problem-level-3 > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.problem-level-3 > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -981,9 +981,9 @@ div.problem-level-3 > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.problem-level-3 > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1066,34 +1066,34 @@ div.check > .admonition-title {
 }
 
 div.check > .admonition-title::after {
-  content: url("../icons/solid/pencil_square.svg");
+  content: url("../../icons/solid/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
 
 [data-mode=light] div.check > .admonition-title::after {
-  content: url("../icons/solid/light_mode/pencil_square.svg");
+  content: url("../../icons/solid/light_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.check > .admonition-title::after {
-    content: url("../icons/solid/light_mode/pencil_square.svg");
+    content: url("../../icons/solid/light_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.check > .admonition-title::after {
-  content: url("../icons/solid/dark_mode/pencil_square.svg");
+  content: url("../../icons/solid/dark_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.check > .admonition-title::after {
-    content: url("../icons/solid/dark_mode/pencil_square.svg");
+    content: url("../../icons/solid/dark_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
@@ -1181,28 +1181,28 @@ div.sidenote > .admonition-title::before {
 
 
 [data-mode=light] div.sidenote > .admonition-title::after {
-  content: url("../icons/solid/light_mode/scroll.svg");
+  content: url("../../icons/solid/light_mode/scroll.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.sidenote > .admonition-title::after {
-    content: url("../icons/solid/light_mode/scroll.svg");
+    content: url("../../icons/solid/light_mode/scroll.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.sidenote > .admonition-title::after {
-  content: url("../icons/solid/dark_mode/scroll.svg");
+  content: url("../../icons/solid/dark_mode/scroll.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.sidenote > .admonition-title::after {
-    content: url("../icons/solid/dark_mode/scroll.svg");
+    content: url("../../icons/solid/dark_mode/scroll.svg");
     width: 20px;
     height: 20px;
   }
@@ -1228,28 +1228,28 @@ div.hints > .admonition-title::before {
 
 
 [data-mode=light] div.hints > .admonition-title::after {
-  content: url("../icons/outline/light_mode/key.svg");
+  content: url("../../icons/outline/light_mode/key.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.hints > .admonition-title::after {
-    content: url("../icons/outline/light_mode/key.svg");
+    content: url("../../icons/outline/light_mode/key.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.hints > .admonition-title::after {
-  content: url("../icons/outline/dark_mode/key.svg");
+  content: url("../../icons/outline/dark_mode/key.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.hints > .admonition-title::after {
-    content: url("../icons/outline/dark_mode/key.svg");
+    content: url("../../icons/outline/dark_mode/key.svg");
     width: 20px;
     height: 20px;
   }
@@ -1272,28 +1272,28 @@ div.pythonerror > .admonition-title::before {
 
 
 [data-mode=light] div.pythonerror > .admonition-title::after {
-  content: url("../icons/solid/light_mode/python.svg");
+  content: url("../../icons/solid/light_mode/python.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.pythonerror > .admonition-title::after {
-    content: url("../icons/solid/light_mode/python.svg");
+    content: url("../../icons/solid/light_mode/python.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.pythonerror > .admonition-title::after {
-  content: url("../icons/solid/dark_mode/python.svg");
+  content: url("../../icons/solid/dark_mode/python.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.pythonerror > .admonition-title::after {
-    content: url("../icons/solid/dark_mode/python.svg");
+    content: url("../../icons/solid/dark_mode/python.svg");
     width: 20px;
     height: 20px;
   }
@@ -1398,34 +1398,34 @@ div.exercise > .admonition-title {
 
 
 div.exercise > .admonition-title::after {
-  content: url("../icons/solid/pencil_square.svg");
+  content: url("../../icons/solid/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
 
 [data-mode=light] div.exercise > .admonition-title::after {
-  content: url("../icons/solid/light_mode/pencil_square.svg");
+  content: url("../../icons/solid/light_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
   
 @media (prefers-color-scheme: light) {
   div.exercise > .admonition-title::after {
-    content: url("../icons/solid/light_mode/pencil_square.svg");
+    content: url("../../icons/solid/light_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
 }
   
 [data-mode=dark] div.exercise > .admonition-title::after {
-  content: url("../icons/solid/dark_mode/pencil_square.svg");
+  content: url("../../icons/solid/dark_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   div.exercise > .admonition-title::after {
-    content: url("../icons/solid/dark_mode/pencil_square.svg");
+    content: url("../../icons/solid/dark_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
   }
@@ -1513,7 +1513,7 @@ div.exercise > .admonition-title::after {
 
 div.common > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1522,7 +1522,7 @@ div.common > .admonition-title::after {
 
 [data-mode=light] div.common > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1532,7 +1532,7 @@ div.common > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.common > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1542,7 +1542,7 @@ div.common > .admonition-title::after {
   
 [data-mode=dark] div.common > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1552,7 +1552,7 @@ div.common > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.common > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1652,8 +1652,8 @@ div.rare > .admonition-title {
 
 div.rare > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1662,8 +1662,8 @@ div.rare > .admonition-title::after {
 
 [data-mode=light] div.rare > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1673,8 +1673,8 @@ div.rare > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.rare > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1684,8 +1684,8 @@ div.rare > .admonition-title::after {
   
 [data-mode=dark] div.rare > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1695,8 +1695,8 @@ div.rare > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.rare > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1793,9 +1793,9 @@ div.rare > .admonition-title::after {
 
 div.epic > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1804,9 +1804,9 @@ div.epic > .admonition-title::after {
 
 [data-mode=light] div.epic > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1816,9 +1816,9 @@ div.epic > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.epic > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1828,9 +1828,9 @@ div.epic > .admonition-title::after {
   
 [data-mode=dark] div.epic > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1840,9 +1840,9 @@ div.epic > .admonition-title::after {
 @media (prefers-color-scheme: dark) {
   div.epic > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1933,10 +1933,10 @@ div.legendary > .admonition-title {
 
 [data-mode=light] div.legendary > .admonition-title::after {
   content: 
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg") ""
-    url("../icons/outline/light_mode/fire.svg");
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg") ""
+    url("../../icons/outline/light_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1946,10 +1946,10 @@ div.legendary > .admonition-title {
 @media (prefers-color-scheme: light) {
   div.legendary > .admonition-title::after {
     content: 
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg") ""
-      url("../icons/outline/light_mode/fire.svg");
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg") ""
+      url("../../icons/outline/light_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;
@@ -1959,10 +1959,10 @@ div.legendary > .admonition-title {
   
 [data-mode=dark] div.legendary > .admonition-title::after {
   content: 
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg") ""
-    url("../icons/outline/dark_mode/fire.svg");
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg") ""
+    url("../../icons/outline/dark_mode/fire.svg");
   width: 20px;
   height: 20px;
   display: inline-block;
@@ -1972,10 +1972,10 @@ div.legendary > .admonition-title {
 @media (prefers-color-scheme: dark) {
   div.legendary > .admonition-title::after {
     content: 
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg") ""
-      url("../icons/outline/dark_mode/fire.svg");
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg") ""
+      url("../../icons/outline/dark_mode/fire.svg");
     width: 20px;
     height: 20px;
     display: inline-block;

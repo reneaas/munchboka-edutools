@@ -365,27 +365,45 @@ class MultiInteractiveGraphDirective(SphinxDirective):
             graph_blocks: List of content blocks
             frame_dirs: List of output directories
         """
-        from .animate import AnimateDirective
+        from docutils.statemachine import StringList
 
-        # Create a temporary animate directive instance to reuse its methods
-        temp_directive = AnimateDirective(
-            name=self.name,
-            arguments=self.arguments,
-            options=self.options,
-            content=self.content,
-            lineno=self.lineno,
-            content_offset=self.content_offset,
-            block_text=self.block_text,
-            state=self.state,
-            state_machine=self.state_machine,
-        )
+        from .plot import PlotDirective
 
         # Generate frames for each graph
         for graph_idx, (content_lines, frame_dir) in enumerate(zip(graph_blocks, frame_dirs)):
             os.makedirs(frame_dir, exist_ok=True)
 
-            # Parse content to get options
-            merged_options = self._parse_graph_content(content_lines)
+            internal_plot_name = f"__{os.path.basename(frame_dir)}_plot_tmp"
+
+            def _render_svg(frame_content: str) -> str:
+                plot_directive = PlotDirective(
+                    name="plot",
+                    arguments=[],
+                    options={},
+                    content=StringList(frame_content.splitlines()),
+                    lineno=self.lineno,
+                    content_offset=self.content_offset,
+                    block_text=self.block_text,
+                    state=self.state,
+                    state_machine=self.state_machine,
+                )
+                plot_directive.options["nocache"] = None
+                plot_directive.options["internal"] = None
+                plot_directive.options["internal-name"] = internal_plot_name
+
+                rendered_nodes = plot_directive.run()
+                svg_text: str | None = None
+                for top in rendered_nodes:
+                    for raw in top.traverse(nodes.raw):
+                        txt = raw.astext()
+                        if "<svg" in txt:
+                            svg_text = txt
+                            break
+                    if svg_text is not None:
+                        break
+                if svg_text is None:
+                    raise ValueError("PlotDirective did not return inline SVG")
+                return svg_text
 
             # Generate each frame as SVG
             for i, value in enumerate(var_values):
@@ -393,16 +411,12 @@ class MultiInteractiveGraphDirective(SphinxDirective):
                 frame_content = "\n".join(content_lines)
                 frame_content = _substitute_variable(frame_content, var_name, value)
 
-                # Generate SVG directly to output directory
                 svg_path = os.path.join(frame_dir, f"frame_{i:04d}.svg")
-                temp_directive._generate_frame_svg(
-                    app,
-                    frame_content,
-                    svg_path,
-                    merged_options,
-                    var_name,
-                    value,
-                )
+
+                svg_content = _render_svg(frame_content)
+
+                with open(svg_path, "w", encoding="utf-8") as f:
+                    f.write(svg_content)
 
                 # Make SVG IDs unique by adding frame and graph index prefix
                 with open(svg_path, "r", encoding="utf-8") as f:

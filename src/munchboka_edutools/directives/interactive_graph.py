@@ -266,6 +266,9 @@ class InteractiveGraphDirective(SphinxDirective):
 
             # Look for at least one meaningful change across frames.
             for frame in deltas:
+                # Full-SVG fallback frames are always meaningful.
+                if isinstance(frame, dict) and frame.get("fullSvg"):
+                    return False
                 changes = frame.get("changes") or {}
                 for elem_id, ch in changes.items():
                     if not isinstance(ch, dict):
@@ -559,58 +562,62 @@ class InteractiveGraphDirective(SphinxDirective):
             output_dir: Directory to save frames
             merged_options: Merged options
         """
-        import tempfile
-
         os.makedirs(output_dir, exist_ok=True)
 
-        # Import frame generation from animate
-        from .animate import AnimateDirective
-        from .svg_delta import compute_svg_deltas, save_delta_format
-        import re
+        from docutils.statemachine import StringList
 
-        # Create a temporary animate directive instance to reuse its methods
-        temp_directive = AnimateDirective(
-            name=self.name,
-            arguments=self.arguments,
-            options=self.options,
-            content=self.content,
-            lineno=self.lineno,
-            content_offset=self.content_offset,
-            block_text=self.block_text,
-            state=self.state,
-            state_machine=self.state_machine,
-        )
+        from .plot import PlotDirective
+        from .svg_delta import compute_svg_deltas, save_delta_format
+
+        internal_plot_name = f"__{os.path.basename(output_dir)}_plot_tmp"
+
+        def _render_svg(frame_content: str) -> str:
+            plot_directive = PlotDirective(
+                name="plot",
+                arguments=[],
+                options=dict(merged_options),
+                content=StringList(frame_content.splitlines()),
+                lineno=self.lineno,
+                content_offset=self.content_offset,
+                block_text=self.block_text,
+                state=self.state,
+                state_machine=self.state_machine,
+            )
+            # Remove interactive-only keys that plot.py doesn't care about.
+            plot_directive.options.pop("interactive-var", None)
+            plot_directive.options.pop("interactive-max-frames", None)
+
+            # Force regeneration and request internal rendering semantics:
+            # - stable internal filename (so we don't create N cache files)
+            # - do not rewrite ids with a random prefix
+            # - do not add anchors/targets to the document
+            plot_directive.options["nocache"] = None
+            plot_directive.options["internal"] = None
+            plot_directive.options["internal-name"] = internal_plot_name
+
+            rendered_nodes = plot_directive.run()
+            svg_text: str | None = None
+            for top in rendered_nodes:
+                for raw in top.traverse(nodes.raw):
+                    txt = raw.astext()
+                    if "<svg" in txt:
+                        svg_text = txt
+                        break
+                if svg_text is not None:
+                    break
+            if svg_text is None:
+                raise ValueError("PlotDirective did not return inline SVG")
+            return svg_text
 
         # Generate all frames in memory first
         svg_frames = []
 
-        # Use temporary directory for frame generation
-        with tempfile.TemporaryDirectory() as temp_dir:
-            for i, value in enumerate(var_values):
-                # Substitute variable in content
-                frame_content = "\n".join(plot_content_lines)
-                frame_content = _substitute_variable(frame_content, var_name, value)
+        for i, value in enumerate(var_values):
+            frame_content = "\n".join(plot_content_lines)
+            frame_content = _substitute_variable(frame_content, var_name, value)
 
-                # Generate SVG to temp location
-                svg_path = os.path.join(temp_dir, f"frame_{i:04d}.svg")
-                temp_directive._generate_frame_svg(
-                    app,
-                    frame_content,
-                    svg_path,
-                    merged_options,
-                    var_name,
-                    value,
-                )
-
-                # Read SVG content
-                with open(svg_path, "r", encoding="utf-8") as f:
-                    svg_content = f.read()
-
-                # Add consistent IDs to elements (needed for delta system)
-                # Use simple numeric IDs based on frame to keep deltas small
-                svg_content = self._ensure_element_ids(svg_content, i)
-
-                svg_frames.append(svg_content)
+            svg_content = _render_svg(frame_content)
+            svg_frames.append(svg_content)
 
         # Compute deltas
         try:
@@ -720,21 +727,44 @@ class InteractiveGraphDirective(SphinxDirective):
 
         os.makedirs(output_dir, exist_ok=True)
 
-        from .animate import AnimateDirective
+        from docutils.statemachine import StringList
+
+        from .plot import PlotDirective
         from .svg_delta import compute_svg_deltas, save_delta_format
 
-        # Create a temporary animate directive instance to reuse its methods
-        temp_directive = AnimateDirective(
-            name=self.name,
-            arguments=self.arguments,
-            options=self.options,
-            content=self.content,
-            lineno=self.lineno,
-            content_offset=self.content_offset,
-            block_text=self.block_text,
-            state=self.state,
-            state_machine=self.state_machine,
-        )
+        internal_plot_name = f"__{os.path.basename(output_dir)}_plot_tmp"
+
+        def _render_svg(frame_content: str) -> str:
+            plot_directive = PlotDirective(
+                name="plot",
+                arguments=[],
+                options=dict(merged_options),
+                content=StringList(frame_content.splitlines()),
+                lineno=self.lineno,
+                content_offset=self.content_offset,
+                block_text=self.block_text,
+                state=self.state,
+                state_machine=self.state_machine,
+            )
+            plot_directive.options.pop("interactive-var", None)
+            plot_directive.options.pop("interactive-max-frames", None)
+            plot_directive.options["nocache"] = None
+            plot_directive.options["internal"] = None
+            plot_directive.options["internal-name"] = internal_plot_name
+
+            rendered_nodes = plot_directive.run()
+            svg_text: str | None = None
+            for top in rendered_nodes:
+                for raw in top.traverse(nodes.raw):
+                    txt = raw.astext()
+                    if "<svg" in txt:
+                        svg_text = txt
+                        break
+                if svg_text is not None:
+                    break
+            if svg_text is None:
+                raise ValueError("PlotDirective did not return inline SVG")
+            return svg_text
 
         var_names = [vn for vn, _vv in var_axes]
         var_values_list = [vv for _vn, vv in var_axes]
@@ -745,37 +775,18 @@ class InteractiveGraphDirective(SphinxDirective):
         # Generate all frames in memory first
         svg_frames: List[str] = []
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            frame_idx = 0
-            for idx_tuple in itertools.product(*[range(n) for n in lengths]):
-                variables = {
-                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
-                }
+        frame_idx = 0
+        for idx_tuple in itertools.product(*[range(n) for n in lengths]):
+            variables = {
+                var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
+            }
 
-                frame_content = "\n".join(plot_content_lines)
-                frame_content = _substitute_variables(frame_content, variables)
+            frame_content = "\n".join(plot_content_lines)
+            frame_content = _substitute_variables(frame_content, variables)
 
-                # Reuse animate frame rendering. It only accepts a single
-                # (var_name, var_value) pair; we pass the first axis.
-                primary_name = var_names[0]
-                primary_value = variables[primary_name]
-
-                svg_path = os.path.join(temp_dir, f"frame_{frame_idx:04d}.svg")
-                temp_directive._generate_frame_svg(
-                    app,
-                    frame_content,
-                    svg_path,
-                    merged_options,
-                    primary_name,
-                    primary_value,
-                )
-
-                with open(svg_path, "r", encoding="utf-8") as f:
-                    svg_content = f.read()
-
-                svg_content = self._ensure_element_ids(svg_content, frame_idx)
-                svg_frames.append(svg_content)
-                frame_idx += 1
+            svg_content = _render_svg(frame_content)
+            svg_frames.append(svg_content)
+            frame_idx += 1
 
         # Compute deltas and write delta assets
         base_svg, deltas = compute_svg_deltas(svg_frames)

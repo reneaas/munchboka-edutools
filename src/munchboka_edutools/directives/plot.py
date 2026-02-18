@@ -2853,6 +2853,16 @@ class PlotDirective(SphinxDirective):
                 pass
 
         explicit_name = merged.get("name")
+        # Internal rendering mode: used by interactive directives that need
+        # PlotDirective's full rendering capabilities but do not want to create
+        # anchors/targets in the document.
+        internal_mode = "internal" in merged
+        internal_name = merged.get("internal-name") if internal_mode else None
+
+        # A stable name can be supplied either via the public `name:` option or via
+        # internal rendering.
+        stable_name = explicit_name or internal_name
+
         debug_mode = "debug" in merged
         # curves: x_expr, y_expr, (t_start, t_end)[, linestyle][, color]
         curve_specs: List[Tuple[str, str, float, float, str | None, str | None]] = []
@@ -3052,7 +3062,7 @@ class PlotDirective(SphinxDirective):
             int(bool(use_usetex)),
             int(bool(handdrawn)),
         )
-        base_name = explicit_name or f"plot_{content_hash}"
+        base_name = stable_name or f"plot_{content_hash}"
 
         rel_dir = os.path.join("_static", "plot")
         abs_dir = os.path.join(app.srcdir, rel_dir)
@@ -3065,7 +3075,7 @@ class PlotDirective(SphinxDirective):
         # If the author specifies a stable `name:`, the SVG filename stays the same.
         # In that case we still need a way to detect content changes to avoid
         # reusing an old cached SVG (e.g. when toggling `handdrawn`).
-        if (not regenerate) and explicit_name:
+        if (not regenerate) and stable_name:
             try:
                 prev = open(abs_meta, "r", encoding="utf-8").read().strip()
             except Exception:
@@ -4364,7 +4374,10 @@ class PlotDirective(SphinxDirective):
         if not debug_mode and "viewBox" in raw_svg:
             raw_svg = _strip_root_svg_size(raw_svg)
 
-        if not debug_mode:
+        # For interactive directives we sometimes need stable, user-controlled ids
+        # across a sequence of frames. In that case we must NOT rewrite ids with a
+        # random uuid prefix.
+        if not debug_mode and not internal_mode:
             raw_svg = _rewrite_ids(raw_svg, f"cpl_{content_hash}_{uuid.uuid4().hex[:6]}_")
 
         alt_default = "Tilpasset figur"

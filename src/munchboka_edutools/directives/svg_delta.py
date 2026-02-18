@@ -219,9 +219,7 @@ def compute_svg_deltas(svg_frames: List[str]) -> Tuple[str, List[Dict[str, Any]]
             cur = _get_parent(cur, parent_map)
         return None
 
-    _OWNER_GROUP_ID_RE = re.compile(
-        r"^(?:line2d|patch|text|matplotlib\.axis|xtick|ytick)_"
-    )
+    _OWNER_GROUP_ID_RE = re.compile(r"^(?:line2d|patch|text|matplotlib\.axis|xtick|ytick)_")
 
     def _find_owner_group(elem, parent_map) -> str | None:
         """Return the nearest Matplotlib artist group id for an element.
@@ -383,7 +381,7 @@ def compute_svg_deltas(svg_frames: List[str]) -> Tuple[str, List[Dict[str, Any]]
                     if legend_diff_ratio > 0.10 or len(legend_sym_diff) > 25:
                         major_region_conflict = True
 
-                for eid in (base_ids & cur_ids):
+                for eid in base_ids & cur_ids:
                     base_region = base_region_by_id.get(eid)
                     if not base_region or not (
                         base_region.startswith("axes_") or base_region.startswith("legend_")

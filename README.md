@@ -20,6 +20,12 @@ Reusable Sphinx / Jupyter Book directives and assets for Norwegian educational c
 pip install munchboka-edutools
 ```
 
+Optional (nicer progress bars during slow builds, e.g. `interactive-graph` frame generation):
+
+```bash
+pip install munchboka-edutools[progress]
+```
+
 ## Usage
 
 ### As Sphinx Extensions (Jupyter Book `_config.yml`)

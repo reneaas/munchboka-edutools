@@ -37,7 +37,7 @@ dependencies = [
   "schemdraw>=0.21",
 ]
 
-version = "0.3.17"
+version = "0.3.18"
 
 
 [project.urls]
@@ -52,6 +52,11 @@ dev = [
   "black",
   "build",
   "twine",
+]
+
+# Optional: nicer build-time progress bars for slow directives (e.g. interactive-graph)
+progress = [
+  "tqdm>=4.66",
 ]
 
 [tool.hatch.build.targets.wheel]

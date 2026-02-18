@@ -566,10 +566,46 @@ class InteractiveGraphDirective(SphinxDirective):
 
         from docutils.statemachine import StringList
 
+        from sphinx.util import logging
+
         from .plot import PlotDirective
         from .svg_delta import compute_svg_deltas, save_delta_format
 
+        logger = logging.getLogger(__name__)
+
         internal_plot_name = f"__{os.path.basename(output_dir)}_plot_tmp"
+
+        def _iter_with_progress(it, *, total: int, desc: str):
+            """Yield from an iterator while providing build-time progress.
+
+            - If `tqdm` is available and stderr is a TTY, show a progress bar.
+            - Otherwise, emit periodic `logger.info` updates.
+            """
+            import sys
+
+            try:
+                from tqdm.auto import tqdm  # type: ignore
+            except Exception:
+                tqdm = None
+
+            if tqdm is not None and sys.stderr.isatty():
+                return tqdm(
+                    it,
+                    total=total,
+                    desc=desc,
+                    unit="frame",
+                    dynamic_ncols=True,
+                )
+
+            log_every = max(1, total // 20)  # ~5% increments
+
+            def _gen():
+                for n, item in enumerate(it, 1):
+                    if n == 1 or n == total or (n % log_every) == 0:
+                        logger.info(f"{desc}: {n}/{total}")
+                    yield item
+
+            return _gen()
 
         def _render_svg(frame_content: str) -> str:
             plot_directive = PlotDirective(
@@ -612,7 +648,14 @@ class InteractiveGraphDirective(SphinxDirective):
         # Generate all frames in memory first
         svg_frames = []
 
-        for i, value in enumerate(var_values):
+        total_frames = len(var_values)
+        desc = f"interactive-graph({var_name})"
+        logger.info(f"Generating {desc}: {total_frames} frames")
+        for i, value in _iter_with_progress(
+            enumerate(var_values),
+            total=total_frames,
+            desc=desc,
+        ):
             frame_content = "\n".join(plot_content_lines)
             frame_content = _substitute_variable(frame_content, var_name, value)
 
@@ -621,14 +664,12 @@ class InteractiveGraphDirective(SphinxDirective):
 
         # Compute deltas
         try:
+            logger.info(f"{desc}: computing SVG deltas")
             base_svg, deltas = compute_svg_deltas(svg_frames)
 
             # Save in delta format
             save_delta_format(base_svg, deltas, output_dir)
 
-            from sphinx.util import logging
-
-            logger = logging.getLogger(__name__)
             logger.info(
                 f"✓ Generated delta-based interactive graph: "
                 f"{len(svg_frames)} frames → base.svg + deltas.json"
@@ -732,7 +773,43 @@ class InteractiveGraphDirective(SphinxDirective):
         from .plot import PlotDirective
         from .svg_delta import compute_svg_deltas, save_delta_format
 
+        from sphinx.util import logging
+
+        logger = logging.getLogger(__name__)
+
         internal_plot_name = f"__{os.path.basename(output_dir)}_plot_tmp"
+
+        def _iter_with_progress(it, *, total: int, desc: str):
+            """Yield from an iterator while providing build-time progress.
+
+            - If `tqdm` is available and stderr is a TTY, show a progress bar.
+            - Otherwise, emit periodic `logger.info` updates.
+            """
+            import sys
+
+            try:
+                from tqdm.auto import tqdm  # type: ignore
+            except Exception:
+                tqdm = None
+
+            if tqdm is not None and sys.stderr.isatty():
+                return tqdm(
+                    it,
+                    total=total,
+                    desc=desc,
+                    unit="frame",
+                    dynamic_ncols=True,
+                )
+
+            log_every = max(1, total // 20)  # ~5% increments
+
+            def _gen():
+                for n, item in enumerate(it, 1):
+                    if n == 1 or n == total or (n % log_every) == 0:
+                        logger.info(f"{desc}: {n}/{total}")
+                    yield item
+
+            return _gen()
 
         def _render_svg(frame_content: str) -> str:
             plot_directive = PlotDirective(
@@ -775,8 +852,20 @@ class InteractiveGraphDirective(SphinxDirective):
         # Generate all frames in memory first
         svg_frames: List[str] = []
 
-        frame_idx = 0
-        for idx_tuple in itertools.product(*[range(n) for n in lengths]):
+        total_frames = 1
+        for n in lengths:
+            total_frames *= max(1, int(n))
+
+        desc = "interactive-graph(" + "×".join(var_names) + ")"
+        logger.info(f"Generating {desc}: {total_frames} frames")
+
+        frame_iter = _iter_with_progress(
+            itertools.product(*[range(n) for n in lengths]),
+            total=total_frames,
+            desc=desc,
+        )
+
+        for idx_tuple in frame_iter:
             variables = {
                 var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
             }
@@ -786,9 +875,9 @@ class InteractiveGraphDirective(SphinxDirective):
 
             svg_content = _render_svg(frame_content)
             svg_frames.append(svg_content)
-            frame_idx += 1
 
         # Compute deltas and write delta assets
+        logger.info(f"{desc}: computing SVG deltas")
         base_svg, deltas = compute_svg_deltas(svg_frames)
         save_delta_format(base_svg, deltas, output_dir)
 
@@ -813,9 +902,6 @@ class InteractiveGraphDirective(SphinxDirective):
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, separators=(",", ":"))
 
-        from sphinx.util import logging
-
-        logger = logging.getLogger(__name__)
         logger.info(
             f"✓ Generated multi-var delta-based interactive graph: "
             f"{len(deltas)} frames ({'×'.join(str(n) for n in lengths)}) → base.svg + deltas.json + meta.json"

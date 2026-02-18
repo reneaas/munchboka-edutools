@@ -53,7 +53,8 @@ Front matter
 * A blank line ends the front matter; remaining lines become the caption.
 * Repeated keys (multi‑valued): ``function``, ``point``, ``annotate``, ``text``,
   ``vline``, ``hline``, ``line``, ``line-segment``, ``polygon``, ``fill-polygon``,
-  ``bar``, ``axis``, ``vector``, ``angle-arc``, ``circle``, ``ellipse``, ``curve``.
+  ``fill-between``, ``bar``, ``axis``, ``vector``, ``angle-arc``, ``circle``,
+  ``ellipse``, ``curve``.
 
 Global figure & layout options
 ------------------------------
@@ -146,6 +147,21 @@ If no color is provided, only edges are drawn (alpha=0).
 extra = color, first numeric extra = alpha (default 0.1).
 Coordinates accept expressions and function label calls.
 
+Fill between
+------------
+``fill-between`` fills the region between two y-expressions as functions of ``x``.
+It is a thin wrapper around Matplotlib's ``Axes.fill_between``.
+
+Forms (all tokens are comma-separated and order-tolerant after the expressions):
+
+1. ``fill-between: y1_expr, y2_expr, (a,b) \ {x1, x2}, color, alpha, where``
+2. ``fill-between: y_expr, (a,b), color, alpha, where``  (baseline defaults to 0)
+
+* ``(a,b) \ {..}`` domain & exclusions use the same syntax as ``function:``.
+* ``color`` resolves through ``plotmath.COLORS`` then falls back to the literal token.
+* ``alpha`` is optional (default 0.2) and may be an expression like ``1/3``.
+* ``where`` is optional: ``all`` (default), ``above`` (y1 >= y2), ``below`` (y1 <= y2).
+
 Bars
 ----
 ``bar: (x, y), length, orientation`` where orientation is one of
@@ -225,7 +241,8 @@ import os
 import re
 import shutil
 import uuid
-from typing import Any, Callable, Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -235,6 +252,180 @@ from sphinx.util.docutils import SphinxDirective
 # ------------------------------------
 # Utilities
 # ------------------------------------
+
+
+@dataclass(frozen=True)
+class _PlotMacroContext:
+    """Macro context for the plot directive.
+
+    - sympy_locals: constants + sympy.Lambda definitions for use with sympify.
+    - numeric_functions: def(name)(x) callables used by the numeric evaluator
+      (resolved safely without Python eval).
+    """
+
+    sympy_locals: Dict[str, Any]
+    numeric_functions: Dict[str, Callable[[float], float]]
+
+
+def _sympy_allowed_base():
+    """Return a conservative SymPy locals dict for sympify()."""
+    import sympy
+
+    allowed = {
+        k: getattr(sympy, k)
+        for k in [
+            "pi",
+            "E",
+            "exp",
+            "sqrt",
+            "log",
+            "sin",
+            "cos",
+            "tan",
+            "asin",
+            "acos",
+            "atan",
+            "Rational",
+            "erf",
+        ]
+        if hasattr(sympy, k)
+    }
+    return allowed
+
+
+def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
+    """Expand let/def/repeat macros in the front matter.
+
+    Supported macros (front matter only):
+      - let: NAME = EXPR
+      - def: fname(arg) = EXPR
+      - repeat: n=a..b; key: value-with-n
+
+    Returns (expanded_lines, macro_ctx).
+    """
+
+    import sympy
+
+    let_re = re.compile(r"^let\s*:\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*$")
+    def_re = re.compile(r"^def\s*:\s*([A-Za-z_]\w*)\s*\(\s*([A-Za-z_]\w*)\s*\)\s*=\s*(.+?)\s*$")
+    repeat_re = re.compile(
+        r"^repeat\s*:\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*\.\.\s*(.+?)\s*;\s*([A-Za-z_][\w-]*)\s*:\s*(.*)$"
+    )
+
+    # Identify the front-matter span using the same rules as _parse_kv_block.
+    fm_start = 0
+    fm_end = 0
+    fenced = False
+    if lines and lines[0].strip() == "---":
+        fenced = True
+        fm_start = 1
+        idx = 1
+        while idx < len(lines) and lines[idx].strip() != "---":
+            idx += 1
+        fm_end = idx  # exclusive (closing fence line is at idx)
+    else:
+        # non-fenced: consume key: value lines (and blanks) until first non-kv, non-blank.
+        for i, line in enumerate(lines):
+            if not line.strip():
+                fm_end = i + 1
+                continue
+            if re.match(r"^([A-Za-z_][\w-]*)\s*:\s*(.*)$", line.rstrip()):
+                fm_end = i + 1
+                continue
+            break
+
+    base_locals: Dict[str, Any] = _sympy_allowed_base()
+    sympy_locals: Dict[str, Any] = {}
+    numeric_functions: Dict[str, Callable[[float], float]] = {}
+
+    def _sympify(expr_s: str, extra: Dict[str, Any] | None = None):
+        loc = {**base_locals, **sympy_locals}
+        if extra:
+            loc.update(extra)
+        return sympy.sympify(expr_s, locals=loc)
+
+    def _parse_int(expr_s: str) -> int:
+        v = _sympify(expr_s).evalf()
+        f = float(v)
+        i = int(round(f))
+        if abs(f - i) > 1e-9:
+            raise ValueError(f"repeat bounds must be integers, got: {expr_s}")
+        return i
+
+    def _subst_word(text: str, var: str, replacement: str) -> str:
+        return re.sub(rf"\b{re.escape(var)}\b", replacement, text)
+
+    expanded_fm: List[str] = []
+    for raw in lines[fm_start:fm_end]:
+        line = raw.rstrip("\n")
+        if not line.strip():
+            expanded_fm.append(raw)
+            continue
+
+        m_let = let_re.match(line.strip())
+        if m_let:
+            name, expr_s = m_let.group(1), m_let.group(2)
+            try:
+                sympy_locals[name] = _sympify(expr_s)
+            except Exception:
+                # Keep directive fault-tolerant: ignore invalid macro.
+                pass
+            continue
+
+        m_def = def_re.match(line.strip())
+        if m_def:
+            fname, argname, body_s = m_def.group(1), m_def.group(2), m_def.group(3)
+            try:
+                arg_sym = sympy.symbols(argname)
+                body_expr = _sympify(body_s, extra={argname: arg_sym})
+                sympy_locals[fname] = sympy.Lambda(arg_sym, body_expr)
+                fn_np = sympy.lambdify(arg_sym, body_expr, modules=["numpy"])
+
+                def _make_num(fn):
+                    return lambda x: float(fn(float(x)))
+
+                numeric_functions[fname] = _make_num(fn_np)
+            except Exception:
+                pass
+            continue
+
+        m_rep = repeat_re.match(line.strip())
+        if m_rep:
+            var, a_s, b_s, key, template = (
+                m_rep.group(1),
+                m_rep.group(2),
+                m_rep.group(3),
+                m_rep.group(4),
+                m_rep.group(5),
+            )
+            try:
+                a = _parse_int(a_s)
+                b = _parse_int(b_s)
+                step = 1 if b >= a else -1
+                for k in range(a, b + step, step):
+                    val_s = _subst_word(template, var, str(k))
+                    expanded_fm.append(f"{key}: {val_s}")
+            except Exception:
+                # Invalid repeat -> keep the original line to avoid silent deletion.
+                expanded_fm.append(raw)
+            continue
+
+        expanded_fm.append(raw)
+
+    if fenced:
+        # Reconstruct, leaving fences and post-fence lines untouched
+        out = [lines[0]] + expanded_fm
+        if fm_end < len(lines) and lines[fm_end].strip() == "---":
+            out.append(lines[fm_end])
+            out.extend(lines[fm_end + 1 :])
+        else:
+            out.extend(lines[fm_end:])
+        return out, _PlotMacroContext(
+            sympy_locals=sympy_locals, numeric_functions=numeric_functions
+        )
+
+    out = expanded_fm + lines[fm_end:]
+    return out, _PlotMacroContext(sympy_locals=sympy_locals, numeric_functions=numeric_functions)
 
 
 def _hash_key(*parts) -> str:
@@ -247,14 +438,14 @@ def _hash_key(*parts) -> str:
     return h.hexdigest()[:12]
 
 
-def _compile_function(expr: str) -> Callable:
+def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
     import sympy, numpy as np
     from scipy import special as sp_special
 
     expr = expr.strip()
     x = sympy.symbols("x")
     try:
-        sym = sympy.sympify(expr)
+        sym = sympy.sympify(expr, locals=sympy_locals or {})
     except Exception as e:
         raise ValueError(f"Ugyldig funksjonsuttrykk '{expr}': {e}")
     # If the expression does not depend on x, treat it as a constant function
@@ -450,12 +641,14 @@ class PlotDirective(SphinxDirective):
         "ylabel": directives.unchanged,
     }
 
-    def _parse_kv_block(self) -> Tuple[Dict[str, Any], Dict[str, List[str]], int]:
+    def _parse_kv_block(
+        self, lines: List[str] | None = None
+    ) -> Tuple[Dict[str, Any], Dict[str, List[str]], int]:
         """Parse front matter supporting repeated keys for function/point/annotate.
 
         Returns: (scalars, lists, caption_idx)
         """
-        lines = list(self.content)
+        lines = list(self.content) if lines is None else list(lines)
         scalars: Dict[str, Any] = {}
         lists: Dict[str, List[str]] = {
             "function": [],
@@ -469,6 +662,7 @@ class PlotDirective(SphinxDirective):
             "polygon": [],
             "axis": [],
             "fill-polygon": [],
+            "fill-between": [],
             "bar": [],
             "vector": [],
             "line-segment": [],
@@ -535,7 +729,9 @@ class PlotDirective(SphinxDirective):
                 err += nodes.paragraph(text=f"Kunne ikke importere plotmath: {e}")
                 return [err]
 
-        scalars, lists, caption_idx = self._parse_kv_block()
+        raw_lines = list(self.content)
+        expanded_lines, macro_ctx = _parse_plot_macros(raw_lines)
+        scalars, lists, caption_idx = self._parse_kv_block(expanded_lines)
         merged: Dict[str, Any] = {**scalars, **self.options}
 
         # debug print removed
@@ -694,24 +890,9 @@ class PlotDirective(SphinxDirective):
             def _sym_eval_num(txt: str) -> float:
                 import sympy
 
-                allowed = {
-                    k: getattr(sympy, k)
-                    for k in [
-                        "pi",
-                        "E",
-                        "exp",
-                        "sqrt",
-                        "log",
-                        "sin",
-                        "cos",
-                        "tan",
-                        "asin",
-                        "acos",
-                        "atan",
-                        "Rational",
-                    ]
-                    if hasattr(sympy, k)
-                }
+                allowed = _sympy_allowed_base()
+                # Macro constants and sympy lambdas (from let/def)
+                allowed.update(macro_ctx.sympy_locals)
                 expr = sympy.sympify(txt, locals=allowed)
                 return float(expr.evalf())
 
@@ -839,7 +1020,7 @@ class PlotDirective(SphinxDirective):
         for item in raw_fn_items:
             expr, label, domain, excludes, color, endpoints = _parse_function_item(item)
             try:
-                functions.append(_compile_function(expr))
+                functions.append(_compile_function(expr, sympy_locals=macro_ctx.sympy_locals))
                 fn_exprs.append(expr)
                 fn_labels_list.append(label or "")
                 fn_domains_list.append(domain)
@@ -882,19 +1063,32 @@ class PlotDirective(SphinxDirective):
                 m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s)
                 if not m:
                     break
-                lbl = m.group(1)
-                if lbl not in fn_labels_list:
-                    # Skip this label, look for the next one
-                    start_next = m.start() + 1
-                    n = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[start_next:])
-                    if not n:
+                # Find the first callable name we can resolve (either a user macro def
+                # or a previously defined function label).
+                pos = 0
+                name = None
+                m2 = None
+                while True:
+                    m2 = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[pos:])
+                    if not m2:
                         break
-                    m = n
-                    lbl = m.group(1)
-                    if lbl not in fn_labels_list:
+                    cand = m2.group(1)
+                    abs_start = pos + m2.start()
+                    abs_end = pos + m2.end()
+                    if cand in macro_ctx.numeric_functions or cand in fn_labels_list:
+                        name = cand
+                        # rebind to absolute match span
+                        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[abs_start:])
+                        # We'll use abs_start/abs_end directly
+                        m_start = abs_start
+                        m_end = abs_end
                         break
-                # Find matching closing parenthesis for this call
-                start = m.end() - 1  # position of '('
+                    pos = abs_end
+
+                if not m2 or name is None:
+                    break
+
+                start = m_end - 1  # position of '('
                 depth = 0
                 end = None
                 for i in range(start, len(s)):
@@ -907,16 +1101,19 @@ class PlotDirective(SphinxDirective):
                             break
                 if end is None:
                     break
+
                 arg_expr = s[start + 1 : end]
                 try:
                     arg_val = _eval_expr(arg_expr)
-                    idx = fn_labels_list.index(lbl)
-                    f = functions[idx]
-                    yv = float(f([arg_val])[0])
-                    s = s[: m.start()] + f"{yv}" + s[end + 1 :]
+                    if name in macro_ctx.numeric_functions:
+                        yv = float(macro_ctx.numeric_functions[name](arg_val))
+                    else:
+                        idx = fn_labels_list.index(name)
+                        f = functions[idx]
+                        yv = float(f([arg_val])[0])
+                    s = s[:m_start] + f"{yv}" + s[end + 1 :]
                     continue
                 except Exception:
-                    # leave unresolved for sympy if evaluation fails
                     break
             allowed = {
                 k: getattr(sympy, k)
@@ -938,6 +1135,10 @@ class PlotDirective(SphinxDirective):
                 if hasattr(sympy, k)
             }
             try:
+                # Merge macro constants + sympy lambdas into allowed locals.
+                # NOTE: numeric 'def' calls are already handled above, but
+                # sympy_locals is still useful for constants.
+                allowed.update(macro_ctx.sympy_locals)
                 expr = sympy.sympify(s, locals=allowed)
                 valf = float(expr.evalf())
                 _num_cache[s0] = valf
@@ -1850,6 +2051,296 @@ class PlotDirective(SphinxDirective):
                     break
             if pts_fp:
                 poly_fill_vals.append((pts_fp, color_fp, alpha_fp))
+
+        # fill-between: y1_expr[, y2_expr][, domain \\ {exclusions}][, color][, alpha][, where]
+        # Uses Matplotlib's fill_between; expressions compiled the same way as functions.
+        # Defaults: baseline y2=0, color -> blue, alpha -> 0.2, where -> all
+        fill_between_vals: List[
+            Tuple[
+                Callable, Callable, Tuple[float, float] | None, List[float], str | None, float, str
+            ]
+        ] = []
+
+        # Allow fill-between expressions to reference existing function labels like f(x)
+        # by providing sympy.Lambda objects for each label.
+        sympy_locals_fill_between: Dict[str, Any] = dict(macro_ctx.sympy_locals)
+        try:
+            import sympy as _sympy_fb
+
+            _x_sym = _sympy_fb.Symbol("x")
+            _allowed_base_fb = _sympy_allowed_base()
+            _allowed_base_fb.update(macro_ctx.sympy_locals)
+            for _expr_src, _lbl_src in zip(fn_exprs, fn_labels_list):
+                _lbl = str(_lbl_src or "").strip()
+                if not _lbl:
+                    continue
+                # Only accept simple identifiers as label names
+                if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", _lbl):
+                    continue
+                if _lbl in sympy_locals_fill_between:
+                    continue
+                try:
+                    _expr_sym = _sympy_fb.sympify(str(_expr_src), locals=_allowed_base_fb)
+                    sympy_locals_fill_between[_lbl] = _sympy_fb.Lambda(_x_sym, _expr_sym)
+                except Exception:
+                    # If we fail to build the lambda, just skip label support for this one
+                    pass
+        except Exception:
+            # Sympy not available (shouldn't happen in normal usage); proceed without label support
+            sympy_locals_fill_between = dict(macro_ctx.sympy_locals)
+
+        def _looks_like_color_fb(tok: str) -> bool:
+            if not isinstance(tok, str):
+                return False
+            t = tok.strip()
+            if not t:
+                return False
+            if re.match(r"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$", t):
+                return True
+            # Keep same rule as function parsing: do not treat single-letter shorthands as colors
+            if len(t) == 1:
+                return False
+            if t.lower().startswith("tab:"):
+                return True
+            if re.match(r"^C\d+$", t):
+                return True
+            try:
+                import plotmath as _pm_fb
+
+                if _pm_fb.COLORS.get(t) is not None:
+                    return True
+            except Exception:
+                pass
+            return False
+
+        def _sym_eval_num_fb(txt: str) -> float:
+            import sympy
+
+            allowed = _sympy_allowed_base()
+            allowed.update(macro_ctx.sympy_locals)
+            expr = sympy.sympify(txt, locals=allowed)
+            return float(expr.evalf())
+
+        def _extract_domain_and_exclusions_fb(text: str):
+            """Return (domain_tuple|None, exclusions_list, text_without_domain)."""
+            n = len(text)
+            i = 0
+            while i < n:
+                if text[i] in "([⟨":
+                    depth = 1
+                    j = i + 1
+                    right_bracket = None
+                    while j < n and depth > 0:
+                        ch = text[j]
+                        if ch in "([⟨":
+                            depth += 1
+                        elif ch in ")]⟩":
+                            depth -= 1
+                            if depth == 0:
+                                right_bracket = ch
+                        j += 1
+                    if depth != 0:
+                        break
+                    content = text[i + 1 : j - 1].strip()
+                    depth2 = 0
+                    comma_index: int | None = None
+                    for k, ch in enumerate(content):
+                        if ch == "(":
+                            depth2 += 1
+                        elif ch == ")":
+                            depth2 -= 1
+                        elif ch == "," and depth2 == 0:
+                            if comma_index is None:
+                                comma_index = k
+                            else:
+                                comma_index = None
+                                break
+                    if comma_index is not None:
+                        left = content[:comma_index].strip()
+                        right = content[comma_index + 1 :].strip()
+                        if left and right:
+                            k2 = j
+                            excl_list: List[float] = []
+                            while k2 < n and text[k2].isspace():
+                                k2 += 1
+                            if k2 < n and text[k2] == "\\":
+                                k2 += 1
+                                while k2 < n and text[k2].isspace():
+                                    k2 += 1
+                                if k2 < n and text[k2] == "{":
+                                    k2 += 1
+                                    excl_start = k2
+                                    while k2 < n and text[k2] != "}":
+                                        k2 += 1
+                                    excl_content = text[excl_start:k2]
+                                    if k2 < n and text[k2] == "}":
+                                        k2 += 1
+                                    for tok in [
+                                        t.strip() for t in excl_content.split(",") if t.strip()
+                                    ]:
+                                        try:
+                                            excl_list.append(_sym_eval_num_fb(tok))
+                                        except Exception:
+                                            pass
+                            dom_tuple: Tuple[float, float] | None = None
+                            try:
+                                d0 = _sym_eval_num_fb(left)
+                                d1 = _sym_eval_num_fb(right)
+                                dom_tuple = (d0, d1)
+                            except Exception:
+                                dom_tuple = None
+                            new_text = (text[:i] + text[k2:]).strip()
+                            return dom_tuple, excl_list, new_text
+                    i = j
+                    continue
+                i += 1
+            return None, [], text
+
+        for fb in lists.get("fill-between", []):
+            s = str(fb).strip()
+            if not s:
+                continue
+
+            # defaults
+            y1_expr: str | None = None
+            y2_expr: str | None = None
+            dom_fb: Tuple[float, float] | None = None
+            excl_fb: List[float] = []
+            color_fb: str | None = None
+            alpha_fb: float = 0.2
+            where_fb: str = "all"  # all|above|below
+
+            lit_fb = _safe_literal(s)
+            if isinstance(lit_fb, (list, tuple)) and len(lit_fb) >= 1:
+                try:
+                    y1_expr = str(lit_fb[0]).strip()
+                    rest_items = list(lit_fb[1:])
+                    # Decide if item[0] is a second expression or not
+                    if rest_items and isinstance(rest_items[0], str):
+                        cand = rest_items[0].strip()
+                        if (
+                            cand
+                            and cand.lower() not in {"all", "above", "below"}
+                            and not _looks_like_color_fb(cand)
+                        ):
+                            y2_expr = cand
+                            rest_items = rest_items[1:]
+                    for item in rest_items:
+                        if dom_fb is None and isinstance(item, (list, tuple)) and len(item) == 2:
+                            try:
+                                dom_fb = (
+                                    _sym_eval_num_fb(str(item[0])),
+                                    _sym_eval_num_fb(str(item[1])),
+                                )
+                                continue
+                            except Exception:
+                                pass
+                        if isinstance(item, (set, list, tuple)) and not (
+                            isinstance(item, (list, tuple)) and len(item) == 2
+                        ):
+                            for v in item:
+                                try:
+                                    excl_fb.append(_sym_eval_num_fb(str(v)))
+                                except Exception:
+                                    pass
+                            continue
+                        if isinstance(item, (int, float)):
+                            alpha_fb = float(item)
+                            continue
+                        if isinstance(item, str):
+                            tok = item.strip().strip("\"'")
+                            low = tok.lower()
+                            if low.startswith("where="):
+                                low = low.split("=", 1)[1].strip()
+                            if low in {"all", "above", "below"}:
+                                where_fb = low
+                                continue
+                            if low.startswith("alpha="):
+                                try:
+                                    alpha_fb = float(_sym_eval_num_fb(tok.split("=", 1)[1].strip()))
+                                except Exception:
+                                    pass
+                                continue
+                            if low.startswith("color="):
+                                if color_fb is None:
+                                    color_fb = tok.split("=", 1)[1].strip()
+                                continue
+                            # try alpha first (allow expressions like 1/3)
+                            if re.match(r"^[0-9.+\-*/ ()]+$", tok) and "x" not in tok:
+                                try:
+                                    alpha_fb = float(_sym_eval_num_fb(tok))
+                                    continue
+                                except Exception:
+                                    pass
+                            if color_fb is None and _looks_like_color_fb(tok):
+                                color_fb = tok
+                                continue
+                except Exception:
+                    y1_expr = None
+
+            if y1_expr is None:
+                # string form: allow domain/exclusions like functions
+                dom_fb, excl_fb, s_wo_dom = _extract_domain_and_exclusions_fb(s)
+                parts = _split_top_level_line(s_wo_dom)
+                if not parts:
+                    continue
+                y1_expr = parts[0].strip()
+                extras = [p.strip() for p in parts[1:] if str(p).strip()]
+                # If the first extra looks like a y2 expression, consume it
+                if extras:
+                    cand = extras[0]
+                    low = cand.lower()
+                    if not (
+                        low in {"all", "above", "below"}
+                        or low.startswith("where=")
+                        or low.startswith("alpha=")
+                        or low.startswith("color=")
+                        or _looks_like_color_fb(cand)
+                    ):
+                        y2_expr = cand
+                        extras = extras[1:]
+                for tok in extras:
+                    t = tok.strip().strip("\"'")
+                    low = t.lower()
+                    if low.startswith("where="):
+                        low = low.split("=", 1)[1].strip()
+                    if low in {"all", "above", "below"}:
+                        where_fb = low
+                        continue
+                    if low.startswith("alpha="):
+                        try:
+                            alpha_fb = float(_sym_eval_num_fb(t.split("=", 1)[1].strip()))
+                        except Exception:
+                            pass
+                        continue
+                    if low.startswith("color="):
+                        if color_fb is None:
+                            color_fb = t.split("=", 1)[1].strip()
+                        continue
+                    if color_fb is None and _looks_like_color_fb(t):
+                        color_fb = t
+                        continue
+                    # alpha token
+                    if re.match(r"^[0-9.+\-*/ ()]+$", t) and "x" not in t:
+                        try:
+                            alpha_fb = float(_sym_eval_num_fb(t))
+                            continue
+                        except Exception:
+                            pass
+
+            if not y1_expr:
+                continue
+            if not y2_expr:
+                y2_expr = "0"
+            try:
+                f1 = _compile_function(y1_expr, sympy_locals=sympy_locals_fill_between)
+                f2 = _compile_function(y2_expr, sympy_locals=sympy_locals_fill_between)
+            except Exception:
+                # Do not fail build for a bad fill-between item
+                continue
+            fill_between_vals.append(
+                (f1, f2, dom_fb, sorted(excl_fb), color_fb, float(alpha_fb), where_fb)
+            )
 
         # line-segment: (x1,y1), (x2,y2)[, linestyle][, color]  (style/color optional, any order)
         line_segment_vals: List[
@@ -2903,6 +3394,91 @@ class PlotDirective(SphinxDirective):
                                 zorder=10,
                             )
 
+                    # fill-between (draw before functions so curves overlay the fill)
+                    if "fill_between_vals" in locals() and fill_between_vals:
+                        default_fb_color = plotmath.COLORS.get("blue")
+                        try:
+                            from matplotlib import colors as _mcolors_fb
+                        except Exception:
+                            _mcolors_fb = None
+                        for (
+                            f1_fb,
+                            f2_fb,
+                            dom_fb,
+                            exs_fb,
+                            col_fb,
+                            a_fb,
+                            where_fb,
+                        ) in fill_between_vals:
+                            x0_fb, x1_fb = dom_fb if dom_fb is not None else (xmin, xmax)
+                            try:
+                                x0_fb, x1_fb = float(x0_fb), float(x1_fb)
+                            except Exception:
+                                x0_fb, x1_fb = xmin, xmax
+                            if x1_fb < x0_fb:
+                                x0_fb, x1_fb = x1_fb, x0_fb
+                            N_fb = int(2**14)
+                            x_fb = np.linspace(x0_fb, x1_fb, N_fb)
+                            try:
+                                y1_fb = f1_fb(x_fb)
+                                y2_fb = f2_fb(x_fb)
+                            except Exception:
+                                continue
+                            y1_fb = np.asarray(y1_fb, dtype=float)
+                            y2_fb = np.asarray(y2_fb, dtype=float)
+                            y1_fb[~np.isfinite(y1_fb)] = np.nan
+                            y2_fb[~np.isfinite(y2_fb)] = np.nan
+
+                            # exclusions: blank a small window around each excluded x to prevent bridges
+                            exs_in_fb = [e for e in exs_fb if x0_fb < e < x1_fb]
+                            if exs_in_fb and N_fb > 1:
+                                dx_fb = (x1_fb - x0_fb) / (N_fb - 1)
+                                w_fb = max(4 * dx_fb, 1e-6 * (1.0 + max(abs(e) for e in exs_in_fb)))
+                                for e in exs_in_fb:
+                                    try:
+                                        maskx = np.abs(x_fb - e) <= w_fb
+                                        if maskx.any():
+                                            y1_fb[maskx] = np.nan
+                                            y2_fb[maskx] = np.nan
+                                        j = int(np.argmin(np.abs(x_fb - e)))
+                                        for k in (j - 2, j - 1, j, j + 1, j + 2):
+                                            if 0 <= k < y1_fb.size:
+                                                y1_fb[k] = np.nan
+                                                y2_fb[k] = np.nan
+                                    except Exception:
+                                        pass
+
+                            mask_fb = np.isfinite(y1_fb) & np.isfinite(y2_fb)
+                            where_mode = (where_fb or "all").strip().lower()
+                            if where_mode == "above":
+                                mask_fb = mask_fb & (y1_fb >= y2_fb)
+                            elif where_mode == "below":
+                                mask_fb = mask_fb & (y1_fb <= y2_fb)
+
+                            if col_fb:
+                                _mapped_fb = plotmath.COLORS.get(col_fb)
+                            else:
+                                _mapped_fb = None
+                            col_use_fb = (_mapped_fb if _mapped_fb else col_fb) or default_fb_color
+                            if _mcolors_fb is not None:
+                                try:
+                                    _ = _mcolors_fb.to_rgba(col_use_fb)
+                                except Exception:
+                                    col_use_fb = default_fb_color
+                            try:
+                                ax.fill_between(
+                                    x_fb,
+                                    y1_fb,
+                                    y2_fb,
+                                    where=mask_fb,
+                                    interpolate=True,
+                                    color=col_use_fb,
+                                    alpha=float(a_fb) if a_fb is not None else 0.2,
+                                    linewidth=0,
+                                )
+                            except Exception:
+                                pass
+
                     any_label = False
                     for f, lbl, dom, exs, col_fun, endpoints in zip(
                         functions,
@@ -3842,7 +4418,7 @@ class PlotDirective(SphinxDirective):
             figure["classes"].extend(extra_classes)
         figure["align"] = merged.get("align", "center")
 
-        caption_lines = list(self.content)[caption_idx:]
+        caption_lines = list(expanded_lines)[caption_idx:]
         while caption_lines and not caption_lines[0].strip():
             caption_lines.pop(0)
         if caption_lines:

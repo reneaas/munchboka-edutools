@@ -131,7 +131,51 @@ Plot test
    width: 60%
 
    Enkel figur.
+
+.. plot::
+
+    function: sin(x), f, (0, 4)
+    fill-between: f(x), 0, (0, 4), blue, 0.2, where=above
+    width: 40%
+
+    Fill-between test (function label).
+
+.. plot::
+
+    let: L = 3
+    let: r = 1/2
+    def: s(x) = L*(1 - r**x)
+    repeat: n=1..3; point: (s(n), 0)
+    function: s(x), s(x), (0, 4)
+    fill-between: s(x), 0, (0, 4), blue, 0.2, where=above
+    width: 40%
+
+    Makrotest (let/def/repeat).
 """
+    )
+
+    # Smoke test interactive-graph directive with plot-style macros.
+    (src / "interactivegraph.rst").write_text(
+        """
+Interactive graph test
+======================
+
+.. interactive-graph::
+   :width: 60%
+
+   interactive-var: a, 0, 2, 3
+   let: L = 3
+   def: s(x) = L*(1 + a*x)
+   repeat: n=1..2; point: (n, s(n))
+   function: s(x), s
+   xmin: 0
+   xmax: L
+   ymin: 0
+   ymax: 10
+
+   Makrotest i interactive-graph.
+""".lstrip(),
+        encoding="utf8",
     )
 
     app2 = Sphinx(
@@ -148,6 +192,11 @@ Plot test
     assert re.search(
         r"<svg[^>]*class=\"[^\"]*graph-inline-svg", plot_html
     ), "Inline plot SVG missing"
+    assert "Ugyldig funksjon 's(x)'" not in plot_html
+
+    ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
+    assert "interactive-graph-wrapper" in ig_html
+    assert 'type="range"' in ig_html
 
     # Add Jeopardy page and ensure container and assets
     (src / "jeopardy.rst").write_text(

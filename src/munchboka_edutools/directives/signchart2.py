@@ -664,9 +664,7 @@ def _eval_sign_at(
     return 1 if fv > 0 else -1
 
 
-def _domain_breakpoints_real(
-    f: sp.Expr, x: sp.Symbol
-) -> tuple[list[Any], sp.Set | None]:
+def _domain_breakpoints_real(f: sp.Expr, x: sp.Symbol) -> tuple[list[Any], sp.Set | None]:
     """Best-effort extraction of real-domain boundary points.
 
     This is used to split the sign chart into intervals where a function like log(x)

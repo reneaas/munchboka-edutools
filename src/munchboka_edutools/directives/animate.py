@@ -181,7 +181,13 @@ def _get_safe_namespace(**extra_vars) -> dict:
     return namespace
 
 
-def _parse_function_item(s: str, default_xmin: float, default_xmax: float) -> Tuple[
+def _parse_function_item(
+    s: str,
+    default_xmin: float,
+    default_xmax: float,
+    *,
+    sympy_locals: Dict[str, Any] | None = None,
+) -> Tuple[
     str,  # expression
     str | None,  # label
     Tuple[float, float] | None,  # domain
@@ -258,7 +264,12 @@ def _parse_function_item(s: str, default_xmin: float, default_xmax: float) -> Tu
             ]
             if hasattr(sympy, k)
         }
-        expr = sympy.sympify(txt, locals=allowed)
+
+        loc = dict(allowed)
+        if sympy_locals:
+            loc.update(sympy_locals)
+
+        expr = sympy.sympify(txt, locals=loc)
         return float(expr.evalf())
 
     # Helper to extract domain and exclusions from text
@@ -1490,6 +1501,37 @@ class AnimateDirective(SphinxDirective):
         # Create content list from our frame content
         content_lines = content.strip().split("\n")
 
+        # Expand plot macros (let/def/repeat) for feature-parity with plot.py.
+        # interactive-graph and multi-interactive-graph reuse this frame renderer.
+        macro_sympy_locals: Dict[str, Any] = {}
+        try:
+            expanded_lines, macro_ctx = plot_module._parse_plot_macros(content_lines)
+            content_lines = [str(l).rstrip("\n") for l in expanded_lines]
+            macro_sympy_locals = dict(getattr(macro_ctx, "sympy_locals", {}) or {})
+        except Exception:
+            macro_sympy_locals = {}
+
+        def _extend_namespace_with_macros(ns: Dict[str, Any]) -> Dict[str, Any]:
+            """Add macro `let:` constants and `def:` functions to an eval namespace."""
+            if not macro_sympy_locals:
+                return ns
+            try:
+                import sympy as _sympy
+
+                for _name, _val in macro_sympy_locals.items():
+                    try:
+                        if isinstance(_val, _sympy.Lambda):
+                            _arg = _val.variables[0]
+                            _fn_np = _sympy.lambdify(_arg, _val.expr, modules=["numpy"])
+                            ns[_name] = _fn_np
+                        else:
+                            ns[_name] = float(_sympy.N(_val))
+                    except Exception:
+                        continue
+            except Exception:
+                return ns
+            return ns
+
         # Parse the content using the same logic as plot directive
         scalars_dict = {}
         lists_dict = {
@@ -1587,13 +1629,30 @@ class AnimateDirective(SphinxDirective):
         # Import plot directive helpers
         from munchboka_edutools.directives import plot as plot_module
 
-        # Extract plot parameters
+        # Extract plot parameters (supports SymPy expressions + macro `let:` locals)
+        import sympy as _sympy
+
+        _sympy_base_locals: Dict[str, Any] = {}
+        try:
+            _sympy_base_locals = plot_module._sympy_allowed_base()
+        except Exception:
+            _sympy_base_locals = {}
+        _sympy_eval_locals: Dict[str, Any] = {**_sympy_base_locals, **macro_sympy_locals}
+
+        def _sym_float(v: Any) -> float:
+            if isinstance(v, (int, float)):
+                return float(v)
+            s = str(v).strip()
+            if not s:
+                raise ValueError("empty")
+            return float(_sympy.sympify(s, locals=_sympy_eval_locals).evalf())
+
         def _f(name, default):
             v = merged.get(name)
             if v in (None, ""):
                 return default
             try:
-                return float(v)
+                return _sym_float(v)
             except Exception:
                 return default
 
@@ -1641,8 +1700,11 @@ class AnimateDirective(SphinxDirective):
 
         parsed_figsize = _parse_figsize(figsize_raw)
         alpha_val = merged.get("alpha", 1.0)
-        if alpha_val:
-            alpha_val = float(alpha_val)
+        try:
+            if alpha_val not in (None, ""):
+                alpha_val = _sym_float(alpha_val)
+        except Exception:
+            alpha_val = 1.0
 
         grid_flag = str(merged.get("grid", "true")).lower() in ("true", "yes", "on", "1")
         ticks_flag = str(merged.get("ticks", "true")).lower() in ("true", "yes", "on", "1")
@@ -1704,11 +1766,11 @@ class AnimateDirective(SphinxDirective):
         for fn_spec in lists_dict.get("function", []):
             # Parse function with domain, exclusions, and endpoint markers
             expr, func_label, domain, excludes, color, endpoints = _parse_function_item(
-                fn_spec, xmin, xmax
+                fn_spec, xmin, xmax, sympy_locals=macro_sympy_locals
             )
 
             try:
-                func = plot_module._compile_function(expr)
+                func = plot_module._compile_function(expr, sympy_locals=macro_sympy_locals)
 
                 # Determine x range: use domain if specified, otherwise use plot bounds
                 if domain is not None:
@@ -1798,7 +1860,9 @@ class AnimateDirective(SphinxDirective):
                     y_expr = parts[1].strip()
 
                     # Evaluate x
-                    namespace = _get_safe_namespace(**{var_name: var_value})
+                    namespace = _extend_namespace_with_macros(
+                        _get_safe_namespace(**{var_name: var_value})
+                    )
                     x_val = eval(x_expr, namespace)
 
                     # Evaluate y - might reference a user-defined function
@@ -1832,7 +1896,9 @@ class AnimateDirective(SphinxDirective):
                 color = parts[3] if len(parts) > 3 else None
 
                 # Evaluate x position
-                namespace = _get_safe_namespace(**{var_name: var_value})
+                namespace = _extend_namespace_with_macros(
+                    _get_safe_namespace(**{var_name: var_value})
+                )
                 x_val = eval(x_expr, namespace)
 
                 # Get function
@@ -1878,7 +1944,7 @@ class AnimateDirective(SphinxDirective):
             }
 
             def _build_eval_namespace_lines():
-                ns = _get_safe_namespace(**{var_name: var_value})
+                ns = _extend_namespace_with_macros(_get_safe_namespace(**{var_name: var_value}))
 
                 # Provide scalar-friendly wrappers for user-defined functions (from function labels)
                 for _fname, _f in function_dict.items():

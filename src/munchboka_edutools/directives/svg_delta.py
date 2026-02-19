@@ -1210,12 +1210,12 @@ def generate_multi_delta_html(
 .interactive-slider-row {{
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     padding: 6px 0;
 }}
 .interactive-slider-row .label {{
     font-family: monospace;
-    min-width: 110px;
+    min-width: 55px;
     font-size: 14px;
     text-align: left;
     white-space: nowrap;

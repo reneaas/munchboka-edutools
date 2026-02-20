@@ -241,6 +241,8 @@ import os
 import re
 import shutil
 import uuid
+import ast
+import math
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -436,6 +438,11 @@ def _hash_key(*parts) -> str:
         h.update(str(p).encode("utf-8"))
         h.update(b"||")
     return h.hexdigest()[:12]
+
+
+# Bump this when placeholder formatting behavior changes, to avoid reusing old
+# cached SVGs whose content no longer matches the current renderer.
+_TEXT_PLACEHOLDER_FORMAT_VERSION = 2
 
 
 def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
@@ -733,6 +740,255 @@ class PlotDirective(SphinxDirective):
         expanded_lines, macro_ctx = _parse_plot_macros(raw_lines)
         scalars, lists, caption_idx = self._parse_kv_block(expanded_lines)
         merged: Dict[str, Any] = {**scalars, **self.options}
+
+        def _format_number_like(val: Any) -> str:
+            if isinstance(val, bool):
+                return "True" if val else "False"
+            try:
+                f = float(val)
+            except Exception:
+                return str(val)
+            if abs(f) < 1e10 and (abs(f) > 1e-4 or f == 0):
+                return f"{f:.10f}".rstrip("0").rstrip(".")
+            return f"{f:.6e}"
+
+        def _safe_eval_placeholder_expr(
+            expr_str: str,
+            *,
+            names: Dict[str, Any],
+            funcs: Dict[str, Callable[..., Any]],
+        ) -> Any:
+            """Safely evaluate a small subset of Python expressions.
+
+            Allowed:
+            - literals (numbers, True/False)
+            - names resolved from `names`
+            - arithmetic (+,-,*,/,**)
+            - comparisons (<,<=,>,>=,==,!=) including chained
+            - boolean ops (and/or)
+            - calls of whitelisted functions in `funcs`
+
+            Disallowed:
+            - attribute access, subscripts, comprehensions, lambdas, etc.
+            """
+
+            # Allow math-ish caret as power.
+            expr_str = expr_str.replace("^", "**")
+
+            ops_bin = {
+                ast.Add: lambda a, b: a + b,
+                ast.Sub: lambda a, b: a - b,
+                ast.Mult: lambda a, b: a * b,
+                ast.Div: lambda a, b: a / b,
+                ast.Pow: lambda a, b: a**b,
+                ast.Mod: lambda a, b: a % b,
+            }
+            ops_un = {
+                ast.UAdd: lambda a: +a,
+                ast.USub: lambda a: -a,
+                ast.Not: lambda a: not a,
+            }
+            ops_cmp = {
+                ast.Lt: lambda a, b: a < b,
+                ast.LtE: lambda a, b: a <= b,
+                ast.Gt: lambda a, b: a > b,
+                ast.GtE: lambda a, b: a >= b,
+                ast.Eq: lambda a, b: a == b,
+                ast.NotEq: lambda a, b: a != b,
+            }
+
+            def _eval(node: ast.AST) -> Any:
+                if isinstance(node, ast.Expression):
+                    return _eval(node.body)
+                if isinstance(node, ast.Constant):
+                    return node.value
+                if isinstance(node, ast.Name):
+                    if node.id in names:
+                        return names[node.id]
+                    raise NameError(node.id)
+                if isinstance(node, ast.UnaryOp):
+                    op_t = type(node.op)
+                    if op_t not in ops_un:
+                        raise ValueError("Unsupported unary op")
+                    return ops_un[op_t](_eval(node.operand))
+                if isinstance(node, ast.BinOp):
+                    op_t = type(node.op)
+                    if op_t not in ops_bin:
+                        raise ValueError("Unsupported binary op")
+                    return ops_bin[op_t](_eval(node.left), _eval(node.right))
+                if isinstance(node, ast.BoolOp):
+                    if isinstance(node.op, ast.And):
+                        for v in node.values:
+                            if not _eval(v):
+                                return False
+                        return True
+                    if isinstance(node.op, ast.Or):
+                        for v in node.values:
+                            if _eval(v):
+                                return True
+                        return False
+                    raise ValueError("Unsupported boolean op")
+                if isinstance(node, ast.Compare):
+                    left = _eval(node.left)
+                    for op, comp in zip(node.ops, node.comparators):
+                        op_t = type(op)
+                        if op_t not in ops_cmp:
+                            raise ValueError("Unsupported comparison")
+                        right = _eval(comp)
+                        if not ops_cmp[op_t](left, right):
+                            return False
+                        left = right
+                    return True
+                if isinstance(node, ast.Call):
+                    if not isinstance(node.func, ast.Name):
+                        raise ValueError("Only direct function calls allowed")
+                    fname = node.func.id
+                    if fname not in funcs:
+                        raise NameError(fname)
+                    if node.keywords:
+                        raise ValueError("Keyword args not allowed")
+                    args = [_eval(a) for a in node.args]
+                    return funcs[fname](*args)
+                raise ValueError("Unsupported expression")
+
+            parsed = ast.parse(expr_str, mode="eval")
+            return _eval(parsed)
+
+        def _format_text_placeholders(text: str) -> str:
+            """Evaluate `{...}` placeholders in plot text.
+
+            Supports `{expr}` / `{expr:fmt}` and comparisons like `{f(a) < f(a+h)}`.
+            Preserves LaTeX command argument braces and escaped braces.
+            """
+            if "{" not in text or "}" not in text:
+                return text
+
+            lbrace_token = "\u0000LBRACE\u0000"
+            rbrace_token = "\u0000RBRACE\u0000"
+            tmp = text.replace("{{", lbrace_token).replace("}}", rbrace_token)
+
+            def _is_latex_command_argument(s: str, lbrace_index: int) -> bool:
+                j = lbrace_index - 1
+                while j >= 0 and s[j].isspace():
+                    j -= 1
+                if j < 0:
+                    return False
+                k = j
+                while k >= 0 and s[k].isalpha():
+                    k -= 1
+                return k >= 0 and s[k] == "\\" and k < j
+
+            def _split_expr_and_format(inner: str) -> tuple[str, str | None]:
+                depth = 0
+                for idx, ch in enumerate(inner):
+                    if ch in "([":
+                        depth += 1
+                    elif ch in ")]":
+                        depth = max(0, depth - 1)
+                    elif ch == ":" and depth == 0:
+                        return inner[:idx].strip(), inner[idx + 1 :].strip()
+                return inner.strip(), None
+
+            # Build env: numeric names from macros + safe math consts.
+            names: Dict[str, Any] = {
+                "pi": math.pi,
+                "E": math.e,
+                "e": math.e,
+                "True": True,
+                "False": False,
+            }
+            for k, v in (macro_ctx.sympy_locals or {}).items():
+                # Macro defs may include sympy.Lambda; numeric values only here.
+                try:
+                    # SymPy objects generally provide evalf(); use it when present.
+                    vv = v.evalf() if hasattr(v, "evalf") else v
+                    names[k] = float(vv)
+                except Exception:
+                    pass
+
+            # Whitelisted functions: macro numeric fns + plot functions + basic math.
+            funcs: Dict[str, Callable[..., Any]] = {
+                "sin": math.sin,
+                "cos": math.cos,
+                "tan": math.tan,
+                "asin": math.asin,
+                "acos": math.acos,
+                "atan": math.atan,
+                "sqrt": math.sqrt,
+                "log": math.log,
+                "exp": math.exp,
+                "abs": abs,
+            }
+            funcs.update(macro_ctx.numeric_functions or {})
+
+            for lbl, fn in zip(fn_labels_list, functions):
+                if not lbl:
+                    continue
+
+                def _wrap_plot_fn(x, _fn=fn):
+                    try:
+                        return float(_fn([float(x)])[0])
+                    except Exception:
+                        return float(_fn(float(x)))
+
+                funcs[lbl] = _wrap_plot_fn
+
+            known_names = set(names.keys()) | set(funcs.keys())
+
+            out_chars: list[str] = []
+            i = 0
+            while i < len(tmp):
+                ch = tmp[i]
+                if ch != "{":
+                    out_chars.append(ch)
+                    i += 1
+                    continue
+
+                j = tmp.find("}", i + 1)
+                if j == -1:
+                    out_chars.append(ch)
+                    i += 1
+                    continue
+
+                latex_arg = _is_latex_command_argument(tmp, i)
+                inner = tmp[i + 1 : j].strip()
+                if not inner or "\\" in inner:
+                    out_chars.append(tmp[i : j + 1])
+                    i = j + 1
+                    continue
+
+                expr_str, fmt_spec = _split_expr_and_format(inner)
+
+                has_any_known = any(
+                    re.search(r"\b" + re.escape(nm) + r"\b", expr_str)
+                    for nm in known_names
+                    if nm.isidentifier()
+                )
+                has_ops_or_parens = bool(re.search(r"[+\-*/^()<>!=]", expr_str))
+                has_ident = bool(re.search(r"[A-Za-z_]", expr_str))
+                looks_expr = has_any_known or (not latex_arg and (has_ops_or_parens or has_ident))
+
+                if not looks_expr:
+                    out_chars.append(tmp[i : j + 1])
+                    i = j + 1
+                    continue
+
+                try:
+                    val = _safe_eval_placeholder_expr(expr_str, names=names, funcs=funcs)
+                    if fmt_spec:
+                        try:
+                            rendered = format(val, fmt_spec)
+                        except Exception:
+                            rendered = str(val)
+                    else:
+                        rendered = _format_number_like(val)
+                    out_chars.append("{" + rendered + "}" if latex_arg else rendered)
+                except Exception:
+                    out_chars.append(tmp[i : j + 1])
+
+                i = j + 1
+
+            return "".join(out_chars).replace(lbrace_token, "{").replace(rbrace_token, "}")
 
         # debug print removed
 
@@ -2973,6 +3229,7 @@ class PlotDirective(SphinxDirective):
 
         # Hash includes all content affecting the image
         content_hash = _hash_key(
+            _TEXT_PLACEHOLDER_FORMAT_VERSION,
             "|".join(fn_exprs),
             "|".join(fn_labels_list),
             "|".join(["" if d is None else f"{d[0]},{d[1]}" for d in fn_domains_list]),
@@ -3618,7 +3875,13 @@ class PlotDirective(SphinxDirective):
 
                 # Annotations
                 for xytext, xy, text, arc in ann_vals:
-                    plotmath.annotate(xy=xy, xytext=xytext, s=text, arc=arc, fontsize=int(fontsize))
+                    plotmath.annotate(
+                        xy=xy,
+                        xytext=xytext,
+                        s=_format_text_placeholders(text),
+                        arc=arc,
+                        fontsize=int(fontsize),
+                    )
 
                 # Lines (y = a*x + b) and tangents; draw before points so markers remain visible
                 if line_vals or tangent_vals:
@@ -3777,6 +4040,7 @@ class PlotDirective(SphinxDirective):
 
                 for x0, y0, text, pos, use_bbox in text_vals:
                     va, ha = _parse_text_positioning(pos)
+                    text = _format_text_placeholders(text)
                     # Factors as fractions of axes size; keep long* ~3.3x larger
                     _fx_short = 0.015
                     _fy_short = 0.015

@@ -3,7 +3,72 @@ from ._version import __version__
 import importlib
 import pkgutil
 import os
+import re
 from importlib.resources import files
+
+
+_EXERCISE_FENCE_COLON_RE = re.compile(r"^(\s*)(:{3,})\{exercise\}.*$")
+_EXERCISE_FENCE_BACKTICK_RE = re.compile(r"^(\s*)(`{3,})\{exercise\}.*$")
+_YAML_FENCE_RE = re.compile(r"^\s*---\s*$")
+_AIDS_BOOL_RE = re.compile(r"^(\s*)aids\s*:\s*(true|false)\s*$", re.IGNORECASE)
+
+
+def _rewrite_exercise_aids_yaml_options(app, docname, source):
+    """Rewrite `aids: true/false` to quoted strings inside exercise YAML options.
+
+    MyST parses YAML option blocks and may produce native booleans for `true/false`.
+    Those values are not consistently forwarded to docutils directive options.
+    To keep authoring ergonomic (allow `aids: true`), we rewrite to strings early.
+    """
+
+    try:
+        path = app.env.doc2path(docname)
+    except Exception:
+        path = ""
+
+    if not (path.endswith(".md") or path.endswith(".myst") or path.endswith(".markdown")):
+        return
+
+    text = source[0]
+    lines = text.splitlines(keepends=True)
+    out = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+        out.append(line)
+
+        if not (_EXERCISE_FENCE_COLON_RE.match(line) or _EXERCISE_FENCE_BACKTICK_RE.match(line)):
+            i += 1
+            continue
+
+        # If the directive starts with a YAML options block, normalize aids booleans.
+        if i + 1 < len(lines) and _YAML_FENCE_RE.match(lines[i + 1]):
+            out.append(lines[i + 1])
+            i += 2
+
+            while i < len(lines):
+                cur = lines[i]
+                if _YAML_FENCE_RE.match(cur):
+                    out.append(cur)
+                    i += 1
+                    break
+
+                m = _AIDS_BOOL_RE.match(cur.rstrip("\n"))
+                if m:
+                    indent, val = m.group(1), m.group(2).lower()
+                    newline = "\n" if cur.endswith("\n") else ""
+                    out.append(f'{indent}aids: "{val}"{newline}')
+                else:
+                    out.append(cur)
+
+                i += 1
+
+            continue
+
+        i += 1
+
+    source[0] = "".join(out)
 
 
 def _copy_static(app):
@@ -191,6 +256,9 @@ def setup(app):
     """
     # Ensure packaged static assets are available for HTML builder
     app.connect("builder-inited", _copy_static)
+
+    # Normalize MyST YAML booleans for exercise options (e.g. `aids: true`).
+    app.connect("source-read", _rewrite_exercise_aids_yaml_options)
 
     # Auto discover and load directive modules.
     #

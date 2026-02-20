@@ -785,6 +785,17 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
                     else:
                         rendered = value_str
                     out.append("{" + rendered + "}" if latex_arg else rendered)
+                elif re.search(r"\b" + re.escape(var_name) + r"\b", expr_str):
+                    # If evaluation failed due to unknown identifiers (e.g. plot function
+                    # labels), still substitute the variable value into the expression and
+                    # keep it for a later evaluation stage.
+                    expr_sub = re.sub(
+                        r"\b" + re.escape(var_name) + r"\b",
+                        value_str,
+                        expr_str,
+                    )
+                    inner_sub = expr_sub + (":" + fmt_spec if fmt_spec else "")
+                    out.append("{" + inner_sub + "}")
                 else:
                     out.append(tmp[i : j + 1])
 
@@ -1013,7 +1024,25 @@ def _substitute_variables(content: str, variables: dict[str, float]) -> str:
                         rendered = value_strs[expr_str]
                     out_chars.append("{" + rendered + "}" if latex_arg else rendered)
                 else:
-                    out_chars.append(tmp[i : j + 1])
+                    # If evaluation failed (e.g. missing plot function labels), still
+                    # substitute known variable names into the expression so a later
+                    # stage (e.g. plot renderer) can evaluate it.
+                    expr_sub = expr_str
+                    replaced_any = False
+                    for name, val_str in value_strs.items():
+                        if re.search(r"\b" + re.escape(name) + r"\b", expr_sub):
+                            expr_sub = re.sub(
+                                r"\b" + re.escape(name) + r"\b",
+                                val_str,
+                                expr_sub,
+                            )
+                            replaced_any = True
+
+                    if replaced_any:
+                        inner_sub = expr_sub + (":" + fmt_spec if fmt_spec else "")
+                        out_chars.append("{" + inner_sub + "}")
+                    else:
+                        out_chars.append(tmp[i : j + 1])
 
             i = j + 1
 

@@ -122,6 +122,7 @@ class ExerciseDirective(SphinxDirective):
     final_argument_whitespace = True
     option_spec = {
         "level": directives.unchanged,
+        "aids": directives.unchanged,
     }
 
     def run(self):
@@ -129,6 +130,23 @@ class ExerciseDirective(SphinxDirective):
         # Create the admonition node
         admonition_node = nodes.admonition()
         admonition_node["classes"] = ["admonition", "exercise"]
+
+        aids_opt = self.options.get("aids")
+        if isinstance(aids_opt, bool):
+            aids_enabled = aids_opt
+        elif aids_opt is None:
+            aids_enabled = False
+        else:
+            aids_enabled = str(aids_opt).strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "y",
+                "on",
+            }
+
+        if aids_enabled:
+            admonition_node["classes"].append("exercise-aids")
 
         # Create the title node
         title_node = nodes.title()

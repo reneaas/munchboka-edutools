@@ -21,6 +21,26 @@
     }
   }
 
+  function executeScripts(root){
+    // When content is inserted via innerHTML, script tags don't execute
+    // This function finds and re-executes them
+    if (!root) return;
+    const scripts = root.querySelectorAll('script');
+    scripts.forEach(function(oldScript){
+      const newScript = document.createElement('script');
+      if (oldScript.src) {
+        newScript.src = oldScript.src;
+      } else {
+        newScript.textContent = oldScript.textContent;
+      }
+      // Copy attributes
+      Array.from(oldScript.attributes).forEach(function(attr){
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+  }
+
   function initJeopardy(container){
     let cfg = null;
     try {
@@ -346,6 +366,10 @@
         try { setTimeout(()=>{ if (typeof body.scrollTo === 'function') body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }); else body.scrollTop = body.scrollHeight; }, 0); } catch(e){ try { body.scrollTop = body.scrollHeight; } catch(_e){} }
       });
       body.appendChild(q); body.appendChild(a);
+
+      // Execute any scripts in the question and answer content
+      executeScripts(q);
+      executeScripts(a);
 
       // Tracking for duel vs turn-based scoring
       let scored = false;

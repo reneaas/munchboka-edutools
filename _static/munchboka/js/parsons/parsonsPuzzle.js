@@ -1,9 +1,34 @@
 class ParsonsPuzzle {
-    constructor(puzzleContainerId, codeString, onSolvedCallback = null) {
+    constructor(puzzleContainerId, codeString, onSolvedCallback = null, options = {}) {
+        // Backwards compatibility: allow third arg to be options
+        if (onSolvedCallback && typeof onSolvedCallback === 'object') {
+            options = onSolvedCallback;
+            onSolvedCallback = null;
+        }
+
         this.puzzleContainerId = puzzleContainerId;
         this.puzzleContainer = document.getElementById(puzzleContainerId);
         this.codeString = codeString;
         this.onSolvedCallback = onSolvedCallback;
+
+        this.lang = (options && options.lang) ? options.lang : 'python';
+        this.chunkMarker = (options && options.chunkMarker) ? options.chunkMarker : null;
+
+        this.indentationMode = (options && options.indentationMode)
+            ? String(options.indentationMode).trim().toLowerCase()
+            : 'fixed';
+        if (!['fixed', 'student'].includes(this.indentationMode)) {
+            this.indentationMode = 'fixed';
+        }
+
+        this.indentSize = (options && Number.isFinite(options.indentSize))
+            ? Math.max(1, Math.floor(options.indentSize))
+            : this.inferIndentSize(codeString);
+
+        // Pixels per indentation level used for snapping.
+        this.indentationWidth = (options && Number.isFinite(options.indentationWidth))
+            ? Math.max(10, Math.floor(options.indentationWidth))
+            : 40;
 
         this.generateHTML();
 
@@ -21,14 +46,96 @@ class ParsonsPuzzle {
         this.codeBlocks = this.preprocessCode(codeString);
         this.shuffledCodeBlocks = this.shuffleArray(this.codeBlocks.slice());
 
-        this.renderDraggableCode(this.draggableCodeContainer, this.shuffledCodeBlocks);
-        this.createPlaceholder(this.dropArea);
-        this.enableDragAndDrop(this.draggableCodeContainer, this.dropArea);
+        if (this.indentationMode === 'student') {
+            this.maxIndentationLevel = Math.max(
+                0,
+                ...this.codeBlocks
+                    .filter((obj) => !obj.isEmpty)
+                    .map((obj) => obj.expectedIndentation ?? 0)
+            );
+
+            this.dropArea.classList.add('parsons-drop-area--indent');
+            this.draggableCodeContainer.classList.add('parsons-draggable-code--indent');
+
+            this.renderDraggableCodeIndentationMode(this.draggableCodeContainer, this.shuffledCodeBlocks);
+            this.createDropAreaPlaceholder(this.dropArea);
+            this.addIndentationGuides(this.dropArea);
+            this.enableIndentationDragAndDrop();
+        } else {
+            this.renderDraggableCode(this.draggableCodeContainer, this.shuffledCodeBlocks);
+            this.createPlaceholder(this.dropArea);
+            this.enableDragAndDrop(this.draggableCodeContainer, this.dropArea);
+        }
 
 
         this.isSolved = false;
         
         this.addEventListeners();
+    }
+
+    inferIndentSize(codeString) {
+        const lines = String(codeString).split('\n');
+        const counts = [];
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            const spaces = this.countLeadingSpaces(line);
+            if (spaces > 0) counts.push(spaces);
+        }
+
+        if (counts.length === 0) return 4;
+
+        const gcd2 = (a, b) => {
+            let x = Math.abs(a);
+            let y = Math.abs(b);
+            while (y) {
+                const t = x % y;
+                x = y;
+                y = t;
+            }
+            return x;
+        };
+
+        let g = counts[0];
+        for (let i = 1; i < counts.length; i++) {
+            g = gcd2(g, counts[i]);
+            if (g === 1) break;
+        }
+
+        // Keep it reasonable; fall back to 4 if we get something odd.
+        if (g >= 1 && g <= 8) return g;
+        return 4;
+    }
+
+    countLeadingSpaces(line) {
+        const match = String(line).match(/^[\t ]*/);
+        if (!match) return 0;
+        const prefix = match[0];
+        let count = 0;
+        for (const ch of prefix) {
+            count += (ch === '\t') ? this.indentSize : 1;
+        }
+        return count;
+    }
+
+    deindentLine(line, spaces) {
+        if (spaces <= 0) return line;
+        let remaining = spaces;
+        let i = 0;
+        while (i < line.length && remaining > 0) {
+            const ch = line[i];
+            if (ch === ' ') {
+                remaining -= 1;
+                i += 1;
+                continue;
+            }
+            if (ch === '\t') {
+                remaining -= this.indentSize;
+                i += 1;
+                continue;
+            }
+            break;
+        }
+        return line.slice(i);
     }
 
 
@@ -99,18 +206,252 @@ class ParsonsPuzzle {
 
     preprocessCode(codeString) {
         const lines = codeString.split('\n');
-        return lines.map((line, index) => {
-            let trimmedLine = line.trim();
-            if (line.includes(';')) {
-                const parts = line.split(';');
-                trimmedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+
+        const markerPatterns = this.buildChunkMarkerPatterns(this.chunkMarker);
+
+        const hasStartEndMarkers = markerPatterns
+            ? lines.some((line) => markerPatterns.start.test(line) || markerPatterns.end.test(line))
+            : false;
+
+        const hasSeparatorMarkers = markerPatterns
+            ? lines.some((line) => markerPatterns.separator.test(line))
+            : false;
+
+        // Default behavior (no markers): keep the current one-line-per-block approach.
+        if (!hasStartEndMarkers && !hasSeparatorMarkers) {
+            return lines.map((line, index) => {
+                let renderedLine = line;
+                if (line.includes(';')) {
+                    const parts = line.split(';');
+                    renderedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                }
+
+                const leadingSpaces = this.countLeadingSpaces(line);
+                const expectedIndentation = Math.round(leadingSpaces / this.indentSize);
+                const displayBlock = renderedLine
+                    .split('\n')
+                    .map((l) => this.deindentLine(l, leadingSpaces))
+                    .join('\n');
+
+                return {
+                    block: renderedLine,
+                    output: renderedLine,
+                    displayBlock,
+                    order: index,
+                    expectedIndentation,
+                    isEmpty: line.trim() === ''
+                };
+            });
+        }
+
+        // Prefer explicit start/end chunking when present.
+        if (hasStartEndMarkers) {
+            const pieces = [];
+            let inChunk = false;
+            let currentChunk = [];
+
+            for (const line of lines) {
+                if (markerPatterns.start.test(line)) {
+                    // Starting a new chunk: flush any existing chunk first.
+                    if (inChunk) {
+                        pieces.push({ type: 'chunk', lines: currentChunk });
+                        currentChunk = [];
+                    }
+                    inChunk = true;
+                    continue;
+                }
+
+                if (markerPatterns.end.test(line)) {
+                    if (inChunk) {
+                        pieces.push({ type: 'chunk', lines: currentChunk });
+                        currentChunk = [];
+                        inChunk = false;
+                    }
+                    continue;
+                }
+
+                if (inChunk) {
+                    currentChunk.push(line);
+                } else {
+                    pieces.push({ type: 'line', line });
+                }
             }
+
+            // Unclosed chunk: treat remainder as chunk.
+            if (inChunk) {
+                pieces.push({ type: 'chunk', lines: currentChunk });
+            }
+
+            const blocks = [];
+            let order = 0;
+
+            for (const piece of pieces) {
+                if (piece.type === 'line') {
+                    const line = piece.line;
+                    let renderedLine = line;
+                    if (line.includes(';')) {
+                        const parts = line.split(';');
+                        renderedLine = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                    }
+
+                    const leadingSpaces = this.countLeadingSpaces(line);
+                    const expectedIndentation = Math.round(leadingSpaces / this.indentSize);
+                    const displayBlock = renderedLine
+                        .split('\n')
+                        .map((l) => this.deindentLine(l, leadingSpaces))
+                        .join('\n');
+
+                    blocks.push({
+                        block: renderedLine,
+                        output: renderedLine,
+                        displayBlock,
+                        order: order++,
+                        expectedIndentation,
+                        isEmpty: line.trim() === ''
+                    });
+                    continue;
+                }
+
+                // piece.type === 'chunk'
+                const expandedLines = [];
+                for (const chunkLine of piece.lines) {
+                    if (chunkLine.includes(';')) {
+                        const parts = chunkLine.split(';');
+                        const expanded = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                        expandedLines.push(...expanded.split('\n'));
+                    } else {
+                        expandedLines.push(chunkLine);
+                    }
+                }
+
+                const outputText = expandedLines.join('\n');
+                const blockText = expandedLines
+                    .filter((l) => l.trim() !== '')
+                    .join('\n');
+
+                const nonEmpty = expandedLines.filter((l) => l.trim() !== '');
+                const baselineSpaces = nonEmpty.length
+                    ? Math.min(...nonEmpty.map((l) => this.countLeadingSpaces(l)))
+                    : 0;
+                const expectedIndentation = Math.round(baselineSpaces / this.indentSize);
+
+                const displayBlock = blockText
+                    .split('\n')
+                    .map((l) => this.deindentLine(l, baselineSpaces))
+                    .join('\n');
+
+                blocks.push({
+                    block: blockText,
+                    output: outputText,
+                    displayBlock,
+                    order: order++,
+                    expectedIndentation,
+                    isEmpty: blockText.trim() === ''
+                });
+            }
+
+            return blocks;
+        }
+
+        // Separator behavior: group multiple lines into chunks separated by marker lines.
+        const chunks = [];
+        let current = [];
+
+        for (const line of lines) {
+            if (markerPatterns.separator.test(line)) {
+                chunks.push(current);
+                current = [];
+                continue;
+            }
+            current.push(line);
+        }
+        chunks.push(current);
+
+        return chunks.map((chunkLines, chunkIndex) => {
+            const expandedLines = [];
+
+            // Keep the existing ";" convenience inside chunks.
+            for (const line of chunkLines) {
+                if (line.includes(';')) {
+                    const parts = line.split(';');
+                    const expanded = parts.map(part => part.trim() === '' ? '' : part).join('\n');
+                    expandedLines.push(...expanded.split('\n'));
+                } else {
+                    expandedLines.push(line);
+                }
+            }
+
+            const outputText = expandedLines.join('\n');
+            const blockText = expandedLines
+                .filter((line) => line.trim() !== '')
+                .join('\n');
+
+            const nonEmpty = expandedLines.filter((l) => l.trim() !== '');
+            const baselineSpaces = nonEmpty.length
+                ? Math.min(...nonEmpty.map((l) => this.countLeadingSpaces(l)))
+                : 0;
+            const expectedIndentation = Math.round(baselineSpaces / this.indentSize);
+
+            const displayBlock = blockText
+                .split('\n')
+                .map((l) => this.deindentLine(l, baselineSpaces))
+                .join('\n');
+
             return {
-                block: line.includes(';') ? trimmedLine : line,
-                order: index,
-                isEmpty: line.trim() === ''
+                block: blockText,
+                output: outputText,
+                displayBlock,
+                order: chunkIndex,
+                expectedIndentation,
+                isEmpty: blockText.trim() === ''
             };
         });
+    }
+
+    buildChunkMarkerPatterns(marker) {
+        if (!marker) {
+            return null;
+        }
+
+        const trimmed = String(marker).trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Normalize base token to support explicit "-start"/"-end" variants.
+        const stripSuffix = (token) => token.replace(/(?:-start|-end)\s*$/i, '').trim();
+
+        if (trimmed.startsWith('#')) {
+            const afterHashRaw = trimmed.slice(1).trim();
+            const baseToken = stripSuffix(afterHashRaw);
+            const baseEscaped = escapeRegex(baseToken);
+
+            // If marker is just '#', treat it as a generic comment marker.
+            if (!baseToken) {
+                return {
+                    separator: /^\s*#\s*$/, // unlikely but keeps behavior predictable
+                    start: /^\s*#\s*-start\s*$/,
+                    end: /^\s*#\s*-end\s*$/,
+                };
+            }
+
+            return {
+                separator: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*$`),
+                start: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*-start\\s*$`),
+                end: new RegExp(`^\\s*#\\s*${baseEscaped}\\s*-end\\s*$`),
+            };
+        }
+
+        // Non-comment markers: exact match + "-start"/"-end" variants.
+        const baseToken = stripSuffix(trimmed);
+        const baseEscaped = escapeRegex(baseToken);
+        return {
+            separator: new RegExp(`^\\s*${baseEscaped}\\s*$`),
+            start: new RegExp(`^\\s*${baseEscaped}\\s*-start\\s*$`),
+            end: new RegExp(`^\\s*${baseEscaped}\\s*-end\\s*$`),
+        };
     }
 
     shuffleArray(array) {
@@ -129,9 +470,26 @@ class ParsonsPuzzle {
                 lineElement.className = 'draggable';
                 lineElement.draggable = true;
                 lineElement.dataset.order = obj.order;
-                lineElement.innerHTML = `<pre class="highlight python"><code>${this.escapeHTML(obj.block)}</code></pre>`;
+                lineElement.innerHTML = `<pre class="highlight ${this.escapeHTML(this.lang)}"><code>${this.escapeHTML(obj.block)}</code></pre>`;
                 container.appendChild(lineElement);
                 hljs.highlightElement(lineElement.querySelector('code'));
+            }
+        });
+    }
+
+    renderDraggableCodeIndentationMode(container, codeBlockObjects) {
+        container.innerHTML = '';
+        codeBlockObjects.forEach((obj) => {
+            if (!obj.isEmpty) {
+                const tile = document.createElement('div');
+                tile.className = 'draggable parsons-tile';
+                tile.dataset.order = obj.order;
+                tile.dataset.expectedIndentation = String(obj.expectedIndentation ?? 0);
+                tile.dataset.currentIndentation = '0';
+                const text = (obj.displayBlock != null) ? obj.displayBlock : obj.block;
+                tile.innerHTML = `<pre class="highlight ${this.escapeHTML(this.lang)}"><code>${this.escapeHTML(text)}</code></pre>`;
+                container.appendChild(tile);
+                hljs.highlightElement(tile.querySelector('code'));
             }
         });
     }
@@ -145,15 +503,68 @@ class ParsonsPuzzle {
     }
 
     checkSolution() {
+        if (this.indentationMode === 'student') {
+            const droppedTiles = Array.from(this.dropArea.querySelectorAll('.parsons-tile'));
+            const dropped = droppedTiles.map(tile => ({
+                order: parseInt(tile.dataset.order),
+                indentation: parseInt(tile.dataset.currentIndentation || '0')
+            }));
+
+            const correct = this.codeBlocks
+                .filter(obj => !obj.isEmpty)
+                .slice()
+                .sort((a, b) => a.order - b.order)
+                .map(obj => ({
+                    order: obj.order,
+                    indentation: parseInt(String(obj.expectedIndentation ?? 0))
+                }));
+
+            const isCorrect = dropped.length === correct.length
+                && dropped.every((d, i) => d.order === correct[i].order && d.indentation === correct[i].indentation);
+
+            const fullCode = this.codeBlocks
+                .slice()
+                .sort((a, b) => a.order - b.order)
+                .map(obj => obj.output ?? obj.block)
+                .join('\n');
+
+            this.fullCodeElement.textContent = fullCode;
+            hljs.highlightElement(this.fullCodeElement);
+
+            if (isCorrect) {
+                this.showToast('success');
+                if (this.onSolvedCallback) {
+                    setTimeout(() => {
+                        this.onSolvedCallback(fullCode);
+                    }, 1500);
+                } else {
+                    this.solutionModal.style.display = 'block';
+                }
+                return true;
+            }
+
+            this.showToast('error');
+            return false;
+        }
+
         const droppedItems = Array.from(this.dropArea.children).filter(item => !item.classList.contains('placeholder'));
         const droppedOrder = droppedItems.map(item => parseInt(item.dataset.order));
-        const fullCode = this.codeBlocks.sort((a, b) => a.order - b.order).map(obj => obj.block).join('\n');
+        // Build the full code in original order, INCLUDING empty blocks.
+        // Empty blocks are not draggable tiles, but represent blank lines/spacing in the authored code.
+        const fullCode = this.codeBlocks
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map(obj => obj.output ?? obj.block)
+            .join('\n');
         this.fullCodeElement.textContent = fullCode;
         console.log("fullCode: \n", fullCode);
 
 
         hljs.highlightElement(this.fullCodeElement);
-        const correctOrder = this.codeBlocks.filter(obj => !obj.isEmpty).sort((a, b) => a.order - b.order).map(obj => obj.order);
+        const correctOrder = this.codeBlocks
+            .filter(obj => !obj.isEmpty)
+            .sort((a, b) => a.order - b.order)
+            .map(obj => obj.order);
         if (JSON.stringify(droppedOrder) === JSON.stringify(correctOrder)) {
             this.showToast('success');
             console.log("onSolvedCallback: ", this.onSolvedCallback);
@@ -210,7 +621,7 @@ class ParsonsPuzzle {
         modal.innerHTML = `
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <pre><code id="fullCode-${puzzleContainerId}" class="highlight python"></code></pre>
+                <pre><code id="fullCode-${puzzleContainerId}" class="highlight ${this.escapeHTML(this.lang)}"></code></pre>
                 <button id="copyCodeButton-${puzzleContainerId}" class="button button-check-solution">Riktig! 🔥 Kopier koden!</button>
             </div>
         `;
@@ -223,6 +634,244 @@ class ParsonsPuzzle {
         placeholder.className = 'placeholder';
         placeholder.textContent = 'Dra og dropp kode her!';
         dropArea.appendChild(placeholder);
+    }
+
+    createDropAreaPlaceholder(dropArea) {
+        const existing = dropArea.querySelector('.placeholder');
+        if (existing) return;
+        this.createPlaceholder(dropArea);
+    }
+
+    addIndentationGuides(container) {
+        // Clear any old guides/preview (e.g., after reset).
+        container.querySelectorAll('.parsons-indentation-guide').forEach((el) => el.remove());
+        container.querySelectorAll('.parsons-indentation-preview').forEach((el) => el.remove());
+
+        container.style.position = 'relative';
+
+        const style = getComputedStyle(container);
+        this.dropAreaPaddingLeft = parseFloat(style.paddingLeft || '0') || 0;
+
+        // Live indentation preview column.
+        this.indentationPreview = document.createElement('div');
+        this.indentationPreview.className = 'parsons-indentation-preview';
+        this.indentationPreview.style.width = `${this.indentationWidth}px`;
+        this.indentationPreview.style.display = 'none';
+        container.appendChild(this.indentationPreview);
+
+        // Guides for each allowed indentation level (including 0).
+        this.indentationGuides = [];
+        for (let i = 0; i <= this.maxIndentationLevel; i++) {
+            const guide = document.createElement('div');
+            guide.className = 'parsons-indentation-guide';
+            guide.dataset.level = String(i);
+            guide.style.left = `${this.dropAreaPaddingLeft + i * this.indentationWidth}px`;
+            container.appendChild(guide);
+            this.indentationGuides.push(guide);
+        }
+    }
+
+    computeIndentLevelFromClientX(clientX) {
+        if (!this.dropArea) return 0;
+
+        const dropRect = this.dropArea.getBoundingClientRect();
+        const paddingLeft = Number.isFinite(this.dropAreaPaddingLeft)
+            ? this.dropAreaPaddingLeft
+            : (parseFloat(getComputedStyle(this.dropArea).paddingLeft || '0') || 0);
+
+        // Snap based on the tile's upper-left corner within the drop area's *content* box.
+        // This makes indent=0 feel natural even when the tile is cursor-centered.
+        const tileLeftClientX = clientX - (this.dragOffsetX || 0);
+        const relativeLeft = tileLeftClientX - dropRect.left - paddingLeft;
+
+        let indentLevel = Math.round(relativeLeft / this.indentationWidth);
+        indentLevel = Math.max(0, Math.min(indentLevel, this.maxIndentationLevel));
+        return indentLevel;
+    }
+
+    setIndentationPreview(indentLevel) {
+        if (!this.indentationPreview) return;
+
+        const paddingLeft = Number.isFinite(this.dropAreaPaddingLeft) ? this.dropAreaPaddingLeft : 0;
+        this.indentationPreview.style.left = `${paddingLeft + indentLevel * this.indentationWidth}px`;
+        this.indentationPreview.dataset.level = String(indentLevel);
+        this.indentationPreview.style.display = '';
+
+        if (Array.isArray(this.indentationGuides)) {
+            this.indentationGuides.forEach((g) => {
+                g.classList.toggle('is-active', g.dataset.level === String(indentLevel));
+            });
+        }
+    }
+
+    clearIndentationPreview() {
+        if (this.indentationPreview) {
+            this.indentationPreview.style.display = 'none';
+        }
+        if (Array.isArray(this.indentationGuides)) {
+            this.indentationGuides.forEach((g) => g.classList.remove('is-active'));
+        }
+        this.pendingIndentLevel = null;
+    }
+
+    enableIndentationDragAndDrop() {
+        const tiles = this.puzzleContainer.querySelectorAll('.parsons-tile');
+        tiles.forEach((tile) => {
+            tile.addEventListener('mousedown', (e) => this.indentDragStart(e, tile));
+        });
+    }
+
+    indentDragStart(e, tile) {
+        // Only left click / primary touch.
+        if (e.button != null && e.button !== 0) return;
+        e.preventDefault();
+
+        this.currentTile = tile;
+        this.dragOriginalParent = tile.parentElement;
+        this.pendingIndentLevel = null;
+
+        this.dragPlaceholder = document.createElement('div');
+        this.dragPlaceholder.className = 'parsons-drag-placeholder';
+        this.dragPlaceholder.style.height = `${tile.offsetHeight}px`;
+
+        tile.parentElement.insertBefore(this.dragPlaceholder, tile.nextSibling);
+
+        const rect = tile.getBoundingClientRect();
+        // Natural pickup: keep the cursor's grab point within the tile.
+        // Indentation snapping still tracks the tile's upper-left via dragOffsetX.
+        this.dragOffsetX = e.clientX - rect.left;
+        this.dragOffsetY = e.clientY - rect.top;
+
+        document.body.appendChild(tile);
+        // Use fixed positioning so clientX/clientY map directly (no scroll mismatch).
+        tile.style.position = 'fixed';
+        tile.style.zIndex = '1000';
+        tile.style.width = `${rect.width}px`;
+        tile.classList.add('parsons-dragging');
+
+        this.indentDragMoveBound = (ev) => this.indentDragMove(ev);
+        this.indentDragEndBound = (ev) => this.indentDragEnd(ev);
+
+        document.addEventListener('mousemove', this.indentDragMoveBound);
+        document.addEventListener('mouseup', this.indentDragEndBound);
+
+        this.indentMoveAt(e.clientX, e.clientY);
+    }
+
+    indentMoveAt(clientX, clientY) {
+        if (!this.currentTile) return;
+        this.currentTile.style.left = `${clientX - this.dragOffsetX}px`;
+        this.currentTile.style.top = `${clientY - this.dragOffsetY}px`;
+    }
+
+    updateDropPreview(indentLevel, enabled) {
+        if (!this.dragPlaceholder) return;
+        if (!enabled) {
+            this.dragPlaceholder.classList.remove('parsons-drop-preview');
+            this.dragPlaceholder.style.marginLeft = '';
+            this.dragPlaceholder.style.width = '';
+            this.dragPlaceholder.dataset.level = '';
+            return;
+        }
+
+        const indentPx = indentLevel * this.indentationWidth;
+        this.dragPlaceholder.classList.add('parsons-drop-preview');
+        this.dragPlaceholder.style.marginLeft = `${indentPx}px`;
+        this.dragPlaceholder.style.width = `calc(100% - ${indentPx}px)`;
+        this.dragPlaceholder.dataset.level = String(indentLevel);
+    }
+
+    indentDragMove(e) {
+        e.preventDefault();
+        this.indentMoveAt(e.clientX, e.clientY);
+
+        const elementsBelow = document.elementsFromPoint(e.clientX, e.clientY);
+        const isOverDrop = elementsBelow.some((el) => el === this.dropArea || this.dropArea.contains(el));
+        const isOverPool = elementsBelow.some((el) => el === this.draggableCodeContainer || this.draggableCodeContainer.contains(el));
+
+        const newParent = isOverDrop ? this.dropArea : (isOverPool ? this.draggableCodeContainer : null);
+        if (!newParent) return;
+
+        // Live indentation feedback while hovering over the drop area.
+        if (isOverDrop) {
+            const indentLevel = this.computeIndentLevelFromClientX(e.clientX);
+            this.pendingIndentLevel = indentLevel;
+            this.setIndentationPreview(indentLevel);
+            // Snap the visual indentation while dragging so placement is easy.
+            this.currentTile.style.paddingLeft = `${indentLevel * this.indentationWidth}px`;
+            this.updateDropPreview(indentLevel, true);
+        } else {
+            this.clearIndentationPreview();
+            // In the pool, show tiles without indentation.
+            this.currentTile.style.paddingLeft = '';
+            this.updateDropPreview(0, false);
+        }
+
+        if (this.dragPlaceholder.parentElement !== newParent) {
+            this.dragPlaceholder.remove();
+            newParent.appendChild(this.dragPlaceholder);
+        }
+
+        const selector = '.parsons-tile:not(.parsons-dragging)';
+        const siblings = Array.from(newParent.querySelectorAll(selector));
+        let insertBefore = null;
+        for (const sib of siblings) {
+            const rect = sib.getBoundingClientRect();
+            if (e.clientY < rect.top + rect.height / 2) {
+                insertBefore = sib;
+                break;
+            }
+        }
+
+        if (insertBefore) {
+            newParent.insertBefore(this.dragPlaceholder, insertBefore);
+        } else {
+            newParent.appendChild(this.dragPlaceholder);
+        }
+    }
+
+    indentDragEnd(e) {
+        e.preventDefault();
+
+        document.removeEventListener('mousemove', this.indentDragMoveBound);
+        document.removeEventListener('mouseup', this.indentDragEndBound);
+
+        const finalParent = this.dragPlaceholder.parentElement;
+
+        if (finalParent === this.dropArea) {
+            const indentLevel = (this.pendingIndentLevel != null)
+                ? this.pendingIndentLevel
+                : this.computeIndentLevelFromClientX(e.clientX);
+            this.currentTile.dataset.currentIndentation = String(indentLevel);
+            this.currentTile.style.paddingLeft = `${indentLevel * this.indentationWidth}px`;
+        } else {
+            // In the pool, indentation doesn't apply.
+            this.currentTile.dataset.currentIndentation = '0';
+            this.currentTile.style.paddingLeft = '';
+        }
+
+        this.clearIndentationPreview();
+        this.updateDropPreview(0, false);
+
+        this.currentTile.style.position = '';
+        this.currentTile.style.left = '';
+        this.currentTile.style.top = '';
+        this.currentTile.style.zIndex = '';
+        this.currentTile.style.width = '';
+        this.currentTile.classList.remove('parsons-dragging');
+
+        finalParent.insertBefore(this.currentTile, this.dragPlaceholder);
+        this.dragPlaceholder.remove();
+
+        this.currentTile = null;
+        this.dragPlaceholder = null;
+
+        // Toggle the drop-area placeholder message.
+        const placeholder = this.dropArea.querySelector('.placeholder');
+        const tilesInDrop = this.dropArea.querySelectorAll('.parsons-tile').length;
+        if (placeholder) {
+            placeholder.style.display = tilesInDrop === 0 ? '' : 'none';
+        }
     }
 
 
@@ -353,6 +1002,25 @@ class ParsonsPuzzle {
     }
 
     reset() {
+        if (this.indentationMode === 'student') {
+            const tiles = Array.from(this.dropArea.querySelectorAll('.parsons-tile'));
+            tiles.forEach((tile) => {
+                tile.dataset.currentIndentation = '0';
+                tile.style.paddingLeft = '';
+                this.draggableCodeContainer.appendChild(tile);
+            });
+            const poolTiles = Array.from(this.draggableCodeContainer.querySelectorAll('.parsons-tile'));
+            this.shuffleArray(poolTiles).forEach((el) => this.draggableCodeContainer.appendChild(el));
+
+            const placeholder = this.dropArea.querySelector('.placeholder');
+            if (placeholder) placeholder.style.display = '';
+            else this.createDropAreaPlaceholder(this.dropArea);
+
+            // Re-bind handlers because reshuffling moves nodes around.
+            this.enableIndentationDragAndDrop();
+            return;
+        }
+
         this.feedback.textContent = '';
         const draggableElements = this.dropArea.querySelectorAll('.draggable');
         draggableElements.forEach(element => {
@@ -399,243 +1067,6 @@ function makeCallbackFunction(puzzleContainerId, editorId) {
 
 class IndentationParsonsPuzzle extends ParsonsPuzzle {
     constructor(puzzleContainerId, codeString, onSolvedCallback = null) {
-        super(puzzleContainerId, codeString, onSolvedCallback);
-
-        // Override codeBlocks with preprocessed code
-        this.codeBlocks = this.preprocessCodeWithIndentation(codeString);
-
-        // Determine the maximum indentation level required by the code
-        this.maxIndentationLevel = Math.max(...this.codeBlocks.map(obj => obj.expectedIndentation));
-
-        // Initialize indentation settings
-        this.indentationWidth = 40; // Pixels per indentation level
-
-        // Shuffle the code blocks
-        this.shuffledCodeBlocks = this.shuffleArray(this.codeBlocks.slice());
-
-        // Render the draggable code lines
-        this.renderDraggableCodeLines(this.draggableCodeContainer, this.shuffledCodeBlocks);
-
-        // Add visual guides for indentation levels
-        this.addIndentationGuides(this.dropArea);
-
-        // Enable custom drag-and-drop functionality
-        this.enableCustomDragAndDrop();
-    }
-
-    // Override the preprocessCode method to handle indentation
-    preprocessCodeWithIndentation(codeString) {
-        const lines = codeString.split('\n');
-        return lines.map((line, index) => {
-            const leadingSpaces = line.match(/^\s*/)[0].length;
-            const indentLevel = leadingSpaces / 4; // Assuming 4 spaces per indent level
-            const trimmedLine = line.trim();
-            return {
-                block: trimmedLine,
-                order: index,
-                expectedIndentation: indentLevel,
-                isEmpty: trimmedLine === ''
-            };
-        });
-    }
-
-    // Render draggable code lines
-    renderDraggableCodeLines(container, codeBlockObjects) {
-        container.innerHTML = '';
-        codeBlockObjects.forEach((obj) => {
-            if (!obj.isEmpty) {
-                const lineElement = document.createElement('div');
-                lineElement.className = 'code-line';
-                lineElement.dataset.order = obj.order;
-                lineElement.dataset.expectedIndentation = obj.expectedIndentation;
-                lineElement.dataset.currentIndentation = 0; // Initialize current indentation to 0
-
-                // Code content
-                const codeContent = document.createElement('pre');
-                codeContent.className = 'highlight python code-content';
-                codeContent.innerHTML = `<code>${this.escapeHTML(obj.block)}</code>`;
-
-                // Assemble line element
-                lineElement.appendChild(codeContent);
-
-                container.appendChild(lineElement);
-                hljs.highlightElement(codeContent.querySelector('code'));
-            }
-        });
-    }
-
-    // Add visual indentation guides to the drop area
-    addIndentationGuides(container) {
-        container.style.position = 'relative';
-        for (let i = 1; i <= this.maxIndentationLevel; i++) {
-            const guide = document.createElement('div');
-            guide.className = 'indentation-guide';
-            guide.style.left = `${i * this.indentationWidth}px`;
-            container.appendChild(guide);
-        }
-    }
-
-    // Enable custom drag-and-drop functionality
-    enableCustomDragAndDrop() {
-        const codeLines = this.puzzleContainer.querySelectorAll('.code-line');
-        codeLines.forEach(codeLine => {
-            codeLine.addEventListener('mousedown', (e) => this.dragStart(e, codeLine));
-        });
-    }
-
-    dragStart(e, codeLine) {
-        e.preventDefault();
-        this.currentCodeLine = codeLine;
-        this.startX = e.clientX;
-        this.startY = e.clientY;
-
-        this.originalParent = codeLine.parentElement;
-        this.placeholder = document.createElement('div');
-        this.placeholder.className = 'placeholder-code-line';
-        this.placeholder.style.height = `${codeLine.offsetHeight}px`;
-
-        // Insert placeholder
-        codeLine.parentElement.insertBefore(this.placeholder, codeLine.nextSibling);
-
-        // Move code line to body for absolute positioning
-        document.body.appendChild(codeLine);
-        codeLine.style.position = 'absolute';
-        codeLine.style.zIndex = 1000;
-        codeLine.classList.add('dragging');
-
-        this.moveAt(e.pageX, e.pageY);
-
-        document.addEventListener('mousemove', this.dragMove.bind(this));
-        document.addEventListener('mouseup', this.dragEnd.bind(this));
-    }
-
-    moveAt(pageX, pageY) {
-        this.currentCodeLine.style.left = pageX - this.currentCodeLine.offsetWidth / 2 + 'px';
-        this.currentCodeLine.style.top = pageY - this.currentCodeLine.offsetHeight / 2 + 'px';
-    }
-
-    dragMove(e) {
-        e.preventDefault();
-        this.moveAt(e.pageX, e.pageY);
-
-        // Check for potential drop targets
-        const elementsBelow = document.elementsFromPoint(e.clientX, e.clientY);
-        const dropArea = this.dropArea;
-        const draggableArea = this.draggableCodeContainer;
-
-        let newParent = null;
-        if (elementsBelow.includes(dropArea)) {
-            newParent = dropArea;
-        } else if (elementsBelow.includes(draggableArea)) {
-            newParent = draggableArea;
-        }
-
-        if (newParent && this.currentCodeLine.parentElement !== newParent) {
-            this.placeholder.remove();
-            newParent.appendChild(this.placeholder);
-        }
-
-        // Adjust placeholder position within new parent
-        const codeLines = Array.from(newParent.querySelectorAll('.code-line:not(.dragging)'));
-        let insertBeforeElement = null;
-        for (let codeLine of codeLines) {
-            const rect = codeLine.getBoundingClientRect();
-            if (e.clientY < rect.top + rect.height / 2) {
-                insertBeforeElement = codeLine;
-                break;
-            }
-        }
-
-        if (insertBeforeElement) {
-            newParent.insertBefore(this.placeholder, insertBeforeElement);
-        } else {
-            newParent.appendChild(this.placeholder);
-        }
-    }
-
-    dragEnd(e) {
-        e.preventDefault();
-        document.removeEventListener('mousemove', this.dragMove.bind(this));
-        document.removeEventListener('mouseup', this.dragEnd.bind(this));
-
-        // Snap to indentation level
-        const dropAreaRect = this.dropArea.getBoundingClientRect();
-        const relativeX = e.clientX - dropAreaRect.left;
-        let indentLevel = Math.round(relativeX / this.indentationWidth);
-        indentLevel = Math.max(0, Math.min(indentLevel, this.maxIndentationLevel));
-
-        this.currentCodeLine.dataset.currentIndentation = indentLevel;
-        this.currentCodeLine.style.paddingLeft = `${indentLevel * this.indentationWidth}px`;
-
-        // Remove styles added during dragging
-        this.currentCodeLine.style.position = '';
-        this.currentCodeLine.style.left = '';
-        this.currentCodeLine.style.top = '';
-        this.currentCodeLine.style.zIndex = '';
-        this.currentCodeLine.classList.remove('dragging');
-
-        // Insert the code line into the new parent
-        this.placeholder.parentElement.insertBefore(this.currentCodeLine, this.placeholder);
-        this.placeholder.remove();
-
-        this.currentCodeLine = null;
-    }
-
-    // Override the checkSolution method to include indentation
-    checkSolution() {
-        const droppedItems = Array.from(this.dropArea.querySelectorAll('.code-line'));
-        const droppedOrder = droppedItems.map(item => ({
-            order: parseInt(item.dataset.order),
-            indentation: parseInt(item.dataset.currentIndentation)
-        }));
-
-        // Get the expected order and indentation
-        const correctOrder = this.codeBlocks.filter(obj => !obj.isEmpty).map(obj => ({
-            order: obj.order,
-            indentation: obj.expectedIndentation
-        }));
-
-        // Compare the student's solution with the correct one
-        const isCorrect = this.compareSolutions(droppedOrder, correctOrder);
-
-        // Prepare the full code with student's indentation for display
-        const fullCode = droppedItems.map(item => {
-            const numSpaces = parseInt(item.dataset.currentIndentation) * 4; // Assuming 4 spaces per indent level
-            const indentation = ' '.repeat(numSpaces);
-            const codeLine = this.codeBlocks.find(obj => obj.order === parseInt(item.dataset.order)).block;
-            return indentation + codeLine;
-        }).join('\n');
-
-        this.fullCodeElement.textContent = fullCode;
-        hljs.highlightElement(this.fullCodeElement);
-
-        if (isCorrect) {
-            this.showToast('success');
-            if (this.onSolvedCallback) {
-                setTimeout(() => {
-                    this.onSolvedCallback(fullCode);
-                }, 1500);
-            } else {
-                this.solutionModal.style.display = 'block';
-            }
-            return true;
-        } else {
-            this.showToast('error');
-            return false;
-        }
-    }
-
-    // Helper method to compare solutions
-    compareSolutions(droppedOrder, correctOrder) {
-        if (droppedOrder.length !== correctOrder.length) {
-            return false;
-        }
-        for (let i = 0; i < droppedOrder.length; i++) {
-            if (droppedOrder[i].order !== correctOrder[i].order ||
-                droppedOrder[i].indentation !== correctOrder[i].indentation) {
-                return false;
-            }
-        }
-        return true;
+        super(puzzleContainerId, codeString, onSolvedCallback, { indentationMode: 'student' });
     }
 }

@@ -25,6 +25,7 @@
     const showProgress = !!opts.show_progress;
     let index = Number.isFinite(opts.start_index) ? Math.max(0, Math.min(cards.length - 1, opts.start_index)) : 0;
     let side = 'front';
+    let renderedIndex = -1;
 
     if (opts.shuffle && cards.length > 1) {
       for (let i = cards.length - 1; i > 0; i -= 1) {
@@ -57,14 +58,22 @@
     const body = document.createElement('div');
     body.className = 'flashcards-body';
 
+    const flipWrap = document.createElement('div');
+    flipWrap.className = 'flashcards-flip';
+
+    const flipInner = document.createElement('div');
+    flipInner.className = 'flashcards-flip-inner';
+
     const frontDiv = document.createElement('div');
     frontDiv.className = 'flashcards-face front';
 
     const backDiv = document.createElement('div');
     backDiv.className = 'flashcards-face back';
 
-    body.appendChild(frontDiv);
-    body.appendChild(backDiv);
+    flipInner.appendChild(frontDiv);
+    flipInner.appendChild(backDiv);
+    flipWrap.appendChild(flipInner);
+    body.appendChild(flipWrap);
 
     const footer = document.createElement('div');
     footer.className = 'flashcards-footer';
@@ -103,10 +112,38 @@
     cardShell.appendChild(card);
     root.appendChild(cardShell);
 
+    function updateUI() {
+      root.dataset.side = side;
+      sideLabel.textContent = side === 'front' ? 'Forside' : 'Bakside';
+      progress.textContent = showProgress ? `Kort ${index + 1} / ${cards.length}` : '';
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === cards.length - 1;
+      flipBtn.disabled = false;
+    }
+
+    function renderCurrentCardIfNeeded() {
+      if (!cards.length) return;
+      if (renderedIndex === index) return;
+
+      const current = cards[index] || { front: '', back: '' };
+      frontDiv.innerHTML = current.front || '';
+      backDiv.innerHTML = current.back || '';
+
+      // Render both faces once per card so flipping is instant.
+      [frontDiv, backDiv].forEach((el) => {
+        renderMathIn(el);
+        highlightCode(el);
+      });
+
+      renderedIndex = index;
+    }
+
     function update() {
       if (!cards.length) {
+        renderedIndex = -1;
         frontDiv.innerHTML = '<em>Ingen kort.</em>';
         backDiv.innerHTML = '';
+        root.dataset.side = 'front';
         sideLabel.textContent = 'Kort';
         progress.textContent = '';
         prevBtn.disabled = true;
@@ -115,31 +152,14 @@
         return;
       }
 
-      const current = cards[index] || { front: '', back: '' };
-      frontDiv.innerHTML = current.front || '';
-      backDiv.innerHTML = current.back || '';
-      root.dataset.side = side;
-
-      sideLabel.textContent = side === 'front' ? 'Forside' : 'Bakside';
-      progress.textContent = showProgress ? `Kort ${index + 1} / ${cards.length}` : '';
-
-      prevBtn.disabled = index === 0;
-      nextBtn.disabled = index === cards.length - 1;
-
-      [frontDiv, backDiv].forEach((el) => {
-        renderMathIn(el);
-        highlightCode(el);
-      });
+      renderCurrentCardIfNeeded();
+      updateUI();
     }
 
     function flip() {
       side = side === 'front' ? 'back' : 'front';
-      card.classList.remove('flashcards-card-flip');
-      // Force reflow so the animation can restart
-      // eslint-disable-next-line no-unused-expressions
-      void card.offsetWidth;
-      card.classList.add('flashcards-card-flip');
-      update();
+      // Flipping should be instant; do not rerender content here.
+      updateUI();
     }
 
     function prev() {

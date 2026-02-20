@@ -13,6 +13,7 @@ Creates a styled exercise/task admonition.
 | Option | Type |
 |---|---|
 | `level` | string |
+| `aids` | boolean (`true`/`false`) |
 
 ## Example
 
@@ -22,9 +23,22 @@ Find the derivative of $f(x)=x^3-2x$.
 :::
 ````
 
+Digital aids example:
+
+````markdown
+:::{exercise} Practice (digital aids allowed)
+---
+aids: true
+---
+
+Use a CAS/graphing tool to investigate the function.
+:::
+````
+
 ## Notes
 
 - Optional `:level:` can be used to tag difficulty.
+- Use `aids: true` to switch the exercise icon to a computer.
 
 ## Source
 

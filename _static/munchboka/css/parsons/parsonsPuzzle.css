@@ -166,6 +166,97 @@
     margin-bottom: 15px;
 }
 
+/* Indentation-mode: show vertical guides for allowed indentation levels */
+.drop-area.parsons-drop-area--indent {
+    overflow: hidden;
+}
+
+.drop-area.parsons-drop-area--indent .parsons-indentation-preview {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background-color: var(--parsons-puzzle-hover-background-color);
+    opacity: 0.55;
+    pointer-events: none;
+    /* Above the dragged tile (z-index ~1000) */
+    z-index: 2200;
+}
+
+.drop-area.parsons-drop-area--indent .parsons-indentation-preview::after {
+    content: attr(data-level);
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--parsons-puzzle-drop-area-background-color);
+    color: var(--parsons-puzzle-text-color);
+    border: 1px solid var(--parsons-puzzle-drop-area-border-color);
+}
+
+.drop-area.parsons-drop-area--indent .parsons-indentation-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 2px dashed var(--parsons-puzzle-drop-area-border-color);
+    opacity: 0.75;
+    pointer-events: none;
+    /* Above the dragged tile (z-index ~1000) */
+    z-index: 2100;
+}
+
+.drop-area.parsons-drop-area--indent .parsons-indentation-guide.is-active {
+    opacity: 1;
+    border-left-style: solid;
+    border-left-width: 3px;
+}
+
+/* Tile while being dragged in indentation-mode */
+.parsons-tile.parsons-dragging {
+    cursor: grabbing;
+    opacity: 0.95;
+}
+
+/* Placeholder slot during custom dragging */
+.parsons-drag-placeholder {
+    margin-bottom: 5px;
+    border: 1px dashed var(--parsons-puzzle-placeholder-border-color);
+    background-color: transparent;
+    border-radius: 3px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Drop preview rectangle during custom drag (indentation-mode) */
+.parsons-drag-placeholder.parsons-drop-preview {
+    background-color: var(--parsons-puzzle-hover-background-color);
+    opacity: 0.45;
+    border: 2px dashed var(--parsons-puzzle-hover-border-color);
+    /* Above the dragged tile (which uses z-index ~1000) */
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.parsons-drag-placeholder.parsons-drop-preview::after {
+    content: attr(data-level);
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--parsons-puzzle-drop-area-background-color);
+    color: var(--parsons-puzzle-text-color);
+    border: 1px solid var(--parsons-puzzle-drop-area-border-color);
+    opacity: 0.9;
+}
+
 /* General draggable item styles */
 .draggable {
     background-color: var(--parsons-puzzle-draggable-item-background-color) !important;

@@ -283,6 +283,22 @@ class CodeEditor {
                 template: "for x in range(start, stopp, avstand):\n    if venstre_side == høyre_side:\n        print(x)",
                 caretWords: ["start", "stopp", "avstand", "venstre_side", "høyre_side"]
             },
+            "log": {
+                template: "def log(x):\n    import math\n    return math.log(x)",
+                caretWords: []
+            },
+            "exp": {
+                template: "def exp(x):\n    import math\n    return math.exp(x)",
+                caretWords: []
+            },
+            "log10": {
+                template: "def log10(x):\n    import math\n    return math.log10(x)",
+                caretWords: []
+            },
+            "log2": {
+                template: "def log2(x):\n    import math\n    return math.log2(x)",
+                caretWords: []
+            },
         };
     }
 

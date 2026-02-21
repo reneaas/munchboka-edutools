@@ -621,8 +621,6 @@ html[data-theme="dark"] .multi-interactive-item {{
 
 <script>
 (function() {{
-    console.log('Multi-interactive graph script starting for {unique_id}');
-    
     const allFrames = {frames_arrays_js};
     const values = {values_js};
     const slider = document.getElementById('multi-interactive-slider-{unique_id}');
@@ -637,21 +635,12 @@ html[data-theme="dark"] .multi-interactive-item {{
         }}
     }}
     
-    console.log('Elements found:', {{
-        slider: !!slider,
-        valueDisplay: !!valueDisplay,
-        imagesCount: images.length,
-        framesArrays: allFrames.length
-    }});
-    
     if (!slider || !valueDisplay || images.length === 0) {{
-        console.error('Missing elements!');
         return;
     }}
     
     function updateFrames() {{
         const index = parseInt(slider.value);
-        console.log('Updating to frame', index);
         
         // Update all images
         for (let i = 0; i < images.length; i++) {{
@@ -746,8 +735,6 @@ html[data-theme="dark"] .multi-interactive-item {{
     
     // Start initialization
     initializeGraphs();
-    
-    console.log('Event listeners attached successfully');
 }})();
 </script>
 """

@@ -124,7 +124,7 @@ Plot test
 
 .. plot::
 
-   function: sin(x), f(x), (-3, 3) \ {0}
+    function: sin(x), f(x), (-3, 3) \\ {0}
    point: (pi/2, f(pi/2))
    xlabel: $x$, 6
    ylabel: $y$, 10
@@ -151,6 +151,17 @@ Plot test
     width: 40%
 
     Makrotest (let/def/repeat).
+
+.. plot::
+
+    circle: (0, 0), 1, fill, #123456
+    xmin: -2
+    xmax: 2
+    ymin: -2
+    ymax: 2
+    width: 30%
+
+    Filled circle test.
 """
     )
 
@@ -194,6 +205,18 @@ Interactive graph test
     ), "Inline plot SVG missing"
     assert "Ugyldig funksjon 's(x)'" not in plot_html
 
+    # Ensure circle fill uses the requested alpha (0.2) and color.
+    # Matplotlib may insert newlines into long attributes (even inside words),
+    # so normalize whitespace before checking.
+    style_attrs = re.findall(r'style="([^"]*)"', plot_html)
+    normalized = [re.sub(r"\s+", "", s) for s in style_attrs]
+    assert any(
+        ("fill:#123456" in s)
+        and ("stroke:#123456" in s)
+        and (("fill-opacity:0.2" in s) or ("opacity:0.2" in s))
+        for s in normalized
+    ), "Filled circle not found in SVG output"
+
     ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
     assert "interactive-graph-wrapper" in ig_html
     assert 'type="range"' in ig_html
@@ -218,7 +241,7 @@ Jeopardy test
    Category: Geometri
    100:
    Q: Hvor mange grader er en rett vinkel?
-   A: 90$^\circ$
+   A: 90$^\\circ$
         """
     )
 

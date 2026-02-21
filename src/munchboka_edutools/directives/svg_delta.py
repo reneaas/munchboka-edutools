@@ -657,20 +657,14 @@ def generate_delta_html(
     const values = {values_js};
     const varName = '{var_name}';
     
-    console.log('Initializing delta graph:', uniqueId);
-    console.log('Base SVG URL:', baseSvgUrl);
-    console.log('Deltas JSON URL:', deltasJsonUrl);
-    
     const container = document.getElementById('svg-container-' + uniqueId);
     const slider = document.getElementById('interactive-slider-' + uniqueId);
     const valueDisplay = document.getElementById('interactive-value-' + uniqueId);
     
     if (!container) {{
-        console.error('Container not found:', 'svg-container-' + uniqueId);
         return;
     }}
     if (!slider) {{
-        console.error('Slider not found:', 'interactive-slider-' + uniqueId);
         return;
     }}
 
@@ -754,23 +748,17 @@ def generate_delta_html(
         svg.classList.add('adaptive-figure');
     }}
     
-    console.log('Starting fetch...');
-    
     // Load base SVG and deltas
     Promise.all([
         fetch(baseSvgUrl).then(r => {{
-            console.log('Base SVG response:', r.status, r.statusText);
             if (!r.ok) throw new Error('Failed to load base SVG: ' + r.status + ' ' + r.statusText);
             return r.text();
         }}),
         fetch(deltasJsonUrl).then(r => {{
-            console.log('Deltas JSON response:', r.status, r.statusText);
             if (!r.ok) throw new Error('Failed to load deltas JSON: ' + r.status + ' ' + r.statusText);
             return r.json();
         }})
     ]).then(([svgText, deltasData]) => {{
-        console.log('SVG text length:', svgText.length);
-        console.log('Deltas count:', deltasData.length);
         
         // Remove XML declaration, DOCTYPE, and metadata with undeclared namespaces
         svgText = svgText.replace(/<\\?xml[^?]*\\?>/g, '');
@@ -785,13 +773,11 @@ def generate_delta_html(
 
         const parserError = doc.querySelector('parsererror');
         if (parserError) {{
-            console.error('SVG XML parse error:', parserError.textContent);
             throw new Error('Failed to parse base.svg as SVG XML');
         }}
 
         const svgElement = doc.documentElement;
         if (!svgElement || svgElement.localName !== 'svg') {{
-            console.error('No SVG element found after parsing');
             throw new Error('No SVG element found in loaded content');
         }}
 
@@ -802,14 +788,11 @@ def generate_delta_html(
         container.appendChild(importedSvg);
         svgDoc = importedSvg;
         deltas = deltasData;
-        
-        console.log('SVG element found:', !!svgDoc);
-        
+
         if (!svgDoc) {{
             throw new Error('No SVG element found in loaded content');
         }}
-        
-        console.log('Styling SVG...');
+
         styleSvg(svgDoc);
 
         // Keep an immutable template of the base SVG.
@@ -817,13 +800,8 @@ def generate_delta_html(
         baseSvgTemplate = importedSvg.cloneNode(true);
         buildElementCache();
         buildBaseCache();
-        
-        console.log('Rendering initial frame...');
+
         renderFrame(parseInt(slider.value));
-        
-        console.log('Attaching event listeners...');
-        console.log('SVG dimensions:', svgDoc.getBoundingClientRect());
-        console.log('Container dimensions:', container.getBoundingClientRect());
         
         // Attach event listeners AFTER SVG is loaded
         slider.addEventListener('input', updateFrame);
@@ -842,10 +820,7 @@ def generate_delta_html(
                 updateFrame();
             }}
         }});
-        
-        console.log('Delta-based graph loaded:', uniqueId, deltas.length, 'frames');
     }}).catch(err => {{
-        console.error('Failed to load delta graph:', err);
         container.innerHTML = '<p style="color: red; padding: 20px;">Failed to load interactive graph: ' + err.message + '</p>';
     }});
     
@@ -1010,7 +985,6 @@ def generate_delta_html(
     }}
     
     function applyDelta(frameIndex) {{
-        console.log('applyDelta called with frameIndex:', frameIndex);
         if (!deltas || frameIndex < 0 || frameIndex >= deltas.length) return;
         
         const delta = deltas[frameIndex];
@@ -1034,13 +1008,11 @@ def generate_delta_html(
                 updateValueDisplay(frameIndex);
                 return;
             }} catch (e) {{
-                console.error('Failed to apply fullSvg frame:', e);
                 // If it fails, fall back to a clean base + no-op.
                 mountFreshBaseSvg();
                 return;
             }}
         }}
-        console.log('Applying delta with', Object.keys(delta.changes).length, 'element changes');
         
         let didReplaceOuterHtml = false;
 
@@ -1090,7 +1062,6 @@ def generate_delta_html(
                 const doc = parser.parseFromString(wrapper, 'image/svg+xml');
                 const parserError = doc.querySelector('parsererror');
                 if (parserError) {{
-                    console.error('outerHTML parse error:', parserError.textContent);
                     return;
                 }}
                 const replacement = doc.documentElement.firstElementChild;
@@ -1099,7 +1070,6 @@ def generate_delta_html(
                 existingElem.replaceWith(imported);
                 didReplaceOuterHtml = true;
             }} catch (e) {{
-                console.error('Failed to apply outerHTML delta:', e);
             }}
         }}
 
@@ -1161,7 +1131,6 @@ def generate_delta_html(
     
     function updateFrame() {{
         const index = parseInt(slider.value);
-        console.log('updateFrame called, slider value:', index);
         
         if (pendingFrame !== null) {{
             cancelAnimationFrame(pendingFrame);
@@ -1272,7 +1241,6 @@ def generate_multi_delta_html(
     const controlsRoot = document.getElementById('interactive-controls-' + uniqueId);
 
     if (!container || !controlsRoot) {{
-        console.error('interactive-graph container/controls not found', uniqueId);
         return;
     }}
 
@@ -1350,7 +1318,6 @@ def generate_multi_delta_html(
             const doc = parser.parseFromString(wrapper, 'image/svg+xml');
             const parserError = doc.querySelector('parsererror');
             if (parserError) {{
-                console.error('outerHTML parse error:', parserError.textContent);
                 return false;
             }}
             const replacement = doc.documentElement.firstElementChild;
@@ -1359,13 +1326,11 @@ def generate_multi_delta_html(
             existingElem.replaceWith(imported);
             return true;
         }} catch (e) {{
-            console.error('Failed to apply outerHTML delta:', e);
             return false;
         }}
     }}
 
     let svgDoc = null;
-    let baseSvgTemplate = null;
     let deltas = null;
     let meta = null;
     let svgElements = {{}};
@@ -1539,7 +1504,6 @@ def generate_multi_delta_html(
                 buildElementCache();
                 return;
             }} catch (e) {{
-                console.error('Failed to apply fullSvg frame:', e);
                 mountFreshBaseSvg();
                 return;
             }}
@@ -1715,7 +1679,6 @@ def generate_multi_delta_html(
         buildControls();
         updateFrame();
     }}).catch(err => {{
-        console.error('Failed to load multi delta graph:', err);
         container.innerHTML = '<p style="color: red; padding: 20px;">Failed to load interactive graph: ' + err.message + '</p>';
     }});
 }})();

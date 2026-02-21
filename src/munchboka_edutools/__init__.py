@@ -149,6 +149,7 @@ def _copy_static(app):
         _register("css/github-light.css")
         _register("css/github-dark.css")
         _register("css/github-dark-high-contrast.css")
+        _register("css/table.css")
         _register("css/pairPuzzle/style.css")
         _register("css/escapeRoom/escape-room.css")
         _register("css/parsons/parsonsPuzzle.css")

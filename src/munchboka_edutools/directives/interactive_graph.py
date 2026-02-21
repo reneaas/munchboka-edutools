@@ -634,7 +634,7 @@ class InteractiveGraphDirective(SphinxDirective):
             rendered_nodes = plot_directive.run()
             svg_text: str | None = None
             for top in rendered_nodes:
-                for raw in top.traverse(nodes.raw):
+                for raw in top.findall(nodes.raw):
                     txt = raw.astext()
                     if "<svg" in txt:
                         svg_text = txt
@@ -832,7 +832,7 @@ class InteractiveGraphDirective(SphinxDirective):
             rendered_nodes = plot_directive.run()
             svg_text: str | None = None
             for top in rendered_nodes:
-                for raw in top.traverse(nodes.raw):
+                for raw in top.findall(nodes.raw):
                     txt = raw.astext()
                     if "<svg" in txt:
                         svg_text = txt
@@ -1197,8 +1197,6 @@ class InteractiveGraphDirective(SphinxDirective):
 
 <script>
 (function() {{
-    console.log('Interactive graph script starting for {unique_id}');
-    
     const frames = {frame_paths_js};
     const values = {values_js};
     const img = document.getElementById('interactive-img-{unique_id}');
@@ -1243,16 +1241,8 @@ class InteractiveGraphDirective(SphinxDirective):
         }}
         valueDisplay.textContent = '{var_name} = ' + vStr;
     }}
-    
-    console.log('Elements found:', {{
-        img: !!img,
-        slider: !!slider,
-        valueDisplay: !!valueDisplay,
-        framesCount: frames.length
-    }});
-    
+
     if (!img || !slider || !valueDisplay) {{
-        console.error('Missing elements for {unique_id}!');
         return;
     }}
     
@@ -1331,7 +1321,6 @@ class InteractiveGraphDirective(SphinxDirective):
                 // Continue loading immediately - no delays
                 requestAnimationFrame(loadBatch);
             }} else {{
-                console.log('All {len(var_values)} frames preloaded for {unique_id}');
             }}
         }}
         
@@ -1340,7 +1329,6 @@ class InteractiveGraphDirective(SphinxDirective):
     
     // Function to initialize the graph
     function initializeGraph() {{
-        console.log('Initializing graph {unique_id}');
         // Force reload the current frame
         updateFrame();
         
@@ -1388,8 +1376,6 @@ class InteractiveGraphDirective(SphinxDirective):
     let dropdownParent = img.closest('.admonition.dropdown');
     
     if (dropdownParent) {{
-        console.log('Graph {unique_id} is inside a dropdown');
-        
         // Find the toggle button (summary element or button)
         const toggleButton = dropdownParent.querySelector('summary, .admonition-title');
         
@@ -1444,8 +1430,6 @@ class InteractiveGraphDirective(SphinxDirective):
         // Not in dropdown, initialize immediately
         initializeGraph();
     }}
-    
-    console.log('Event listeners attached successfully');
 }})();
 </script>
 </div>

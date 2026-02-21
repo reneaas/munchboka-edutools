@@ -37,7 +37,7 @@ dependencies = [
   "schemdraw>=0.21",
 ]
 
-version = "0.3.21"
+version = "0.3.22"
 
 
 [project.urls]
@@ -81,3 +81,14 @@ target-version = "py39"
 [tool.black]
 line-length = 100
 target-version = ["py39"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  # Upstream warnings (not actionable in this repo)
+  "ignore:.*'oneOf' deprecated.*:pyparsing.exceptions.PyparsingDeprecationWarning:matplotlib\\._fontconfig_pattern",
+  "ignore:.*'parseString' deprecated.*:pyparsing.exceptions.PyparsingDeprecationWarning:matplotlib\\._fontconfig_pattern",
+  "ignore:.*'resetCache' deprecated.*:pyparsing.exceptions.PyparsingDeprecationWarning:matplotlib\\._fontconfig_pattern",
+  "ignore:.*'enablePackrat' deprecated.*:pyparsing.exceptions.PyparsingDeprecationWarning:matplotlib\\._mathtext",
+  "ignore:The frontend\\.OptionParser class will be replaced.*:DeprecationWarning:myst_parser\\.mdit_to_docutils\\.base",
+  "ignore:The frontend\\.Option class will be removed.*:DeprecationWarning:optparse",
+]

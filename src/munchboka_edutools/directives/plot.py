@@ -186,7 +186,8 @@ expressions.
 
 Circles & ellipses
 ------------------
-Circle: ``circle: (cx, cy), r[, linestyle][, color]`` (r > 0).
+Circle: ``circle: (cx, cy), r[, fill][, linestyle][, color]`` (r > 0).
+If ``fill`` is present, the interior is filled with the resolved color at alpha 0.2.
 Ellipse: ``ellipse: (cx, cy), a, b[, linestyle][, color]`` (a,b > 0).
 Both sample 1024 points; style/color optional and order‑independent.
 
@@ -2937,7 +2938,7 @@ class PlotDirective(SphinxDirective):
         # circles: (x,y), radius[, linestyle][, color]  (style/color optional, any order)
         # Accept expressions for x, y, radius. Optional tokens may appear in any order
         # after the radius token. Supported linestyles: solid, dotted, dashed, dashdot.
-        circle_vals: List[Tuple[float, float, float, str | None, str | None]] = []
+        circle_vals: List[Tuple[float, float, float, bool, str | None, str | None]] = []
         _allowed_circle_styles = {"solid", "dotted", "dashed", "dashdot"}
         for c in lists.get("circle", []):
             raw = str(c).strip()
@@ -3003,10 +3004,14 @@ class PlotDirective(SphinxDirective):
             if not tokens:
                 continue
             r_token = tokens[0]
+            fill_circle = False
             style_circle: str | None = None
             color_circle: str | None = None
             for tok in tokens[1:]:
                 low = tok.lower()
+                if low in {"fill", "filled"}:
+                    fill_circle = True
+                    continue
                 if low in _allowed_circle_styles and style_circle is None:
                     style_circle = low
                 elif color_circle is None:
@@ -3017,7 +3022,9 @@ class PlotDirective(SphinxDirective):
                 rv = _eval_expr(r_token)
                 if rv <= 0:
                     continue
-                circle_vals.append((float(xv), float(yv), float(rv), style_circle, color_circle))
+                circle_vals.append(
+                    (float(xv), float(yv), float(rv), bool(fill_circle), style_circle, color_circle)
+                )
             except Exception:
                 # Silently skip invalid circle
                 pass
@@ -4162,6 +4169,10 @@ class PlotDirective(SphinxDirective):
                     except Exception:
                         _mpatches_c = None
                     if _mpatches_c is not None:
+                        try:
+                            from matplotlib import colors as _mcolors_c
+                        except Exception:
+                            _mcolors_c = None
                         style_map_circle = {
                             "solid": "-",
                             "dotted": ":",
@@ -4169,7 +4180,7 @@ class PlotDirective(SphinxDirective):
                             "dashdot": "-.",
                         }
                         default_circle_color = plotmath.COLORS.get("black") or "black"
-                        for cx, cy, r_c, st_c, col_c in circle_vals:
+                        for cx, cy, r_c, fill_c, st_c, col_c in circle_vals:
                             try:
                                 # Resolve color
                                 if col_c:
@@ -4179,15 +4190,34 @@ class PlotDirective(SphinxDirective):
                                 col_use = (mapped if mapped else col_c) or default_circle_color
                                 # Resolve linestyle -> we pass as linestyle on patch edge
                                 ls_use = style_map_circle.get((st_c or "solid").lower(), "-")
-                                circ = _mpatches_c.Circle(
-                                    (cx, cy),
-                                    r_c,
-                                    fill=False,
-                                    edgecolor=col_use,
-                                    facecolor="none",
-                                    linestyle=ls_use,
-                                    lw=lw,
-                                )
+
+                                if fill_c:
+                                    if _mcolors_c is not None:
+                                        try:
+                                            face_use = _mcolors_c.to_rgba(col_use, alpha=0.2)
+                                        except Exception:
+                                            face_use = col_use
+                                    else:
+                                        face_use = col_use
+                                    circ = _mpatches_c.Circle(
+                                        (cx, cy),
+                                        r_c,
+                                        fill=True,
+                                        edgecolor=col_use,
+                                        facecolor=face_use,
+                                        linestyle=ls_use,
+                                        lw=lw,
+                                    )
+                                else:
+                                    circ = _mpatches_c.Circle(
+                                        (cx, cy),
+                                        r_c,
+                                        fill=False,
+                                        edgecolor=col_use,
+                                        facecolor="none",
+                                        linestyle=ls_use,
+                                        lw=lw,
+                                    )
                                 ax.add_patch(circ)
                             except Exception:
                                 pass

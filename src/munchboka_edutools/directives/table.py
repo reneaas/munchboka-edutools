@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import re
 from typing import List, Sequence
 
 from docutils import nodes
@@ -34,6 +35,24 @@ def _split_csv_line(line: str) -> List[str]:
 
 
 _ELLIPSIS_TOKENS = {"...", "…"}
+
+
+_WIDTH_RE = re.compile(
+    r"^(?:auto|fit-content|max-content|min-content|\d+(?:\.\d+)?(?:%|px|em|rem|ch|vw|vh|vmin|vmax))$",
+    flags=re.IGNORECASE,
+)
+
+
+def _normalize_width(value: str) -> str:
+    v = str(value).strip()
+    if not v:
+        raise ValueError("width: must not be empty")
+    if not _WIDTH_RE.match(v):
+        raise ValueError(
+            f"Invalid width: {value!r} (expected e.g. 80%, 400px, 30rem, auto)"
+        )
+    # Keep the author-provided case (but strip whitespace).
+    return v
 
 
 def _normalize_placement_token(token: str) -> str:
@@ -123,6 +142,8 @@ class TableDirective(SphinxDirective):
     option_spec = {
         # MyST YAML front matter may supply this as a boolean/None/string.
         "transpose": directives.unchanged,
+        "width": directives.unchanged,
+        "align": directives.unchanged,
         "class": directives.class_option,
         "name": directives.unchanged,
     }
@@ -133,7 +154,7 @@ class TableDirective(SphinxDirective):
             transpose = _is_truthy_option(self.options.get("transpose"))
         extra_classes = self.options.get("class", [])
 
-        labels, rows, placement = self._parse_content()
+        labels, rows, placement, width, align = self._parse_content()
 
         classes = ["munchboka-table"]
         if transpose:
@@ -146,6 +167,8 @@ class TableDirective(SphinxDirective):
             transpose=transpose,
             classes=classes,
             placement=placement,
+            width=width,
+            align=align,
         )
         raw = nodes.raw("", html_table, format="html")
 
@@ -159,10 +182,26 @@ class TableDirective(SphinxDirective):
 
         return [container]
 
-    def _parse_content(self) -> tuple[List[str], List[List[str]], List[str] | None]:
+    def _parse_content(
+        self,
+    ) -> tuple[List[str], List[List[str]], List[str] | None, str | None, str]:
         transpose = False
         if "transpose" in self.options:
             transpose = _is_truthy_option(self.options.get("transpose"))
+
+        width: str | None = None
+        if "width" in self.options and self.options.get("width") is not None:
+            try:
+                width = _normalize_width(self.options.get("width"))
+            except ValueError as e:
+                raise self.error(str(e))
+
+        align = "center"
+        if "align" in self.options and self.options.get("align") is not None:
+            try:
+                align = _normalize_placement_token(self.options.get("align"))
+            except ValueError as e:
+                raise self.error(str(e))
 
         cell_ellipsis = "$\\vdots$" if transpose else "$\\ldots$"
         # Ellipsis-only rows:
@@ -185,6 +224,22 @@ class TableDirective(SphinxDirective):
                 raw_placement = [p for p in _split_csv_line(after) if p]
                 continue
 
+            if line.lower().startswith("width:"):
+                after = line.split(":", 1)[1].strip()
+                try:
+                    width = _normalize_width(after)
+                except ValueError as e:
+                    raise self.error(str(e))
+                continue
+
+            if line.lower().startswith("align:"):
+                after = line.split(":", 1)[1].strip()
+                try:
+                    align = _normalize_placement_token(after)
+                except ValueError as e:
+                    raise self.error(str(e))
+                continue
+
             if labels is None:
                 if not line.lower().startswith("labels:"):
                     continue
@@ -204,23 +259,23 @@ class TableDirective(SphinxDirective):
         if labels is None:
             labels = []
 
-        width = len(labels)
+        col_count = len(labels)
         placement: List[str] | None = None
-        if width > 0 and raw_placement is not None:
+        if col_count > 0 and raw_placement is not None:
             try:
-                expanded = _expand_ellipsis_list(raw_placement, width)
+                expanded = _expand_ellipsis_list(raw_placement, col_count)
                 if len(expanded) == 1:
-                    placement = [_normalize_placement_token(expanded[0])] * width
-                elif len(expanded) == width:
+                    placement = [_normalize_placement_token(expanded[0])] * col_count
+                elif len(expanded) == col_count:
                     placement = [_normalize_placement_token(v) for v in expanded]
                 else:
                     raise ValueError(
-                        f"placement: expected 1 value or {width} values (got {len(expanded)})"
+                        f"placement: expected 1 value or {col_count} values (got {len(expanded)})"
                     )
             except ValueError as e:
                 raise self.error(str(e))
 
-        if width > 0:
+        if col_count > 0:
             # Apply ellipsis transformations after width is known.
             # - transpose off (labels are columns): cell ... -> \ldots, ellipsis-only row -> \vdots
             # - transpose on  (labels are rows):    cell ... -> \vdots, ellipsis-only row -> \vdots
@@ -229,12 +284,12 @@ class TableDirective(SphinxDirective):
                 # Ellipsis-only row expands based on transpose mode.
                 if len(r) == 1 and str(r[0]).strip() in _ELLIPSIS_TOKENS:
                     if transpose:
-                        normalized_rows.append([row_ellipsis] * width)
+                        normalized_rows.append([row_ellipsis] * col_count)
                     else:
-                        normalized_rows.append([row_ellipsis] + ([""] * (width - 1)))
+                        normalized_rows.append([row_ellipsis] + ([""] * (col_count - 1)))
                     continue
 
-                padded = _pad_or_trim(r, width)
+                padded = _pad_or_trim(r, col_count)
                 out_row: List[str] = []
                 for cell in padded:
                     if str(cell).strip() in _ELLIPSIS_TOKENS:
@@ -245,7 +300,7 @@ class TableDirective(SphinxDirective):
 
             rows = normalized_rows
 
-        return labels, rows, placement
+        return labels, rows, placement, width, align
 
     def _render_html(
         self,
@@ -255,6 +310,8 @@ class TableDirective(SphinxDirective):
         transpose: bool,
         classes: List[str],
         placement: List[str] | None,
+        width: str | None,
+        align: str,
     ) -> str:
         cls_attr = " ".join(html.escape(c) for c in classes if c)
 
@@ -269,8 +326,14 @@ class TableDirective(SphinxDirective):
             effective_placement = ["center"] * len(labels)
 
         def _wrap(table_html: str) -> str:
+            style_attr = ""
+            if width:
+                style_attr = f' style="width: {html.escape(width)};"'
+
+            frame_align = _normalize_placement_token(align)
+            frame_class = f"munchboka-table-frame munchboka-table-frame--align-{frame_align}"
             return (
-                '<div class="munchboka-table-frame">'
+                f'<div class="{frame_class}"{style_attr}>'
                 '<div class="munchboka-table-scroll">'
                 f"{table_html}"
                 "</div>"

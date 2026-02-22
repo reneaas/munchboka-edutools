@@ -74,6 +74,13 @@ labels: x1, x2, x3, x4
 placement: center, right, ..., left
 1, 2, 3, 4
 :::
+
+:::{table}
+width: 60%
+align: right
+labels: u, v
+1, 2
+:::
 """.lstrip(),
         encoding="utf8",
     )
@@ -172,3 +179,16 @@ placement: center, right, ..., left
 
     # Empty cells must be allowed (trailing comma yields an empty <td>).
     assert re.search(r"<td[^>]*>0\.5</td><td[^>]*></td>", compact)
+
+    # Width option should apply to the frame wrapper.
+    assert re.search(
+        r'<div[^>]*class="[^"]*munchboka-table-frame[^"]*"[^>]*style="width:60%;"[^>]*>',
+        compact,
+    )
+
+    # Align defaults to center, but this table explicitly sets align: right.
+    assert "munchboka-table-frame--align-center" in compact
+    assert re.search(
+        r'<div[^>]*class="[^"]*munchboka-table-frame--align-right[^"]*"[^>]*style="width:60%;"',
+        compact,
+    )

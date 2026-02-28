@@ -15,6 +15,21 @@
 
 @media print {
     /* ========================================
+       0. PRINT TYPOGRAPHY
+       ======================================== */
+
+    /* Reduce overall text size in printed/PDF output.
+       (Browser default is typically 16px; 14px is a good print baseline.) */
+    html {
+        font-size: 12px !important;
+    }
+
+    /* Slightly tighter leading reads better in print */
+    body {
+        line-height: 1.35 !important;
+    }
+
+    /* ========================================
        1. HIDE INTERACTIVE ELEMENTS
        ======================================== */
     
@@ -27,39 +42,17 @@
     .noninteractive {
         display: block !important;
     }
-    
-    /* Keep CAS buttons visible and styled for print */
+
+    /* Hide CAS/GGB popup open-buttons in downloaded/printed PDF */
     .cas-popup-button,
-    .ggb-cas-button {
-        display: inline-block !important;
-        margin: 0.5em 0 !important;
-        page-break-inside: avoid;
-        max-width: 100%;
-        box-sizing: border-box;
+    .ggb-cas-button,
+    .ggb-popup-button {
+        display: none !important;
     }
-    
-    /* Ensure CAS buttons inside tab content stay contained */
-    .sd-tab-content .cas-popup-button,
-    .sd-tab-content .ggb-cas-button,
-    .sd-tab-content .sidebar-cas {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        position: static !important;
-        float: none !important;
-        width: auto !important;
-    }
-    
-    /* Override sidebar layout for print - keep everything in flow */
+
+    /* Hide the sidebar wrapper used by :layout: sidebar (avoids empty boxes in print) */
     .sidebar-cas {
-        position: static !important;
-        float: none !important;
-        width: auto !important;
-        margin: 0.5em 0 !important;
-    }
-    
-    .sidebar-cas .ggb-cas-button {
-        display: inline-block !important;
-        width: auto !important;
+        display: none !important;
     }
     
     /* Hide the actual popup wrapper (the dialog that would open) */
@@ -207,11 +200,22 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-    
-    /* Hide icons in print but keep title styling */
-    .admonition.exercise .admonition-title::after,
-    div.exercise .admonition-title::after {
-        display: none; /* Hide icons in print */
+
+    /* Admonition title icon spacing in print
+       Theme reserves `2rem` on the left for its icon (`left: .5rem; width: 1rem`).
+       Our custom icons are often `20px` wide (fixed px). When we reduce the print
+       base font-size, `2rem` becomes too small and the icon can overlap the title
+       text. Increase left padding in print to keep spacing consistent with web.
+    */
+    .admonition > .admonition-title,
+    div.admonition > .admonition-title {
+        padding-left: 3rem;
+    }
+
+    /* Some custom icons shift left slightly for web; disable that in print to
+       avoid pushing the icon into the text area. */
+    div.exercise.exercise-aids > .admonition-title::after {
+        transform: none !important;
     }
     
     /* ========================================

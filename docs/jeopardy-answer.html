@@ -51,7 +51,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/fonts/opendyslexic/dyslexic.css?v=80f1227b" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
@@ -499,11 +499,27 @@ The vertex is $(1,0)$.
 ::::
 </pre></div>
 </div>
+<p>Nested inside a question (no need to repeat <code class="docutils literal notranslate"><span class="pre">category</span></code>/<code class="docutils literal notranslate"><span class="pre">points</span></code>):</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gu">::::{jeopardy-question}</span>
+<span class="gu">---</span>
+category: Functions
+<span class="gu">points: 200</span>
+<span class="gu">---</span>
+Find the vertex of $y=(x-1)^2$.
+
+:::{jeopardy-answer}
+The vertex is $(1,0)$.
+:::
+::::
+</pre></div>
+</div>
 </section>
 <section id="notes">
 <h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Must be nested inside <code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> and matched by <code class="docutils literal notranslate"><span class="pre">category</span></code> + <code class="docutils literal notranslate"><span class="pre">points</span></code>.</p></li>
+<li><p>Must be nested inside <code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code>.</p></li>
+<li><p>If nested inside <code class="docutils literal notranslate"><span class="pre">jeopardy-question</span></code>, <code class="docutils literal notranslate"><span class="pre">category</span></code> and <code class="docutils literal notranslate"><span class="pre">points</span></code> are inherited from the parent question (so you don’t have to repeat them).</p></li>
+<li><p>If used directly under <code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> (not inside a question), you should provide <code class="docutils literal notranslate"><span class="pre">category</span></code> + <code class="docutils literal notranslate"><span class="pre">points</span></code> so it can be matched to the correct tile.</p></li>
 </ul>
 </section>
 <section id="source">

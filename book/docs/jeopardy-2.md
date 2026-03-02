@@ -24,7 +24,10 @@ category: Algebra
 points: 100
 ---
 What is $2+2$?
-Answer: 4
+
+::{jeopardy-answer}
+4
+::
 ::::
 :::::
 ````

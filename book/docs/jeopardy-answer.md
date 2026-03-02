@@ -27,9 +27,27 @@ The vertex is $(1,0)$.
 ::::
 ````
 
+Nested inside a question (no need to repeat `category`/`points`):
+
+````markdown
+::::{jeopardy-question}
+---
+category: Functions
+points: 200
+---
+Find the vertex of $y=(x-1)^2$.
+
+:::{jeopardy-answer}
+The vertex is $(1,0)$.
+:::
+::::
+````
+
 ## Notes
 
-- Must be nested inside `jeopardy-2` and matched by `category` + `points`.
+- Must be nested inside `jeopardy-2`.
+- If nested inside `jeopardy-question`, `category` and `points` are inherited from the parent question (so you don't have to repeat them).
+- If used directly under `jeopardy-2` (not inside a question), you should provide `category` + `points` so it can be matched to the correct tile.
 
 ## Source
 

@@ -5,20 +5,25 @@
 :root {
   color-scheme: light dark;
   /* Light mode tokens */
-  --jp-bg: #FAFAFA;             /* background */
+  --jp-bg: #F7F8FC;             /* background */
   --jp-surface: #FFFFFF;         /* surfaces/cards */
-  --jp-text: #1F1F1F;            /* primary text */
-  --jp-subtle-text: #5F6368;     /* secondary text */
-  --jp-outline: #E0E3EB;         /* outlines/dividers */
-  --jp-primary: #1A73E8;         /* Google Blue 600 */
-  --jp-primary-strong: #0B57D0;  /* header/nav */
+  --jp-text: #0F172A;            /* primary text */
+  --jp-subtle-text: #475569;     /* secondary text */
+  --jp-outline: #D7DFEF;         /* outlines/dividers */
+  /* Deep navy + calmer tile blue (closer to classic Jeopardy) */
+  --jp-primary: #1F4AD0;         /* tiles */
+  --jp-primary-strong: #132A6A;  /* header/nav */
   --jp-on-primary: #FFFFFF;      /* text on primary */
-  --jp-secondary: #E8F0FE;       /* subtle surface tint */
-  --jp-danger: #D93025;          /* Google Red 600 */
-  --jp-success: #188038;         /* Google Green 700 */
-  --jp-success-border: #0F6E31;  /* darker green for outline */
-  --jp-accent: #F29900;          /* Orange for reset */
-  --jp-accent-border: #C47D00;   /* Darker orange border */
+  --jp-secondary: #EEF2FF;       /* subtle surface tint */
+  --jp-danger: #DC2626;          /* red 600 */
+  --jp-success: #16A34A;         /* green 600 */
+  --jp-success-border: #15803D;  /* green 700 */
+  --jp-accent: #F59E0B;          /* amber 500 (reset) */
+  --jp-accent-border: #D97706;   /* amber 600 */
+  --jp-focus-ring: rgba(31, 74, 208, 0.35);
+  --jp-neutral: #4B5563;
+  --jp-neutral-strong: #374151;
+  --jp-on-neutral: #F9FAFB;
   --jp-shadow: 0 2px 6px rgba(0,0,0,0.12);
   --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.22);
   /* Components */
@@ -32,26 +37,30 @@
   --jp-modal-bg: var(--jp-surface);
   --jp-modal-fg: var(--jp-text);
   /* Make modal footer match page/surface in light mode */
-  --jp-modal-footer: #FFFFFF;
+  --jp-modal-footer: var(--jp-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     /* Dark mode tokens */
-    --jp-bg: #121212;
-    --jp-surface: #1E1E1E;
-    --jp-text: #E8EAED;
-    --jp-subtle-text: #9AA0A6;
-    --jp-outline: #2A2E34;
-    --jp-primary: #1B66C9;         /* darker blue for tiles */
-    --jp-primary-strong: #1C3B70;  /* deep header/nav */
+    --jp-bg: #0B1220;
+    --jp-surface: #0F172A;
+    --jp-text: #E2E8F0;
+    --jp-subtle-text: #94A3B8;
+    --jp-outline: #22314D;
+    --jp-primary: #1E40AF;         /* tile blue */
+    --jp-primary-strong: #0B1B3A;  /* deep header/nav */
     --jp-on-primary: #FFFFFF;
-    --jp-secondary: #171A21;       /* modal footer tint */
-    --jp-danger: #EA4335;          /* Google Red 500 */
-  --jp-success: #1E8E3E;         /* Material green for dark */
-  --jp-success-border: #167C35;  /* darker variant for outline */
-    --jp-accent: #F6A400;          /* Slightly lighter orange for dark */
-    --jp-accent-border: #DB8E00;   /* Darker orange border */
+    --jp-secondary: #111C33;       /* modal/footer tint */
+    --jp-danger: #EF4444;          /* red 500 */
+    --jp-success: #22C55E;         /* green 500 */
+    --jp-success-border: #16A34A;  /* green 600 */
+    --jp-accent: #F59E0B;          /* amber 500 */
+    --jp-accent-border: #D97706;   /* amber 600 */
+    --jp-focus-ring: rgba(96, 165, 250, 0.35);
+    --jp-neutral: #334155;
+    --jp-neutral-strong: #1F2937;
+    --jp-on-neutral: #E2E8F0;
     --jp-shadow: 0 2px 6px rgba(0,0,0,0.4);
     --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.6);
     /* Components */
@@ -64,7 +73,7 @@
     --jp-tile-fg: #FFFFFF;
     --jp-modal-bg: var(--jp-surface);
     --jp-modal-fg: var(--jp-text);
-    --jp-modal-footer: #161A20;
+    --jp-modal-footer: #0B1220;
   }
   /* In dark mode, keep container on the dark surface token */
   .jeopardy-container { background: var(--jp-bg); }
@@ -76,20 +85,24 @@ body.dark-mode,
 html[data-theme='dark'],
 body[data-theme='dark'],
 html[data-mode='dark'] {
-  --jp-bg: #121212;
-  --jp-surface: #1E1E1E;
-  --jp-text: #E8EAED;
-  --jp-subtle-text: #9AA0A6;
-  --jp-outline: #2A2E34;
-  --jp-primary: #1B66C9;
-  --jp-primary-strong: #1C3B70;
+  --jp-bg: #0B1220;
+  --jp-surface: #0F172A;
+  --jp-text: #E2E8F0;
+  --jp-subtle-text: #94A3B8;
+  --jp-outline: #22314D;
+  --jp-primary: #1E40AF;
+  --jp-primary-strong: #0B1B3A;
   --jp-on-primary: #FFFFFF;
-  --jp-secondary: #171A21;
-  --jp-danger: #EA4335;
-  --jp-success: #1E8E3E;
-  --jp-success-border: #167C35;
-  --jp-accent: #F6A400;
-  --jp-accent-border: #DB8E00;
+  --jp-secondary: #111C33;
+  --jp-danger: #EF4444;
+  --jp-success: #22C55E;
+  --jp-success-border: #16A34A;
+  --jp-accent: #F59E0B;
+  --jp-accent-border: #D97706;
+  --jp-focus-ring: rgba(96, 165, 250, 0.35);
+  --jp-neutral: #334155;
+  --jp-neutral-strong: #1F2937;
+  --jp-on-neutral: #E2E8F0;
   --jp-shadow: 0 2px 6px rgba(0,0,0,0.4);
   --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.6);
   --jp-header-bg: var(--jp-primary-strong);
@@ -101,7 +114,7 @@ html[data-mode='dark'] {
   --jp-tile-fg: #FFFFFF;
   --jp-modal-bg: var(--jp-surface);
   --jp-modal-fg: var(--jp-text);
-  --jp-modal-footer: #161A20;
+  --jp-modal-footer: #0B1220;
 }
 
 .jeopardy-container { 
@@ -181,7 +194,7 @@ html[data-mode='dark'] {
 /* Active team highlight for turn-based mode */
 .jeopardy-team.active {
   outline: 2px solid var(--jp-outline);
-  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.35);
+  box-shadow: 0 0 0 3px var(--jp-focus-ring);
 }
 
 .jeopardy-grid {
@@ -215,7 +228,7 @@ html[data-mode='dark'] {
   width: 100%;
   background: var(--jp-tile-bg);
   color: var(--jp-tile-fg);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 8px;
   padding: 1rem 0.5rem;
   /* responsive font that shrinks on tight layouts */
@@ -279,14 +292,14 @@ html[data-mode='dark'] {
 
 /* Auto theme (OS/browser preference) */
 @media (prefers-color-scheme: light) {
-  .jeopardy-modal-body { background: #FFFFFF; color: #000000; }
+  .jeopardy-modal-body { background: var(--jp-surface); color: var(--jp-text); }
   /* Ensure auto mode adopts the same light overrides explicitly */
-  [data-mode='auto'] .jeopardy-modal-body { background: #FFFFFF; color: #000000; }
-  [data-mode='auto'] .jeopardy-setup { background: #E8F0FE; color: #000000; }
-  [data-mode='auto'] .jeopardy-setup .jp-field label { color: #000000; }
+  [data-mode='auto'] .jeopardy-modal-body { background: var(--jp-surface); color: var(--jp-text); }
+  [data-mode='auto'] .jeopardy-setup { background: var(--jp-secondary); color: var(--jp-text); }
+  [data-mode='auto'] .jeopardy-setup .jp-field label { color: var(--jp-text); }
   [data-mode='auto'] .jeopardy-setup input,
-  [data-mode='auto'] .jeopardy-setup select { background: #FFFFFF; color: #000000; border-color: var(--jp-outline); }
-  [data-mode='auto'] .jeopardy-resume-prompt { background: #E8F0FE; color: #000000; border-color: var(--jp-outline); }
+  [data-mode='auto'] .jeopardy-setup select { background: var(--jp-surface); color: var(--jp-text); border-color: var(--jp-outline); }
+  [data-mode='auto'] .jeopardy-resume-prompt { background: var(--jp-secondary); color: var(--jp-text); border-color: var(--jp-outline); }
   /* In auto+light, keep container transparent so the page background shows */
   [data-mode='auto'] .jeopardy-container { background: transparent !important; color: var(--jp-text); }
 }
@@ -299,7 +312,7 @@ html.light-mode .jeopardy-modal-body,
 body.light-mode .jeopardy-modal-body,
 html[data-theme='light'] .jeopardy-modal-body,
 body[data-theme='light'] .jeopardy-modal-body,
-[data-mode='light'] .jeopardy-modal-body { background: #FFFFFF !important; color: #000000 !important; }
+[data-mode='light'] .jeopardy-modal-body { background: var(--jp-surface) !important; color: var(--jp-text) !important; }
 
 html.dark-mode .jeopardy-modal-body,
 body.dark-mode .jeopardy-modal-body,
@@ -402,8 +415,8 @@ body[data-theme='dark'] .jeopardy-modal-body pre,
 .jeopardy-team-actions .j-btn.secondary {
   border: 2px solid var(--jp-outline);
   /* Neutral grey with good contrast in both light/dark contexts */
-  background: #4b5563;
-  color: #f9fafb;
+  background: var(--jp-neutral);
+  color: var(--jp-on-neutral);
 }
 .jeopardy-team-actions .j-btn.used-choice {
   opacity: 0.55;
@@ -417,7 +430,7 @@ body[data-theme='dark'] .jeopardy-modal-body pre,
 }
 .jeopardy-team-actions .j-btn.used-choice.secondary {
   box-shadow: 0 0 0 2px var(--jp-outline);
-  background: #374151;
+  background: var(--jp-neutral-strong);
 }
 
 /* Images inside content */
@@ -456,9 +469,9 @@ body[data-theme='dark'] .jeopardy-modal-body pre,
 
 /* Light mode: make setup panel light blue with black text for clarity */
 @media (prefers-color-scheme: light) {
-  .jeopardy-setup { background: #E8F0FE; color: #000000; }
-  .jeopardy-setup .jp-field label { color: #000000; }
-  .jeopardy-setup input, .jeopardy-setup select { background: #FFFFFF; color: #000000; border-color: var(--jp-outline); }
+  .jeopardy-setup { background: var(--jp-secondary); color: var(--jp-text); }
+  .jeopardy-setup .jp-field label { color: var(--jp-text); }
+  .jeopardy-setup input, .jeopardy-setup select { background: var(--jp-surface); color: var(--jp-text); border-color: var(--jp-outline); }
 }
 
 /* Explicit light theme overrides (site theme toggles) */
@@ -466,12 +479,12 @@ html.light-mode .jeopardy-setup,
 body.light-mode .jeopardy-setup,
 html[data-theme='light'] .jeopardy-setup,
 body[data-theme='light'] .jeopardy-setup,
-[data-mode='light'] .jeopardy-setup { background: #E8F0FE !important; color: #000000 !important; }
+[data-mode='light'] .jeopardy-setup { background: var(--jp-secondary) !important; color: var(--jp-text) !important; }
 html.light-mode .jeopardy-setup .jp-field label,
 body.light-mode .jeopardy-setup .jp-field label,
 html[data-theme='light'] .jeopardy-setup .jp-field label,
 body[data-theme='light'] .jeopardy-setup .jp-field label,
-[data-mode='light'] .jeopardy-setup .jp-field label { color: #000000 !important; }
+[data-mode='light'] .jeopardy-setup .jp-field label { color: var(--jp-text) !important; }
 html.light-mode .jeopardy-setup input,
 body.light-mode .jeopardy-setup input,
 html[data-theme='light'] .jeopardy-setup input,
@@ -481,7 +494,7 @@ body.light-mode .jeopardy-setup select,
 html[data-theme='light'] .jeopardy-setup select,
 body[data-theme='light'] .jeopardy-setup select,
 [data-mode='light'] .jeopardy-setup input,
-[data-mode='light'] .jeopardy-setup select { background: #FFFFFF !important; color: #000000 !important; border-color: var(--jp-outline) !important; }
+[data-mode='light'] .jeopardy-setup select { background: var(--jp-surface) !important; color: var(--jp-text) !important; border-color: var(--jp-outline) !important; }
 
 /* Resume prompt above setup */
 .jeopardy-resume-prompt {
@@ -500,7 +513,7 @@ body[data-theme='light'] .jeopardy-setup select,
 
 /* Light mode: make resume prompt light blue for consistency */
 @media (prefers-color-scheme: light) {
-  .jeopardy-resume-prompt { background: #E8F0FE; color: #000000; border-color: var(--jp-outline); }
+  .jeopardy-resume-prompt { background: var(--jp-secondary); color: var(--jp-text); border-color: var(--jp-outline); }
 }
 
 /* Explicit light theme overrides */
@@ -508,7 +521,7 @@ html.light-mode .jeopardy-resume-prompt,
 body.light-mode .jeopardy-resume-prompt,
 html[data-theme='light'] .jeopardy-resume-prompt,
 body[data-theme='light'] .jeopardy-resume-prompt,
-[data-mode='light'] .jeopardy-resume-prompt { background: #E8F0FE !important; color: #000000 !important; border-color: var(--jp-outline) !important; }
+[data-mode='light'] .jeopardy-resume-prompt { background: var(--jp-secondary) !important; color: var(--jp-text) !important; border-color: var(--jp-outline) !important; }
 
 /* Explicit dark theme overrides (site theme toggles and data-mode) */
 html.dark-mode .jeopardy-setup,

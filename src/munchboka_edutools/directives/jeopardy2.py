@@ -189,8 +189,17 @@ class JeopardyQuestionDirective(SphinxDirective):
         category = self.options.get("category", category or "General")
         points = self.options.get("points", points or 100)
 
-        # Split content into question and answer
-        question_html, answer_html = self._split_question_answer(content_lines)
+        # Allow nested `jeopardy-answer` directives inside this question to inherit
+        # category/points without repeating them.
+        self.env.temp["current_jeopardy2_question_meta"] = {
+            "category": category,
+            "points": points,
+        }
+        try:
+            # Split content into question and answer
+            question_html, answer_html = self._split_question_answer(content_lines)
+        finally:
+            self.env.temp.pop("current_jeopardy2_question_meta", None)
 
         # Store question in environment
         questions_key = f"jeopardy2_questions_{board_id}"
@@ -444,9 +453,26 @@ class JeopardyAnswerDirective(SphinxDirective):
         # Parse front matter and content
         category, points, content_lines = self._parse_content()
 
-        # Use options if provided, otherwise use front matter
-        category = self.options.get("category", category or "General")
-        points = self.options.get("points", points or 100)
+        # Apply options (if any)
+        opt_category = self.options.get("category")
+        opt_points = self.options.get("points")
+        if opt_category is not None:
+            category = opt_category
+        if opt_points is not None:
+            points = opt_points
+
+        # If this answer is nested inside a `jeopardy-question`, inherit missing
+        # category/points from the current question.
+        question_meta = self.env.temp.get("current_jeopardy2_question_meta")
+        if isinstance(question_meta, dict):
+            if category is None:
+                category = question_meta.get("category")
+            if points is None:
+                points = question_meta.get("points")
+
+        # Final defaults (keeps backward compatibility)
+        category = category or "General"
+        points = points or 100
 
         # Render content to HTML
         answer_html = self._render_to_html(content_lines)

@@ -117,6 +117,47 @@ html[data-mode='dark'] {
   --jp-modal-footer: #0B1220;
 }
 
+/* Explicit light tokens when user selects light mode (override system dark)
+   Note: some sites put `data-mode` on a container instead of `<html>`. */
+html.light-mode,
+body.light-mode,
+html[data-theme='light'],
+body[data-theme='light'],
+html[data-mode='light'],
+[data-mode='light'] {
+  color-scheme: light;
+  --jp-bg: #F7F8FC;
+  --jp-surface: #FFFFFF;
+  --jp-text: #0F172A;
+  --jp-subtle-text: #475569;
+  --jp-outline: #D7DFEF;
+  --jp-primary: #1F4AD0;
+  --jp-primary-strong: #132A6A;
+  --jp-on-primary: #FFFFFF;
+  --jp-secondary: #EEF2FF;
+  --jp-danger: #DC2626;
+  --jp-success: #16A34A;
+  --jp-success-border: #15803D;
+  --jp-accent: #F59E0B;
+  --jp-accent-border: #D97706;
+  --jp-focus-ring: rgba(31, 74, 208, 0.35);
+  --jp-neutral: #4B5563;
+  --jp-neutral-strong: #374151;
+  --jp-on-neutral: #F9FAFB;
+  --jp-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.22);
+  --jp-header-bg: var(--jp-primary-strong);
+  --jp-header-fg: var(--jp-on-primary);
+  --jp-team-bg: var(--jp-primary-strong);
+  --jp-team-fg: var(--jp-on-primary);
+  --jp-team-border: rgba(255,255,255,0.28);
+  --jp-tile-bg: var(--jp-primary);
+  --jp-tile-fg: #FFFFFF;
+  --jp-modal-bg: var(--jp-surface);
+  --jp-modal-fg: var(--jp-text);
+  --jp-modal-footer: var(--jp-surface);
+}
+
 .jeopardy-container { 
   box-sizing: border-box;
   width: 100%;

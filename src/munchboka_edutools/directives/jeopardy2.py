@@ -358,7 +358,20 @@ class JeopardyQuestionDirective(SphinxDirective):
         elif isinstance(node, nodes.image):
             uri = node.get("uri", "")
             alt = node.get("alt", "")
-            return f'<img src="{uri}" alt="{alt}" />'
+            classes = list(node.get("classes", []))
+            align = node.get("align")
+            if align in ("left", "center", "right"):
+                align_class = f"align-{align}"
+                if align_class not in classes:
+                    classes.append(align_class)
+
+            attrs = [
+                f'src="{_html.escape(uri, quote=True)}"',
+                f'alt="{_html.escape(alt, quote=True)}"',
+            ]
+            if classes:
+                attrs.append(f'class="{_html.escape(" ".join(classes), quote=True)}"')
+            return f"<img {' '.join(attrs)} />"
 
         elif isinstance(node, nodes.literal_block):
             content = _html.escape(node.astext())
@@ -369,18 +382,22 @@ class JeopardyQuestionDirective(SphinxDirective):
             # Handle figure nodes (e.g., from plot directive)
             # Preserve the figure element and its classes for proper CSS styling
             content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            align = node.get("align", "center")
+            classes = list(node.get("classes", []))
+            align = node.get("align")
+            # Docutils/Sphinx themes rely on CSS classes like "align-right".
+            # The legacy HTML `align="right"` attribute is not what Sphinx emits.
+            if align in ("left", "center", "right"):
+                align_class = f"align-{align}"
+                if align_class not in classes:
+                    classes.append(align_class)
 
-            # Build figure element with all necessary classes and attributes
             attrs = []
             if classes:
-                attrs.append(f'class="{classes}"')
-            if align:
-                attrs.append(f'align="{align}"')
-
+                attrs.append(f'class="{_html.escape(" ".join(classes), quote=True)}"')
             attrs_str = " ".join(attrs) if attrs else ""
-            return f"<figure {attrs_str}>{content}</figure>"
+            if attrs_str:
+                attrs_str = " " + attrs_str
+            return f"<figure{attrs_str}>{content}</figure>"
 
         elif isinstance(node, nodes.caption):
             # Handle figure captions

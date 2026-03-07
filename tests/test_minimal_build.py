@@ -175,6 +175,7 @@ Interactive graph test
    :width: 60%
 
    interactive-var: a, 0, 2, 3
+    interactive-workers: 1
    let: L = 3
    def: s(x) = L*(1 + a*x)
    repeat: n=1..2; point: (n, s(n))
@@ -185,6 +186,28 @@ Interactive graph test
    ymax: 10
 
    Makrotest i interactive-graph.
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    (src / "interactivegraph_multi.rst").write_text(
+        """
+Interactive graph multi test
+============================
+
+.. interactive-graph::
+   :width: 60%
+
+   interactive-var: a, 0, 1, 2
+   interactive-var: b, 0, 1, 2
+   interactive-workers: 2
+   function: a*x + b
+   xmin: 0
+   xmax: 2
+   ymin: 0
+   ymax: 3
+
+   Multi-variabel test.
 """.lstrip(),
         encoding="utf8",
     )
@@ -220,6 +243,11 @@ Interactive graph test
     ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
     assert "interactive-graph-wrapper" in ig_html
     assert 'type="range"' in ig_html
+
+    ig_multi_html = (build / "interactivegraph_multi.html").read_text(encoding="utf8")
+    assert "interactive-graph-wrapper" in ig_multi_html
+    assert "interactive-controls-" in ig_multi_html
+    assert "meta.json" in ig_multi_html
 
     # Add Jeopardy page and ensure container and assets
     (src / "jeopardy.rst").write_text(

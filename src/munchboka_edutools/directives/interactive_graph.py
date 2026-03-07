@@ -33,6 +33,7 @@ import os
 import re
 import shutil
 import tempfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Dict, List, Tuple
 
 from docutils import nodes
@@ -42,12 +43,38 @@ from sphinx.util.docutils import SphinxDirective
 
 # Import frame generation from animate directive
 from .animate import (
+    AnimateDirective,
     _eval_expr,
     _hash_key,
     _parse_bool,
     _substitute_variable,
     _substitute_variables,
 )
+
+
+def _render_svg_frame_worker(task: Tuple[str, Dict[str, Any]]) -> str:
+    """Render one already-substituted frame in a worker process."""
+    frame_content, render_options = task
+    with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp_svg:
+        svg_path = tmp_svg.name
+
+    try:
+        AnimateDirective._generate_frame_svg(
+            None,
+            None,
+            frame_content,
+            svg_path,
+            dict(render_options),
+            "__interactive_var__",
+            0.0,
+        )
+        with open(svg_path, "r", encoding="utf-8") as f:
+            return f.read()
+    finally:
+        try:
+            os.unlink(svg_path)
+        except FileNotFoundError:
+            pass
 
 
 class InteractiveGraphDirective(SphinxDirective):
@@ -66,6 +93,7 @@ class InteractiveGraphDirective(SphinxDirective):
         "interactive-var": directives.unchanged,
         # Guard for cartesian-product frame grids (only relevant for multi-var)
         "interactive-max-frames": directives.nonnegative_int,
+        "interactive-workers": directives.unchanged,
         "width": directives.unchanged,
         "height": directives.unchanged,
         "align": directives.unchanged,
@@ -161,7 +189,7 @@ class InteractiveGraphDirective(SphinxDirective):
         caption_lines = content_lines[caption_idx:] if caption_idx < len(content_lines) else []
 
         # Filter interactive-specific keys from plot content
-        interactive_keys = {"interactive-var", "interactive-max-frames"}
+        interactive_keys = {"interactive-var", "interactive-max-frames", "interactive-workers"}
         plot_content_lines = []
         for i, line in enumerate(content_lines):
             if i >= caption_idx:
@@ -622,6 +650,7 @@ class InteractiveGraphDirective(SphinxDirective):
             # Remove interactive-only keys that plot.py doesn't care about.
             plot_directive.options.pop("interactive-var", None)
             plot_directive.options.pop("interactive-max-frames", None)
+            plot_directive.options.pop("interactive-workers", None)
 
             # Force regeneration and request internal rendering semantics:
             # - stable internal filename (so we don't create N cache files)
@@ -751,6 +780,43 @@ class InteractiveGraphDirective(SphinxDirective):
                 pass
         return indices
 
+    def _get_interactive_worker_count(
+        self,
+        total_frames: int,
+        merged_options: Dict[str, Any],
+    ) -> int:
+        """Determine process count for multi-variable frame rendering."""
+        if total_frames <= 1:
+            return 1
+
+        raw_value = merged_options.get("interactive-workers")
+        cpu_count = os.cpu_count() or 1
+        auto_workers = min(cpu_count, total_frames)
+
+        if raw_value in (None, "", 0, "0"):
+            requested = auto_workers
+        elif isinstance(raw_value, int):
+            requested = raw_value
+        else:
+            raw_str = str(raw_value).strip().lower()
+            if raw_str == "auto":
+                requested = auto_workers
+            else:
+                try:
+                    requested = int(raw_str)
+                except ValueError as e:
+                    raise ValueError(
+                        "interactive-workers must be a positive integer, 0, or 'auto'"
+                    ) from e
+
+        if requested <= 0:
+            requested = auto_workers
+
+        if total_frames < 4:
+            return 1
+
+        return max(1, min(requested, total_frames))
+
     def _generate_frames_multi(
         self,
         app: Sphinx,
@@ -825,6 +891,7 @@ class InteractiveGraphDirective(SphinxDirective):
             )
             plot_directive.options.pop("interactive-var", None)
             plot_directive.options.pop("interactive-max-frames", None)
+            plot_directive.options.pop("interactive-workers", None)
             plot_directive.options["nocache"] = None
             plot_directive.options["internal"] = None
             plot_directive.options["internal-name"] = internal_plot_name
@@ -848,6 +915,10 @@ class InteractiveGraphDirective(SphinxDirective):
         lengths = [len(vv) for vv in var_values_list]
         strides = self._compute_strides(lengths)
         initial_indices = self._get_initial_indices(var_axes, merged_options)
+        render_options = dict(merged_options)
+        render_options.pop("interactive-var", None)
+        render_options.pop("interactive-max-frames", None)
+        render_options.pop("interactive-workers", None)
 
         # Generate all frames in memory first
         svg_frames: List[str] = []
@@ -858,23 +929,66 @@ class InteractiveGraphDirective(SphinxDirective):
 
         desc = "interactive-graph(" + "×".join(var_names) + ")"
         logger.info(f"Generating {desc}: {total_frames} frames")
+        frame_indices = list(itertools.product(*[range(n) for n in lengths]))
+        worker_count = self._get_interactive_worker_count(total_frames, merged_options)
 
-        frame_iter = _iter_with_progress(
-            itertools.product(*[range(n) for n in lengths]),
-            total=total_frames,
-            desc=desc,
-        )
+        if worker_count > 1:
+            logger.info(f"{desc}: rendering with {worker_count} worker processes")
+            frame_tasks: List[Tuple[str, Dict[str, Any]]] = []
+            for idx_tuple in frame_indices:
+                variables = {
+                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
+                }
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variables(frame_content, variables)
+                frame_tasks.append((frame_content, render_options))
 
-        for idx_tuple in frame_iter:
-            variables = {
-                var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
-            }
+            try:
+                import multiprocessing
 
-            frame_content = "\n".join(plot_content_lines)
-            frame_content = _substitute_variables(frame_content, variables)
+                mp_context = multiprocessing.get_context("spawn")
+                with ProcessPoolExecutor(
+                    max_workers=worker_count,
+                    mp_context=mp_context,
+                ) as executor:
+                    future_to_index = {
+                        executor.submit(_render_svg_frame_worker, task): index
+                        for index, task in enumerate(frame_tasks)
+                    }
+                    completed_svgs: List[str | None] = [None] * total_frames
 
-            svg_content = _render_svg(frame_content)
-            svg_frames.append(svg_content)
+                    for future in _iter_with_progress(
+                        as_completed(future_to_index),
+                        total=total_frames,
+                        desc=desc,
+                    ):
+                        frame_index = future_to_index[future]
+                        completed_svgs[frame_index] = future.result()
+
+                    svg_frames = [svg for svg in completed_svgs if svg is not None]
+            except Exception as e:
+                logger.warning(
+                    f"{desc}: parallel rendering failed, falling back to serial mode: {e}"
+                )
+                worker_count = 1
+
+        if worker_count <= 1:
+            frame_iter = _iter_with_progress(
+                frame_indices,
+                total=total_frames,
+                desc=desc,
+            )
+
+            for idx_tuple in frame_iter:
+                variables = {
+                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
+                }
+
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variables(frame_content, variables)
+
+                svg_content = _render_svg(frame_content)
+                svg_frames.append(svg_content)
 
         # Compute deltas and write delta assets
         logger.info(f"{desc}: computing SVG deltas")

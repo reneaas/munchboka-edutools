@@ -1,5 +1,73 @@
 # `plot` directive
 
+
+
+:::{plot}
+width: 70%
+axis: equal
+ticks: off
+let: Ax = 2
+let: Ay = 1
+let: ax = 3
+let: ay = 2
+let: Dx = 3
+let: Dy = 5
+let: Bx = Ax + ax
+let: By = Ay + ay
+let: bx = Dx - Ax
+let: by = Dy - Ay
+let: Cx = Bx + bx
+let: Cy = By + by
+point: (Ax, Ay)
+point: (Bx, By)
+point: (Cx, Cy)
+point: (Dx, Dy)
+vector: (Ax, Ay), (Bx, By), blue
+vector: (Ax, Ay), (Dx, Dy), red
+let: Ex = 0.5 * (Bx + Cx)
+let: Ey = 0.5 * (By + Cy)
+point: (Ex, Ey)
+line-segment: (Dx, Dy), (Cx, Cy), solid, gray
+line-segment: (Bx, By), (Cx, Cy), solid, gray
+text: Ax, Ay, "$A({Ax}, {Ay})$", bottom-left
+text: Bx + 0.2, By, "$B$", center-right
+text: Cx, Cy, "$C$", top-right
+text: Dx, Dy, "$D({Dx}, {Dy})$", top-left
+let: Mx = (Ax + Bx + Cx + Dx) / 4
+let: My = (Ay + By + Cy + Dy) / 4
+point: (Mx, My)
+text: Mx - 0.1, My, "$M$", center-left
+line-segment: (Ax, Ay), (Cx, Cy), dashed, gray
+line-segment: (Bx, By), (Dx, Dy), dashed, gray
+text: Ex + 0.1, Ey, "$E$", center-right
+let: Qx = 7
+let: Qy = 1
+point: (Qx, Qy)
+let: t0 = -1
+let: t1 = 3.2
+let: vx = 1
+let: vy = 2
+line-segment: (Qx + vx * t0, Qy + t0 * vy), (Qx + vx * t1, Qy + t1 * vy), solid, gray
+text: Qx, Qy, "$Q({Qx}, {Qy})$", bottom-right
+vector: (Qx, Qy), (Qx + vx, Qy + vy), teal
+text: 0.5 * (Qx + Qx + vx), 0.5 * (Qy + Qy + vy), "$\vec{v} = [{vx}, {vy}]$", bottom-right
+text: 0.5 * (Ax + Bx), 0.5 * (Ay + By) - 0.2, "$\vec{a} = [{ax}, {ay}]$", bottom-right
+text: 0.5 * (Ax + Dx) - 0.2, 0.5 * (Ay + Dy) + 0.2, "$\vec{b}$", bottom-left
+let: hx = -16/5
+let: hy = 8/5
+let: Rx = Cx - hx
+let: Ry = Cy - hy
+point: (Rx, Ry)
+text: Rx + 0.1, Ry, "$R$", center-right
+line-segment: (Cx, Cy), (Rx, Ry), dashdot, gray
+let: ds = 0.15
+line-segment: (Rx + ds * hx, Ry + ds * hy), (Rx + ds * hx - ds * hy, Ry + ds * hy + ds * hx), solid, teal
+line-segment: (Rx + ds * hx - ds * hy, Ry + ds * hy + ds * hx), (Rx - ds * hy, Ry + ds * hx), solid, teal
+fill-polygon: (Rx, Ry), (Rx + ds * hx, Ry + ds * hy), (Rx + ds * hx - ds * hy, Ry + ds * hy + ds * hx), (Rx - ds * hy, Ry + ds * hx), teal, 0.2
+fill-polygon: (Dx, Dy), (Bx, By), (Cx, Cy), blue, 0.2
+:::
+
+
 :::{plot}
 width: 70%
 let: a = 4

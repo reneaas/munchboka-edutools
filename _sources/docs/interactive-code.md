@@ -33,3 +33,11 @@ for i in range(3):
 ## Source
 
 `src/munchboka_edutools/directives/interactive_code.py`
+
+
+
+:::{interactive-code}
+# Din kode her
+
+
+:::

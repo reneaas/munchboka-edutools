@@ -1403,10 +1403,24 @@ div.exercise > .admonition-title::after {
   height: 20px;
 }
 
+div.exercise.exercise-aids > .admonition-title::after {
+  content: url("../icons/solid/light_mode/computer.svg");
+  width: 20px;
+  height: 20px;
+  transform: translateX(-4px);
+}
+
 [data-mode=light] div.exercise > .admonition-title::after {
   content: url("../icons/solid/light_mode/pencil_square.svg");
   width: 20px;
   height: 20px;
+}
+
+[data-mode=light] div.exercise.exercise-aids > .admonition-title::after {
+  content: url("../icons/solid/light_mode/computer.svg");
+  width: 20px;
+  height: 20px;
+  transform: translateX(-4px);
 }
   
 @media (prefers-color-scheme: light) {
@@ -1414,6 +1428,13 @@ div.exercise > .admonition-title::after {
     content: url("../icons/solid/light_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
+  }
+
+  div.exercise.exercise-aids > .admonition-title::after {
+    content: url("../icons/solid/light_mode/computer.svg");
+    width: 20px;
+    height: 20px;
+    transform: translateX(-4px);
   }
 }
   
@@ -1423,11 +1444,25 @@ div.exercise > .admonition-title::after {
   height: 20px;
 }
 
+[data-mode=dark] div.exercise.exercise-aids > .admonition-title::after {
+  content: url("../icons/solid/dark_mode/computer.svg");
+  width: 20px;
+  height: 20px;
+  transform: translateX(-4px);
+}
+
 @media (prefers-color-scheme: dark) {
   div.exercise > .admonition-title::after {
     content: url("../icons/solid/dark_mode/pencil_square.svg");
     width: 20px;
     height: 20px;
+  }
+
+  div.exercise.exercise-aids > .admonition-title::after {
+    content: url("../icons/solid/dark_mode/computer.svg");
+    width: 20px;
+    height: 20px;
+    transform: translateX(-4px);
   }
 }
 

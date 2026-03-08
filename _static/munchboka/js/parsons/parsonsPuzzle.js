@@ -715,10 +715,22 @@ class ParsonsPuzzle {
     }
 
     enableIndentationDragAndDrop() {
-        const tiles = this.puzzleContainer.querySelectorAll('.parsons-tile');
-        tiles.forEach((tile) => {
-            tile.addEventListener('mousedown', (e) => this.indentDragStart(e, tile));
-        });
+        // IMPORTANT: This must be idempotent.
+        // Reset/reshuffle moves tiles around; we should not attach per-tile listeners each time,
+        // otherwise we stack handlers and a single mousedown can trigger multiple drags.
+        if (this._indentationDnDEnabled) return;
+        this._indentationDnDEnabled = true;
+
+        this._indentationMouseDownHandler = (e) => {
+            const tile = e.target && e.target.closest ? e.target.closest('.parsons-tile') : null;
+            if (!tile) return;
+            if (!this.puzzleContainer || !this.puzzleContainer.contains(tile)) return;
+            if (this.currentTile) return;
+            if (tile.classList.contains('parsons-dragging')) return;
+            this.indentDragStart(e, tile);
+        };
+
+        this.puzzleContainer.addEventListener('mousedown', this._indentationMouseDownHandler);
     }
 
     indentDragStart(e, tile) {
@@ -1017,7 +1029,7 @@ class ParsonsPuzzle {
             else this.createDropAreaPlaceholder(this.dropArea);
 
             // Re-bind handlers because reshuffling moves nodes around.
-            this.enableIndentationDragAndDrop();
+            // (Binding is delegated and idempotent; no need to re-bind here.)
             return;
         }
 

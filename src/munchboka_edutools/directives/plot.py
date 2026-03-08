@@ -262,12 +262,12 @@ class _PlotMacroContext:
     """Macro context for the plot directive.
 
     - sympy_locals: constants + sympy.Lambda definitions for use with sympify.
-    - numeric_functions: def(name)(x) callables used by the numeric evaluator
+    - numeric_functions: def(name)(...) callables used by the numeric evaluator
       (resolved safely without Python eval).
     """
 
     sympy_locals: Dict[str, Any]
-    numeric_functions: Dict[str, Callable[[float], float]]
+    numeric_functions: Dict[str, Callable[..., float]]
 
 
 def _sympy_allowed_base():
@@ -296,13 +296,135 @@ def _sympy_allowed_base():
     return allowed
 
 
+def _find_matching_paren(text: str, open_index: int) -> int | None:
+    """Return the index of the matching ')' for text[open_index] == '('."""
+
+    if open_index < 0 or open_index >= len(text) or text[open_index] != "(":
+        return None
+    depth = 0
+    for idx in range(open_index, len(text)):
+        ch = text[idx]
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return idx
+    return None
+
+
+def _split_top_level_commas(text: str) -> List[str]:
+    """Split a string on commas that are not nested inside brackets."""
+
+    if not text.strip():
+        return []
+    out: List[str] = []
+    cur: List[str] = []
+    depth = 0
+    for ch in text:
+        if ch in "([{":
+            depth += 1
+            cur.append(ch)
+        elif ch in ")]}":
+            depth = max(0, depth - 1)
+            cur.append(ch)
+        elif ch == "," and depth == 0:
+            token = "".join(cur).strip()
+            if token:
+                out.append(token)
+            cur = []
+        else:
+            cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail:
+        out.append(tail)
+    return out
+
+
+def _format_macro_replacement(value: str) -> str:
+    """Format a macro substitution value conservatively for text replacement."""
+
+    s = str(value).strip()
+    if not s:
+        return s
+    if re.match(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$", s):
+        return s
+    if re.match(r"^[A-Za-z_]\w*$", s):
+        return s
+    if re.match(r"^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$", s):
+        return s
+    if (s.startswith("(") and s.endswith(")")) or (s.startswith("[") and s.endswith("]")):
+        return s
+    return f"({s})"
+
+
+def _substitute_macro_bindings(text: str, bindings: Dict[str, str]) -> str:
+    """Substitute macro parameter names with bound expressions."""
+
+    out = str(text)
+    for name, value in bindings.items():
+        out = re.sub(
+            rf"\b{re.escape(name)}\b",
+            _format_macro_replacement(value),
+            out,
+        )
+    return out
+
+
+def _replace_identifier_tokens(
+    text: str, mapping: Dict[str, str], exclude: set[str] | None = None
+) -> str:
+    """Replace identifier tokens using a mapping, excluding specific names."""
+
+    if not mapping:
+        return text
+    exclude = exclude or set()
+
+    def repl(match: re.Match) -> str:
+        token = match.group(0)
+        if token in exclude:
+            return token
+        return mapping.get(token, token)
+
+    return re.sub(r"\b[A-Za-z_]\w*\b", repl, text)
+
+
+def _rename_macro_locals_in_line(
+    text: str,
+    rename_map: Dict[str, str],
+    let_re: re.Pattern,
+    def_re: re.Pattern,
+) -> str:
+    """Apply hygienic renaming for macro-local let/def bindings in one line."""
+
+    stripped = text.strip()
+    m_let = let_re.match(stripped)
+    if m_let:
+        name, expr_s = m_let.group(1), m_let.group(2)
+        new_name = rename_map.get(name, name)
+        new_expr = _replace_identifier_tokens(expr_s, rename_map)
+        return f"let: {new_name} = {new_expr}"
+
+    m_def = def_re.match(stripped)
+    if m_def:
+        fname, arglist_s, body_s = m_def.group(1), m_def.group(2), m_def.group(3)
+        arg_names = [part.strip() for part in arglist_s.split(",") if part.strip()]
+        new_name = rename_map.get(fname, fname)
+        new_body = _replace_identifier_tokens(body_s, rename_map, exclude=set(arg_names))
+        return f"def: {new_name}({', '.join(arg_names)}) = {new_body}"
+
+    return _replace_identifier_tokens(text, rename_map)
+
+
 def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
     """Expand let/def/repeat macros in the front matter.
 
     Supported macros (front matter only):
       - let: NAME = EXPR
-      - def: fname(arg) = EXPR
-      - repeat: n=a..b; key: value-with-n
+    - def: fname(arg1[, arg2, ...]) = EXPR
+    - repeat: n=a..b; any supported front-matter line
+    - macro: name(arg1[, arg2, ...]) ... endmacro
+    - use: name(expr1[, expr2, ...])
 
     Returns (expanded_lines, macro_ctx).
     """
@@ -310,9 +432,11 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
     import sympy
 
     let_re = re.compile(r"^let\s*:\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*$")
-    def_re = re.compile(r"^def\s*:\s*([A-Za-z_]\w*)\s*\(\s*([A-Za-z_]\w*)\s*\)\s*=\s*(.+?)\s*$")
+    def_re = re.compile(r"^def\s*:\s*([A-Za-z_]\w*)\s*\(\s*([^()]*)\s*\)\s*=\s*(.+?)\s*$")
+    macro_re = re.compile(r"^macro\s*:\s*([A-Za-z_]\w*)\s*\(\s*([^()]*)\s*\)\s*$")
+    use_re = re.compile(r"^use\s*:\s*([A-Za-z_]\w*)(?:\s*\(\s*(.*?)\s*\))?\s*$")
     repeat_re = re.compile(
-        r"^repeat\s*:\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*\.\.\s*(.+?)\s*;\s*([A-Za-z_][\w-]*)\s*:\s*(.*)$"
+        r"^repeat\s*:\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*\.\.\s*(.+?)\s*;\s*(.+?)\s*$"
     )
 
     # Identify the front-matter span using the same rules as _parse_kv_block.
@@ -327,9 +451,23 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
             idx += 1
         fm_end = idx  # exclusive (closing fence line is at idx)
     else:
-        # non-fenced: consume key: value lines (and blanks) until first non-kv, non-blank.
+        # non-fenced: consume key: value lines (and blanks) until first non-kv,
+        # non-blank line, but keep full macro blocks together.
+        macro_depth = 0
         for i, line in enumerate(lines):
-            if not line.strip():
+            stripped = line.strip()
+            if macro_depth > 0:
+                fm_end = i + 1
+                if macro_re.match(stripped):
+                    macro_depth += 1
+                elif stripped == "endmacro":
+                    macro_depth = max(0, macro_depth - 1)
+                continue
+            if not stripped:
+                fm_end = i + 1
+                continue
+            if macro_re.match(stripped):
+                macro_depth = 1
                 fm_end = i + 1
                 continue
             if re.match(r"^([A-Za-z_][\w-]*)\s*:\s*(.*)$", line.rstrip()):
@@ -339,7 +477,8 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
 
     base_locals: Dict[str, Any] = _sympy_allowed_base()
     sympy_locals: Dict[str, Any] = {}
-    numeric_functions: Dict[str, Callable[[float], float]] = {}
+    numeric_functions: Dict[str, Callable[..., float]] = {}
+    macros: Dict[str, Tuple[List[str], List[str]]] = {}
 
     def _sympify(expr_s: str, extra: Dict[str, Any] | None = None):
         loc = {**base_locals, **sympy_locals}
@@ -358,10 +497,63 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
     def _subst_word(text: str, var: str, replacement: str) -> str:
         return re.sub(rf"\b{re.escape(var)}\b", replacement, text)
 
+    def _parse_arg_names(arglist_s: str) -> List[str]:
+        names = [part.strip() for part in arglist_s.split(",") if part.strip()]
+        if not names:
+            raise ValueError("def requires at least one argument")
+        ident_re = re.compile(r"^[A-Za-z_]\w*$")
+        if any(not ident_re.match(name) for name in names):
+            raise ValueError(f"invalid def argument list: {arglist_s}")
+        return names
+
+    def _parse_macro_param_names(arglist_s: str) -> List[str]:
+        if not arglist_s.strip():
+            return []
+        names = [part.strip() for part in arglist_s.split(",") if part.strip()]
+        ident_re = re.compile(r"^[A-Za-z_]\w*$")
+        if any(not ident_re.match(name) for name in names):
+            raise ValueError(f"invalid macro parameter list: {arglist_s}")
+        return names
+
     expanded_fm: List[str] = []
-    for raw in lines[fm_start:fm_end]:
+    pending_lines = list(lines[fm_start:fm_end])
+    max_expanded_lines = 20000
+    macro_use_counter = 0
+    while pending_lines:
+        raw = pending_lines.pop(0)
         line = raw.rstrip("\n")
         if not line.strip():
+            expanded_fm.append(raw)
+            continue
+
+        m_macro = macro_re.match(line.strip())
+        if m_macro:
+            macro_name = m_macro.group(1)
+            try:
+                macro_params = _parse_macro_param_names(m_macro.group(2))
+                macro_body: List[str] = []
+                macro_depth = 1
+                while pending_lines:
+                    next_raw = pending_lines.pop(0)
+                    next_line = next_raw.rstrip("\n")
+                    next_stripped = next_line.strip()
+                    if macro_re.match(next_stripped):
+                        macro_depth += 1
+                        macro_body.append(next_line.lstrip())
+                        continue
+                    if next_stripped == "endmacro":
+                        macro_depth -= 1
+                        if macro_depth == 0:
+                            break
+                        macro_body.append(next_line.lstrip())
+                        continue
+                    macro_body.append(next_line.lstrip())
+                macros[macro_name] = (macro_params, macro_body)
+            except Exception:
+                expanded_fm.append(raw)
+            continue
+
+        if line.strip() == "endmacro":
             expanded_fm.append(raw)
             continue
 
@@ -377,37 +569,85 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
 
         m_def = def_re.match(line.strip())
         if m_def:
-            fname, argname, body_s = m_def.group(1), m_def.group(2), m_def.group(3)
+            fname, arglist_s, body_s = m_def.group(1), m_def.group(2), m_def.group(3)
             try:
-                arg_sym = sympy.symbols(argname)
-                body_expr = _sympify(body_s, extra={argname: arg_sym})
-                sympy_locals[fname] = sympy.Lambda(arg_sym, body_expr)
-                fn_np = sympy.lambdify(arg_sym, body_expr, modules=["numpy"])
+                arg_names = _parse_arg_names(arglist_s)
+                arg_symbols = sympy.symbols(", ".join(arg_names))
+                if not isinstance(arg_symbols, tuple):
+                    arg_symbols = (arg_symbols,)
+                body_expr = _sympify(
+                    body_s,
+                    extra={name: symbol for name, symbol in zip(arg_names, arg_symbols)},
+                )
+                lambda_args: Any = arg_symbols[0] if len(arg_symbols) == 1 else arg_symbols
+                sympy_locals[fname] = sympy.Lambda(lambda_args, body_expr)
+                fn_np = sympy.lambdify(lambda_args, body_expr, modules=["numpy"])
 
                 def _make_num(fn):
-                    return lambda x: float(fn(float(x)))
+                    return lambda *xs: float(fn(*[float(x) for x in xs]))
 
                 numeric_functions[fname] = _make_num(fn_np)
             except Exception:
                 pass
             continue
 
+        m_use = use_re.match(line.strip())
+        if m_use:
+            macro_name = m_use.group(1)
+            if macro_name in macros:
+                params, body_lines = macros[macro_name]
+                arg_text = m_use.group(2) or ""
+                arg_values = _split_top_level_commas(arg_text)
+                if len(arg_values) == len(params):
+                    bindings = {name: value for name, value in zip(params, arg_values)}
+                    generated = [_substitute_macro_bindings(body, bindings) for body in body_lines]
+                    local_names: set[str] = set()
+                    for body in generated:
+                        stripped_body = body.strip()
+                        m_local_let = let_re.match(stripped_body)
+                        if m_local_let:
+                            local_names.add(m_local_let.group(1))
+                            continue
+                        m_local_def = def_re.match(stripped_body)
+                        if m_local_def:
+                            local_names.add(m_local_def.group(1))
+                    if local_names:
+                        macro_use_counter += 1
+                        rename_map = {
+                            name: f"__mb_macro_{macro_name}_{macro_use_counter}_{name}"
+                            for name in sorted(local_names)
+                        }
+                        generated = [
+                            _rename_macro_locals_in_line(body, rename_map, let_re, def_re)
+                            for body in generated
+                        ]
+                    if len(expanded_fm) + len(pending_lines) + len(generated) > max_expanded_lines:
+                        expanded_fm.append(raw)
+                    else:
+                        pending_lines = generated + pending_lines
+                    continue
+            expanded_fm.append(raw)
+            continue
+
         m_rep = repeat_re.match(line.strip())
         if m_rep:
-            var, a_s, b_s, key, template = (
+            var, a_s, b_s, template = (
                 m_rep.group(1),
                 m_rep.group(2),
                 m_rep.group(3),
                 m_rep.group(4),
-                m_rep.group(5),
             )
             try:
                 a = _parse_int(a_s)
                 b = _parse_int(b_s)
                 step = 1 if b >= a else -1
+                generated: List[str] = []
                 for k in range(a, b + step, step):
-                    val_s = _subst_word(template, var, str(k))
-                    expanded_fm.append(f"{key}: {val_s}")
+                    generated.append(_subst_word(template, var, str(k)))
+                if len(expanded_fm) + len(pending_lines) + len(generated) > max_expanded_lines:
+                    expanded_fm.append(raw)
+                else:
+                    pending_lines = generated + pending_lines
             except Exception:
                 # Invalid repeat -> keep the original line to avoid silent deletion.
                 expanded_fm.append(raw)
@@ -1296,7 +1536,8 @@ class PlotDirective(SphinxDirective):
         # Supports:
         #  * Plain numbers
         #  * Arithmetic & SymPy functions (sqrt, pi, sin, ...)
-        #  * References to previously defined function labels: f(2), g(pi/4+1)
+        #  * References to previously defined function labels and macro defs:
+        #    f(2), g(pi/4+1), tri_x(2, 1)
         # Limitations: nested user function calls deeper than 50 rewrites are blocked.
         # ------------------------------------
         _num_cache: Dict[str, float] = {}
@@ -1314,63 +1555,52 @@ class PlotDirective(SphinxDirective):
             if s0 in _num_cache:
                 return _num_cache[s0]
             s = s0
-            # Replace user function label calls iteratively, allowing
-            # general expressions as arguments, e.g. f(2 - sqrt(2)).
+            call_names = set(macro_ctx.numeric_functions.keys()) | {
+                lbl for lbl in fn_labels_list if lbl
+            }
+
+            # Replace user function and macro calls iteratively, allowing
+            # general expressions as arguments, e.g. f(2 - sqrt(2)) or tri(1, 2).
             for _ in range(50):
-                m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s)
-                if not m:
-                    break
-                # Find the first callable name we can resolve (either a user macro def
-                # or a previously defined function label).
+                resolved_call = False
                 pos = 0
-                name = None
-                m2 = None
                 while True:
-                    m2 = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[pos:])
-                    if not m2:
+                    m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[pos:])
+                    if not m:
                         break
-                    cand = m2.group(1)
-                    abs_start = pos + m2.start()
-                    abs_end = pos + m2.end()
-                    if cand in macro_ctx.numeric_functions or cand in fn_labels_list:
-                        name = cand
-                        # rebind to absolute match span
-                        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\(", s[abs_start:])
-                        # We'll use abs_start/abs_end directly
-                        m_start = abs_start
-                        m_end = abs_end
+                    cand = m.group(1)
+                    abs_start = pos + m.start()
+                    abs_end = pos + m.end()
+                    if cand not in call_names:
+                        pos = abs_end
+                        continue
+
+                    open_idx = abs_end - 1
+                    close_idx = _find_matching_paren(s, open_idx)
+                    if close_idx is None:
                         break
-                    pos = abs_end
 
-                if not m2 or name is None:
-                    break
-
-                start = m_end - 1  # position of '('
-                depth = 0
-                end = None
-                for i in range(start, len(s)):
-                    if s[i] == "(":
-                        depth += 1
-                    elif s[i] == ")":
-                        depth -= 1
-                        if depth == 0:
-                            end = i
-                            break
-                if end is None:
-                    break
-
-                arg_expr = s[start + 1 : end]
-                try:
-                    arg_val = _eval_expr(arg_expr)
-                    if name in macro_ctx.numeric_functions:
-                        yv = float(macro_ctx.numeric_functions[name](arg_val))
-                    else:
-                        idx = fn_labels_list.index(name)
-                        f = functions[idx]
-                        yv = float(f([arg_val])[0])
-                    s = s[:m_start] + f"{yv}" + s[end + 1 :]
-                    continue
-                except Exception:
+                    arg_text = s[open_idx + 1 : close_idx]
+                    arg_exprs = _split_top_level_commas(arg_text)
+                    try:
+                        arg_vals = [_eval_expr(expr) for expr in arg_exprs]
+                        if cand in macro_ctx.numeric_functions:
+                            yv = float(macro_ctx.numeric_functions[cand](*arg_vals))
+                        else:
+                            if len(arg_vals) != 1:
+                                raise ValueError(
+                                    f"plot function labels accept exactly one argument: {cand}"
+                                )
+                            idx = fn_labels_list.index(cand)
+                            f = functions[idx]
+                            yv = float(f([arg_vals[0]])[0])
+                        s = s[:abs_start] + f"{yv}" + s[close_idx + 1 :]
+                        resolved_call = True
+                        break
+                    except Exception:
+                        pos = close_idx + 1
+                        continue
+                if not resolved_call:
                     break
             allowed = {
                 k: getattr(sympy, k)
@@ -4269,9 +4499,13 @@ class PlotDirective(SphinxDirective):
                         for x_expr_s, y_expr_s, t0_c, t1_c, st_c, col_c in curve_specs:
                             try:
                                 t_sym = _sp_curve.symbols("t")
-                                # Sympify with local symbol t; rely on SymPy's safe parsing (no arbitrary exec)
-                                x_sym = _sp_curve.sympify(x_expr_s, locals={"t": t_sym})
-                                y_sym = _sp_curve.sympify(y_expr_s, locals={"t": t_sym})
+                                # Curve expressions should see the same macro locals as the rest
+                                # of the directive, including values from let/def.
+                                curve_locals = _sympy_allowed_base()
+                                curve_locals.update(macro_ctx.sympy_locals)
+                                curve_locals["t"] = t_sym
+                                x_sym = _sp_curve.sympify(x_expr_s, locals=curve_locals)
+                                y_sym = _sp_curve.sympify(y_expr_s, locals=curve_locals)
                                 fx = _sp_curve.lambdify(t_sym, x_sym, "numpy")
                                 fy = _sp_curve.lambdify(t_sym, y_sym, "numpy")
                                 t_arr = _np_curve.linspace(t0_c, t1_c, 1024)

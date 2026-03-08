@@ -162,6 +162,74 @@ Plot test
     width: 30%
 
     Filled circle test.
+
+.. plot::
+
+    let: a = 4
+    let: b = 2
+    let: r = b / 2
+    curve: a + r * cos(t), b / 2 + r * sin(t), (-pi / 2, pi / 2), solid, #13579b
+    xmin: -1
+    xmax: 6
+    ymin: -1
+    ymax: 3
+    axis: off
+    axis: equal
+    width: 30%
+
+    Curve with let-macros test.
+
+.. plot::
+
+    let: d = 0.35
+    def: px(i, j) = i + d * j
+    def: py(i, j) = j / 3
+    repeat: i=0..1; repeat: j=0..1; line-segment: (px(i, j), py(i, j)), (px(i, j) + 0.12, py(i, j)), solid, #2468ac
+    xmin: -0.1
+    xmax: 1.6
+    ymin: -0.1
+    ymax: 0.8
+    axis: off
+    width: 30%
+
+    Nested repeat and multi-arg def test.
+
+.. plot::
+
+        let: d = 0.4
+        macro: shortseg(i, j, color)
+            line-segment: (i + d * j, j / 4), (i + d * j + 0.15, j / 4), solid, color
+            point: (i + d * j, j / 4)
+        endmacro
+        repeat: i=0..1; repeat: j=0..1; use: shortseg(i, j, #b7410e)
+        xmin: -0.1
+        xmax: 1.7
+        ymin: -0.1
+        ymax: 0.8
+        axis: off
+        width: 30%
+
+        Macro block and use test.
+
+.. plot::
+
+    let: d = 0
+    macro: scopedseg(i, color)
+        let: d = i / 10
+        def: px(x) = x + d
+        line-segment: (px(0), i / 5), (px(1/5), i / 5), solid, color
+    endmacro
+    use: scopedseg(1, #aa0000)
+    use: scopedseg(2, #00aa00)
+    line-segment: (d, 0), (d + 0.08, 0), solid, #000000
+    xmin: -0.1
+    xmax: 0.5
+    ymin: -0.1
+    ymax: 0.6
+    axis: off
+    width: 30%
+
+    Scoped local let and def test.
 """
     )
 
@@ -239,6 +307,16 @@ Interactive graph multi test
         and (("fill-opacity:0.2" in s) or ("opacity:0.2" in s))
         for s in normalized
     ), "Filled circle not found in SVG output"
+    assert any("#13579b" in s for s in normalized), "Curve using let-macros not found in SVG output"
+    assert (
+        sum(1 for s in normalized if "stroke:#2468ac" in s) >= 4
+    ), "Nested repeat with multi-arg defs did not render expected line segments"
+    assert (
+        sum(1 for s in normalized if "stroke:#b7410e" in s) >= 4
+    ), "Macro block expansion did not render expected line segments"
+    assert any("stroke:#aa0000" in s for s in normalized), "First scoped macro invocation missing"
+    assert any("stroke:#00aa00" in s for s in normalized), "Second scoped macro invocation missing"
+    assert any("stroke:#000000" in s for s in normalized), "Outer-scope line segment missing"
 
     ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
     assert "interactive-graph-wrapper" in ig_html

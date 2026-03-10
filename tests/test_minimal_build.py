@@ -242,8 +242,9 @@ Interactive graph test
 .. interactive-graph::
    :width: 60%
 
-   interactive-var: a, 0, 2, 3
-    interactive-workers: 1
+    interactive-var: a, 0, 2, 5
+    parallel: true
+    interactive-workers: 2
    let: L = 3
    def: s(x) = L*(1 + a*x)
    repeat: n=1..2; point: (n, s(n))

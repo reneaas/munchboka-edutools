@@ -94,6 +94,7 @@ class InteractiveGraphDirective(SphinxDirective):
         # Guard for cartesian-product frame grids (only relevant for multi-var)
         "interactive-max-frames": directives.nonnegative_int,
         "interactive-workers": directives.unchanged,
+        "parallel": directives.unchanged,
         "width": directives.unchanged,
         "height": directives.unchanged,
         "align": directives.unchanged,
@@ -189,7 +190,12 @@ class InteractiveGraphDirective(SphinxDirective):
         caption_lines = content_lines[caption_idx:] if caption_idx < len(content_lines) else []
 
         # Filter interactive-specific keys from plot content
-        interactive_keys = {"interactive-var", "interactive-max-frames", "interactive-workers"}
+        interactive_keys = {
+            "interactive-var",
+            "interactive-max-frames",
+            "interactive-workers",
+            "parallel",
+        }
         plot_content_lines = []
         for i, line in enumerate(content_lines):
             if i >= caption_idx:
@@ -651,6 +657,7 @@ class InteractiveGraphDirective(SphinxDirective):
             plot_directive.options.pop("interactive-var", None)
             plot_directive.options.pop("interactive-max-frames", None)
             plot_directive.options.pop("interactive-workers", None)
+            plot_directive.options.pop("parallel", None)
 
             # Force regeneration and request internal rendering semantics:
             # - stable internal filename (so we don't create N cache files)
@@ -674,22 +681,71 @@ class InteractiveGraphDirective(SphinxDirective):
                 raise ValueError("PlotDirective did not return inline SVG")
             return svg_text
 
-        # Generate all frames in memory first
-        svg_frames = []
-
         total_frames = len(var_values)
         desc = f"interactive-graph({var_name})"
         logger.info(f"Generating {desc}: {total_frames} frames")
-        for i, value in _iter_with_progress(
-            enumerate(var_values),
-            total=total_frames,
-            desc=desc,
-        ):
-            frame_content = "\n".join(plot_content_lines)
-            frame_content = _substitute_variable(frame_content, var_name, value)
+        parallel_enabled = _parse_bool(merged_options.get("parallel"), default=False)
+        worker_count = (
+            self._get_interactive_worker_count(total_frames, merged_options)
+            if parallel_enabled
+            else 1
+        )
+        render_options = dict(merged_options)
+        render_options.pop("interactive-var", None)
+        render_options.pop("interactive-max-frames", None)
+        render_options.pop("interactive-workers", None)
+        render_options.pop("parallel", None)
 
-            svg_content = _render_svg(frame_content)
-            svg_frames.append(svg_content)
+        svg_frames: List[str] = []
+
+        if worker_count > 1:
+            logger.info(f"{desc}: rendering with {worker_count} worker processes")
+            frame_tasks = []
+            for value in var_values:
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variable(frame_content, var_name, value)
+                frame_tasks.append((frame_content, render_options))
+
+            try:
+                import multiprocessing
+
+                mp_context = multiprocessing.get_context("spawn")
+                with ProcessPoolExecutor(
+                    max_workers=worker_count,
+                    mp_context=mp_context,
+                ) as executor:
+                    future_to_index = {
+                        executor.submit(_render_svg_frame_worker, task): index
+                        for index, task in enumerate(frame_tasks)
+                    }
+                    completed_svgs: List[str | None] = [None] * total_frames
+
+                    for future in _iter_with_progress(
+                        as_completed(future_to_index),
+                        total=total_frames,
+                        desc=desc,
+                    ):
+                        frame_index = future_to_index[future]
+                        completed_svgs[frame_index] = future.result()
+
+                    svg_frames = [svg for svg in completed_svgs if svg is not None]
+            except Exception as e:
+                logger.warning(
+                    f"{desc}: parallel rendering failed, falling back to serial mode: {e}"
+                )
+                worker_count = 1
+
+        if worker_count <= 1:
+            for _i, value in _iter_with_progress(
+                enumerate(var_values),
+                total=total_frames,
+                desc=desc,
+            ):
+                frame_content = "\n".join(plot_content_lines)
+                frame_content = _substitute_variable(frame_content, var_name, value)
+
+                svg_content = _render_svg(frame_content)
+                svg_frames.append(svg_content)
 
         # Compute deltas
         try:
@@ -785,7 +841,7 @@ class InteractiveGraphDirective(SphinxDirective):
         total_frames: int,
         merged_options: Dict[str, Any],
     ) -> int:
-        """Determine process count for multi-variable frame rendering."""
+        """Determine process count for interactive-graph frame rendering."""
         if total_frames <= 1:
             return 1
 
@@ -892,6 +948,7 @@ class InteractiveGraphDirective(SphinxDirective):
             plot_directive.options.pop("interactive-var", None)
             plot_directive.options.pop("interactive-max-frames", None)
             plot_directive.options.pop("interactive-workers", None)
+            plot_directive.options.pop("parallel", None)
             plot_directive.options["nocache"] = None
             plot_directive.options["internal"] = None
             plot_directive.options["internal-name"] = internal_plot_name
@@ -919,6 +976,7 @@ class InteractiveGraphDirective(SphinxDirective):
         render_options.pop("interactive-var", None)
         render_options.pop("interactive-max-frames", None)
         render_options.pop("interactive-workers", None)
+        render_options.pop("parallel", None)
 
         # Generate all frames in memory first
         svg_frames: List[str] = []

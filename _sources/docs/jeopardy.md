@@ -1,36 +1,85 @@
 # `jeopardy` directive
 
-Creates an interactive Jeopardy board from text-based categories and tiles.
+::::::::{jeopardy-2}
 
-## Signature
 
-- Required arguments: `0`
-- Optional arguments: `0`
-- Body content: `yes`
+:::::::{jeopardy-question}
+---
+category: Standardform
+points: 100
+---
+Bestem symmetrilinja til funksjonen 
 
-## Options
+$$
+f(x) = 2x^2 - 4x - 5
+$$
 
-| Option | Type |
-|---|---|
-| `teams` | string |
 
-## Example
+::::::{jeopardy-answer}
+$$
+x = 2
+$$
+::::::
 
-````markdown
-:::{jeopardy}
-:teams: 2
+:::::::
 
-Category: Algebra
-100:
-Q: Solve $x+2=5$.
-A: $x=3$
 
-200:
-Q: Solve $2x=10$.
-A: $x=5$
-:::
-````
+:::::::{jeopardy-question}
+---
+category: Standardform
+points: 200
+---
+En funksjon $f$ er gitt ved $f(x) = 2x^2 - 4x + 1$.
 
-## Source
+Hvilken av grafene nedenfor viser grafen til $f$?
+:::::::
 
-`src/munchboka_edutools/directives/jeopardy.py`
+
+:::::::{jeopardy-question}
+---
+category: Ekstremalpunktsform
+points: 100
+---
+SSS
+
+
+:::::::
+
+
+:::::::{jeopardy-question}
+---
+category: Nullpunktsform
+points: 100
+---
+
+:::::::
+
+
+:::::::{jeopardy-question}
+---
+category: Andregradslikninger
+points: 100
+---
+
+:::::::
+
+
+:::::::{jeopardy-question}
+---
+category: 100
+points: Identiter
+---
+
+:::::::
+
+
+:::::::{jeopardy-question}
+---
+category: Vekstfart
+points: 100
+---
+
+:::::::
+
+
+::::::::

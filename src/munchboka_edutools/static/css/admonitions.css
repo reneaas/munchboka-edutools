@@ -621,10 +621,24 @@ div.solution.solution-soft-locked > .admonition-title::after {
   height: 20px;
   display: inline-block;
 }
+
+[data-mode=light] div.solution.solution-soft-locked > .admonition-title::after {
+  content: url("../icons/outline/light_mode/key.svg");
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
   
 @media (prefers-color-scheme: light) {
   div.solution > .admonition-title::after {
     content: url("../icons/outline/light_mode/unlock.svg");
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+  }
+
+  div.solution.solution-soft-locked > .admonition-title::after {
+    content: url("../icons/outline/light_mode/key.svg");
     width: 20px;
     height: 20px;
     display: inline-block;

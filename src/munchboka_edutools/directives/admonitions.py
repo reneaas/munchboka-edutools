@@ -289,6 +289,7 @@ class SolutionDirective(SphinxDirective):
 
     option_spec = {
         "dropdown": directives.unchanged,
+        "delay": directives.nonnegative_int,
     }
 
     def run(self):
@@ -297,9 +298,20 @@ class SolutionDirective(SphinxDirective):
         else:
             title = "Løsning"
 
+        delay_seconds = int(
+            self.options.get(
+                "delay", getattr(self.env.config, "munchboka_solution_delay_seconds", 300)
+            )
+        )
+        solution_id = f"{self.env.docname.replace('/', '-')}-{self.lineno}"
+
         # Create the admonition node
         admonition_node = nodes.admonition()
         admonition_node["classes"] = ["admonition", "solution"]
+        if delay_seconds > 0:
+            admonition_node["classes"].append("solution-timed")
+            admonition_node["classes"].append(f"solution-delay-{delay_seconds}")
+            admonition_node["classes"].append(f"solution-ref-{solution_id}")
 
         if self.options.get("dropdown"):
             dropdown = self.options.get("dropdown")
@@ -390,6 +402,7 @@ def setup(app):
     Note: CSS files are registered in __init__.py with the munchboka/ prefix.
     The admonitions.css file contains all styling for these directives.
     """
+    app.add_config_value("munchboka_solution_delay_seconds", 300, "html")
     app.add_directive("answer", AnswerDirective)
     app.add_directive("example", ExampleDirective)
     app.add_directive("exercise", ExerciseDirective)
@@ -399,6 +412,7 @@ def setup(app):
     app.add_directive("solution", SolutionDirective)
     app.add_directive("summary", SummaryDirective)
     app.add_directive("theory", TheoryDirective)
+    app.add_js_file("munchboka/js/solution_timer.js")
 
     return {
         "version": "0.1",

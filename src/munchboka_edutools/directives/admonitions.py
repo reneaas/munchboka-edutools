@@ -304,22 +304,21 @@ class SolutionDirective(SphinxDirective):
             )
         )
         solution_id = f"{self.env.docname.replace('/', '-')}-{self.lineno}"
+        dropdown_enabled = True
+        if self.options.get("dropdown") is not None:
+            dropdown_enabled = self.options.get("dropdown") == "1"
+
+        timed_enabled = delay_seconds > 0 and dropdown_enabled
 
         # Create the admonition node
         admonition_node = nodes.admonition()
         admonition_node["classes"] = ["admonition", "solution"]
-        if delay_seconds > 0:
+        if timed_enabled:
             admonition_node["classes"].append("solution-timed")
             admonition_node["classes"].append(f"solution-delay-{delay_seconds}")
             admonition_node["classes"].append(f"solution-ref-{solution_id}")
 
-        if self.options.get("dropdown"):
-            dropdown = self.options.get("dropdown")
-            if dropdown == "1":
-                admonition_node["classes"].append("dropdown")
-            elif dropdown == "0":
-                pass
-        else:
+        if dropdown_enabled:
             admonition_node["classes"].append("dropdown")
 
         # Create the title node

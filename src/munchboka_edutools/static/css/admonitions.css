@@ -606,10 +606,12 @@ div.solution > .admonition-title::after {
   content: url("../icons/outline/light_mode/unlock.svg");
   width: 20px;
   height: 20px;
+  display: inline-block;
 }
 
 div.solution.solution-soft-locked > .admonition-title::after {
   content: url("../icons/outline/light_mode/key.svg");
+  display: inline-block;
 }
 
 
@@ -617,6 +619,7 @@ div.solution.solution-soft-locked > .admonition-title::after {
   content: url("../icons/outline/light_mode/unlock.svg");
   width: 20px;
   height: 20px;
+  display: inline-block;
 }
   
 @media (prefers-color-scheme: light) {
@@ -624,6 +627,7 @@ div.solution.solution-soft-locked > .admonition-title::after {
     content: url("../icons/outline/light_mode/unlock.svg");
     width: 20px;
     height: 20px;
+    display: inline-block;
   }
 }
   
@@ -631,10 +635,12 @@ div.solution.solution-soft-locked > .admonition-title::after {
   content: url("../icons/outline/dark_mode/unlock.svg");
   width: 20px;
   height: 20px;
+  display: inline-block;
 }
 
 [data-mode=dark] div.solution.solution-soft-locked > .admonition-title::after {
   content: url("../icons/outline/dark_mode/key.svg");
+  display: inline-block;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -642,10 +648,12 @@ div.solution.solution-soft-locked > .admonition-title::after {
     content: url("../icons/outline/dark_mode/unlock.svg");
     width: 20px;
     height: 20px;
+    display: inline-block;
   }
 
   div.solution.solution-soft-locked > .admonition-title::after {
     content: url("../icons/outline/dark_mode/key.svg");
+    display: inline-block;
   }
 }
 
@@ -656,21 +664,25 @@ div.solution.solution-soft-locked > .admonition-title::after {
 
 [data-mode=dark] div.solution > .admonition-title {
   background-color: rgba(33, 33, 60, 0.647) !important;
+  color: #e2eef3;
 }
 
 @media (prefers-color-scheme: dark) {
   div.solution > .admonition-title {
     background-color: rgba(33, 33, 60, 0.647) !important;
+    color: #e2eef3;
   }
 }
 
 [data-mode=light] div.solution > .admonition-title {
   background-color: white !important;
+  color: #243447;
 }
 
 @media (prefers-color-scheme: light) {
   div.solution > .admonition-title {
     background-color: white !important;
+    color: #243447;
   }
 }
 
@@ -725,6 +737,7 @@ div.solution > .solution-lock-status {
 
 .solution-lock-modal h3 {
   margin: 0 0 0.75rem;
+  color: #0f172a;
 }
 
 .solution-lock-modal-text,
@@ -768,6 +781,10 @@ div.solution > .solution-lock-status {
   color: #e2eef3;
 }
 
+[data-mode=dark] .solution-lock-modal h3 {
+  color: #e2eef3;
+}
+
 [data-mode=dark] .solution-lock-modal-countdown {
   color: #9eb7c6;
 }
@@ -784,6 +801,10 @@ div.solution > .solution-lock-status {
 @media (prefers-color-scheme: dark) {
   .solution-lock-modal {
     background: #0f1b30;
+    color: #e2eef3;
+  }
+
+  .solution-lock-modal h3 {
     color: #e2eef3;
   }
 

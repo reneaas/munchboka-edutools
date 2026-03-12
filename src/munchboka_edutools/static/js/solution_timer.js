@@ -1,5 +1,4 @@
 (function () {
-  const STORAGE_PREFIX = "munchboka-solution-timer-v2:";
   const DEFAULT_DELAY_SECONDS = 300;
   const VISIBILITY_THRESHOLD = 0.35;
   const UPDATE_INTERVAL_MS = 1000;
@@ -8,41 +7,11 @@
   let activeModal = null;
   let modalElements = null;
 
-  function getStorage() {
-    try {
-      return window.sessionStorage;
-    } catch (_error) {
-      return null;
-    }
-  }
-
-  function storageKey(solutionId) {
-    return `${STORAGE_PREFIX}${window.location.pathname}::${solutionId}`;
-  }
-
-  function readState(key) {
-    const storage = getStorage();
-    if (!storage) return {};
-
-    try {
-      const raw = storage.getItem(key);
-      if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch (_error) {
-      return {};
-    }
-  }
-
-  function writeState(key, value) {
-    const storage = getStorage();
-    if (!storage) return;
-
-    try {
-      storage.setItem(key, JSON.stringify(value));
-    } catch (_error) {
-      // Non-fatal: feature degrades to page-only behavior.
-    }
+  function createState() {
+    return {
+      startedAt: null,
+      bypassed: false,
+    };
   }
 
   function formatDuration(totalSeconds) {
@@ -96,6 +65,7 @@
 
     if (isLocked(entry)) {
       entry.element.classList.add("solution-soft-locked");
+      enforceLockedClosed(entry);
       statusNode.hidden = false;
       statusNode.textContent = `Løsningen åpnes om ${formatDuration(remainingSeconds(entry))}.`;
       return;
@@ -118,12 +88,44 @@
     }
 
     entry.state.startedAt = Date.now();
-    writeState(entry.storageKey, entry.state);
     updateStatus(entry);
     updateModal();
   }
 
+  function toggleLabel(open) {
+    if (open) {
+      return window.toggleHintHide || "Klikk for å skjule";
+    }
+
+    return window.toggleHintShow || "Klikk for å vise";
+  }
+
+  function setExpandedState(entry, expanded) {
+    if (!entry.element.classList.contains("toggle")) {
+      return false;
+    }
+
+    const toggleButton = entry.element.querySelector(".toggle-button");
+    entry.element.classList.toggle("toggle-hidden", !expanded);
+
+    if (toggleButton) {
+      toggleButton.classList.toggle("toggle-button-hidden", !expanded);
+      toggleButton.dataset.toggleHint = toggleLabel(expanded);
+      toggleButton.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
+
+    return true;
+  }
+
   function openSolution(entry) {
+    if (!entry) {
+      return;
+    }
+
+    if (setExpandedState(entry, true)) {
+      return;
+    }
+
     if (!entry.titleNode) return;
     window.setTimeout(() => {
       entry.titleNode.dispatchEvent(
@@ -181,11 +183,11 @@
 
     dialog.querySelector("[data-action='override']").addEventListener("click", () => {
       if (!activeModal) return;
-      activeModal.state.bypassed = true;
-      writeState(activeModal.storageKey, activeModal.state);
-      updateStatus(activeModal);
+      const entry = activeModal;
+      entry.state.bypassed = true;
+      updateStatus(entry);
       closeModal();
-      openSolution(activeModal);
+      openSolution(entry);
     });
 
     document.addEventListener("keydown", (event) => {
@@ -211,8 +213,9 @@
     const remaining = remainingSeconds(activeModal);
 
     if (!isLocked(activeModal)) {
+      const entry = activeModal;
       closeModal();
-      openSolution(activeModal);
+      openSolution(entry);
       return;
     }
 
@@ -254,6 +257,18 @@
     return Boolean(trigger && root.contains(trigger));
   }
 
+  function syncCollapsedState(entry, collapsed) {
+    setExpandedState(entry, !collapsed);
+  }
+
+  function enforceLockedClosed(entry) {
+    if (!isLocked(entry)) {
+      return;
+    }
+
+    syncCollapsedState(entry, true);
+  }
+
   function registerSolution(element) {
     const titleNode = element.querySelector(":scope > .admonition-title");
     if (!titleNode) return;
@@ -276,19 +291,17 @@
         `${DEFAULT_DELAY_SECONDS}`,
       10
     );
-    const key = storageKey(solutionId);
-
     const entry = {
       element,
       titleNode,
       statusNode: null,
       solutionId,
       delaySeconds: Number.isFinite(delaySeconds) ? delaySeconds : DEFAULT_DELAY_SECONDS,
-      storageKey: key,
-      state: readState(key),
+      state: createState(),
     };
 
     stateByElement.set(element, entry);
+
     element.addEventListener(
       "click",
       (event) => {
@@ -316,6 +329,12 @@
       },
       true
     );
+
+    const observer = new MutationObserver(() => {
+      enforceLockedClosed(entry);
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["class"] });
+
     updateStatus(entry);
   }
 

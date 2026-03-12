@@ -33,6 +33,12 @@ Solution timer
    :delay: 42
 
    Kortere forsinkelse.
+
+.. solution:: Uten dropdown
+    :delay: 15
+    :dropdown: 0
+
+    Denne skal ikke tidslåses fordi dropdown er slått av.
 """.lstrip(),
         encoding="utf8",
     )
@@ -64,6 +70,11 @@ def test_solution_timer_build(tmp_path):
     assert "solution-delay-300" in html
     assert "solution-delay-42" in html
     assert "solution-ref-index-" in html
+    assert "Uten dropdown" in html
+    assert "solution-delay-15" not in html
+
+    untimed_solution = '<div class="admonition solution">\n<p class="admonition-title">Uten dropdown</p>'
+    assert untimed_solution in html
 
     js = (build / "_static" / "munchboka" / "js" / "solution_timer.js").read_text(encoding="utf8")
     assert "IntersectionObserver" in js

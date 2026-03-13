@@ -6,6 +6,7 @@
   const stateByElement = new Map();
   let activeModal = null;
   let modalElements = null;
+  let visibilityObserver = null;
 
   function createState() {
     return {
@@ -270,6 +271,10 @@
   }
 
   function registerSolution(element) {
+    if (stateByElement.has(element)) {
+      return;
+    }
+
     const titleNode = element.querySelector(":scope > .admonition-title");
     if (!titleNode) return;
 
@@ -335,21 +340,23 @@
     });
     observer.observe(element, { attributes: true, attributeFilter: ["class"] });
 
+    if (visibilityObserver) {
+      visibilityObserver.observe(entry.element);
+    } else {
+      ensureStarted(entry);
+    }
+
     updateStatus(entry);
   }
 
   function observeSolutions() {
-    const entries = Array.from(stateByElement.values());
-    if (entries.length === 0) {
-      return;
-    }
-
     if (!("IntersectionObserver" in window)) {
-      entries.forEach((entry) => ensureStarted(entry));
+      visibilityObserver = null;
+      stateByElement.forEach((entry) => ensureStarted(entry));
       return;
     }
 
-    const observer = new IntersectionObserver(
+    visibilityObserver = new IntersectionObserver(
       (observerEntries) => {
         observerEntries.forEach((observerEntry) => {
           if (!observerEntry.isIntersecting) return;
@@ -357,7 +364,7 @@
           const entry = stateByElement.get(observerEntry.target);
           if (!entry) return;
           ensureStarted(entry);
-          observer.unobserve(observerEntry.target);
+          visibilityObserver.unobserve(observerEntry.target);
         });
       },
       {
@@ -365,7 +372,45 @@
       }
     );
 
-    entries.forEach((entry) => observer.observe(entry.element));
+    stateByElement.forEach((entry) => visibilityObserver.observe(entry.element));
+  }
+
+  function initializeSolutions(root = document) {
+    if (!(root instanceof Element) && root !== document) {
+      return;
+    }
+
+    const solutions =
+      root === document
+        ? root.querySelectorAll(".admonition.solution.solution-timed")
+        : root.matches(".admonition.solution.solution-timed")
+          ? [root]
+          : root.querySelectorAll(".admonition.solution.solution-timed");
+
+    solutions.forEach(registerSolution);
+  }
+
+  function observeDocument() {
+    if (!document.body) {
+      return;
+    }
+
+    const documentObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) {
+            return;
+          }
+
+          initializeSolutions(node);
+        });
+      });
+    });
+
+    documentObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
   }
 
   function tick() {
@@ -374,8 +419,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".admonition.solution.solution-timed").forEach(registerSolution);
+    initializeSolutions(document);
     observeSolutions();
+    observeDocument();
     window.setInterval(tick, UPDATE_INTERVAL_MS);
   });
 })();

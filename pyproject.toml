@@ -37,7 +37,7 @@ dependencies = [
   "schemdraw>=0.21",
 ]
 
-version = "0.3.35"
+version = "0.3.36"
 
 
 [project.urls]

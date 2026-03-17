@@ -683,7 +683,7 @@ def _hash_key(*parts) -> str:
 
 # Bump this when placeholder formatting behavior changes, to avoid reusing old
 # cached SVGs whose content no longer matches the current renderer.
-_TEXT_PLACEHOLDER_FORMAT_VERSION = 2
+_TEXT_PLACEHOLDER_FORMAT_VERSION = 3
 
 
 def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
@@ -1134,7 +1134,6 @@ class PlotDirective(SphinxDirective):
             names: Dict[str, Any] = {
                 "pi": math.pi,
                 "E": math.e,
-                "e": math.e,
                 "True": True,
                 "False": False,
             }
@@ -1192,6 +1191,11 @@ class PlotDirective(SphinxDirective):
                     continue
 
                 latex_arg = _is_latex_command_argument(tmp, i)
+                if latex_arg:
+                    out_chars.append(tmp[i : j + 1])
+                    i = j + 1
+                    continue
+
                 inner = tmp[i + 1 : j].strip()
                 if not inner or "\\" in inner:
                     out_chars.append(tmp[i : j + 1])
@@ -1223,13 +1227,26 @@ class PlotDirective(SphinxDirective):
                             rendered = str(val)
                     else:
                         rendered = _format_number_like(val)
-                    out_chars.append("{" + rendered + "}" if latex_arg else rendered)
+                    out_chars.append(rendered)
                 except Exception:
                     out_chars.append(tmp[i : j + 1])
 
                 i = j + 1
 
             return "".join(out_chars).replace(lbrace_token, "{").replace(rbrace_token, "}")
+
+        def _escape_simple_latex_command_args(text: str) -> str:
+            """Protect simple LaTeX command arguments from downstream brace formatting.
+
+            Example: ``\vec{e}`` becomes ``\vec{{e}}`` while ordinary
+            placeholders like ``{a:.2f}`` remain untouched.
+            """
+
+            return re.sub(
+                r"(\\[A-Za-z]+)\{([A-Za-z_][A-Za-z0-9_]*)\}",
+                r"\1{{\2}}",
+                text,
+            )
 
         # debug print removed
 
@@ -4115,7 +4132,7 @@ class PlotDirective(SphinxDirective):
                     plotmath.annotate(
                         xy=xy,
                         xytext=xytext,
-                        s=_format_text_placeholders(text),
+                        s=_escape_simple_latex_command_args(_format_text_placeholders(text)),
                         arc=arc,
                         fontsize=int(fontsize),
                     )
@@ -4277,7 +4294,7 @@ class PlotDirective(SphinxDirective):
 
                 for x0, y0, text, pos, use_bbox in text_vals:
                     va, ha = _parse_text_positioning(pos)
-                    text = _format_text_placeholders(text)
+                    text = _escape_simple_latex_command_args(_format_text_placeholders(text))
                     # Factors as fractions of axes size; keep long* ~3.3x larger
                     _fx_short = 0.015
                     _fy_short = 0.015

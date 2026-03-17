@@ -230,6 +230,20 @@ Plot test
     width: 30%
 
     Scoped local let and def test.
+
+.. plot::
+
+    vector: (0, 0), (1, 0), blue
+    vector: (0, 0), (0, 1), red
+    text: 0.5, 0, "$\\vec{e}_x$", bottom-center
+    text: 0, 0.5, "$\\vec{e}_y$", center-left
+    xmin: -1
+    xmax: 3
+    ymin: -1
+    ymax: 2.5
+    width: 30%
+
+    Latex text should not treat \\vec{e} as Euler's number.
 """
     )
 
@@ -318,6 +332,8 @@ Interactive graph multi test
     assert any("stroke:#aa0000" in s for s in normalized), "First scoped macro invocation missing"
     assert any("stroke:#00aa00" in s for s in normalized), "Second scoped macro invocation missing"
     assert any("stroke:#000000" in s for s in normalized), "Outer-scope line segment missing"
+    assert "2.718281828" not in plot_html, "Latex \\vec{e} text was converted to Euler's number"
+    assert "e_x" in plot_html and "e_y" in plot_html, "Expected vector basis labels missing"
 
     ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
     assert "interactive-graph-wrapper" in ig_html

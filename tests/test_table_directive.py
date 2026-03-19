@@ -81,6 +81,11 @@ align: right
 labels: u, v
 1, 2
 :::
+
+:::{table}
+labels: $\\text{Punkt }(x, y)$, Verdi
+$(1, 2)$, $\\left(3, 4\\right)$
+:::
 """.lstrip(),
         encoding="utf8",
     )
@@ -190,5 +195,14 @@ labels: u, v
     assert "munchboka-table-frame--align-center" in compact
     assert re.search(
         r'<div[^>]*class="[^"]*munchboka-table-frame--align-right[^"]*"[^>]*style="width:60%;"',
+        compact,
+    )
+
+    # Commas inside LaTeX expressions must stay inside a single cell/label.
+    assert "$\\text{Punkt }(x, y)$" in html
+    assert "$(1, 2)$" in html
+    assert "$\\left(3, 4\\right)$" in html
+    assert re.search(
+        r"<thead><tr><thscope=\"col\"class=\"munchboka-table-labelmunchboka-table-align-center\">\$\\text\{Punkt\}\(x,y\)\$</th><thscope=\"col\"class=\"munchboka-table-labelmunchboka-table-align-center\">Verdi</th></tr></thead><tbody><tr><tdclass=\"munchboka-table-align-center\">\$\(1,2\)\$</td><tdclass=\"munchboka-table-align-center\">\$\\left\(3,4\\right\)\$</td></tr></tbody>",
         compact,
     )

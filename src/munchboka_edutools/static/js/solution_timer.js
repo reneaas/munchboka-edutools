@@ -1,6 +1,7 @@
 (function () {
   const DEFAULT_DELAY_SECONDS = 300;
-  const VISIBILITY_THRESHOLD = 0.35;
+  const VISIBILITY_THRESHOLD = 0.01;
+  const START_MARGIN_PX = 240;
   const UPDATE_INTERVAL_MS = 1000;
 
   const stateByElement = new Map();
@@ -91,6 +92,30 @@
     entry.state.startedAt = Date.now();
     updateStatus(entry);
     updateModal();
+  }
+
+  function isNearViewport(element) {
+    if (!(element instanceof Element)) {
+      return false;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight || 0;
+
+    return rect.top <= viewportHeight + START_MARGIN_PX && rect.bottom >= -START_MARGIN_PX;
+  }
+
+  function startVisibleSolutions() {
+    stateByElement.forEach((entry) => {
+      if (entry.state.startedAt) {
+        return;
+      }
+
+      if (isNearViewport(entry.element)) {
+        ensureStarted(entry);
+      }
+    });
   }
 
   function toggleLabel(open) {
@@ -342,8 +367,6 @@
 
     if (visibilityObserver) {
       visibilityObserver.observe(entry.element);
-    } else {
-      ensureStarted(entry);
     }
 
     updateStatus(entry);
@@ -352,7 +375,9 @@
   function observeSolutions() {
     if (!("IntersectionObserver" in window)) {
       visibilityObserver = null;
-      stateByElement.forEach((entry) => ensureStarted(entry));
+      startVisibleSolutions();
+      window.addEventListener("scroll", startVisibleSolutions, { passive: true });
+      window.addEventListener("resize", startVisibleSolutions);
       return;
     }
 
@@ -369,10 +394,12 @@
       },
       {
         threshold: [VISIBILITY_THRESHOLD],
+        rootMargin: `${START_MARGIN_PX}px 0px ${START_MARGIN_PX}px 0px`,
       }
     );
 
     stateByElement.forEach((entry) => visibilityObserver.observe(entry.element));
+    startVisibleSolutions();
   }
 
   function initializeSolutions(root = document) {

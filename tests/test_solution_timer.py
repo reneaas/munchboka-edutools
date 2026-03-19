@@ -78,4 +78,7 @@ def test_solution_timer_build(tmp_path):
 
     js = (build / "_static" / "munchboka" / "js" / "solution_timer.js").read_text(encoding="utf8")
     assert "IntersectionObserver" in js
+    assert "rootMargin" in js
+    assert "START_MARGIN_PX" in js
+    assert "isNearViewport" in js
     assert "Du har bare prøvd på oppgaven i" in js

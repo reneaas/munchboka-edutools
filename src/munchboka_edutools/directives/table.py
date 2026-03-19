@@ -29,9 +29,136 @@ def _is_truthy_option(val) -> bool:
 
 
 def _split_csv_line(line: str) -> List[str]:
-    # Minimal CSV: split on commas, trim whitespace.
-    # (Intentionally does not implement quoted commas.)
-    return [p.strip() for p in line.split(",")]
+    """Split a table row on commas while preserving structured inline content.
+
+    This keeps commas inside quoted strings, brace groups, and common LaTeX math
+    delimiters (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`) within the same cell.
+    """
+
+    parts: List[str] = []
+    current: List[str] = []
+    quote_char: str | None = None
+    brace_depth = 0
+    dollar_math_delim = 0
+    paren_math = False
+    bracket_math = False
+    i = 0
+
+    while i < len(line):
+        ch = line[i]
+        pair = line[i : i + 2]
+
+        if quote_char is not None:
+            current.append(ch)
+            if ch == quote_char:
+                if i + 1 < len(line) and line[i + 1] == quote_char:
+                    current.append(line[i + 1])
+                    i += 2
+                    continue
+                quote_char = None
+            i += 1
+            continue
+
+        if dollar_math_delim:
+            if dollar_math_delim == 2 and pair == "$$":
+                current.append(pair)
+                dollar_math_delim = 0
+                i += 2
+                continue
+            if dollar_math_delim == 1 and ch == "$":
+                current.append(ch)
+                dollar_math_delim = 0
+                i += 1
+                continue
+            if ch == "{":
+                brace_depth += 1
+            elif ch == "}" and brace_depth > 0:
+                brace_depth -= 1
+            current.append(ch)
+            i += 1
+            continue
+
+        if paren_math:
+            if pair == r"\)":
+                current.append(pair)
+                paren_math = False
+                i += 2
+                continue
+            if ch == "{":
+                brace_depth += 1
+            elif ch == "}" and brace_depth > 0:
+                brace_depth -= 1
+            current.append(ch)
+            i += 1
+            continue
+
+        if bracket_math:
+            if pair == r"\]":
+                current.append(pair)
+                bracket_math = False
+                i += 2
+                continue
+            if ch == "{":
+                brace_depth += 1
+            elif ch == "}" and brace_depth > 0:
+                brace_depth -= 1
+            current.append(ch)
+            i += 1
+            continue
+
+        if pair == r"\(":
+            current.append(pair)
+            paren_math = True
+            i += 2
+            continue
+
+        if pair == r"\[":
+            current.append(pair)
+            bracket_math = True
+            i += 2
+            continue
+
+        if pair == "$$":
+            current.append(pair)
+            dollar_math_delim = 2
+            i += 2
+            continue
+
+        if ch == "$":
+            current.append(ch)
+            dollar_math_delim = 1
+            i += 1
+            continue
+
+        if ch in {'"', "'"}:
+            quote_char = ch
+            current.append(ch)
+            i += 1
+            continue
+
+        if ch == "{":
+            brace_depth += 1
+            current.append(ch)
+            i += 1
+            continue
+
+        if ch == "}" and brace_depth > 0:
+            brace_depth -= 1
+            current.append(ch)
+            i += 1
+            continue
+
+        if ch == "," and brace_depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+            i += 1
+            continue
+
+        current.append(ch)
+        i += 1
+
+    parts.append("".join(current).strip())
+    return parts
 
 
 _ELLIPSIS_TOKENS = {"...", "…"}
@@ -315,6 +442,17 @@ class TableDirective(SphinxDirective):
     ) -> str:
         cls_attr = " ".join(html.escape(c) for c in classes if c)
 
+        def _inline_to_html(text: str) -> str:
+            if not text:
+                return ""
+
+            parsed_nodes, messages = self.state.inline_text(text, self.lineno)
+            if messages:
+                return html.escape(text)
+
+            rendered = "".join(_node_to_inline_html(node) for node in parsed_nodes)
+            return rendered or html.escape(text)
+
         def _align_class(p: str) -> str:
             v = _normalize_placement_token(p)
             return f"munchboka-table-align-{v}"
@@ -345,7 +483,7 @@ class TableDirective(SphinxDirective):
 
         if not transpose:
             thead_cells = "".join(
-                f'<th scope="col" class="munchboka-table-label {_align_class(effective_placement[i])}">{html.escape(lbl)}</th>'
+                f'<th scope="col" class="munchboka-table-label {_align_class(effective_placement[i])}">{_inline_to_html(lbl)}</th>'
                 for i, lbl in enumerate(labels)
             )
             thead = f"<thead><tr>{thead_cells}</tr></thead>"
@@ -353,7 +491,7 @@ class TableDirective(SphinxDirective):
             body_rows = []
             for row in rows:
                 tds = "".join(
-                    f'<td class="{_align_class(effective_placement[i])}">{html.escape(val)}</td>'
+                    f'<td class="{_align_class(effective_placement[i])}">{_inline_to_html(val)}</td>'
                     for i, val in enumerate(row)
                 )
                 body_rows.append(f"<tr>{tds}</tr>")
@@ -371,10 +509,10 @@ class TableDirective(SphinxDirective):
             for r in range(rcount):
                 v = rows[r][i] if i < len(rows[r]) else ""
                 vals.append(
-                    f'<td class="{_align_class(effective_placement[i])}">{html.escape(v)}</td>'
+                    f'<td class="{_align_class(effective_placement[i])}">{_inline_to_html(v)}</td>'
                 )
             row_html = (
-                f'<tr><th scope="row" class="munchboka-table-label {_align_class(effective_placement[i])}">{html.escape(lbl)}</th>'
+                f'<tr><th scope="row" class="munchboka-table-label {_align_class(effective_placement[i])}">{_inline_to_html(lbl)}</th>'
                 + "".join(vals)
                 + "</tr>"
             )
@@ -393,3 +531,66 @@ def setup(app: Sphinx):
         "parallel_read_safe": True,
         "parallel_write_safe": True,
     }
+
+
+def _node_to_inline_html(node: nodes.Node) -> str:
+    if isinstance(node, nodes.Text):
+        return html.escape(str(node))
+
+    if isinstance(node, nodes.raw):
+        if node.get("format") == "html":
+            return node.astext()
+        return ""
+
+    if isinstance(node, nodes.math):
+        return f"${html.escape(node.astext())}$"
+
+    if isinstance(node, nodes.math_block):
+        return f"$${html.escape(node.astext())}$$"
+
+    if isinstance(node, nodes.emphasis):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        return f"<em>{content}</em>"
+
+    if isinstance(node, nodes.strong):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        return f"<strong>{content}</strong>"
+
+    if isinstance(node, nodes.literal):
+        content = html.escape(node.astext())
+        return f"<code>{content}</code>"
+
+    if isinstance(node, nodes.subscript):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        return f"<sub>{content}</sub>"
+
+    if isinstance(node, nodes.superscript):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        return f"<sup>{content}</sup>"
+
+    if isinstance(node, nodes.reference):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        attrs = []
+        refuri = node.get("refuri")
+        refid = node.get("refid")
+        if refuri:
+            attrs.append(f'href="{html.escape(refuri, quote=True)}"')
+        elif refid:
+            attrs.append(f'href="#{html.escape(refid, quote=True)}"')
+        classes = " ".join(node.get("classes", []))
+        if classes:
+            attrs.append(f'class="{html.escape(classes, quote=True)}"')
+        attrs_str = " " + " ".join(attrs) if attrs else ""
+        return f"<a{attrs_str}>{content}</a>"
+
+    if isinstance(node, nodes.inline):
+        content = "".join(_node_to_inline_html(child) for child in node.children)
+        classes = " ".join(node.get("classes", []))
+        if classes:
+            return f'<span class="{html.escape(classes, quote=True)}">{content}</span>'
+        return content
+
+    if hasattr(node, "children"):
+        return "".join(_node_to_inline_html(child) for child in node.children)
+
+    return html.escape(node.astext())

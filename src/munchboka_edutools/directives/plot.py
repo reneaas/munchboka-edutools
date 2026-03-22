@@ -13,7 +13,8 @@ NEW / EXTENDED FEATURES (summary)
   ``( -pi, pi ) \ { -pi/2, pi/2 }``.
 * Points, polygons, fill‑polygons, line‑segments, vectors, angle‑arcs,
   circles, ellipses, and parametric curves all evaluate coordinates via SymPy.
-* New primitives: ``circle``, ``ellipse``, ``curve`` (parametric ``x(t), y(t)``).
+* New primitives: ``circle``, ``ellipse``, ``curve`` (parametric ``x(t), y(t)``),
+  ``triangle``.
 * Style / color tokens order‑independent for line‑segment, circle, ellipse,
   curve, angle‑arc (after required numeric parts).
 * Palette mapping: colors first resolved through ``plotmath.COLORS`` then
@@ -26,6 +27,7 @@ function: sin(x)/x, f(x), (-6*pi, 6*pi) \ {0}
 curve: cos(t), sin(2*t), (0, 2*pi), dashed, orange
 circle: (0,0), 2*pi/6, dotted, green
 ellipse: (1, -1), 3, sqrt(5), red
+triangle: sss=(3,4,5), side-labels=exact, angles=all
 point: (pi, f(pi))
 line-segment: (0,0), (2*sqrt(2), 2), dashed, purple
 vector: 0, 0, 2*cos(pi/6), 2*sin(pi/6), teal
@@ -54,7 +56,7 @@ Front matter
 * Repeated keys (multi‑valued): ``function``, ``point``, ``annotate``, ``text``,
   ``vline``, ``hline``, ``line``, ``line-segment``, ``polygon``, ``fill-polygon``,
   ``fill-between``, ``bar``, ``axis``, ``vector``, ``angle-arc``, ``circle``,
-  ``ellipse``, ``curve``.
+    ``ellipse``, ``curve``, ``triangle``.
 
 Global figure & layout options
 ------------------------------
@@ -197,6 +199,38 @@ Parametric curves
 with ``t`` symbol. Interval endpoints may be expressions (auto‑swapped if
 reversed). Style/color optional.
 
+Triangles
+---------
+``triangle`` uses named options so geometry, labels, and markers stay readable.
+Exactly one geometry mode is required:
+
+* ``triangle: points=((x1,y1),(x2,y2),(x3,y3)), ...``
+* ``triangle: sss=(AB,BC,CA), ...``
+* ``triangle: svs=(s1, angle_deg, s2), at=A|B|C, ...``
+
+Supported named options:
+
+* ``side-labels=none|exact|numeric`` or ``side-labels=(AB=exact,BC=exact,CA=none)``
+* In the mapping form, omitted sides default to ``none``; e.g. ``side-labels=(AB=exact,BC=exact)`` implies ``CA=none``
+* ``side-text=(AB="...",BC="...",CA="...")`` overrides generated side labels per side
+* ``corner-labels=(A="$A$",B="$B$",C="$C$")`` (alias: ``point-labels``); default labels are ``A``, ``B``, ``C``
+* ``corner-labels=none`` disables default corner labels
+* ``angle-labels=none|exact|numeric`` or ``angle-labels=(A=exact,C=numeric)``
+* In the mapping form, omitted angles default to ``none``
+* ``angle-text=(A="...",B="...",C="...")``
+* ``angles=none|all|(A,B,C)``
+* ``right-angle=auto|none``
+* ``color=...`` / ``linestyle=solid|dotted|dashed|dashdot`` / ``lw=...`` (default triangle color: ``blue``)
+* ``angle-color=...`` / ``label-color=...`` (default angle marker color: ``red``; default label color: ``black``)
+* ``angle-radius=...`` / ``label-offset=...`` (pixel-based visual sizes)
+* ``corner-label-offset=...`` / ``angle-text-offset=...``
+* ``mirror=up|down`` and ``rotate=...`` for generated ``sss`` / ``svs`` triangles
+* ``origin=(x,y)`` for generated ``sss`` / ``svs`` triangles
+
+For ``svs``, the chosen ``at`` vertex decides which two adjacent sides are given:
+``at=A`` means ``(AB, angle A, AC)``, ``at=B`` means ``(AB, angle B, BC)``, and
+``at=C`` means ``(CA, angle C, BC)``.
+
 Annotations & text
 ------------------
 ``annotate: (xytext), (xy), "text"[, arc]`` — arrow annotation; coordinates &
@@ -250,6 +284,14 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.util.docutils import SphinxDirective
+
+from munchboka_edutools.directives._triangle import (
+    triangle_angle_label_text,
+    parse_triangle_primitive,
+    triangle_angles_deg,
+    triangle_corner_label_text,
+    triangle_side_label_text,
+)
 
 
 # ------------------------------------
@@ -918,6 +960,7 @@ class PlotDirective(SphinxDirective):
             "circle": [],
             "ellipse": [],
             "curve": [],
+            "triangle": [],
         }
         # YAML-like fenced front matter
         if lines and lines[0].strip() == "---":
@@ -2228,6 +2271,13 @@ class PlotDirective(SphinxDirective):
             if pts:
                 poly_vals.append((pts, show_vertices, poly_color, poly_alpha))
 
+        triangle_vals = []
+        triangle_sympy_locals = {**_sympy_allowed_base(), **macro_ctx.sympy_locals}
+        for tri_raw in lists.get("triangle", []):
+            tri = parse_triangle_primitive(str(tri_raw).strip(), _eval_expr, triangle_sympy_locals)
+            if tri is not None:
+                triangle_vals.append(tri)
+
         # Re-introduce a plain numeric tuple matcher for other primitives still expecting numeric-only coordinates.
         tup_pat = re.compile(r"\(\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*\)")
 
@@ -3535,6 +3585,7 @@ class PlotDirective(SphinxDirective):
                     for (cx, cy, r, sa, ea, st, col) in angle_arcs
                 ]
             ),
+            ";".join([str(raw) for raw in lists.get("triangle", [])]),
             ";".join(
                 [
                     f"{xy[0]},{xy[1]}:{length}:{orientation}"
@@ -4274,6 +4325,250 @@ class PlotDirective(SphinxDirective):
                                 ax.plot(xs, ys, lw=1, color=col_use, linestyle=ls_use)
                             except Exception:
                                 pass
+
+                if "triangle_vals" in locals() and triangle_vals:
+                    try:
+                        from matplotlib import colors as _mcolors_tri
+                    except Exception:
+                        _mcolors_tri = None
+
+                    style_map_tri = {
+                        "solid": "-",
+                        "dotted": ":",
+                        "dashed": "--",
+                        "dashdot": "-.",
+                    }
+                    default_tri_color = plotmath.COLORS.get("blue") or "blue"
+                    default_tri_angle_color = plotmath.COLORS.get("red") or "red"
+                    default_tri_label_color = plotmath.COLORS.get("black") or "black"
+
+                    def _resolve_tri_color(raw_color: str | None, fallback: str) -> str:
+                        candidate = (
+                            (plotmath.COLORS.get(raw_color) if raw_color else None)
+                            or raw_color
+                            or fallback
+                        )
+                        if _mcolors_tri is not None:
+                            try:
+                                _ = _mcolors_tri.to_rgba(candidate)
+                            except Exception:
+                                candidate = fallback
+                        return candidate
+
+                    for tri in triangle_vals:
+                        tri_color = _resolve_tri_color(tri.edge_color, default_tri_color)
+                        tri_lw = tri.line_width if tri.line_width is not None else lw
+                        tri_ls = style_map_tri.get((tri.edge_style or "solid").lower(), "-")
+                        for start_name, end_name in (("A", "B"), ("B", "C"), ("C", "A")):
+                            x1t, y1t = tri.vertices[start_name]
+                            x2t, y2t = tri.vertices[end_name]
+                            ax.plot([x1t, x2t], [y1t, y2t], linestyle=tri_ls, color=tri_color, lw=tri_lw)
+
+                    def _display_unit_vector(p_from, p_to):
+                        x0d, y0d = ax.transData.transform(p_from)
+                        x1d, y1d = ax.transData.transform(p_to)
+                        dx = x1d - x0d
+                        dy = y1d - y0d
+                        norm = math.hypot(dx, dy)
+                        if norm <= 1e-9:
+                            return None
+                        return (dx / norm, dy / norm)
+
+                    def _display_to_data(points_disp):
+                        return ax.transData.inverted().transform(points_disp)
+
+                    def _normalize_display_vec(vx, vy):
+                        norm = math.hypot(vx, vy)
+                        if norm <= 1e-9:
+                            return None
+                        return (vx / norm, vy / norm)
+
+                    def _bisector_display_point(vertex_disp, u1, u2, centroid_disp, distance_px, inward):
+                        bis = _normalize_display_vec(u1[0] + u2[0], u1[1] + u2[1])
+                        to_centroid = (
+                            centroid_disp[0] - vertex_disp[0],
+                            centroid_disp[1] - vertex_disp[1],
+                        )
+                        if bis is None:
+                            fallback = _normalize_display_vec(to_centroid[0], to_centroid[1])
+                            if fallback is None:
+                                fallback = (0.0, -1.0)
+                            bis = fallback
+                        dot = bis[0] * to_centroid[0] + bis[1] * to_centroid[1]
+                        if inward and dot < 0:
+                            bis = (-bis[0], -bis[1])
+                        if not inward and dot > 0:
+                            bis = (-bis[0], -bis[1])
+                        return (
+                            vertex_disp[0] + bis[0] * distance_px,
+                            vertex_disp[1] + bis[1] * distance_px,
+                        )
+
+                    for tri in triangle_vals:
+                        tri_label_color = _resolve_tri_color(tri.label_color, default_tri_label_color)
+                        tri_angle_color = _resolve_tri_color(
+                            tri.angle_color,
+                            default_tri_angle_color,
+                        )
+                        tri_lw = tri.line_width if tri.line_width is not None else lw
+                        verts = tri.vertices
+                        centroid_disp = ax.transData.transform(
+                            (
+                                sum(verts[name][0] for name in ("A", "B", "C")) / 3.0,
+                                sum(verts[name][1] for name in ("A", "B", "C")) / 3.0,
+                            )
+                        )
+
+                        for side_name, start_name, end_name in (("AB", "A", "B"), ("BC", "B", "C"), ("CA", "C", "A")):
+                            label = triangle_side_label_text(tri, side_name)
+                            if not label:
+                                continue
+                            if side_name in tri.side_text:
+                                label_render = _escape_simple_latex_command_args(
+                                    _format_text_placeholders(label)
+                                )
+                            elif tri.side_label_modes.get(side_name, "none") == "exact":
+                                label_render = _escape_simple_latex_command_args(label)
+                            else:
+                                label_render = _escape_simple_latex_command_args(
+                                    _format_text_placeholders(label)
+                                )
+                            p0_disp = ax.transData.transform(verts[start_name])
+                            p1_disp = ax.transData.transform(verts[end_name])
+                            mid_disp = ((p0_disp[0] + p1_disp[0]) / 2.0, (p0_disp[1] + p1_disp[1]) / 2.0)
+                            dx = p1_disp[0] - p0_disp[0]
+                            dy = p1_disp[1] - p0_disp[1]
+                            norm = math.hypot(dx, dy)
+                            if norm <= 1e-9:
+                                continue
+                            nx = -dy / norm
+                            ny = dx / norm
+                            to_centroid_x = centroid_disp[0] - mid_disp[0]
+                            to_centroid_y = centroid_disp[1] - mid_disp[1]
+                            if nx * to_centroid_x + ny * to_centroid_y > 0:
+                                nx *= -1.0
+                                ny *= -1.0
+                            label_disp = (
+                                mid_disp[0] + nx * tri.label_offset_px,
+                                mid_disp[1] + ny * tri.label_offset_px,
+                            )
+                            label_xy = _display_to_data([label_disp])[0]
+                            ax.text(
+                                label_xy[0],
+                                label_xy[1],
+                                label_render,
+                                fontsize=max(10, int(fontsize * 0.9)),
+                                ha="center",
+                                va="center",
+                                color=tri_label_color,
+                            )
+
+                        tri_angles = triangle_angles_deg(tri)
+                        neighbor_map = {"A": ("B", "C"), "B": ("A", "C"), "C": ("A", "B")}
+
+                        for vertex_name, neighbors in neighbor_map.items():
+                            label = triangle_corner_label_text(tri, vertex_name)
+                            if not label:
+                                continue
+                            p_vertex = verts[vertex_name]
+                            u1 = _display_unit_vector(p_vertex, verts[neighbors[0]])
+                            u2 = _display_unit_vector(p_vertex, verts[neighbors[1]])
+                            if u1 is None or u2 is None:
+                                continue
+                            vertex_disp = ax.transData.transform(p_vertex)
+                            label_disp = _bisector_display_point(
+                                vertex_disp,
+                                u1,
+                                u2,
+                                centroid_disp,
+                                tri.corner_label_offset_px,
+                                inward=False,
+                            )
+                            label_xy = _display_to_data([label_disp])[0]
+                            ax.text(
+                                label_xy[0],
+                                label_xy[1],
+                                _escape_simple_latex_command_args(_format_text_placeholders(label)),
+                                fontsize=max(10, int(fontsize * 0.9)),
+                                ha="center",
+                                va="center",
+                                color=tri_label_color,
+                            )
+
+                        for vertex_name in tri.angle_vertices:
+                            if vertex_name not in neighbor_map:
+                                continue
+                            p_vertex = verts[vertex_name]
+                            n1, n2 = neighbor_map[vertex_name]
+                            u1 = _display_unit_vector(p_vertex, verts[n1])
+                            u2 = _display_unit_vector(p_vertex, verts[n2])
+                            if u1 is None or u2 is None:
+                                continue
+                            vertex_disp = ax.transData.transform(p_vertex)
+                            angle_deg_val = tri_angles.get(vertex_name, 0.0)
+                            if tri.right_angle_mode != "none" and abs(angle_deg_val - 90.0) <= 0.75:
+                                side_len = tri.angle_radius_px * 0.7
+                                p1 = (vertex_disp[0] + u1[0] * side_len, vertex_disp[1] + u1[1] * side_len)
+                                p2 = (p1[0] + u2[0] * side_len, p1[1] + u2[1] * side_len)
+                                p3 = (vertex_disp[0] + u2[0] * side_len, vertex_disp[1] + u2[1] * side_len)
+                                square_data = _display_to_data([p1, p2, p3])
+                                ax.plot(
+                                    [square_data[0][0], square_data[1][0], square_data[2][0]],
+                                    [square_data[0][1], square_data[1][1], square_data[2][1]],
+                                    color=tri_angle_color,
+                                    lw=max(1.0, tri_lw * 0.8),
+                                )
+                                continue
+
+                            a1 = math.atan2(u1[1], u1[0])
+                            a2 = math.atan2(u2[1], u2[0])
+                            delta = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
+                            disp_points = []
+                            for idx in range(49):
+                                theta = a1 + delta * idx / 48.0
+                                disp_points.append(
+                                    (
+                                        vertex_disp[0] + tri.angle_radius_px * math.cos(theta),
+                                        vertex_disp[1] + tri.angle_radius_px * math.sin(theta),
+                                    )
+                                )
+                            arc_data = _display_to_data(disp_points)
+                            ax.plot(
+                                [pt[0] for pt in arc_data],
+                                [pt[1] for pt in arc_data],
+                                color=tri_angle_color,
+                                lw=max(1.0, tri_lw * 0.8),
+                            )
+
+                        for vertex_name in ("A", "B", "C"):
+                            label = triangle_angle_label_text(tri, vertex_name)
+                            if vertex_name not in neighbor_map or not label:
+                                continue
+                            p_vertex = verts[vertex_name]
+                            n1, n2 = neighbor_map[vertex_name]
+                            u1 = _display_unit_vector(p_vertex, verts[n1])
+                            u2 = _display_unit_vector(p_vertex, verts[n2])
+                            if u1 is None or u2 is None:
+                                continue
+                            vertex_disp = ax.transData.transform(p_vertex)
+                            label_disp = _bisector_display_point(
+                                vertex_disp,
+                                u1,
+                                u2,
+                                centroid_disp,
+                                tri.angle_radius_px + tri.angle_text_offset_px,
+                                inward=True,
+                            )
+                            label_xy = _display_to_data([label_disp])[0]
+                            ax.text(
+                                label_xy[0],
+                                label_xy[1],
+                                _escape_simple_latex_command_args(_format_text_placeholders(label)),
+                                fontsize=max(10, int(fontsize * 0.9)),
+                                ha="center",
+                                va="center",
+                                color=tri_label_color,
+                            )
 
                 # text with optional positioning and optional bbox
 

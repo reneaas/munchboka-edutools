@@ -2,6 +2,8 @@ import os
 import re
 from pathlib import Path
 from sphinx.application import Sphinx
+from matplotlib.colors import to_hex
+import plotmath
 
 
 def _make_source(src: Path) -> None:
@@ -244,6 +246,106 @@ Plot test
     width: 30%
 
     Latex text should not treat \\vec{e} as Euler's number.
+
+.. plot::
+
+    triangle: sss=(3,4,5), side-labels=exact, angles=all, color=#0a7d5a, angle-color=#0a7d5a, label-color=#663399
+    xmin: -1
+    xmax: 4.5
+    ymin: -1
+    ymax: 4.5
+    axis: equal
+    width: 30%
+
+    Triangle SSS test.
+
+.. plot::
+
+    triangle: svs=(4, 60, 3), at=B, side-labels=exact, angles=(B,C), color=#c1440e, angle-color=#c1440e
+    xmin: -1
+    xmax: 4.5
+    ymin: -1
+    ymax: 4.5
+    axis: equal
+    width: 30%
+
+    Triangle SVS test.
+
+.. plot::
+
+    triangle: points=((0,0),(4,0),(1,3)), side-labels=numeric, angles=(A,C), color=#1e5aa8, label-color=#9c27b0
+    xmin: -1
+    xmax: 5
+    ymin: -1
+    ymax: 4
+    axis: equal
+    width: 30%
+
+    Triangle points test.
+
+.. plot::
+
+    triangle: sss=(3,4,5), side-labels=exact, side-text=(AB="SIDE_AB"), corner-labels=(B="CORNER_B"), angle-text=(C="ANGLE_C"), angles=(C), color=#006d77, label-color=#2a9d8f
+    xmin: -1
+    xmax: 4.5
+    ymin: -1
+    ymax: 4.5
+    axis: equal
+    usetex: false
+    width: 30%
+
+    Triangle custom label override test.
+
+.. plot::
+
+    triangle: points=((0,0),(4,0),(1,3)), side-labels=exact, color=#3a86ff
+    xmin: -1
+    xmax: 5
+    ymin: -1
+    ymax: 4
+    axis: equal
+    usetex: false
+    width: 30%
+
+    Triangle exact side label test.
+
+.. plot::
+
+    triangle: points=((0,0),(4,0),(1,3)), side-labels=(BC=exact), corner-labels=none, color=#264653, label-color=#118ab2
+    xmin: -1
+    xmax: 5
+    ymin: -1
+    ymax: 4
+    axis: equal
+    usetex: false
+    width: 30%
+
+    Triangle explicit side-label map test.
+
+.. plot::
+
+    triangle: svs=(5,60,7), at=A, side-labels=none, corner-labels=none, angle-labels=(A=numeric), label-color=#ef476f, angles=none, color=#073b4c
+    xmin: -1
+    xmax: 8
+    ymin: -1
+    ymax: 7
+    axis: equal
+    usetex: false
+    width: 30%
+
+    Triangle explicit angle-label map test.
+
+.. plot::
+
+    triangle: sss=(3,4,5), angles=(A)
+    xmin: -1
+    xmax: 4.5
+    ymin: -1
+    ymax: 4.5
+    axis: equal
+    width: 30%
+
+    Triangle default color test.
 """
     )
 
@@ -332,8 +434,28 @@ Interactive graph multi test
     assert any("stroke:#aa0000" in s for s in normalized), "First scoped macro invocation missing"
     assert any("stroke:#00aa00" in s for s in normalized), "Second scoped macro invocation missing"
     assert any("stroke:#000000" in s for s in normalized), "Outer-scope line segment missing"
+    assert sum(1 for s in normalized if "stroke:#0a7d5a" in s) >= 5, "Triangle SSS edges and angle markers missing"
+    assert any("#663399" in s for s in normalized), "Triangle side labels missing"
+    assert any("stroke:#c1440e" in s for s in normalized), "Triangle SVS rendering missing"
+    assert any("stroke:#1e5aa8" in s for s in normalized), "Triangle points rendering missing"
+    assert any("#9c27b0" in s for s in normalized), "Triangle numeric side labels missing"
+    assert "SIDE_AB" in plot_html, "Custom side-text override missing"
+    assert "CORNER_B" in plot_html, "Custom corner label missing"
+    assert "ANGLE_C" in plot_html, "Custom angle text missing"
+    assert "\\sqrt{10}" in plot_html or "3 \\sqrt{2}" in plot_html, "Exact side labels missing"
+    assert plot_html.count("fill: #118ab2") == 1, "Explicit side-label map should render only one side label"
+    assert "3 \\sqrt{2}" in plot_html, "Explicit side-label map missing requested exact label"
+    assert plot_html.count("fill: #ef476f") == 1, "Explicit angle-label map should render only one angle label"
+    assert "60^\\circ" in plot_html, "Explicit angle-label map missing requested angle value"
+    default_blue = to_hex(plotmath.COLORS["blue"])
+    default_red = to_hex(plotmath.COLORS["red"])
+    assert any(f"stroke:{default_blue}" in s for s in normalized), "Default triangle color should be blue"
+    assert any(f"stroke:{default_red}" in s for s in normalized), "Default angle color should be red"
     assert "2.718281828" not in plot_html, "Latex \\vec{e} text was converted to Euler's number"
-    assert "e_x" in plot_html and "e_y" in plot_html, "Expected vector basis labels missing"
+    assert (
+        ("e_x" in plot_html and "e_y" in plot_html)
+        or ("\\vec{{e}}_x" in plot_html and "\\vec{{e}}_y" in plot_html)
+    ), "Expected vector basis labels missing"
 
     ig_html = (build / "interactivegraph.html").read_text(encoding="utf8")
     assert "interactive-graph-wrapper" in ig_html

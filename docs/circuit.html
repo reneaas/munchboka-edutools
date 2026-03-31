@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>circuit &#8212; munchboka-edutools</title>
+    <title>circuit directive &#8212; munchboka-edutools</title>
   
   
   
@@ -111,7 +111,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="../_static/munchboka/js/popup.js?v=5db611f4"></script>
@@ -122,6 +122,8 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'docs/circuit';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
@@ -237,7 +239,7 @@
 <li class="toctree-l1"><a class="reference internal" href="answer.html"><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas-popup.html"><code class="docutils literal notranslate"><span class="pre">cas-popup</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="clear.html"><code class="docutils literal notranslate"><span class="pre">clear</span></code> directive</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">circuit</span></code></a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dialogue.html"><code class="docutils literal notranslate"><span class="pre">dialogue</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="escape-room.html"><code class="docutils literal notranslate"><span class="pre">escape-room</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="escape-room-2.html"><code class="docutils literal notranslate"><span class="pre">escape-room-2</span></code> directive</a></li>
@@ -281,6 +283,7 @@
 <li class="toctree-l1"><a class="reference internal" href="signchart2.html"><code class="docutils literal notranslate"><span class="pre">signchart2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="solution.html"><code class="docutils literal notranslate"><span class="pre">solution</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="summary.html"><code class="docutils literal notranslate"><span class="pre">summary</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table.html"><code class="docutils literal notranslate"><span class="pre">table</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="theory.html"><code class="docutils literal notranslate"><span class="pre">theory</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed-quiz.html"><code class="docutils literal notranslate"><span class="pre">timed-quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timedquiz.html"><code class="docutils literal notranslate"><span class="pre">timedquiz</span></code> directive</a></li>
@@ -407,7 +410,9 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -418,11 +423,35 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>circuit</h1>
+    <h1>circuit directive</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#component-declaration">Component declaration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#component-types">Component types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id-prefix-auto-detection">ID prefix auto-detection</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#topology-expression">Topology expression</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#series-with-parallel-branch">Series with parallel branch</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parallel-first-then-series">Parallel first, then series</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deeply-nested-parallel-series">Deeply nested parallel-series</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips">Tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -432,36 +461,281 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="circuit">
-<h1><code class="docutils literal notranslate"><span class="pre">circuit</span></code><a class="headerlink" href="#circuit" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="circuit-directive">
+<h1><code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive<a class="headerlink" href="#circuit-directive" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive generates electric circuit diagrams as inline SVG from a simple topology description. You describe the circuit as nested <code class="docutils literal notranslate"><span class="pre">series(...)</span></code> / <code class="docutils literal notranslate"><span class="pre">parallel(...)</span></code> expressions, and the directive renders it using LaTeX <code class="docutils literal notranslate"><span class="pre">circuitikz</span></code>.</p>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
+<p>A simple series circuit with a battery and two resistors:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{circuit}
+width: 40%
+circuit: series(U, R1, R2)
+:::
+</pre></div>
+</div>
+<figure class="adaptive-figure circuit-figure no-click align-center">
+<div class="circuit-image no-click no-scaled-link"><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 209 46" class="circuit-inline-svg" role="img" aria-label="Elektrisk krets" style="width:40%; height:auto; display:block; margin:0 auto;">
+<defs>
+<g>
+<g id="circuit_9f7133b7974c_092f3f_glyph-0-0">
+<path d="M 7.59375 -6.90625 C 7.703125 -7.40625 7.921875 -7.75 8.875 -7.796875 C 8.9375 -7.796875 9.078125 -7.8125 9.078125 -8.03125 C 9.078125 -8.046875 9.078125 -8.15625 8.921875 -8.15625 C 8.53125 -8.15625 8.109375 -8.125 7.703125 -8.125 C 7.296875 -8.125 6.859375 -8.15625 6.46875 -8.15625 C 6.390625 -8.15625 6.25 -8.15625 6.25 -7.921875 C 6.25 -7.796875 6.375 -7.796875 6.46875 -7.796875 C 7.140625 -7.78125 7.28125 -7.53125 7.28125 -7.265625 C 7.28125 -7.234375 7.25 -7.046875 7.25 -7.015625 L 6.171875 -2.75 C 5.765625 -1.140625 4.390625 -0.109375 3.1875 -0.109375 C 2.375 -0.109375 1.734375 -0.640625 1.734375 -1.65625 C 1.734375 -1.6875 1.734375 -2.0625 1.859375 -2.59375 L 3.03125 -7.25 C 3.125 -7.671875 3.15625 -7.796875 4.03125 -7.796875 C 4.34375 -7.796875 4.4375 -7.796875 4.4375 -8.03125 C 4.4375 -8.15625 4.296875 -8.15625 4.265625 -8.15625 C 3.9375 -8.15625 3.078125 -8.125 2.734375 -8.125 C 2.390625 -8.125 1.546875 -8.15625 1.1875 -8.15625 C 1.09375 -8.15625 0.96875 -8.15625 0.96875 -7.921875 C 0.96875 -7.796875 1.078125 -7.796875 1.296875 -7.796875 C 1.328125 -7.796875 1.546875 -7.796875 1.75 -7.765625 C 1.96875 -7.75 2.078125 -7.734375 2.078125 -7.578125 C 2.078125 -7.5 1.953125 -7 1.875 -6.734375 L 1.609375 -5.671875 C 1.5 -5.21875 0.9375 -2.953125 0.890625 -2.71875 C 0.796875 -2.390625 0.796875 -2.21875 0.796875 -2.03125 C 0.796875 -0.578125 1.890625 0.265625 3.140625 0.265625 C 4.65625 0.265625 6.125 -1.09375 6.53125 -2.671875 Z M 7.59375 -6.90625 "/>
+</g>
+<g id="circuit_9f7133b7974c_092f3f_glyph-0-1">
+<path d="M 4.484375 -7.34375 C 4.546875 -7.625 4.59375 -7.75 4.8125 -7.78125 C 4.921875 -7.796875 5.3125 -7.796875 5.546875 -7.796875 C 6.390625 -7.796875 7.71875 -7.796875 7.71875 -6.609375 C 7.71875 -6.203125 7.53125 -5.375 7.0625 -4.90625 C 6.75 -4.609375 6.125 -4.21875 5.046875 -4.21875 L 3.703125 -4.21875 Z M 6.203125 -4.0625 C 7.40625 -4.328125 8.828125 -5.15625 8.828125 -6.375 C 8.828125 -7.40625 7.75 -8.15625 6.1875 -8.15625 L 2.78125 -8.15625 C 2.546875 -8.15625 2.4375 -8.15625 2.4375 -7.921875 C 2.4375 -7.796875 2.546875 -7.796875 2.765625 -7.796875 C 2.796875 -7.796875 3.03125 -7.796875 3.234375 -7.765625 C 3.4375 -7.75 3.546875 -7.734375 3.546875 -7.578125 C 3.546875 -7.53125 3.53125 -7.5 3.5 -7.34375 L 1.90625 -0.9375 C 1.78125 -0.46875 1.75 -0.375 0.8125 -0.375 C 0.59375 -0.375 0.484375 -0.375 0.484375 -0.125 C 0.484375 0 0.640625 0 0.65625 0 C 0.984375 0 1.828125 -0.03125 2.15625 -0.03125 C 2.5 -0.03125 3.34375 0 3.6875 0 C 3.78125 0 3.921875 0 3.921875 -0.234375 C 3.921875 -0.375 3.8125 -0.375 3.578125 -0.375 C 3.140625 -0.375 2.8125 -0.375 2.8125 -0.578125 C 2.8125 -0.65625 2.828125 -0.71875 2.84375 -0.78125 L 3.640625 -3.953125 L 5.0625 -3.953125 C 6.140625 -3.953125 6.359375 -3.28125 6.359375 -2.875 C 6.359375 -2.6875 6.265625 -2.3125 6.1875 -2.046875 C 6.109375 -1.703125 6 -1.265625 6 -1.03125 C 6 0.265625 7.4375 0.265625 7.59375 0.265625 C 8.609375 0.265625 9.03125 -0.9375 9.03125 -1.109375 C 9.03125 -1.25 8.890625 -1.25 8.875 -1.25 C 8.78125 -1.25 8.75 -1.171875 8.71875 -1.09375 C 8.421875 -0.203125 7.90625 0 7.640625 0 C 7.25 0 7.15625 -0.265625 7.15625 -0.734375 C 7.15625 -1.09375 7.234375 -1.703125 7.28125 -2.09375 C 7.296875 -2.265625 7.328125 -2.484375 7.328125 -2.65625 C 7.328125 -3.578125 6.53125 -3.9375 6.203125 -4.0625 Z M 6.203125 -4.0625 "/>
+</g>
+<g id="circuit_9f7133b7974c_092f3f_glyph-1-0">
+<path d="M 2.8125 -5.328125 C 2.8125 -5.546875 2.78125 -5.5625 2.546875 -5.5625 C 2.015625 -5.03125 1.25 -5.03125 0.90625 -5.03125 L 0.90625 -4.71875 C 1.109375 -4.71875 1.671875 -4.71875 2.125 -4.953125 L 2.125 -0.6875 C 2.125 -0.40625 2.125 -0.296875 1.296875 -0.296875 L 0.96875 -0.296875 L 0.96875 0 C 1.125 -0.015625 2.15625 -0.03125 2.46875 -0.03125 C 2.71875 -0.03125 3.78125 -0.015625 3.96875 0 L 3.96875 -0.296875 L 3.640625 -0.296875 C 2.8125 -0.296875 2.8125 -0.40625 2.8125 -0.6875 Z M 2.8125 -5.328125 "/>
+</g>
+<g id="circuit_9f7133b7974c_092f3f_glyph-1-1">
+<path d="M 4.234375 -1.53125 L 3.9375 -1.53125 C 3.921875 -1.34375 3.828125 -0.84375 3.734375 -0.765625 C 3.65625 -0.71875 3.015625 -0.71875 2.890625 -0.71875 L 1.359375 -0.71875 C 2.234375 -1.484375 2.53125 -1.71875 3.03125 -2.125 C 3.65625 -2.609375 4.234375 -3.125 4.234375 -3.921875 C 4.234375 -4.9375 3.34375 -5.5625 2.265625 -5.5625 C 1.234375 -5.5625 0.53125 -4.828125 0.53125 -4.0625 C 0.53125 -3.640625 0.890625 -3.59375 0.96875 -3.59375 C 1.171875 -3.59375 1.421875 -3.734375 1.421875 -4.03125 C 1.421875 -4.1875 1.359375 -4.484375 0.921875 -4.484375 C 1.1875 -5.078125 1.75 -5.265625 2.140625 -5.265625 C 2.984375 -5.265625 3.421875 -4.609375 3.421875 -3.921875 C 3.421875 -3.203125 2.890625 -2.625 2.625 -2.3125 L 0.609375 -0.328125 C 0.53125 -0.25 0.53125 -0.234375 0.53125 0 L 3.984375 0 Z M 4.234375 -1.53125 "/>
+</g>
+</g>
+</defs>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -0.00059375 0.0016875 L 26.882219 0.0016875 M 41.175187 0.0016875 L 68.030656 0.0016875 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 31.659562 0.0016875 L 26.874406 0.0016875 M 36.374406 0.0016875 L 41.159562 0.0016875 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 31.659562 7.142312 L 31.659562 -7.142844 M 36.374406 14.286844 L 36.374406 -14.287375 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use href="#circuit_9f7133b7974c_092f3f_glyph-0-0" x="31.494" y="10.38"/>
+</g>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 68.030656 0.0016875 L 83.030656 0.0016875 M 121.143938 0.0016875 L 136.065812 0.0016875 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 121.097063 -7.142844 L 82.999406 -7.142844 L 82.999406 7.142312 L 121.097063 7.142312 Z M 121.097063 -7.142844 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use href="#circuit_9f7133b7974c_092f3f_glyph-0-1" x="97.077" y="18.242"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use href="#circuit_9f7133b7974c_092f3f_glyph-1-0" x="106.155" y="20.036"/>
+</g>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 136.065812 0.0016875 L 151.08925 0.0016875 M 189.202531 0.0016875 L 204.097062 0.0016875 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 189.128312 -7.142844 L 151.030656 -7.142844 L 151.030656 7.142312 L 189.128312 7.142312 Z M 189.128312 -7.142844 " transform="matrix(1, 0, 0, -1, 2.192, 29.322)"/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use href="#circuit_9f7133b7974c_092f3f_glyph-0-1" x="165.148" y="18.242"/>
+</g>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use href="#circuit_9f7133b7974c_092f3f_glyph-1-1" x="174.226" y="20.036"/>
+</g>
+</svg>
+</div></figure>
+</section>
+<section id="syntax-overview">
+<h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{circuit}
+component: V1, battery, 12 V
+component: R1, resistor, 1 kΩ
+component: L1, lamp
+
+circuit: series(V1, R1, parallel(L1, R2))
+width: 80%
+layout: loop
+:::
+</pre></div>
+</div>
+<section id="component-declaration">
+<h3>Component declaration<a class="headerlink" href="#component-declaration" title="Link to this heading">#</a></h3>
+<p>Components are declared with repeated <code class="docutils literal notranslate"><span class="pre">component:</span></code> (or <code class="docutils literal notranslate"><span class="pre">comp:</span></code>) lines:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">component</span><span class="p">:</span> <span class="n">ID</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">label</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>ID</strong> — a unique identifier (e.g. <code class="docutils literal notranslate"><span class="pre">R1</span></code>, <code class="docutils literal notranslate"><span class="pre">V1</span></code>, <code class="docutils literal notranslate"><span class="pre">L1</span></code>)</p></li>
+<li><p><strong>type</strong> — component type (see table below)</p></li>
+<li><p><strong>value</strong> — optional display value (e.g. <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">kΩ</span></code>, <code class="docutils literal notranslate"><span class="pre">12</span> <span class="pre">V</span></code>)</p></li>
+<li><p><strong>label</strong> — optional custom label (defaults to TeX-ified ID, e.g. <code class="docutils literal notranslate"><span class="pre">R1</span></code> → <span class="math notranslate nohighlight">\(R_1\)</span>)</p></li>
+</ul>
+<p>If a component is referenced in <code class="docutils literal notranslate"><span class="pre">circuit:</span></code> but not explicitly declared, its type is inferred from the ID prefix.</p>
+</section>
+<section id="component-types">
+<h3>Component types<a class="headerlink" href="#component-types" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Type keyword</p></th>
+<th class="head"><p>Rendered as</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resistor</span></code>, <code class="docutils literal notranslate"><span class="pre">r</span></code>, <code class="docutils literal notranslate"><span class="pre">res</span></code></p></td>
+<td><p>Resistor</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">var_resistor</span></code>, <code class="docutils literal notranslate"><span class="pre">pot</span></code>, <code class="docutils literal notranslate"><span class="pre">potmeter</span></code></p></td>
+<td><p>Variable resistor</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">battery</span></code>, <code class="docutils literal notranslate"><span class="pre">source</span></code>, <code class="docutils literal notranslate"><span class="pre">dc</span></code>, <code class="docutils literal notranslate"><span class="pre">vsource</span></code></p></td>
+<td><p>Battery / voltage source</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lamp</span></code>, <code class="docutils literal notranslate"><span class="pre">bulb</span></code></p></td>
+<td><p>Lamp</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">led</span></code></p></td>
+<td><p>LED</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">diode</span></code></p></td>
+<td><p>Diode</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wire</span></code></p></td>
+<td><p>Plain wire (default)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id-prefix-auto-detection">
+<h3>ID prefix auto-detection<a class="headerlink" href="#id-prefix-auto-detection" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Prefix</p></th>
+<th class="head"><p>Inferred type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">R</span></code></p></td>
+<td><p>resistor</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RV</span></code></p></td>
+<td><p>var_resistor</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">V</span></code>, <code class="docutils literal notranslate"><span class="pre">U</span></code></p></td>
+<td><p>battery</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">L</span></code></p></td>
+<td><p>lamp</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D</span></code>, <code class="docutils literal notranslate"><span class="pre">LED</span></code></p></td>
+<td><p>led</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="topology-expression">
+<h3>Topology expression<a class="headerlink" href="#topology-expression" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">circuit:</span></code> line uses nested function calls:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">series(A,</span> <span class="pre">B,</span> <span class="pre">C)</span></code> — components in series</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel(A,</span> <span class="pre">B,</span> <span class="pre">C)</span></code> — components in parallel</p></li>
+<li><p>Arguments can be component IDs or nested <code class="docutils literal notranslate"><span class="pre">series(...)</span></code>/<code class="docutils literal notranslate"><span class="pre">parallel(...)</span></code> groups</p></li>
+</ul>
+</section>
+</section>
+<section id="options">
+<h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+<th class="head"><p>Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<td><p>CSS width</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">align</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, or <code class="docutils literal notranslate"><span class="pre">right</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">layout</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ladder</span></code> or <code class="docutils literal notranslate"><span class="pre">loop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ladder</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">flow</span></code></p></td>
+<td><p>Direction of current flow: <code class="docutils literal notranslate"><span class="pre">right</span></code>, <code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">up</span></code>, <code class="docutils literal notranslate"><span class="pre">down</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">right</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">unit</span></code></p></td>
+<td><p>Scale factor (float)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.2</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">style</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">european</span></code> or <code class="docutils literal notranslate"><span class="pre">american</span></code> (circuitikz)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">european</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">backend</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">circuitikz</span></code> or <code class="docutils literal notranslate"><span class="pre">schemdraw</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">circuitikz</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">symbols</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iec</span></code> or <code class="docutils literal notranslate"><span class="pre">ieee</span></code> (schemdraw only)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iec</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">branch</span></code></p></td>
+<td><p>Parallel branch placement: <code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">up</span></code>, <code class="docutils literal notranslate"><span class="pre">down</span></code>, <code class="docutils literal notranslate"><span class="pre">both</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">auto</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">junctions</span></code></p></td>
+<td><p>Show junction dots: <code class="docutils literal notranslate"><span class="pre">true</span></code>/<code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td><p>Font size for labels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
+<td><p>Extra CSS classes</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Stable anchor / reference name</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alt</span></code></p></td>
+<td><p>Alt text for accessibility</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
+<td><p>Force regeneration</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">debug</span></code></p></td>
+<td><p>Keep debug output</p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<section id="series-with-parallel-branch">
+<h3>Series with parallel branch<a class="headerlink" href="#series-with-parallel-branch" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{circuit}
+width: 40%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, R1, parallel(R2, R3))
+:::
+</pre></div>
+</div>
 <figure class="adaptive-figure circuit-figure no-click align-center">
 <div class="circuit-image no-click no-scaled-link"><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 93 67" class="circuit-inline-svg" role="img" aria-label="Elektrisk krets" style="width:40%; height:auto; display:block; margin:0 auto;">
 <defs>
 <g>
-<g id="circuit_e3fd362c20c1_be763a_glyph-0-0">
+<g id="circuit_e3fd362c20c1_b46449_glyph-0-0">
 <path d="M 4.359375 -1.984375 C 4.0625 -0.78125 3.0625 -0.0625 2.25 -0.0625 C 1.625 -0.0625 1.203125 -0.484375 1.203125 -1.203125 C 1.203125 -1.234375 1.203125 -1.484375 1.296875 -1.875 L 2.140625 -5.25 C 2.21875 -5.546875 2.234375 -5.625 2.84375 -5.625 C 3 -5.625 3.09375 -5.625 3.09375 -5.78125 C 3.09375 -5.875 3.015625 -5.875 2.96875 -5.875 C 2.8125 -5.875 2.625 -5.859375 2.46875 -5.859375 L 1.453125 -5.859375 C 1.28125 -5.859375 1.109375 -5.875 0.9375 -5.875 C 0.875 -5.875 0.78125 -5.875 0.78125 -5.71875 C 0.78125 -5.625 0.828125 -5.625 1 -5.625 C 1.515625 -5.625 1.515625 -5.5625 1.515625 -5.46875 C 1.515625 -5.421875 1.453125 -5.171875 1.40625 -5.015625 L 0.65625 -2 C 0.640625 -1.90625 0.578125 -1.671875 0.578125 -1.453125 C 0.578125 -0.5 1.265625 0.1875 2.203125 0.1875 C 3.078125 0.1875 4.03125 -0.515625 4.484375 -1.59375 C 4.53125 -1.75 4.609375 -2.046875 4.671875 -2.28125 C 4.75 -2.59375 4.9375 -3.34375 5 -3.578125 L 5.328125 -4.859375 C 5.4375 -5.3125 5.5 -5.59375 6.265625 -5.625 C 6.328125 -5.640625 6.359375 -5.703125 6.359375 -5.78125 C 6.359375 -5.875 6.28125 -5.875 6.25 -5.875 C 6.125 -5.875 5.96875 -5.859375 5.859375 -5.859375 L 5.453125 -5.859375 C 4.921875 -5.859375 4.640625 -5.875 4.625 -5.875 C 4.578125 -5.875 4.484375 -5.875 4.484375 -5.71875 C 4.484375 -5.625 4.546875 -5.625 4.609375 -5.625 C 5.125 -5.609375 5.15625 -5.421875 5.15625 -5.265625 C 5.15625 -5.1875 5.15625 -5.15625 5.125 -5.03125 Z M 4.359375 -1.984375 "/>
 </g>
-<g id="circuit_e3fd362c20c1_be763a_glyph-0-1">
+<g id="circuit_e3fd362c20c1_b46449_glyph-0-1">
 <path d="M 3.171875 -5.296875 C 3.25 -5.609375 3.28125 -5.625 3.609375 -5.625 L 4.234375 -5.625 C 4.96875 -5.625 5.53125 -5.40625 5.53125 -4.734375 C 5.53125 -4.296875 5.296875 -3.03125 3.578125 -3.03125 L 2.59375 -3.03125 Z M 4.359375 -2.921875 C 5.4375 -3.15625 6.265625 -3.84375 6.265625 -4.59375 C 6.265625 -5.265625 5.59375 -5.875 4.390625 -5.875 L 2.0625 -5.875 C 1.890625 -5.875 1.8125 -5.875 1.8125 -5.71875 C 1.8125 -5.625 1.875 -5.625 2.03125 -5.625 C 2.546875 -5.625 2.546875 -5.5625 2.546875 -5.46875 C 2.546875 -5.453125 2.546875 -5.390625 2.515625 -5.265625 L 1.359375 -0.640625 C 1.28125 -0.328125 1.25 -0.25 0.65625 -0.25 C 0.46875 -0.25 0.40625 -0.25 0.40625 -0.09375 C 0.40625 0 0.5 0 0.53125 0 C 0.6875 0 0.859375 -0.015625 1.03125 -0.015625 L 2.046875 -0.015625 C 2.203125 -0.015625 2.375 0 2.53125 0 C 2.59375 0 2.6875 0 2.6875 -0.15625 C 2.6875 -0.25 2.625 -0.25 2.484375 -0.25 C 1.96875 -0.25 1.96875 -0.3125 1.96875 -0.40625 C 1.96875 -0.40625 1.96875 -0.46875 1.984375 -0.546875 L 2.5625 -2.859375 L 3.59375 -2.859375 C 4.40625 -2.859375 4.5625 -2.34375 4.5625 -2.0625 C 4.5625 -1.921875 4.484375 -1.59375 4.421875 -1.375 C 4.328125 -0.96875 4.296875 -0.875 4.296875 -0.71875 C 4.296875 -0.109375 4.796875 0.1875 5.375 0.1875 C 6.0625 0.1875 6.375 -0.671875 6.375 -0.796875 C 6.375 -0.859375 6.328125 -0.875 6.28125 -0.875 C 6.203125 -0.875 6.1875 -0.828125 6.171875 -0.75 C 5.96875 -0.140625 5.609375 0.015625 5.390625 0.015625 C 5.1875 0.015625 5.046875 -0.09375 5.046875 -0.46875 C 5.046875 -0.6875 5.140625 -1.46875 5.15625 -1.5 C 5.203125 -1.828125 5.203125 -1.859375 5.203125 -1.921875 C 5.203125 -2.5625 4.6875 -2.828125 4.359375 -2.921875 Z M 4.359375 -2.921875 "/>
 </g>
-<g id="circuit_e3fd362c20c1_be763a_glyph-1-0">
+<g id="circuit_e3fd362c20c1_b46449_glyph-1-0">
 <path d="M 1.71875 -3.84375 C 1.71875 -3.96875 1.71875 -3.984375 1.609375 -3.984375 C 1.453125 -3.8125 1.15625 -3.59375 0.546875 -3.59375 L 0.546875 -3.421875 C 0.6875 -3.421875 0.984375 -3.421875 1.3125 -3.578125 L 1.3125 -0.453125 C 1.3125 -0.25 1.296875 -0.171875 0.765625 -0.171875 L 0.578125 -0.171875 L 0.578125 0 C 0.734375 -0.015625 1.328125 -0.015625 1.515625 -0.015625 C 1.71875 -0.015625 2.296875 -0.015625 2.453125 0 L 2.453125 -0.171875 L 2.265625 -0.171875 C 1.734375 -0.171875 1.71875 -0.25 1.71875 -0.453125 Z M 1.71875 -3.84375 "/>
 </g>
-<g id="circuit_e3fd362c20c1_be763a_glyph-1-1">
+<g id="circuit_e3fd362c20c1_b46449_glyph-1-1">
 <path d="M 2.640625 -1 L 2.5 -1 C 2.484375 -0.90625 2.4375 -0.578125 2.375 -0.484375 C 2.328125 -0.421875 2 -0.421875 1.8125 -0.421875 L 0.703125 -0.421875 C 0.875 -0.5625 1.234375 -0.953125 1.390625 -1.09375 C 2.296875 -1.921875 2.640625 -2.234375 2.640625 -2.828125 C 2.640625 -3.515625 2.09375 -3.984375 1.390625 -3.984375 C 0.703125 -3.984375 0.296875 -3.390625 0.296875 -2.875 C 0.296875 -2.5625 0.5625 -2.5625 0.578125 -2.5625 C 0.703125 -2.5625 0.859375 -2.65625 0.859375 -2.84375 C 0.859375 -3.015625 0.734375 -3.125 0.578125 -3.125 C 0.515625 -3.125 0.515625 -3.125 0.484375 -3.125 C 0.609375 -3.53125 0.921875 -3.8125 1.3125 -3.8125 C 1.828125 -3.8125 2.140625 -3.375 2.140625 -2.828125 C 2.140625 -2.328125 1.84375 -1.875 1.5 -1.5 L 0.296875 -0.140625 L 0.296875 0 L 2.484375 0 Z M 2.640625 -1 "/>
 </g>
-<g id="circuit_e3fd362c20c1_be763a_glyph-1-2">
+<g id="circuit_e3fd362c20c1_b46449_glyph-1-2">
 <path d="M 1.09375 -2.140625 C 1 -2.140625 0.96875 -2.140625 0.96875 -2.078125 C 0.96875 -2.015625 1 -2.015625 1.109375 -2.015625 L 1.390625 -2.015625 C 1.890625 -2.015625 2.125 -1.609375 2.125 -1.03125 C 2.125 -0.25 1.71875 -0.03125 1.421875 -0.03125 C 1.140625 -0.03125 0.640625 -0.171875 0.46875 -0.5625 C 0.671875 -0.53125 0.84375 -0.640625 0.84375 -0.859375 C 0.84375 -1.03125 0.71875 -1.15625 0.546875 -1.15625 C 0.40625 -1.15625 0.25 -1.078125 0.25 -0.84375 C 0.25 -0.3125 0.78125 0.125 1.4375 0.125 C 2.15625 0.125 2.6875 -0.421875 2.6875 -1.015625 C 2.6875 -1.578125 2.234375 -2 1.65625 -2.109375 C 2.1875 -2.25 2.515625 -2.6875 2.515625 -3.15625 C 2.515625 -3.625 2.03125 -3.984375 1.453125 -3.984375 C 0.84375 -3.984375 0.40625 -3.609375 0.40625 -3.171875 C 0.40625 -2.9375 0.59375 -2.890625 0.6875 -2.890625 C 0.8125 -2.890625 0.953125 -2.984375 0.953125 -3.15625 C 0.953125 -3.34375 0.8125 -3.4375 0.671875 -3.4375 C 0.640625 -3.4375 0.625 -3.4375 0.609375 -3.421875 C 0.84375 -3.84375 1.40625 -3.84375 1.4375 -3.84375 C 1.625 -3.84375 2.015625 -3.75 2.015625 -3.15625 C 2.015625 -3.046875 2 -2.703125 1.828125 -2.453125 C 1.640625 -2.1875 1.4375 -2.171875 1.28125 -2.171875 Z M 1.09375 -2.140625 "/>
 </g>
 </g>
-<clipPath id="circuit_e3fd362c20c1_be763a_clip-0">
+<clipPath id="circuit_e3fd362c20c1_b46449_clip-0">
 <path clip-rule="nonzero" d="M 82 37 L 92.011719 37 L 92.011719 51 L 82 51 Z M 82 37 "/>
 </clipPath>
-<clipPath id="circuit_e3fd362c20c1_be763a_clip-1">
+<clipPath id="circuit_e3fd362c20c1_b46449_clip-1">
 <path clip-rule="nonzero" d="M 82 37 L 92.011719 37 L 92.011719 51 L 82 51 Z M 82 37 "/>
 </clipPath>
-<clipPath id="circuit_e3fd362c20c1_be763a_clip-2">
+<clipPath id="circuit_e3fd362c20c1_b46449_clip-2">
 <path clip-rule="nonzero" d="M 1 37 L 11 37 L 11 51 L 1 51 Z M 1 37 "/>
 </clipPath>
 </defs>
@@ -469,79 +743,92 @@
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 13.190781 0.00096875 L 11.198594 0.00096875 M 15.155625 0.00096875 L 17.151719 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 13.190781 2.977531 L 13.190781 -2.975594 M 15.155625 5.954094 L 15.155625 -5.952156 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-0-0" x="14.847" y="34.568"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-0-0" x="14.847" y="34.568"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 28.347031 0.00096875 L 34.581406 0.00096875 M 50.456406 0.00096875 L 56.694688 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 50.456406 -2.975594 L 34.581406 -2.975594 L 34.581406 2.977531 L 50.456406 2.977531 Z M 50.456406 -2.975594 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-0-1" x="41.71" y="37.842"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-0-1" x="41.71" y="37.842"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-1-0" x="48.125" y="39.1335"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-1-0" x="48.125" y="39.1335"/>
 </g>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 57.487656 0.00096875 C 57.487656 0.438469 57.132188 0.793937 56.694688 0.793937 C 56.257188 0.793937 55.901719 0.438469 55.901719 0.00096875 C 55.901719 -0.436531 56.257188 -0.792 56.694688 -0.792 C 57.132188 -0.792 57.487656 -0.436531 57.487656 0.00096875 Z M 57.487656 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" d="M 89.820312 44.332031 C 89.820312 43.894531 89.464844 43.539062 89.027344 43.539062 C 88.585938 43.539062 88.230469 43.894531 88.230469 44.332031 C 88.230469 44.769531 88.585938 45.125 89.027344 45.125 C 89.464844 45.125 89.820312 44.769531 89.820312 44.332031 Z M 89.820312 44.332031 "/>
-<g clip-path="url(#circuit_e3fd362c20c1_be763a_clip-0)">
+<g clip-path="url(#circuit_e3fd362c20c1_b46449_clip-0)">
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.835313 0.00096875 C 85.835313 0.438469 85.479844 0.793937 85.042344 0.793937 C 84.600938 0.793937 84.245469 0.438469 84.245469 0.00096875 C 84.245469 -0.436531 84.600938 -0.792 85.042344 -0.792 C 85.479844 -0.792 85.835313 -0.436531 85.835313 0.00096875 Z M 85.835313 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 0.00096875 L 56.694688 8.149406 M 56.694688 8.149406 L 56.694688 16.297844 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 16.297844 L 62.929063 16.297844 M 78.804063 16.297844 L 85.042344 16.297844 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 78.804063 13.321281 L 62.929063 13.321281 L 62.929063 19.274406 L 78.804063 19.274406 Z M 78.804063 13.321281 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-0-1" x="70.056" y="21.543"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-0-1" x="70.056" y="21.543"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-1-1" x="76.4715" y="22.834"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-1-1" x="76.4715" y="22.834"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 16.297844 L 85.042344 8.149406 M 85.042344 8.149406 L 85.042344 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 0.00096875 L 56.694688 -8.151375 M 56.694688 -8.151375 L 56.694688 -16.299813 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 -16.299813 L 62.929063 -16.299813 M 78.804063 -16.299813 L 85.042344 -16.299813 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 78.804063 -19.276375 L 62.929063 -19.276375 L 62.929063 -13.32325 L 78.804063 -13.32325 Z M 78.804063 -19.276375 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-0-1" x="70.056" y="54.141"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-0-1" x="70.056" y="54.141"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_e3fd362c20c1_be763a_glyph-1-2" x="76.4715" y="55.4325"/>
+<use href="#circuit_e3fd362c20c1_b46449_glyph-1-2" x="76.4715" y="55.4325"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 -16.299813 L 85.042344 -8.151375 M 85.042344 -8.151375 L 85.042344 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 0.00096875 L 85.042344 20.907219 M 85.042344 20.907219 L 85.042344 41.809562 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 41.809562 L 42.518906 41.809562 M 42.518906 41.809562 L -0.000625 41.809562 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -0.000625 41.809562 L -0.000625 20.907219 M -0.000625 20.907219 L -0.000625 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" d="M 89.820312 44.332031 C 89.820312 43.894531 89.464844 43.539062 89.027344 43.539062 C 88.585938 43.539062 88.230469 43.894531 88.230469 44.332031 C 88.230469 44.769531 88.585938 45.125 89.027344 45.125 C 89.464844 45.125 89.820312 44.769531 89.820312 44.332031 Z M 89.820312 44.332031 "/>
-<g clip-path="url(#circuit_e3fd362c20c1_be763a_clip-1)">
+<g clip-path="url(#circuit_e3fd362c20c1_b46449_clip-1)">
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.835313 0.00096875 C 85.835313 0.438469 85.479844 0.793937 85.042344 0.793937 C 84.600938 0.793937 84.245469 0.438469 84.245469 0.00096875 C 84.245469 -0.436531 84.600938 -0.792 85.042344 -0.792 C 85.479844 -0.792 85.835313 -0.436531 85.835313 0.00096875 Z M 85.835313 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 </g>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" d="M 4.777344 44.332031 C 4.777344 43.894531 4.421875 43.539062 3.984375 43.539062 C 3.546875 43.539062 3.191406 43.894531 3.191406 44.332031 C 3.191406 44.769531 3.546875 45.125 3.984375 45.125 C 4.421875 45.125 4.777344 44.769531 4.777344 44.332031 Z M 4.777344 44.332031 "/>
-<g clip-path="url(#circuit_e3fd362c20c1_be763a_clip-2)">
+<g clip-path="url(#circuit_e3fd362c20c1_b46449_clip-2)">
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.792344 0.00096875 C 0.792344 0.438469 0.436875 0.793937 -0.000625 0.793937 C -0.438125 0.793937 -0.793594 0.438469 -0.793594 0.00096875 C -0.793594 -0.436531 -0.438125 -0.792 -0.000625 -0.792 C 0.436875 -0.792 0.792344 -0.436531 0.792344 0.00096875 Z M 0.792344 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 </g>
 </svg>
 </div></figure>
+</section>
+<section id="parallel-first-then-series">
+<h3>Parallel first, then series<a class="headerlink" href="#parallel-first-then-series" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{circuit}
+width: 40%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, parallel(R1, R2), R3)
+:::
+</pre></div>
+</div>
 <figure class="adaptive-figure circuit-figure no-click align-center">
 <div class="circuit-image no-click no-scaled-link"><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 93 67" class="circuit-inline-svg" role="img" aria-label="Elektrisk krets" style="width:40%; height:auto; display:block; margin:0 auto;">
 <defs>
 <g>
-<g id="circuit_f28c685898ed_580e7c_glyph-0-0">
+<g id="circuit_f28c685898ed_cf5f4b_glyph-0-0">
 <path d="M 4.359375 -1.984375 C 4.0625 -0.78125 3.0625 -0.0625 2.25 -0.0625 C 1.625 -0.0625 1.203125 -0.484375 1.203125 -1.203125 C 1.203125 -1.234375 1.203125 -1.484375 1.296875 -1.875 L 2.140625 -5.25 C 2.21875 -5.546875 2.234375 -5.625 2.84375 -5.625 C 3 -5.625 3.09375 -5.625 3.09375 -5.78125 C 3.09375 -5.875 3.015625 -5.875 2.96875 -5.875 C 2.8125 -5.875 2.625 -5.859375 2.46875 -5.859375 L 1.453125 -5.859375 C 1.28125 -5.859375 1.109375 -5.875 0.9375 -5.875 C 0.875 -5.875 0.78125 -5.875 0.78125 -5.71875 C 0.78125 -5.625 0.828125 -5.625 1 -5.625 C 1.515625 -5.625 1.515625 -5.5625 1.515625 -5.46875 C 1.515625 -5.421875 1.453125 -5.171875 1.40625 -5.015625 L 0.65625 -2 C 0.640625 -1.90625 0.578125 -1.671875 0.578125 -1.453125 C 0.578125 -0.5 1.265625 0.1875 2.203125 0.1875 C 3.078125 0.1875 4.03125 -0.515625 4.484375 -1.59375 C 4.53125 -1.75 4.609375 -2.046875 4.671875 -2.28125 C 4.75 -2.59375 4.9375 -3.34375 5 -3.578125 L 5.328125 -4.859375 C 5.4375 -5.3125 5.5 -5.59375 6.265625 -5.625 C 6.328125 -5.640625 6.359375 -5.703125 6.359375 -5.78125 C 6.359375 -5.875 6.28125 -5.875 6.25 -5.875 C 6.125 -5.875 5.96875 -5.859375 5.859375 -5.859375 L 5.453125 -5.859375 C 4.921875 -5.859375 4.640625 -5.875 4.625 -5.875 C 4.578125 -5.875 4.484375 -5.875 4.484375 -5.71875 C 4.484375 -5.625 4.546875 -5.625 4.609375 -5.625 C 5.125 -5.609375 5.15625 -5.421875 5.15625 -5.265625 C 5.15625 -5.1875 5.15625 -5.15625 5.125 -5.03125 Z M 4.359375 -1.984375 "/>
 </g>
-<g id="circuit_f28c685898ed_580e7c_glyph-0-1">
+<g id="circuit_f28c685898ed_cf5f4b_glyph-0-1">
 <path d="M 3.171875 -5.296875 C 3.25 -5.609375 3.28125 -5.625 3.609375 -5.625 L 4.234375 -5.625 C 4.96875 -5.625 5.53125 -5.40625 5.53125 -4.734375 C 5.53125 -4.296875 5.296875 -3.03125 3.578125 -3.03125 L 2.59375 -3.03125 Z M 4.359375 -2.921875 C 5.4375 -3.15625 6.265625 -3.84375 6.265625 -4.59375 C 6.265625 -5.265625 5.59375 -5.875 4.390625 -5.875 L 2.0625 -5.875 C 1.890625 -5.875 1.8125 -5.875 1.8125 -5.71875 C 1.8125 -5.625 1.875 -5.625 2.03125 -5.625 C 2.546875 -5.625 2.546875 -5.5625 2.546875 -5.46875 C 2.546875 -5.453125 2.546875 -5.390625 2.515625 -5.265625 L 1.359375 -0.640625 C 1.28125 -0.328125 1.25 -0.25 0.65625 -0.25 C 0.46875 -0.25 0.40625 -0.25 0.40625 -0.09375 C 0.40625 0 0.5 0 0.53125 0 C 0.6875 0 0.859375 -0.015625 1.03125 -0.015625 L 2.046875 -0.015625 C 2.203125 -0.015625 2.375 0 2.53125 0 C 2.59375 0 2.6875 0 2.6875 -0.15625 C 2.6875 -0.25 2.625 -0.25 2.484375 -0.25 C 1.96875 -0.25 1.96875 -0.3125 1.96875 -0.40625 C 1.96875 -0.40625 1.96875 -0.46875 1.984375 -0.546875 L 2.5625 -2.859375 L 3.59375 -2.859375 C 4.40625 -2.859375 4.5625 -2.34375 4.5625 -2.0625 C 4.5625 -1.921875 4.484375 -1.59375 4.421875 -1.375 C 4.328125 -0.96875 4.296875 -0.875 4.296875 -0.71875 C 4.296875 -0.109375 4.796875 0.1875 5.375 0.1875 C 6.0625 0.1875 6.375 -0.671875 6.375 -0.796875 C 6.375 -0.859375 6.328125 -0.875 6.28125 -0.875 C 6.203125 -0.875 6.1875 -0.828125 6.171875 -0.75 C 5.96875 -0.140625 5.609375 0.015625 5.390625 0.015625 C 5.1875 0.015625 5.046875 -0.09375 5.046875 -0.46875 C 5.046875 -0.6875 5.140625 -1.46875 5.15625 -1.5 C 5.203125 -1.828125 5.203125 -1.859375 5.203125 -1.921875 C 5.203125 -2.5625 4.6875 -2.828125 4.359375 -2.921875 Z M 4.359375 -2.921875 "/>
 </g>
-<g id="circuit_f28c685898ed_580e7c_glyph-1-0">
+<g id="circuit_f28c685898ed_cf5f4b_glyph-1-0">
 <path d="M 1.71875 -3.84375 C 1.71875 -3.96875 1.71875 -3.984375 1.609375 -3.984375 C 1.453125 -3.8125 1.15625 -3.59375 0.546875 -3.59375 L 0.546875 -3.421875 C 0.6875 -3.421875 0.984375 -3.421875 1.3125 -3.578125 L 1.3125 -0.453125 C 1.3125 -0.25 1.296875 -0.171875 0.765625 -0.171875 L 0.578125 -0.171875 L 0.578125 0 C 0.734375 -0.015625 1.328125 -0.015625 1.515625 -0.015625 C 1.71875 -0.015625 2.296875 -0.015625 2.453125 0 L 2.453125 -0.171875 L 2.265625 -0.171875 C 1.734375 -0.171875 1.71875 -0.25 1.71875 -0.453125 Z M 1.71875 -3.84375 "/>
 </g>
-<g id="circuit_f28c685898ed_580e7c_glyph-1-1">
+<g id="circuit_f28c685898ed_cf5f4b_glyph-1-1">
 <path d="M 2.640625 -1 L 2.5 -1 C 2.484375 -0.90625 2.4375 -0.578125 2.375 -0.484375 C 2.328125 -0.421875 2 -0.421875 1.8125 -0.421875 L 0.703125 -0.421875 C 0.875 -0.5625 1.234375 -0.953125 1.390625 -1.09375 C 2.296875 -1.921875 2.640625 -2.234375 2.640625 -2.828125 C 2.640625 -3.515625 2.09375 -3.984375 1.390625 -3.984375 C 0.703125 -3.984375 0.296875 -3.390625 0.296875 -2.875 C 0.296875 -2.5625 0.5625 -2.5625 0.578125 -2.5625 C 0.703125 -2.5625 0.859375 -2.65625 0.859375 -2.84375 C 0.859375 -3.015625 0.734375 -3.125 0.578125 -3.125 C 0.515625 -3.125 0.515625 -3.125 0.484375 -3.125 C 0.609375 -3.53125 0.921875 -3.8125 1.3125 -3.8125 C 1.828125 -3.8125 2.140625 -3.375 2.140625 -2.828125 C 2.140625 -2.328125 1.84375 -1.875 1.5 -1.5 L 0.296875 -0.140625 L 0.296875 0 L 2.484375 0 Z M 2.640625 -1 "/>
 </g>
-<g id="circuit_f28c685898ed_580e7c_glyph-1-2">
+<g id="circuit_f28c685898ed_cf5f4b_glyph-1-2">
 <path d="M 1.09375 -2.140625 C 1 -2.140625 0.96875 -2.140625 0.96875 -2.078125 C 0.96875 -2.015625 1 -2.015625 1.109375 -2.015625 L 1.390625 -2.015625 C 1.890625 -2.015625 2.125 -1.609375 2.125 -1.03125 C 2.125 -0.25 1.71875 -0.03125 1.421875 -0.03125 C 1.140625 -0.03125 0.640625 -0.171875 0.46875 -0.5625 C 0.671875 -0.53125 0.84375 -0.640625 0.84375 -0.859375 C 0.84375 -1.03125 0.71875 -1.15625 0.546875 -1.15625 C 0.40625 -1.15625 0.25 -1.078125 0.25 -0.84375 C 0.25 -0.3125 0.78125 0.125 1.4375 0.125 C 2.15625 0.125 2.6875 -0.421875 2.6875 -1.015625 C 2.6875 -1.578125 2.234375 -2 1.65625 -2.109375 C 2.1875 -2.25 2.515625 -2.6875 2.515625 -3.15625 C 2.515625 -3.625 2.03125 -3.984375 1.453125 -3.984375 C 0.84375 -3.984375 0.40625 -3.609375 0.40625 -3.171875 C 0.40625 -2.9375 0.59375 -2.890625 0.6875 -2.890625 C 0.8125 -2.890625 0.953125 -2.984375 0.953125 -3.15625 C 0.953125 -3.34375 0.8125 -3.4375 0.671875 -3.4375 C 0.640625 -3.4375 0.625 -3.4375 0.609375 -3.421875 C 0.84375 -3.84375 1.40625 -3.84375 1.4375 -3.84375 C 1.625 -3.84375 2.015625 -3.75 2.015625 -3.15625 C 2.015625 -3.046875 2 -2.703125 1.828125 -2.453125 C 1.640625 -2.1875 1.4375 -2.171875 1.28125 -2.171875 Z M 1.09375 -2.140625 "/>
 </g>
 </g>
-<clipPath id="circuit_f28c685898ed_580e7c_clip-0">
+<clipPath id="circuit_f28c685898ed_cf5f4b_clip-0">
 <path clip-rule="nonzero" d="M 82 37 L 92.011719 37 L 92.011719 51 L 82 51 Z M 82 37 "/>
 </clipPath>
-<clipPath id="circuit_f28c685898ed_580e7c_clip-1">
+<clipPath id="circuit_f28c685898ed_cf5f4b_clip-1">
 <path clip-rule="nonzero" d="M 1 37 L 11 37 L 11 51 L 1 51 Z M 1 37 "/>
 </clipPath>
 </defs>
@@ -549,7 +836,7 @@
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 13.190781 0.00096875 L 11.198594 0.00096875 M 15.155625 0.00096875 L 17.151719 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 13.190781 2.977531 L 13.190781 -2.975594 M 15.155625 5.954094 L 15.155625 -5.952156 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-0-0" x="14.847" y="34.568"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-0-0" x="14.847" y="34.568"/>
 </g>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 29.14 0.00096875 C 29.14 0.438469 28.784531 0.793937 28.347031 0.793937 C 27.909531 0.793937 27.554063 0.438469 27.554063 0.00096875 C 27.554063 -0.436531 27.909531 -0.792 28.347031 -0.792 C 28.784531 -0.792 29.14 -0.436531 29.14 0.00096875 Z M 29.14 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 57.487656 0.00096875 C 57.487656 0.438469 57.132188 0.793937 56.694688 0.793937 C 56.257188 0.793937 55.901719 0.438469 55.901719 0.00096875 C 55.901719 -0.436531 56.257188 -0.792 56.694688 -0.792 C 57.132188 -0.792 57.487656 -0.436531 57.487656 0.00096875 Z M 57.487656 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
@@ -557,43 +844,72 @@
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 28.347031 16.297844 L 34.581406 16.297844 M 50.456406 16.297844 L 56.694688 16.297844 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 50.456406 13.321281 L 34.581406 13.321281 L 34.581406 19.274406 L 50.456406 19.274406 Z M 50.456406 13.321281 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-0-1" x="41.71" y="21.543"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-0-1" x="41.71" y="21.543"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-1-0" x="48.125" y="22.834"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-1-0" x="48.125" y="22.834"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 16.297844 L 56.694688 8.149406 M 56.694688 8.149406 L 56.694688 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 28.347031 0.00096875 L 28.347031 -8.151375 M 28.347031 -8.151375 L 28.347031 -16.299813 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 28.347031 -16.299813 L 34.581406 -16.299813 M 50.456406 -16.299813 L 56.694688 -16.299813 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 50.456406 -19.276375 L 34.581406 -19.276375 L 34.581406 -13.32325 L 50.456406 -13.32325 Z M 50.456406 -19.276375 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-0-1" x="41.71" y="54.141"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-0-1" x="41.71" y="54.141"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-1-1" x="48.125" y="55.4325"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-1-1" x="48.125" y="55.4325"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 -16.299813 L 56.694688 -8.151375 M 56.694688 -8.151375 L 56.694688 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.694688 0.00096875 L 62.929063 0.00096875 M 78.804063 0.00096875 L 85.042344 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.797" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 78.804063 -2.975594 L 62.929063 -2.975594 L 62.929063 2.977531 L 78.804063 2.977531 Z M 78.804063 -2.975594 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-0-1" x="70.056" y="37.842"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-0-1" x="70.056" y="37.842"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#circuit_f28c685898ed_580e7c_glyph-1-2" x="76.4715" y="39.1335"/>
+<use href="#circuit_f28c685898ed_cf5f4b_glyph-1-2" x="76.4715" y="39.1335"/>
 </g>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 0.00096875 L 85.042344 20.907219 M 85.042344 20.907219 L 85.042344 41.809562 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.042344 41.809562 L 42.518906 41.809562 M 42.518906 41.809562 L -0.000625 41.809562 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M -0.000625 41.809562 L -0.000625 20.907219 M -0.000625 20.907219 L -0.000625 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" d="M 89.820312 44.332031 C 89.820312 43.894531 89.464844 43.539062 89.027344 43.539062 C 88.585938 43.539062 88.230469 43.894531 88.230469 44.332031 C 88.230469 44.769531 88.585938 45.125 89.027344 45.125 C 89.464844 45.125 89.820312 44.769531 89.820312 44.332031 Z M 89.820312 44.332031 "/>
-<g clip-path="url(#circuit_f28c685898ed_580e7c_clip-0)">
+<g clip-path="url(#circuit_f28c685898ed_cf5f4b_clip-0)">
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 85.835313 0.00096875 C 85.835313 0.438469 85.479844 0.793937 85.042344 0.793937 C 84.600938 0.793937 84.245469 0.438469 84.245469 0.00096875 C 84.245469 -0.436531 84.600938 -0.792 85.042344 -0.792 C 85.479844 -0.792 85.835313 -0.436531 85.835313 0.00096875 Z M 85.835313 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 </g>
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 0%)" fill-opacity="1" d="M 4.777344 44.332031 C 4.777344 43.894531 4.421875 43.539062 3.984375 43.539062 C 3.546875 43.539062 3.191406 43.894531 3.191406 44.332031 C 3.191406 44.769531 3.546875 45.125 3.984375 45.125 C 4.421875 45.125 4.777344 44.769531 4.777344 44.332031 Z M 4.777344 44.332031 "/>
-<g clip-path="url(#circuit_f28c685898ed_580e7c_clip-1)">
+<g clip-path="url(#circuit_f28c685898ed_cf5f4b_clip-1)">
 <path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.792344 0.00096875 C 0.792344 0.438469 0.436875 0.793937 -0.000625 0.793937 C -0.438125 0.793937 -0.793594 0.438469 -0.793594 0.00096875 C -0.793594 -0.436531 -0.438125 -0.792 -0.000625 -0.792 C 0.436875 -0.792 0.792344 -0.436531 0.792344 0.00096875 Z M 0.792344 0.00096875 " transform="matrix(1, 0, 0, -1, 3.985, 44.333)"/>
 </g>
 </svg>
 </div></figure>
+</section>
+<section id="deeply-nested-parallel-series">
+<h3>Deeply nested parallel-series<a class="headerlink" href="#deeply-nested-parallel-series" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{circuit}
+width: 40%
+fontsize: 18
+flow: right
+layout: loop
+unit: 0.5
+circuit: series(U, parallel(R1, R2, series(R3, R4)))
+nocache:
+:::
+</pre></div>
+</div>
+</section>
+</section>
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Components not declared with <code class="docutils literal notranslate"><span class="pre">component:</span></code> but referenced in <code class="docutils literal notranslate"><span class="pre">circuit:</span></code> are auto-detected from their ID prefix.</p></li>
+<li><p>Labels default to TeX formatting: <code class="docutils literal notranslate"><span class="pre">R1</span></code> → <span class="math notranslate nohighlight">\(R_1\)</span>, <code class="docutils literal notranslate"><span class="pre">RV12</span></code> → <span class="math notranslate nohighlight">\(RV_{12}\)</span>.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">circuitikz</span></code> backend requires a working LaTeX installation with the <code class="docutils literal notranslate"><span class="pre">circuitikz</span></code> package.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">layout:</span> <span class="pre">loop</span></code> for perimeter-style layouts (current flows around a loop) and <code class="docutils literal notranslate"><span class="pre">layout:</span> <span class="pre">ladder</span></code> for ladder-style layouts.</p></li>
+</ul>
+</section>
+<section id="source">
+<h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
+<p><a class="reference external" href="https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/circuit.py"><code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/circuit.py</span></code></a></p>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -650,6 +966,39 @@
             </div>
             
             
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#component-declaration">Component declaration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#component-types">Component types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id-prefix-auto-detection">ID prefix auto-detection</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#topology-expression">Topology expression</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#series-with-parallel-branch">Series with parallel branch</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parallel-first-then-series">Parallel first, then series</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deeply-nested-parallel-series">Deeply nested parallel-series</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips">Tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

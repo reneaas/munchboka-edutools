@@ -1,29 +1,24 @@
 # `horner` directive
 
-Renders a Horner (synthetic division) scheme as SVG.
+The `horner` directive renders a Horner (synthetic division) scheme as an SVG figure. It supports step-by-step reveal via the `stage` option.
 
-## Signature
+## Basic usage
 
-- Required arguments: `0`
-- Optional arguments: `0`
-- Body content: `yes`
+````markdown
+:::{horner}
+:p: x^3 + 2x^2 - 3x - 6
+:x: 1
+:::
+````
 
-## Options
+:::{horner}
+:p: x^3 + 2x^2 - 3x - 6
+:x: 1
+:::
 
-| Option | Type |
-|---|---|
-| `p` | string (required) |
-| `x` | string (required) |
-| `stage` | non-negative integer |
-| `tutor` | flag |
-| `align` | value |
-| `class` | CSS class list |
-| `name` | string |
-| `nocache` | flag |
-| `alt` | string |
-| `width` | length / percentage |
+## Step-by-step reveal
 
-## Example
+Use `stage` to show only the first *n* steps of the scheme, perfect for classroom walkthroughs:
 
 ````markdown
 :::{horner}
@@ -33,6 +28,27 @@ Renders a Horner (synthetic division) scheme as SVG.
 :::
 ````
 
+:::{horner}
+:p: x^3 + 2x^2 - 3x - 6
+:x: 1
+:stage: 2
+:::
+
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `p` | Polynomial expression (e.g. `x^3 + 2x^2 - 3x - 6`) | *(required)* |
+| `x` | Evaluation point / divisor | *(required)* |
+| `stage` | Number of steps to reveal (0 = show all) | `0` |
+| `tutor` | Enable interactive tutor mode | off |
+| `width` | CSS width | — |
+| `align` | `left`, `center`, or `right` | — |
+| `class` | Extra CSS classes | — |
+| `name` | Stable anchor / reference name | — |
+| `alt` | Alt text | — |
+| `nocache` | Force regeneration | — |
+
 ## Source
 
-`src/munchboka_edutools/directives/horner.py`
+[`src/munchboka_edutools/directives/horner.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/horner.py)

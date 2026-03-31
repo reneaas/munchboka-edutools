@@ -111,7 +111,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js?v=1ae7504c"></script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="../_static/munchboka/js/popup.js?v=5db611f4"></script>
@@ -237,7 +237,7 @@
 <li class="toctree-l1"><a class="reference internal" href="answer.html"><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas-popup.html"><code class="docutils literal notranslate"><span class="pre">cas-popup</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="clear.html"><code class="docutils literal notranslate"><span class="pre">clear</span></code> directive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="circuit.html"><code class="docutils literal notranslate"><span class="pre">circuit</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="circuit.html"><code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dialogue.html"><code class="docutils literal notranslate"><span class="pre">dialogue</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="escape-room.html"><code class="docutils literal notranslate"><span class="pre">escape-room</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="escape-room-2.html"><code class="docutils literal notranslate"><span class="pre">escape-room-2</span></code> directive</a></li>
@@ -281,6 +281,7 @@
 <li class="toctree-l1"><a class="reference internal" href="signchart2.html"><code class="docutils literal notranslate"><span class="pre">signchart2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="solution.html"><code class="docutils literal notranslate"><span class="pre">solution</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="summary.html"><code class="docutils literal notranslate"><span class="pre">summary</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table.html"><code class="docutils literal notranslate"><span class="pre">table</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="theory.html"><code class="docutils literal notranslate"><span class="pre">theory</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timed-quiz.html"><code class="docutils literal notranslate"><span class="pre">timed-quiz</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="timedquiz.html"><code class="docutils literal notranslate"><span class="pre">timedquiz</span></code> directive</a></li>
@@ -430,9 +431,9 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>
@@ -448,141 +449,9 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="multi-plot-directive">
 <h1><code class="docutils literal notranslate"><span class="pre">multi-plot</span></code> directive<a class="headerlink" href="#multi-plot-directive" title="Link to this heading">#</a></h1>
-<p>Builds a grid of static plots from a list of functions.</p>
-<section id="signature">
-<h2>Signature<a class="headerlink" href="#signature" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>Required arguments: <code class="docutils literal notranslate"><span class="pre">0</span></code></p></li>
-<li><p>Optional arguments: <code class="docutils literal notranslate"><span class="pre">0</span></code></p></li>
-<li><p>Body content: <code class="docutils literal notranslate"><span class="pre">yes</span></code></p></li>
-</ul>
-</section>
-<section id="options">
-<h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Option</p></th>
-<th class="head"><p>Type</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">functions</span></code></p></td>
-<td><p>string (required)</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fn_labels</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">function-names</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">domains</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vlines</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hlines</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xlims</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ylims</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lines</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">points</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">point</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hline</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vline</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">line</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tangent</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xmin</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xmax</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ymin</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ymax</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">text</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">annotate</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xstep</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ystep</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">grid</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ticks</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rows</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cols</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">align</span></code></p></td>
-<td><p>value</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
-<td><p>CSS class list</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
-<td><p>flag</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alt</span></code></p></td>
-<td><p>string</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
-<td><p>length / percentage</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">debug</span></code></p></td>
-<td><p>flag</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">multi-plot</span></code> directive builds a grid of static plots from a list of function expressions. All plots share the same axis limits and styling.</p>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{multi-plot}
 functions: [x**2, sin(x), exp(x)]
 rows: 1
@@ -593,6 +462,1502 @@ width: 100%
 :::
 </pre></div>
 </div>
+<figure class="adaptive-figure multi-plot-figure no-click align-center">
+<div class="graph-image no-click no-scaled-link"><?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 964.8 244.94" xmlns="http://www.w3.org/2000/svg" version="1.1" class="graph-inline-svg" role="img" aria-label="Multiplot av 3 funksjoner" style="width:100%; height:auto; display:block; margin:0 auto;">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-03-27T23:10:41.700574</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.8, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="mgr_2c1392ddc193_8f4033_figure_1">
+  <g id="mgr_2c1392ddc193_8f4033_patch_1">
+   <path d="M 0 244.94 
+L 964.8 244.94 
+L 964.8 0 
+L 0 0 
+L 0 244.94 
+z
+" style="fill: none"/>
+  </g>
+  <g id="mgr_2c1392ddc193_8f4033_axes_1">
+   <g id="mgr_2c1392ddc193_8f4033_patch_2">
+    <path d="M 7.2 237.74 
+L 313.8 237.74 
+L 313.8 16.556315 
+L 7.2 16.556315 
+L 7.2 237.74 
+z
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_1">
+    <g id="mgr_2c1392ddc193_8f4033_xtick_1">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_1">
+      <path d="M 58.3 237.74 
+L 58.3 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_2">
+      <defs>
+       <path id="mgr_2c1392ddc193_8f4033_mb8a97ef5f1" d="M 0 0 
+L 0 3.5 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="58.3" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_1">
+      <!-- $-2$ -->
+      <g transform="translate(45.982209 147.985154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMSY10-0" d="M 4218 1472 
+C 4326 1472 4442 1472 4442 1600 
+C 4442 1728 4326 1728 4218 1728 
+L 755 1728 
+C 646 1728 531 1728 531 1600 
+C 531 1472 646 1472 755 1472 
+L 4218 1472 
+z
+" transform="scale(0.015625)"/>
+        <path id="CMR17-32" d="M 2669 989 
+L 2554 989 
+C 2490 536 2438 459 2413 420 
+C 2381 369 1920 369 1830 369 
+L 602 369 
+C 832 619 1280 1072 1824 1597 
+C 2214 1967 2669 2402 2669 3035 
+C 2669 3790 2067 4224 1395 4224 
+C 691 4224 262 3604 262 3030 
+C 262 2780 448 2748 525 2748 
+C 589 2748 781 2787 781 3010 
+C 781 3207 614 3264 525 3264 
+C 486 3264 448 3258 422 3245 
+C 544 3790 915 4058 1306 4058 
+C 1862 4058 2227 3617 2227 3035 
+C 2227 2479 1901 2000 1536 1584 
+L 262 146 
+L 262 0 
+L 2515 0 
+L 2669 989 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_2">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_3">
+      <path d="M 109.4 237.74 
+L 109.4 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_4">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="109.4" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_2">
+      <!-- $-1$ -->
+      <g transform="translate(97.082209 147.985154) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-31" d="M 1702 4058 
+C 1702 4192 1696 4192 1606 4192 
+C 1357 3916 979 3827 621 3827 
+C 602 3827 570 3827 563 3808 
+C 557 3795 557 3782 557 3648 
+C 755 3648 1088 3686 1344 3839 
+L 1344 461 
+C 1344 236 1331 160 781 160 
+L 589 160 
+L 589 0 
+C 896 0 1216 0 1523 0 
+C 1830 0 2150 0 2458 0 
+L 2458 160 
+L 2266 160 
+C 1715 160 1702 230 1702 458 
+L 1702 4058 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_3">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_5">
+      <path d="M 211.6 237.74 
+L 211.6 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_6">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="211.6" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_3">
+      <!-- $1$ -->
+      <g transform="translate(207.030952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_4">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_7">
+      <path d="M 262.7 237.74 
+L 262.7 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_8">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="262.7" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_4">
+      <!-- $2$ -->
+      <g transform="translate(258.130952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_5">
+     <!-- $x$ -->
+     <g transform="translate(302.713188 169.697785) scale(0.2 -0.2)">
+      <defs>
+       <path id="CMMI12-78" d="M 3034 2606 
+C 2829 2567 2752 2414 2752 2293 
+C 2752 2139 2874 2088 2963 2088 
+C 3155 2088 3290 2254 3290 2427 
+C 3290 2695 2982 2816 2714 2816 
+C 2323 2816 2106 2433 2048 2312 
+C 1901 2816 1504 2816 1389 2816 
+C 736 2816 390 1980 390 1839 
+C 390 1814 416 1782 461 1782 
+C 512 1782 525 1820 538 1846 
+C 755 2555 1184 2689 1370 2689 
+C 1658 2689 1715 2420 1715 2267 
+C 1715 2127 1677 1980 1600 1673 
+L 1382 798 
+C 1286 415 1101 64 762 64 
+C 730 64 570 64 435 147 
+C 666 192 717 383 717 460 
+C 717 588 621 664 499 664 
+C 346 664 179 530 179 326 
+C 179 57 480 -64 755 -64 
+C 1062 -64 1280 179 1414 441 
+C 1517 64 1837 -64 2074 -64 
+C 2726 -64 3072 773 3072 913 
+C 3072 945 3046 971 3008 971 
+C 2950 971 2944 939 2925 888 
+C 2752 326 2381 64 2093 64 
+C 1869 64 1747 230 1747 492 
+C 1747 632 1773 734 1875 1156 
+L 2099 2024 
+C 2195 2408 2413 2689 2707 2689 
+C 2720 2689 2899 2689 3034 2606 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#CMMI12-78" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_2">
+    <g id="mgr_2c1392ddc193_8f4033_ytick_1">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_9">
+      <path d="M 7.2 219.308026 
+L 313.8 219.308026 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_10">
+      <defs>
+       <path id="mgr_2c1392ddc193_8f4033_m7637c1546a" d="M 0 0 
+L -3.5 0 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="219.308026" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_6">
+      <!-- $-5$ -->
+      <g transform="translate(128.864417 226.226525) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-35" d="M 730 3692 
+C 794 3666 1056 3584 1325 3584 
+C 1920 3584 2246 3911 2432 4100 
+C 2432 4157 2432 4192 2394 4192 
+C 2387 4192 2374 4192 2323 4163 
+C 2099 4058 1837 3973 1517 3973 
+C 1325 3973 1037 3999 723 4139 
+C 653 4171 640 4171 634 4171 
+C 602 4171 595 4164 595 4037 
+L 595 2203 
+C 595 2089 595 2057 659 2057 
+C 691 2057 704 2070 736 2114 
+C 941 2401 1222 2522 1542 2522 
+C 1766 2522 2246 2382 2246 1289 
+C 2246 1085 2246 715 2054 421 
+C 1894 159 1645 25 1370 25 
+C 947 25 518 320 403 814 
+C 429 807 480 795 506 795 
+C 589 795 749 840 749 1038 
+C 749 1210 627 1280 506 1280 
+C 358 1280 262 1190 262 1011 
+C 262 454 704 -128 1382 -128 
+C 2042 -128 2669 440 2669 1264 
+C 2669 2030 2170 2624 1549 2624 
+C 1222 2624 947 2503 730 2274 
+L 730 3692 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-35" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_2">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_11">
+      <path d="M 7.2 200.876053 
+L 313.8 200.876053 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_12">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="200.876053" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_7">
+      <!-- $-4$ -->
+      <g transform="translate(128.864417 207.794551) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-34" d="M 2150 4122 
+C 2150 4256 2144 4256 2029 4256 
+L 128 1254 
+L 128 1088 
+L 1779 1088 
+L 1779 457 
+C 1779 224 1766 160 1318 160 
+L 1197 160 
+L 1197 0 
+C 1402 0 1747 0 1965 0 
+C 2182 0 2528 0 2733 0 
+L 2733 160 
+L 2611 160 
+C 2163 160 2150 224 2150 457 
+L 2150 1088 
+L 2803 1088 
+L 2803 1254 
+L 2150 1254 
+L 2150 4122 
+z
+M 1798 3703 
+L 1798 1254 
+L 256 1254 
+L 1798 3703 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-34" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_3">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_13">
+      <path d="M 7.2 182.444079 
+L 313.8 182.444079 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_14">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="182.444079" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_8">
+      <!-- $-3$ -->
+      <g transform="translate(128.864417 189.362577) scale(0.2 -0.2)">
+       <defs>
+        <path id="CMR17-33" d="M 1414 2157 
+C 1984 2157 2234 1662 2234 1090 
+C 2234 320 1824 25 1453 25 
+C 1114 25 563 194 390 693 
+C 422 680 454 680 486 680 
+C 640 680 755 782 755 948 
+C 755 1133 614 1216 486 1216 
+C 378 1216 211 1165 211 926 
+C 211 335 787 -128 1466 -128 
+C 2176 -128 2720 430 2720 1085 
+C 2720 1707 2208 2157 1600 2227 
+C 2086 2328 2554 2756 2554 3329 
+C 2554 3820 2048 4179 1472 4179 
+C 890 4179 378 3829 378 3329 
+C 378 3110 544 3072 627 3072 
+C 762 3072 877 3155 877 3321 
+C 877 3486 762 3569 627 3569 
+C 602 3569 570 3569 544 3557 
+C 730 3959 1235 4032 1459 4032 
+C 1683 4032 2106 3925 2106 3320 
+C 2106 3143 2080 2828 1862 2550 
+C 1670 2304 1453 2304 1242 2284 
+C 1210 2284 1062 2269 1037 2269 
+C 992 2263 966 2257 966 2208 
+C 966 2163 973 2157 1101 2157 
+L 1414 2157 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-33" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_4">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_15">
+      <path d="M 7.2 164.012105 
+L 313.8 164.012105 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_16">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="164.012105" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_9">
+      <!-- $-2$ -->
+      <g transform="translate(128.864417 170.930603) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_5">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_17">
+      <path d="M 7.2 145.580131 
+L 313.8 145.580131 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_18">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="145.580131" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_10">
+      <!-- $-1$ -->
+      <g transform="translate(128.864417 152.49863) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_6">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_19">
+      <path d="M 7.2 108.716184 
+L 313.8 108.716184 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_20">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="108.716184" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_11">
+      <!-- $1$ -->
+      <g transform="translate(144.361905 115.634682) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_7">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_21">
+      <path d="M 7.2 90.28421 
+L 313.8 90.28421 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_22">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="90.28421" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_12">
+      <!-- $2$ -->
+      <g transform="translate(144.361905 97.202709) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_8">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_23">
+      <path d="M 7.2 71.852236 
+L 313.8 71.852236 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_24">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="71.852236" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_13">
+      <!-- $3$ -->
+      <g transform="translate(144.361905 78.770735) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-33" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_9">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_25">
+      <path d="M 7.2 53.420263 
+L 313.8 53.420263 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_26">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="53.420263" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_14">
+      <!-- $4$ -->
+      <g transform="translate(144.361905 60.338761) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-34" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_10">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_27">
+      <path d="M 7.2 34.988289 
+L 313.8 34.988289 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_28">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="160.5" y="34.988289" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_15">
+      <!-- $5$ -->
+      <g transform="translate(144.361905 41.906787) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-35" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_16">
+     <!-- $y$ -->
+     <g transform="translate(115.351583 12.680682) scale(0.2 -0.2)">
+      <defs>
+       <path id="CMMI12-79" d="M 1683 -700 
+C 1510 -939 1261 -1152 947 -1152 
+C 870 -1152 563 -1152 467 -889 
+C 486 -895 518 -895 531 -895 
+C 723 -895 851 -729 851 -582 
+C 851 -435 730 -384 634 -384 
+C 531 -384 307 -458 307 -759 
+C 307 -1071 582 -1286 947 -1286 
+C 1587 -1286 2234 -700 2413 6 
+L 3040 2485 
+C 3046 2517 3059 2556 3059 2594 
+C 3059 2689 2982 2753 2886 2753 
+C 2829 2753 2694 2727 2643 2535 
+L 2170 658 
+C 2138 543 2138 530 2086 460 
+C 1958 281 1747 64 1440 64 
+C 1082 64 1050 415 1050 588 
+C 1050 952 1222 1443 1395 1903 
+C 1466 2088 1504 2178 1504 2305 
+C 1504 2574 1312 2816 998 2816 
+C 410 2816 173 1890 173 1839 
+C 173 1814 198 1782 243 1782 
+C 301 1782 307 1807 333 1897 
+C 486 2433 730 2689 979 2689 
+C 1037 2689 1146 2689 1146 2478 
+C 1146 2312 1075 2127 979 1884 
+C 666 1047 666 837 666 683 
+C 666 77 1101 -64 1421 -64 
+C 1606 -64 1837 -6 2061 230 
+L 2067 224 
+C 1971 -147 1907 -392 1683 -700 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#CMMI12-79" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_29">
+    <defs>
+     <path id="mgr_2c1392ddc193_8f4033_md8598b7c70" d="M 3 0 
+L -3 -3 
+L -3 3 
+z
+" style="stroke: #000000; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_md8598b7c70" x="313.8" y="127.148158" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_30">
+    <defs>
+     <path id="mgr_2c1392ddc193_8f4033_mc76b3862d2" d="M 0 -3 
+L -3 3 
+L 3 3 
+z
+" style="stroke: #000000; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_mc76b3862d2" x="160.5" y="16.556315" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_31">
+    <path d="M 25.761671 -1 
+L 31.533333 9.74359 
+L 37.22359 19.875263 
+L 42.838974 29.425493 
+L 48.379487 38.412087 
+L 53.845128 46.852615 
+L 59.161026 54.657331 
+L 64.402051 61.961565 
+L 69.568205 68.781937 
+L 74.659487 75.134829 
+L 79.601026 80.950913 
+L 84.467692 86.341936 
+L 89.259487 91.323329 
+L 93.97641 95.910289 
+L 98.618462 100.117772 
+L 103.185641 103.960498 
+L 107.677949 107.45295 
+L 112.095385 110.609373 
+L 116.437949 113.443775 
+L 120.780513 116.01195 
+L 125.048205 118.276465 
+L 129.241026 120.250852 
+L 133.358974 121.948407 
+L 137.476923 123.406563 
+L 141.52 124.605298 
+L 145.563077 125.57326 
+L 149.606154 126.31045 
+L 153.574359 126.809586 
+L 157.542564 127.086418 
+L 161.510769 127.140946 
+L 165.478974 126.973169 
+L 169.447179 126.583087 
+L 173.415385 125.970701 
+L 177.38359 125.136011 
+L 181.426667 124.056936 
+L 185.469744 122.747088 
+L 189.587692 121.175762 
+L 193.705641 119.365037 
+L 197.898462 117.275422 
+L 202.091282 114.937624 
+L 206.358974 112.303208 
+L 210.701538 109.358643 
+L 215.118974 106.090157 
+L 219.611282 102.483744 
+L 224.10359 98.592426 
+L 228.670769 94.344186 
+L 233.312821 89.724541 
+L 238.029744 84.718772 
+L 242.89641 79.224868 
+L 247.837949 73.304319 
+L 252.854359 66.941455 
+L 257.945641 60.120371 
+L 263.111795 52.824921 
+L 268.352821 45.038724 
+L 273.74359 36.625499 
+L 279.209231 27.676576 
+L 284.749744 18.174621 
+L 290.365128 8.102067 
+L 295.238329 -1 
+L 295.238329 -1 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_p90c7e5b067)" style="fill: none; stroke: #0072b2; stroke-width: 2.5; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_3">
+    <path d="M 160.5 237.74 
+L 160.5 16.556315 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_4">
+    <path d="M 313.8 237.74 
+L 313.8 16.556315 
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_5">
+    <path d="M 7.2 127.148158 
+L 313.8 127.148158 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_6">
+    <path d="M 7.2 16.556315 
+L 313.8 16.556315 
+" style="fill: none"/>
+   </g>
+  </g>
+  <g id="mgr_2c1392ddc193_8f4033_axes_2">
+   <g id="mgr_2c1392ddc193_8f4033_patch_7">
+    <path d="M 327.6 237.74 
+L 634.2 237.74 
+L 634.2 16.556315 
+L 327.6 16.556315 
+L 327.6 237.74 
+z
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_3">
+    <g id="mgr_2c1392ddc193_8f4033_xtick_5">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_32">
+      <path d="M 378.7 237.74 
+L 378.7 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_33">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="378.7" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_17">
+      <!-- $-2$ -->
+      <g transform="translate(366.382209 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_6">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_34">
+      <path d="M 429.8 237.74 
+L 429.8 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_35">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="429.8" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_18">
+      <!-- $-1$ -->
+      <g transform="translate(417.482209 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_7">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_36">
+      <path d="M 532 237.74 
+L 532 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_37">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="532" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_19">
+      <!-- $1$ -->
+      <g transform="translate(527.430952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_8">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_38">
+      <path d="M 583.1 237.74 
+L 583.1 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_39">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="583.1" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_20">
+      <!-- $2$ -->
+      <g transform="translate(578.530952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_21">
+     <!-- $x$ -->
+     <g transform="translate(623.113188 169.697785) scale(0.2 -0.2)">
+      <use xlink:href="#CMMI12-78" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_4">
+    <g id="mgr_2c1392ddc193_8f4033_ytick_11">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_40">
+      <path d="M 327.6 219.308026 
+L 634.2 219.308026 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_41">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="219.308026" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_22">
+      <!-- $-5$ -->
+      <g transform="translate(449.264417 226.226525) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-35" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_12">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_42">
+      <path d="M 327.6 200.876053 
+L 634.2 200.876053 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_43">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="200.876053" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_23">
+      <!-- $-4$ -->
+      <g transform="translate(449.264417 207.794551) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-34" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_13">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_44">
+      <path d="M 327.6 182.444079 
+L 634.2 182.444079 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_45">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="182.444079" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_24">
+      <!-- $-3$ -->
+      <g transform="translate(449.264417 189.362577) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-33" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_14">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_46">
+      <path d="M 327.6 164.012105 
+L 634.2 164.012105 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_47">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="164.012105" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_25">
+      <!-- $-2$ -->
+      <g transform="translate(449.264417 170.930603) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_15">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_48">
+      <path d="M 327.6 145.580131 
+L 634.2 145.580131 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_49">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="145.580131" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_26">
+      <!-- $-1$ -->
+      <g transform="translate(449.264417 152.49863) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_16">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_50">
+      <path d="M 327.6 108.716184 
+L 634.2 108.716184 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_51">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="108.716184" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_27">
+      <!-- $1$ -->
+      <g transform="translate(464.761905 115.634682) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_17">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_52">
+      <path d="M 327.6 90.28421 
+L 634.2 90.28421 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_53">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="90.28421" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_28">
+      <!-- $2$ -->
+      <g transform="translate(464.761905 97.202709) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_18">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_54">
+      <path d="M 327.6 71.852236 
+L 634.2 71.852236 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_55">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="71.852236" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_29">
+      <!-- $3$ -->
+      <g transform="translate(464.761905 78.770735) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-33" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_19">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_56">
+      <path d="M 327.6 53.420263 
+L 634.2 53.420263 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_57">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="53.420263" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_30">
+      <!-- $4$ -->
+      <g transform="translate(464.761905 60.338761) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-34" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_20">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_58">
+      <path d="M 327.6 34.988289 
+L 634.2 34.988289 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_59">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="480.9" y="34.988289" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_31">
+      <!-- $5$ -->
+      <g transform="translate(464.761905 41.906787) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-35" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_32">
+     <!-- $y$ -->
+     <g transform="translate(435.751583 12.680682) scale(0.2 -0.2)">
+      <use xlink:href="#CMMI12-79" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_60">
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_md8598b7c70" x="634.2" y="127.148158" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_61">
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_mc76b3862d2" x="480.9" y="16.556315" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_62">
+    <path d="M 327.6 129.749278 
+L 339.878974 134.017219 
+L 348.713846 136.857308 
+L 356.350769 139.081888 
+L 363.238974 140.861442 
+L 369.752821 142.315879 
+L 375.892308 143.461772 
+L 381.807179 144.343448 
+L 387.572308 144.981415 
+L 393.262564 145.388771 
+L 398.877949 145.56927 
+L 404.493333 145.527542 
+L 410.108718 145.264091 
+L 415.798974 144.774215 
+L 421.564103 144.055265 
+L 427.478974 143.09432 
+L 433.618462 141.871361 
+L 440.057436 140.361035 
+L 446.945641 138.51407 
+L 454.507692 136.250334 
+L 463.117949 133.433545 
+L 474.198974 129.558323 
+L 501.302564 119.982848 
+L 509.987692 117.213614 
+L 517.549744 115.033021 
+L 524.437949 113.276097 
+L 530.876923 111.86079 
+L 537.01641 110.736787 
+L 542.931282 109.877538 
+L 548.69641 109.262401 
+L 554.386667 108.878235 
+L 560.002051 108.720979 
+L 565.617436 108.786022 
+L 571.232821 109.072581 
+L 576.923077 109.585374 
+L 582.763077 110.337802 
+L 588.752821 111.337249 
+L 594.967179 112.603309 
+L 601.481026 114.160644 
+L 608.444103 116.057725 
+L 616.081026 118.373393 
+L 624.915897 121.29276 
+L 634.2 124.547037 
+L 634.2 124.547037 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc7afced242)" style="fill: none; stroke: #0072b2; stroke-width: 2.5; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_8">
+    <path d="M 480.9 237.74 
+L 480.9 16.556315 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_9">
+    <path d="M 634.2 237.74 
+L 634.2 16.556315 
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_10">
+    <path d="M 327.6 127.148158 
+L 634.2 127.148158 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_11">
+    <path d="M 327.6 16.556315 
+L 634.2 16.556315 
+" style="fill: none"/>
+   </g>
+  </g>
+  <g id="mgr_2c1392ddc193_8f4033_axes_3">
+   <g id="mgr_2c1392ddc193_8f4033_patch_12">
+    <path d="M 648 237.74 
+L 954.6 237.74 
+L 954.6 16.556315 
+L 648 16.556315 
+L 648 237.74 
+z
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_5">
+    <g id="mgr_2c1392ddc193_8f4033_xtick_9">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_63">
+      <path d="M 699.1 237.74 
+L 699.1 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_64">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="699.1" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_33">
+      <!-- $-2$ -->
+      <g transform="translate(686.782209 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_10">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_65">
+      <path d="M 750.2 237.74 
+L 750.2 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_66">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="750.2" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_34">
+      <!-- $-1$ -->
+      <g transform="translate(737.882209 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_11">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_67">
+      <path d="M 852.4 237.74 
+L 852.4 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_68">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="852.4" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_35">
+      <!-- $1$ -->
+      <g transform="translate(847.830952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_xtick_12">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_69">
+      <path d="M 903.5 237.74 
+L 903.5 16.556315 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_70">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_mb8a97ef5f1" x="903.5" y="127.148158" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_36">
+      <!-- $2$ -->
+      <g transform="translate(898.930952 147.985154) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_37">
+     <!-- $x$ -->
+     <g transform="translate(943.513188 169.697785) scale(0.2 -0.2)">
+      <use xlink:href="#CMMI12-78" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_matplotlib.axis_6">
+    <g id="mgr_2c1392ddc193_8f4033_ytick_21">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_71">
+      <path d="M 648 219.308026 
+L 954.6 219.308026 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_72">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="219.308026" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_38">
+      <!-- $-5$ -->
+      <g transform="translate(769.664417 226.226525) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-35" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_22">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_73">
+      <path d="M 648 200.876053 
+L 954.6 200.876053 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_74">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="200.876053" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_39">
+      <!-- $-4$ -->
+      <g transform="translate(769.664417 207.794551) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-34" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_23">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_75">
+      <path d="M 648 182.444079 
+L 954.6 182.444079 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_76">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="182.444079" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_40">
+      <!-- $-3$ -->
+      <g transform="translate(769.664417 189.362577) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-33" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_24">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_77">
+      <path d="M 648 164.012105 
+L 954.6 164.012105 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_78">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="164.012105" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_41">
+      <!-- $-2$ -->
+      <g transform="translate(769.664417 170.930603) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-32" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_25">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_79">
+      <path d="M 648 145.580131 
+L 954.6 145.580131 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_80">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="145.580131" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_42">
+      <!-- $-1$ -->
+      <g transform="translate(769.664417 152.49863) scale(0.2 -0.2)">
+       <use xlink:href="#CMSY10-0" transform="scale(0.996264)"/>
+       <use xlink:href="#CMR17-31" transform="translate(77.487468 0) scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_26">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_81">
+      <path d="M 648 108.716184 
+L 954.6 108.716184 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_82">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="108.716184" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_43">
+      <!-- $1$ -->
+      <g transform="translate(785.161905 115.634682) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-31" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_27">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_83">
+      <path d="M 648 90.28421 
+L 954.6 90.28421 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_84">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="90.28421" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_44">
+      <!-- $2$ -->
+      <g transform="translate(785.161905 97.202709) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-32" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_28">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_85">
+      <path d="M 648 71.852236 
+L 954.6 71.852236 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_86">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="71.852236" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_45">
+      <!-- $3$ -->
+      <g transform="translate(785.161905 78.770735) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-33" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_29">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_87">
+      <path d="M 648 53.420263 
+L 954.6 53.420263 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_88">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="53.420263" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_46">
+      <!-- $4$ -->
+      <g transform="translate(785.161905 60.338761) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-34" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_ytick_30">
+     <g id="mgr_2c1392ddc193_8f4033_line2d_89">
+      <path d="M 648 34.988289 
+L 954.6 34.988289 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-opacity: 0.6; stroke-width: 0.8"/>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_line2d_90">
+      <g>
+       <use xlink:href="#mgr_2c1392ddc193_8f4033_m7637c1546a" x="801.3" y="34.988289" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="mgr_2c1392ddc193_8f4033_text_47">
+      <!-- $5$ -->
+      <g transform="translate(785.161905 41.906787) scale(0.2 -0.2)">
+       <use xlink:href="#CMR17-35" transform="scale(0.996264)"/>
+      </g>
+     </g>
+    </g>
+    <g id="mgr_2c1392ddc193_8f4033_text_48">
+     <!-- $y$ -->
+     <g transform="translate(756.151583 12.680682) scale(0.2 -0.2)">
+      <use xlink:href="#CMMI12-79" transform="scale(0.996264)"/>
+     </g>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_91">
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_md8598b7c70" x="954.6" y="127.148158" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_92">
+    <g>
+     <use xlink:href="#mgr_2c1392ddc193_8f4033_mc76b3862d2" x="801.3" y="16.556315" style="stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_line2d_93">
+    <path d="M 648 126.230484 
+L 671.210256 125.702883 
+L 690.003077 125.060454 
+L 705.801026 124.304127 
+L 719.427692 123.434976 
+L 731.482051 122.447105 
+L 742.188718 121.351333 
+L 751.922051 120.135011 
+L 760.756923 118.811351 
+L 768.917949 117.367691 
+L 776.48 115.807746 
+L 783.517949 114.133171 
+L 790.181538 112.320348 
+L 796.395897 110.402882 
+L 802.310769 108.347966 
+L 807.926154 106.164222 
+L 813.316923 103.829549 
+L 818.483077 101.348774 
+L 823.424615 98.729272 
+L 828.21641 95.935404 
+L 832.78359 93.017225 
+L 837.275897 89.880861 
+L 841.618462 86.575359 
+L 845.811282 83.105919 
+L 849.929231 79.4098 
+L 853.972308 75.479256 
+L 857.940513 71.306968 
+L 861.833846 66.886126 
+L 865.652308 62.210511 
+L 869.395897 57.274579 
+L 873.064615 52.073544 
+L 876.733333 46.485371 
+L 880.327179 40.608134 
+L 883.921026 34.302671 
+L 887.514872 27.537781 
+L 891.033846 20.436457 
+L 894.552821 12.828872 
+L 898.071795 4.678935 
+L 900.388018 -1 
+L 900.388018 -1 
+" clip-path="url(#mgr_2c1392ddc193_8f4033_pc6d1cac28f)" style="fill: none; stroke: #0072b2; stroke-width: 2.5; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_13">
+    <path d="M 801.3 237.74 
+L 801.3 16.556315 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_14">
+    <path d="M 954.6 237.74 
+L 954.6 16.556315 
+" style="fill: none"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_15">
+    <path d="M 648 127.148158 
+L 954.6 127.148158 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="mgr_2c1392ddc193_8f4033_patch_16">
+    <path d="M 648 16.556315 
+L 954.6 16.556315 
+" style="fill: none"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="mgr_2c1392ddc193_8f4033_p90c7e5b067">
+   <rect x="7.2" y="16.556315" width="306.6" height="221.183685"/>
+  </clipPath>
+  <clipPath id="mgr_2c1392ddc193_8f4033_pc7afced242">
+   <rect x="327.6" y="16.556315" width="306.6" height="221.183685"/>
+  </clipPath>
+  <clipPath id="mgr_2c1392ddc193_8f4033_pc6d1cac28f">
+   <rect x="648" y="16.556315" width="306.6" height="221.183685"/>
+  </clipPath>
+ </defs>
+</svg>
+</div></figure>
+</section>
+<section id="syntax-overview">
+<h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">functions</span></code> key accepts a Python-style list of expressions. Each expression gets its own subplot in the grid.</p>
+</section>
+<section id="options">
+<h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+<th class="head"><p>Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">functions</span></code></p></td>
+<td><p>List of function expressions (e.g. <code class="docutils literal notranslate"><span class="pre">[x**2,</span> <span class="pre">sin(x)]</span></code>)</p></td>
+<td><p><em>(required)</em></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fn_labels</span></code> / <code class="docutils literal notranslate"><span class="pre">function-names</span></code></p></td>
+<td><p>Display labels for the functions</p></td>
+<td><p>auto</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rows</span></code></p></td>
+<td><p>Number of grid rows</p></td>
+<td><p>auto</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cols</span></code></p></td>
+<td><p>Number of grid columns</p></td>
+<td><p>auto</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">domains</span></code></p></td>
+<td><p>Per-function x-ranges</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xmin</span></code>, <code class="docutils literal notranslate"><span class="pre">xmax</span></code>, <code class="docutils literal notranslate"><span class="pre">ymin</span></code>, <code class="docutils literal notranslate"><span class="pre">ymax</span></code></p></td>
+<td><p>Shared axis limits</p></td>
+<td><p>auto</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xstep</span></code>, <code class="docutils literal notranslate"><span class="pre">ystep</span></code></p></td>
+<td><p>Tick spacing</p></td>
+<td><p>auto</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td><p>Font size</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Line width</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
+<td><p>Line alpha</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">grid</span></code></p></td>
+<td><p>Show grid lines</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ticks</span></code></p></td>
+<td><p>Show ticks</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<td><p>CSS width</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">align</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, or <code class="docutils literal notranslate"><span class="pre">right</span></code></p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vlines</span></code>, <code class="docutils literal notranslate"><span class="pre">hlines</span></code>, <code class="docutils literal notranslate"><span class="pre">lines</span></code></p></td>
+<td><p>Drawing primitives shared across panels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">points</span></code>, <code class="docutils literal notranslate"><span class="pre">point</span></code></p></td>
+<td><p>Points shared across panels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">text</span></code></p></td>
+<td><p>Text annotations shared across panels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">annotate</span></code></p></td>
+<td><p>Arrow annotations shared across panels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tangent</span></code></p></td>
+<td><p>Tangent lines shared across panels</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
+<td><p>Extra CSS classes</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Stable anchor / reference name</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alt</span></code></p></td>
+<td><p>Alt text</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
+<td><p>Force regeneration</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">debug</span></code></p></td>
+<td><p>Keep debug output</p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 <section id="notes">
 <h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
@@ -602,7 +1967,7 @@ width: 100%
 </section>
 <section id="source">
 <h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/multi_plot.py</span></code></p>
+<p><a class="reference external" href="https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/multi_plot.py"><code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/multi_plot.py</span></code></a></p>
 </section>
 </section>
 
@@ -672,9 +2037,9 @@ width: 100%
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>

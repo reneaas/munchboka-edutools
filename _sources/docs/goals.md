@@ -1,18 +1,8 @@
 # `goals` directive
 
-Creates a learning-goals admonition.
+The `goals` directive creates a learning-goals admonition. It is styled to highlight the objectives at the beginning of a section or chapter.
 
-## Signature
-
-- Required arguments: `1`
-- Optional arguments: `0`
-- Body content: `yes`
-
-## Options
-
-_No options._
-
-## Example
+## Basic usage
 
 ````markdown
 :::{goals} Learning goals
@@ -21,6 +11,26 @@ _No options._
 :::
 ````
 
+:::{goals} Learning goals
+- Explain slope
+- Compute simple derivatives
+:::
+
+## Syntax overview
+
+```
+:::{goals} Title text
+- Goal 1
+- Goal 2
+:::
+```
+
+The first argument is the **title** (required). The body typically contains a bulleted list of goals.
+
+## Options
+
+_No options._
+
 ## Source
 
-`src/munchboka_edutools/directives/admonitions.py`
+[`src/munchboka_edutools/directives/admonitions.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/admonitions.py)

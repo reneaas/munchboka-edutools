@@ -1,20 +1,8 @@
 # `solution` directive
 
-Creates a full-solution admonition (collapsed by default).
+The `solution` directive creates a full-solution admonition that is collapsed by default. Students expand it to see the solution.
 
-## Signature
-
-- Required arguments: `0`
-- Optional arguments: `1`
-- Body content: `yes`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `dropdown` | string |
-
-## Example
+## Basic usage
 
 ````markdown
 :::{solution}
@@ -24,6 +12,34 @@ Step 2: Solve for $x$.
 :::
 ````
 
+:::{solution}
+Step 1: Set up the equation.
+
+Step 2: Solve for $x$.
+:::
+
+## With custom title
+
+````markdown
+:::{solution} Full solution
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+:::
+````
+
+:::{solution} Full solution
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+:::
+
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `dropdown` | Control dropdown behavior. Use `"open"` to start expanded. | collapsed |
+
 ## Source
 
-`src/munchboka_edutools/directives/admonitions.py`
+[`src/munchboka_edutools/directives/admonitions.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/admonitions.py)

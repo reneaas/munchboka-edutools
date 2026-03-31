@@ -1,31 +1,8 @@
 # `polydiv` directive
 
-Generates an SVG polynomial long-division layout.
+The `polydiv` directive renders a polynomial long-division layout as an SVG figure. It supports step-by-step reveal and custom variable names.
 
-## Signature
-
-- Required arguments: `0`
-- Optional arguments: `0`
-- Body content: `yes`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `p` | string (required) |
-| `q` | string (required) |
-| `stage` | non-negative integer |
-| `vars` | string |
-| `align` | value |
-| `class` | CSS class list |
-| `name` | string |
-| `cache` | flag |
-| `nocache` | flag |
-| `alt` | string |
-| `width` | length / percentage |
-| `inline` | flag |
-
-## Example
+## Basic usage
 
 ````markdown
 :::{polydiv}
@@ -35,6 +12,48 @@ Generates an SVG polynomial long-division layout.
 :::
 ````
 
+:::{polydiv}
+:p: x^3 - 3x^2 + 1
+:q: x - 1
+:width: 80%
+:::
+
+## Step-by-step reveal
+
+Use `stage` to show only the first *n* steps of the division:
+
+````markdown
+:::{polydiv}
+:p: x^3 - 3x^2 + 1
+:q: x - 1
+:stage: 2
+:width: 80%
+:::
+````
+
+:::{polydiv}
+:p: x^3 - 3x^2 + 1
+:q: x - 1
+:stage: 2
+:width: 80%
+:::
+
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `p` | Dividend polynomial | *(required)* |
+| `q` | Divisor polynomial | *(required)* |
+| `stage` | Number of steps to reveal (0 = all) | `0` |
+| `vars` | Variable name (e.g. `t` instead of `x`) | `x` |
+| `inline` | Render inline (no figure wrapper) | off |
+| `width` | CSS width | — |
+| `align` | `left`, `center`, or `right` | — |
+| `class` | Extra CSS classes | — |
+| `name` | Stable anchor / reference name | — |
+| `alt` | Alt text | — |
+| `nocache` / `cache` | Force regeneration / enable caching | — |
+
 ## Source
 
-`src/munchboka_edutools/directives/polydiv.py`
+[`src/munchboka_edutools/directives/polydiv.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/polydiv.py)

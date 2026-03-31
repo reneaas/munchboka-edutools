@@ -1,23 +1,11 @@
 # `parsons-puzzle` directive
 
-Creates a Parsons puzzle where learners reorder shuffled code lines.
+The `parsons-puzzle` directive creates a Parsons puzzle where learners reorder shuffled code lines into the correct sequence.
 
-## Signature
-
-- Required arguments: `0`
-- Optional arguments: `1`
-- Body content: `yes`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `lang` | string |
-
-## Example
+## Basic usage
 
 ````markdown
-```{parsons-puzzle} fib-demo
+```{parsons-puzzle}
 :lang: python
 
 def fib(n):
@@ -27,12 +15,18 @@ def fib(n):
 ```
 ````
 
+```{parsons-puzzle}
+:lang: python
+
+def fib(n):
+    if n <= 1:
+        return n
+    return fib(n-1) + fib(n-2)
+```
+
 ## Chunking with `# chunk`
 
-If you want fewer (larger) draggable blocks, you can separate code into chunks
-using a marker comment line. Marker lines are **not** included in the final
-solved code (so they won't appear when the solution is injected into
-`interactive-code`).
+By default each line is a separate draggable block. To create larger blocks, use a marker comment to group lines:
 
 ````markdown
 :::{parsons-puzzle}
@@ -47,7 +41,9 @@ print(s)
 :::
 ````
 
-You can also override the marker:
+Marker lines are **not** included in the final solved code.
+
+You can customize the marker:
 
 ````markdown
 :::{parsons-puzzle}
@@ -59,10 +55,17 @@ You can also override the marker:
 :::
 ````
 
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `lang` | Programming language for syntax highlighting | — |
+| `chunk-marker` | Custom marker string for chunking | `# chunk` |
+
 ## Notes
 
 - Aliases: `parsonspuzzle`
 
 ## Source
 
-`src/munchboka_edutools/directives/parsons.py`
+[`src/munchboka_edutools/directives/parsons.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/parsons.py)

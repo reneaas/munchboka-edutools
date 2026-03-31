@@ -1,22 +1,8 @@
 # `ggb-popup` directive
 
-Creates a button that opens a GeoGebra applet in a dialog.
+The `ggb-popup` directive creates a button that opens a GeoGebra applet in a modal dialog.
 
-## Signature
-
-- Required arguments: `0`
-- Optional arguments: `4`
-- Body content: `no`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `layout` | value |
-| `menubar` | value |
-| `perspective` | value |
-
-## Example
+## Basic usage
 
 ````markdown
 ```{ggb-popup} 800 600 "Open GeoGebra" "GeoGebra"
@@ -25,10 +11,28 @@ Creates a button that opens a GeoGebra applet in a dialog.
 ```
 ````
 
+## Syntax overview
+
+```
+```{ggb-popup} <width> <height> <button_text> <dialog_title>
+:perspective: <code>
+```
+```
+
+The four optional positional arguments control the dialog size and button/title text. All are optional and have sensible defaults.
+
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `layout` | Layout mode | — |
+| `menubar` | Show menu bar in the applet | — |
+| `perspective` | GeoGebra perspective code (e.g. `AG`) | — |
+
 ## Notes
 
 - Aliases: `ggbpopup`
 
 ## Source
 
-`src/munchboka_edutools/directives/ggb_popup.py`
+[`src/munchboka_edutools/directives/ggb_popup.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/ggb_popup.py)

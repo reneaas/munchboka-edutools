@@ -50,6 +50,7 @@ chapters:
   - file: docs/signchart2.md
   - file: docs/solution.md
   - file: docs/summary.md
+  - file: docs/table.md
   - file: docs/theory.md
   - file: docs/timed-quiz.md
   - file: docs/timedquiz.md

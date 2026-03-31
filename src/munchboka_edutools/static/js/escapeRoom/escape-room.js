@@ -20,6 +20,19 @@
     }
   }
 
+  /** Re-execute inline <script> tags that were injected via innerHTML. */
+  function activateScripts(container){
+    if (!container) return;
+    container.querySelectorAll('script').forEach(function(old){
+      var s = document.createElement('script');
+      if (old.type) s.type = old.type;
+      // Skip data-only script tags (e.g. application/json config blocks)
+      if (s.type && s.type !== 'text/javascript' && s.type !== '') return;
+      if (old.src) { s.src = old.src; } else { s.textContent = old.textContent; }
+      old.parentNode.replaceChild(s, old);
+    });
+  }
+
   function initEscapeRoom(container){
     let cfg = null;
     try {
@@ -138,7 +151,7 @@
       const title = document.createElement('h3'); title.className='er-title'; title.textContent = step.title || `Rom ${idx+1}`;
       const q = document.createElement('div'); q.className='er-q'; q.innerHTML = step.question || '';
       body.appendChild(title); body.appendChild(q);
-      renderMathIfAvailable(q); highlightCodeIfAvailable(q);
+      renderMathIfAvailable(q); highlightCodeIfAvailable(q); activateScripts(q);
       codeInput.value = '';
       if (userInitiated) {
         try { codeInput.focus({ preventScroll: true }); } catch(e){ try { codeInput.focus(); } catch(_){} }

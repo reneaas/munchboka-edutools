@@ -239,19 +239,30 @@ class RoomDirective(SphinxDirective):
             return ""
 
         elif isinstance(node, nodes.math):
-            # Render inline math using KaTeX-compatible format
             math_text = node.astext()
             return f"${math_text}$"
 
         elif isinstance(node, nodes.math_block):
-            # Render display math ($$...$$) using KaTeX-compatible format
             math_text = node.astext()
             return f"$${math_text}$$"
 
         elif isinstance(node, nodes.image):
             uri = node.get("uri", "")
             alt = node.get("alt", "")
-            return f'<img src="{uri}" alt="{alt}" />'
+            classes = list(node.get("classes", []))
+            align = node.get("align")
+            if align in ("left", "center", "right"):
+                align_class = f"align-{align}"
+                if align_class not in classes:
+                    classes.append(align_class)
+
+            attrs = [
+                f'src="{_html.escape(uri, quote=True)}"',
+                f'alt="{_html.escape(alt, quote=True)}"',
+            ]
+            if classes:
+                attrs.append(f'class="{_html.escape(" ".join(classes), quote=True)}"')
+            return f"<img {' '.join(attrs)} />"
 
         elif isinstance(node, nodes.literal_block):
             content = _html.escape(node.astext())
@@ -259,19 +270,21 @@ class RoomDirective(SphinxDirective):
             return f'<pre><code class="{language}">{content}</code></pre>'
 
         elif isinstance(node, nodes.figure):
-            # Handle figure nodes (e.g., from plot directive)
             content = "".join(self._node_to_html(child) for child in node.children)
-            classes = " ".join(node.get("classes", []))
-            align = node.get("align", "center")
+            classes = list(node.get("classes", []))
+            align = node.get("align")
+            if align in ("left", "center", "right"):
+                align_class = f"align-{align}"
+                if align_class not in classes:
+                    classes.append(align_class)
 
             attrs = []
             if classes:
-                attrs.append(f'class="{classes}"')
-            if align:
-                attrs.append(f'align="{align}"')
-
+                attrs.append(f'class="{_html.escape(" ".join(classes), quote=True)}"')
             attrs_str = " ".join(attrs) if attrs else ""
-            return f"<figure {attrs_str}>{content}</figure>"
+            if attrs_str:
+                attrs_str = " " + attrs_str
+            return f"<figure{attrs_str}>{content}</figure>"
 
         elif isinstance(node, nodes.caption):
             content = "".join(self._node_to_html(child) for child in node.children)

@@ -863,26 +863,46 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
             # curve degenerates into a moving single point per frame.
             #
             # We still want bounds like `(0, t)` to use the interactive value.
-            range_pattern = r",\s*\(([^,]+),\s*([^)]+)\)"
-            range_match = re.search(range_pattern, line)
-            if not range_match:
-                pattern = r"\b" + re.escape(var_name) + r"\b"
-                result_lines.append(re.sub(pattern, value_str, line))
-                continue
+            #
+            # Strategy: use parenthesis-depth-aware comma splitting (matching
+            # the logic in plot.py's curve parser) so we correctly handle
+            # expressions like `(1 + 2 * cos(t)) * cos(t)`.
+            colon_idx = line.index(":")
+            prefix = line[: colon_idx + 1]  # "curve:" (preserves leading whitespace)
+            rest = line[colon_idx + 1 :].strip()
 
-            before_range = line[: range_match.start()]
-            after_range = line[range_match.end() :]
-            t_min_expr = range_match.group(1)
-            t_max_expr = range_match.group(2)
+            # Split rest on top-level commas (depth-aware)
+            _depth = 0
+            _parts: list[str] = []
+            _cur: list[str] = []
+            for _ch in rest:
+                if _ch == "(":
+                    _depth += 1
+                    _cur.append(_ch)
+                elif _ch == ")":
+                    _depth -= 1
+                    _cur.append(_ch)
+                elif _ch == "," and _depth == 0:
+                    _parts.append("".join(_cur).strip())
+                    _cur = []
+                else:
+                    _cur.append(_ch)
+            _tail = "".join(_cur).strip()
+            if _tail:
+                _parts.append(_tail)
 
+            # Expected layout: [x_expr, y_expr, (t0, t1), ...trailing]
+            # Parts 0 and 1 (x/y expressions) are left untouched.
+            # Parts 2+ (range, style, color) get variable substitution.
             pattern = r"\b" + re.escape(var_name) + r"\b"
-            t_min_expr_sub = re.sub(pattern, value_str, t_min_expr)
-            t_max_expr_sub = re.sub(pattern, value_str, t_max_expr)
-            after_range_sub = re.sub(pattern, value_str, after_range)
+            _out_parts: list[str] = []
+            for _pi, _part in enumerate(_parts):
+                if _pi < 2:
+                    _out_parts.append(_part)
+                else:
+                    _out_parts.append(re.sub(pattern, value_str, _part))
 
-            result_lines.append(
-                f"{before_range}, ({t_min_expr_sub.strip()}, {t_max_expr_sub.strip()}){after_range_sub}"
-            )
+            result_lines.append(f"{prefix} {', '.join(_out_parts)}")
         else:
             # For non-text lines, do normal substitution
             pattern = r"\b" + re.escape(var_name) + r"\b"
@@ -1201,6 +1221,7 @@ class AnimateDirective(SphinxDirective):
             "circle": [],
             "ellipse": [],
             "curve": [],
+            "triangle": [],
         }
 
         # YAML-like fenced front matter
@@ -1582,6 +1603,7 @@ class AnimateDirective(SphinxDirective):
             "circle": [],
             "ellipse": [],
             "curve": [],
+            "triangle": [],
         }
 
         for line in content_lines:
@@ -2173,24 +2195,38 @@ class AnimateDirective(SphinxDirective):
                 # Example: cos(t), sin(t), (0, a), solid, blue
                 # This means x(t) = cos(t), y(t) = sin(t), for t in (0, a)
 
-                # Strategy: Find the range by looking for ",\s*\(" pattern (comma followed by opening paren)
-                # This ensures we don't match function calls like sin(t)
-                range_pattern = r",\s*\(([^,]+),\s*([^)]+)\)"
-                range_match = re.search(range_pattern, curve_spec)
-                if not range_match:
+                # Use parenthesis-depth-aware comma splitting so that
+                # expressions like ``(1 + 2 * cos(t)) * cos(t)`` are not
+                # broken up by their internal commas / parentheses.
+                _depth = 0
+                _parts: list[str] = []
+                _cur: list[str] = []
+                for _ch in curve_spec:
+                    if _ch == "(":
+                        _depth += 1
+                        _cur.append(_ch)
+                    elif _ch == ")":
+                        _depth -= 1
+                        _cur.append(_ch)
+                    elif _ch == "," and _depth == 0:
+                        _parts.append("".join(_cur).strip())
+                        _cur = []
+                    else:
+                        _cur.append(_ch)
+                _tail = "".join(_cur).strip()
+                if _tail:
+                    _parts.append(_tail)
+
+                if len(_parts) < 3:
                     continue
 
-                # Extract everything before the range (excluding the comma)
-                before_range = curve_spec[: range_match.start()].strip()
-                after_range = curve_spec[range_match.end() :].strip()
-
-                # Parse before range: x_expr, y_expr
-                before_parts = [p.strip() for p in before_range.split(",")]
-                if len(before_parts) < 2:
+                x_expr = _parts[0]
+                y_expr = _parts[1]
+                interval_token = _parts[2]
+                m_iv = re.match(r"^\(\s*(.+?)\s*,\s*(.+?)\s*\)$", interval_token)
+                if not m_iv:
                     continue
 
-                x_expr = before_parts[0]
-                y_expr = before_parts[1]
                 param_var = "t"  # Default parameter name
 
                 # If the interactive variable is also named "t", it collides with
@@ -2206,13 +2242,19 @@ class AnimateDirective(SphinxDirective):
                     y_expr_eval = re.sub(r"\bt\b", param_var, y_expr)
 
                 # Parse range
-                t_min_expr = range_match.group(1).strip()
-                t_max_expr = range_match.group(2).strip()
+                t_min_expr = m_iv.group(1).strip()
+                t_max_expr = m_iv.group(2).strip()
 
-                # Parse after range: style, color (optional)
-                after_parts = [p.strip() for p in after_range.split(",") if p.strip()]
-                style = after_parts[0] if len(after_parts) > 0 else "solid"
-                color = after_parts[1] if len(after_parts) > 1 else None
+                # Parse trailing parts: style, color (optional)
+                _allowed_curve_styles = {"solid", "dashed", "dotted", "dashdot"}
+                style = "solid"
+                color = None
+                for tok in _parts[3:]:
+                    low = tok.lower()
+                    if low in _allowed_curve_styles and style == "solid":
+                        style = low
+                    elif color is None:
+                        color = tok
 
                 # Evaluate range limits
                 eval_namespace = _get_safe_namespace(**{var_name: var_value})
@@ -2855,6 +2897,688 @@ class AnimateDirective(SphinxDirective):
                     color=color_use,
                     zorder=100,
                 )
+            except Exception:
+                pass
+
+        # Process polygons: (x,y), (x,y), ... [, show_vertices] [, color] [, alpha]
+        def _extract_polygon_coord_pairs(seq: str) -> List[Tuple[str, str]]:
+            pairs: List[Tuple[str, str]] = []
+            i = 0
+            n = len(seq)
+            while i < n:
+                if seq[i] == "(":
+                    depth = 0
+                    j = i
+                    while j < n:
+                        ch = seq[j]
+                        if ch == "(":
+                            depth += 1
+                        elif ch == ")":
+                            depth -= 1
+                            if depth == 0:
+                                inner = seq[i + 1 : j].strip()
+                                depth2 = 0
+                                comma_index = -1
+                                for k, ch2 in enumerate(inner):
+                                    if ch2 == "(":
+                                        depth2 += 1
+                                    elif ch2 == ")":
+                                        depth2 -= 1
+                                    elif ch2 == "," and depth2 == 0:
+                                        comma_index = k
+                                        break
+                                if comma_index != -1:
+                                    x_expr = inner[:comma_index].strip()
+                                    y_expr = inner[comma_index + 1 :].strip()
+                                    if x_expr and y_expr:
+                                        pairs.append((x_expr, y_expr))
+                                i = j
+                                break
+                        j += 1
+                i += 1
+            return pairs
+
+        def _build_polygon_eval_ns():
+            ns = _extend_namespace_with_macros(_get_safe_namespace(**{var_name: var_value}))
+            for _fname, _f in function_dict.items():
+
+                def make_scalar_func(f):
+                    def scalar_func(x):
+                        if np.isscalar(x):
+                            return float(f(np.array([x]))[0])
+                        return f(x)
+
+                    return scalar_func
+
+                ns[_fname] = make_scalar_func(_f)
+            return ns
+
+        for p in lists_dict.get("polygon", []):
+            try:
+                s = str(p).strip()
+                show_vertices = False
+                poly_color: str | None = None
+                poly_alpha: float | None = None
+
+                if re.search(r"(^|,)\s*show_vertices\s*(?=,|$)", s, flags=re.IGNORECASE):
+                    show_vertices = True
+                    s = re.sub(r"(^|,)\s*show_vertices\s*(?=,|$)", ",", s, flags=re.IGNORECASE)
+                    s = re.sub(r",{2,}", ",", s).strip().strip(",")
+
+                pairs = _extract_polygon_coord_pairs(s)
+
+                # Extract alpha and color from remaining text
+                temp_s = s
+                for x_e, y_e in pairs:
+                    temp_s = re.sub(
+                        r"\(\s*" + re.escape(x_e) + r"\s*,\s*" + re.escape(y_e) + r"\s*\)",
+                        "",
+                        temp_s,
+                        count=1,
+                    )
+                # Extract alpha if present
+                alpha_match = re.search(r"(^|,)\s*([0-9]*\.?[0-9]+)\s*(?=,|$)", temp_s)
+                if alpha_match:
+                    try:
+                        potential_alpha = float(alpha_match.group(2))
+                        if 0 <= potential_alpha <= 1:
+                            poly_alpha = potential_alpha
+                            temp_s = temp_s[: alpha_match.start()] + temp_s[alpha_match.end() :]
+                            temp_s = re.sub(r",{2,}", ",", temp_s).strip().strip(",")
+                    except Exception:
+                        pass
+
+                remaining = re.sub(r"[(),\s]+", " ", temp_s).strip()
+                tokens = [t.strip() for t in remaining.split() if t.strip()]
+                for token in tokens:
+                    if not re.match(r"^[0-9]*\.?[0-9]+$", token) and poly_color is None:
+                        poly_color = token
+
+                eval_ns = _build_polygon_eval_ns()
+                pts: List[Tuple[float, float]] = []
+                for x_expr, y_expr in pairs:
+                    try:
+                        xv = float(eval(x_expr, eval_ns))
+                        yv = float(eval(y_expr, eval_ns))
+                        pts.append((xv, yv))
+                    except Exception:
+                        pass
+
+                if pts:
+                    kwargs: Dict[str, Any] = {"show_vertices": True} if show_vertices else {}
+                    if poly_color:
+                        _mapped_poly = plotmath.COLORS.get(poly_color)
+                        resolved_color = _mapped_poly if _mapped_poly else poly_color
+                        kwargs["color"] = resolved_color
+                        kwargs["alpha"] = poly_alpha if poly_alpha is not None else 0.3
+                    else:
+                        kwargs["alpha"] = 0
+                    try:
+                        plotmath.polygon(*pts, **kwargs)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        # Process fill-polygons
+        for fp in lists_dict.get("fill-polygon", []):
+            try:
+                s = str(fp).strip()
+                fill_color: str | None = None
+                fill_alpha: float | None = None
+
+                pairs = _extract_polygon_coord_pairs(s)
+
+                temp_s = s
+                for x_e, y_e in pairs:
+                    temp_s = re.sub(
+                        r"\(\s*" + re.escape(x_e) + r"\s*,\s*" + re.escape(y_e) + r"\s*\)",
+                        "",
+                        temp_s,
+                        count=1,
+                    )
+                remaining = re.sub(r"[(),\s]+", " ", temp_s).strip()
+                tokens = [t.strip() for t in remaining.split() if t.strip()]
+                for token in tokens:
+                    if re.match(r"^[0-9]*\.?[0-9]+$", token):
+                        try:
+                            potential_alpha = float(token)
+                            if 0 <= potential_alpha <= 1:
+                                fill_alpha = potential_alpha
+                        except Exception:
+                            pass
+                    elif fill_color is None:
+                        fill_color = token
+
+                eval_ns = _build_polygon_eval_ns()
+                pts = []
+                for x_expr, y_expr in pairs:
+                    try:
+                        xv = float(eval(x_expr, eval_ns))
+                        yv = float(eval(y_expr, eval_ns))
+                        pts.append((xv, yv))
+                    except Exception:
+                        pass
+
+                if pts:
+                    default_fill_color = plotmath.COLORS.get("blue")
+                    if fill_color:
+                        _mapped_fp = plotmath.COLORS.get(fill_color)
+                    else:
+                        _mapped_fp = None
+                    c = (_mapped_fp if _mapped_fp else fill_color) or default_fill_color
+                    a = 0.1 if fill_alpha is None else fill_alpha
+                    try:
+                        plotmath.polygon(*pts, edges=False, color=c, alpha=a)
+                    except Exception:
+                        try:
+                            plotmath.polygon(*pts, edges=False, facecolor=c, alpha=a)
+                        except Exception:
+                            plotmath.polygon(*pts, edges=False, alpha=a)
+            except Exception:
+                pass
+
+        # Process circles: (cx, cy), radius[, fill][, linestyle][, color]
+        _allowed_circle_styles = {"solid", "dotted", "dashed", "dashdot"}
+        _circle_style_map = {"solid": "-", "dotted": ":", "dashed": "--", "dashdot": "-."}
+        for c_spec in lists_dict.get("circle", []):
+            try:
+                raw = str(c_spec).strip()
+                # Find balanced (cx, cy) tuple
+                idx = raw.find("(")
+                if idx == -1:
+                    continue
+                depth = 0
+                end_idx = -1
+                for j in range(idx, len(raw)):
+                    if raw[j] == "(":
+                        depth += 1
+                    elif raw[j] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            end_idx = j
+                            break
+                if end_idx == -1:
+                    continue
+                inner = raw[idx + 1 : end_idx]
+                # Split inner into x_expr, y_expr at first top-level comma
+                depth2 = 0
+                comma_i = -1
+                for k, ch in enumerate(inner):
+                    if ch == "(":
+                        depth2 += 1
+                    elif ch == ")":
+                        depth2 -= 1
+                    elif ch == "," and depth2 == 0:
+                        comma_i = k
+                        break
+                if comma_i == -1:
+                    continue
+                x_expr = inner[:comma_i].strip()
+                y_expr = inner[comma_i + 1 :].strip()
+                # Remaining after tuple for radius + optional tokens
+                rest = raw[end_idx + 1 :].strip().lstrip(",").strip()
+                if not rest:
+                    continue
+                # Split rest into top-level comma tokens
+                depth3 = 0
+                tokens: list = []
+                cur: list = []
+                for ch in rest:
+                    if ch == "(":
+                        depth3 += 1
+                        cur.append(ch)
+                    elif ch == ")":
+                        depth3 -= 1
+                        cur.append(ch)
+                    elif ch == "," and depth3 == 0:
+                        part = "".join(cur).strip()
+                        if part:
+                            tokens.append(part)
+                        cur = []
+                    else:
+                        cur.append(ch)
+                tail = "".join(cur).strip()
+                if tail:
+                    tokens.append(tail)
+                if not tokens:
+                    continue
+                r_token = tokens[0]
+                fill_circle = False
+                style_circle: str | None = None
+                color_circle: str | None = None
+                for tok in tokens[1:]:
+                    low = tok.strip().lower()
+                    if low in {"fill", "filled"}:
+                        fill_circle = True
+                    elif low in _allowed_circle_styles and style_circle is None:
+                        style_circle = low
+                    elif color_circle is None:
+                        color_circle = tok.strip()
+                # Evaluate expressions with the interactive variable
+                eval_ns = _build_polygon_eval_ns()
+                cx_val = float(eval(x_expr, eval_ns))
+                cy_val = float(eval(y_expr, eval_ns))
+                rv = float(eval(r_token, eval_ns))
+                if rv <= 0:
+                    continue
+                # Resolve color
+                default_circle_color = plotmath.COLORS.get("black") or "black"
+                if color_circle:
+                    mapped = plotmath.COLORS.get(color_circle)
+                else:
+                    mapped = None
+                col_use = (mapped if mapped else color_circle) or default_circle_color
+                ls_use = _circle_style_map.get((style_circle or "solid").lower(), "-")
+                from matplotlib import patches as _mpatches_c
+
+                if fill_circle:
+                    from matplotlib import colors as _mcolors_c
+
+                    try:
+                        face_use = _mcolors_c.to_rgba(col_use, alpha=0.2)
+                    except Exception:
+                        face_use = col_use
+                    circ = _mpatches_c.Circle(
+                        (cx_val, cy_val),
+                        rv,
+                        fill=True,
+                        edgecolor=col_use,
+                        facecolor=face_use,
+                        linestyle=ls_use,
+                        lw=lw,
+                    )
+                else:
+                    circ = _mpatches_c.Circle(
+                        (cx_val, cy_val),
+                        rv,
+                        fill=False,
+                        edgecolor=col_use,
+                        facecolor="none",
+                        linestyle=ls_use,
+                        lw=lw,
+                    )
+                ax.add_patch(circ)
+            except Exception:
+                pass
+
+        # ── Triangle rendering ──────────────────────────────────────────
+        for tri_spec in lists_dict.get("triangle", []):
+            try:
+                import math
+
+                from munchboka_edutools.directives._triangle import (
+                    parse_triangle_primitive,
+                    triangle_angles_deg,
+                    triangle_side_label_text,
+                    triangle_corner_label_text,
+                    triangle_angle_label_text,
+                )
+                import sympy as _sympy_tri
+
+                tri_eval_ns = _build_polygon_eval_ns()
+
+                def _tri_eval_num(expr_str):
+                    """Evaluate a numeric expression using the interactive variable namespace."""
+                    if isinstance(expr_str, (int, float)):
+                        return float(expr_str)
+                    s = str(expr_str).strip()
+                    if not s:
+                        raise ValueError("Blank expression")
+                    # Try fast numeric eval first
+                    try:
+                        return float(eval(s, {"__builtins__": {}}, tri_eval_ns))
+                    except Exception:
+                        pass
+                    # Fall back to SymPy
+                    allowed = {
+                        k: getattr(_sympy_tri, k)
+                        for k in [
+                            "pi",
+                            "E",
+                            "exp",
+                            "sqrt",
+                            "log",
+                            "sin",
+                            "cos",
+                            "tan",
+                            "asin",
+                            "acos",
+                            "atan",
+                            "Rational",
+                        ]
+                        if hasattr(_sympy_tri, k)
+                    }
+                    allowed[var_name] = _sympy_tri.Float(var_value)
+                    if macro_sympy_locals:
+                        allowed.update(macro_sympy_locals)
+                    expr = _sympy_tri.sympify(s, locals=allowed)
+                    return float(expr.evalf())
+
+                tri_sympy_locals = {
+                    k: getattr(_sympy_tri, k)
+                    for k in [
+                        "pi",
+                        "E",
+                        "exp",
+                        "sqrt",
+                        "log",
+                        "sin",
+                        "cos",
+                        "tan",
+                        "asin",
+                        "acos",
+                        "atan",
+                        "Rational",
+                    ]
+                    if hasattr(_sympy_tri, k)
+                }
+                tri_sympy_locals[var_name] = _sympy_tri.Float(var_value)
+                if macro_sympy_locals:
+                    tri_sympy_locals.update(macro_sympy_locals)
+
+                tri = parse_triangle_primitive(
+                    str(tri_spec).strip(), _tri_eval_num, tri_sympy_locals
+                )
+                if tri is None:
+                    continue
+
+                # -- Color helpers -------------------------------------------------
+                try:
+                    from matplotlib import colors as _mcolors_tri
+                except Exception:
+                    _mcolors_tri = None
+
+                _style_map_tri = {
+                    "solid": "-",
+                    "dotted": ":",
+                    "dashed": "--",
+                    "dashdot": "-.",
+                }
+                _default_tri_color = "tab:blue"
+                _default_tri_angle_color = "tab:red"
+                _default_tri_label_color = "black"
+
+                def _resolve_tri_color(raw_color, fallback):
+                    candidate = raw_color or fallback
+                    if _mcolors_tri is not None:
+                        try:
+                            _mcolors_tri.to_rgba(candidate)
+                        except Exception:
+                            candidate = fallback
+                    return candidate
+
+                tri_color = _resolve_tri_color(tri.edge_color, _default_tri_color)
+                tri_label_color = _resolve_tri_color(tri.label_color, _default_tri_label_color)
+                tri_angle_color = _resolve_tri_color(tri.angle_color, _default_tri_angle_color)
+                tri_lw = tri.line_width if tri.line_width is not None else lw
+                tri_ls = _style_map_tri.get((tri.edge_style or "solid").lower(), "-")
+
+                # -- Draw edges ----------------------------------------------------
+                for start_name, end_name in (("A", "B"), ("B", "C"), ("C", "A")):
+                    x1t, y1t = tri.vertices[start_name]
+                    x2t, y2t = tri.vertices[end_name]
+                    ax.plot(
+                        [x1t, x2t],
+                        [y1t, y2t],
+                        linestyle=tri_ls,
+                        color=tri_color,
+                        lw=tri_lw,
+                    )
+
+                # Finalize the layout so that ax.transData gives accurate
+                # pixel-space coordinates for label and arc positioning.
+                fig.canvas.draw()
+
+                # -- Display-space helpers -----------------------------------------
+                def _display_unit_vector(p_from, p_to):
+                    x0d, y0d = ax.transData.transform(p_from)
+                    x1d, y1d = ax.transData.transform(p_to)
+                    dx = x1d - x0d
+                    dy = y1d - y0d
+                    norm = math.hypot(dx, dy)
+                    if norm <= 1e-9:
+                        return None
+                    return (dx / norm, dy / norm)
+
+                def _display_to_data(points_disp):
+                    return ax.transData.inverted().transform(points_disp)
+
+                def _normalize_display_vec(vx, vy):
+                    norm = math.hypot(vx, vy)
+                    if norm <= 1e-9:
+                        return None
+                    return (vx / norm, vy / norm)
+
+                def _bisector_display_point(
+                    vertex_disp, u1, u2, centroid_disp, distance_px, inward
+                ):
+                    bis = _normalize_display_vec(u1[0] + u2[0], u1[1] + u2[1])
+                    to_centroid = (
+                        centroid_disp[0] - vertex_disp[0],
+                        centroid_disp[1] - vertex_disp[1],
+                    )
+                    if bis is None:
+                        fallback = _normalize_display_vec(to_centroid[0], to_centroid[1])
+                        if fallback is None:
+                            fallback = (0.0, -1.0)
+                        bis = fallback
+                    dot = bis[0] * to_centroid[0] + bis[1] * to_centroid[1]
+                    if inward and dot < 0:
+                        bis = (-bis[0], -bis[1])
+                    if not inward and dot > 0:
+                        bis = (-bis[0], -bis[1])
+                    return (
+                        vertex_disp[0] + bis[0] * distance_px,
+                        vertex_disp[1] + bis[1] * distance_px,
+                    )
+
+                # -- Escape LaTeX commands -----------------------------------------
+                def _escape_latex_cmd(text):
+                    return re.sub(
+                        r"(\\[A-Za-z]+)\{([A-Za-z_][A-Za-z0-9_]*)\}",
+                        r"\1{{\2}}",
+                        text,
+                    )
+
+                verts = tri.vertices
+                centroid_disp = ax.transData.transform(
+                    (
+                        sum(verts[n][0] for n in ("A", "B", "C")) / 3.0,
+                        sum(verts[n][1] for n in ("A", "B", "C")) / 3.0,
+                    )
+                )
+
+                # -- Adaptive label offsets ----------------------------------------
+                _vd = {n: ax.transData.transform(verts[n]) for n in ("A", "B", "C")}
+                _sides_disp = {
+                    "AB": math.hypot(_vd["B"][0] - _vd["A"][0], _vd["B"][1] - _vd["A"][1]),
+                    "BC": math.hypot(_vd["C"][0] - _vd["B"][0], _vd["C"][1] - _vd["B"][1]),
+                    "CA": math.hypot(_vd["A"][0] - _vd["C"][0], _vd["A"][1] - _vd["C"][1]),
+                }
+                _min_side_disp = min(_sides_disp.values())
+                _TRI_REF_SIZE = 150.0
+                _tri_scale = max(0.25, min(1.0, _min_side_disp / _TRI_REF_SIZE))
+
+                a_label_offset = max(4.0, tri.label_offset_px * _tri_scale)
+                a_corner_offset = max(4.0, tri.corner_label_offset_px * _tri_scale)
+                a_angle_radius = max(6.0, tri.angle_radius_px * _tri_scale)
+                a_angle_text_offset = max(3.0, tri.angle_text_offset_px * _tri_scale)
+
+                _adj_sides = {
+                    "A": min(_sides_disp["AB"], _sides_disp["CA"]),
+                    "B": min(_sides_disp["AB"], _sides_disp["BC"]),
+                    "C": min(_sides_disp["BC"], _sides_disp["CA"]),
+                }
+                a_angle_radius_v = {
+                    v: min(a_angle_radius, 0.35 * _adj_sides[v]) for v in ("A", "B", "C")
+                }
+
+                # -- Side labels ---------------------------------------------------
+                for side_name, start_name, end_name in (
+                    ("AB", "A", "B"),
+                    ("BC", "B", "C"),
+                    ("CA", "C", "A"),
+                ):
+                    label = triangle_side_label_text(tri, side_name)
+                    if not label:
+                        continue
+                    label_render = _escape_latex_cmd(label)
+                    p0_disp = ax.transData.transform(verts[start_name])
+                    p1_disp = ax.transData.transform(verts[end_name])
+                    mid_disp = (
+                        (p0_disp[0] + p1_disp[0]) / 2.0,
+                        (p0_disp[1] + p1_disp[1]) / 2.0,
+                    )
+                    dx = p1_disp[0] - p0_disp[0]
+                    dy = p1_disp[1] - p0_disp[1]
+                    norm = math.hypot(dx, dy)
+                    if norm <= 1e-9:
+                        continue
+                    nx = -dy / norm
+                    ny = dx / norm
+                    to_centroid_x = centroid_disp[0] - mid_disp[0]
+                    to_centroid_y = centroid_disp[1] - mid_disp[1]
+                    if nx * to_centroid_x + ny * to_centroid_y > 0:
+                        nx *= -1.0
+                        ny *= -1.0
+                    label_disp = (
+                        mid_disp[0] + nx * a_label_offset,
+                        mid_disp[1] + ny * a_label_offset,
+                    )
+                    label_xy = _display_to_data([label_disp])[0]
+                    ax.text(
+                        label_xy[0],
+                        label_xy[1],
+                        label_render,
+                        fontsize=max(10, int(fontsize * 0.9)),
+                        ha="center",
+                        va="center",
+                        color=tri_label_color,
+                    )
+
+                # -- Corner labels -------------------------------------------------
+                tri_angles = triangle_angles_deg(tri)
+                neighbor_map = {"A": ("B", "C"), "B": ("A", "C"), "C": ("A", "B")}
+
+                for vertex_name, neighbors in neighbor_map.items():
+                    label = triangle_corner_label_text(tri, vertex_name)
+                    if not label:
+                        continue
+                    p_vertex = verts[vertex_name]
+                    u1 = _display_unit_vector(p_vertex, verts[neighbors[0]])
+                    u2 = _display_unit_vector(p_vertex, verts[neighbors[1]])
+                    if u1 is None or u2 is None:
+                        continue
+                    vertex_disp = ax.transData.transform(p_vertex)
+                    _angle_at_v = tri_angles.get(vertex_name, 60.0)
+                    _half_sin = math.sin(math.radians(max(_angle_at_v, 10.0) / 2.0))
+                    _angle_factor = min(2.0, 0.5 / _half_sin) if _half_sin > 0.01 else 2.0
+                    _corner_offset_v = a_corner_offset * max(1.0, _angle_factor)
+                    label_disp = _bisector_display_point(
+                        vertex_disp,
+                        u1,
+                        u2,
+                        centroid_disp,
+                        _corner_offset_v,
+                        inward=False,
+                    )
+                    label_xy = _display_to_data([label_disp])[0]
+                    ax.text(
+                        label_xy[0],
+                        label_xy[1],
+                        _escape_latex_cmd(label),
+                        fontsize=max(10, int(fontsize * 0.9)),
+                        ha="center",
+                        va="center",
+                        color=tri_label_color,
+                    )
+
+                # -- Angle arcs ----------------------------------------------------
+                for vertex_name in tri.angle_vertices:
+                    if vertex_name not in neighbor_map:
+                        continue
+                    p_vertex = verts[vertex_name]
+                    n1, n2 = neighbor_map[vertex_name]
+                    u1 = _display_unit_vector(p_vertex, verts[n1])
+                    u2 = _display_unit_vector(p_vertex, verts[n2])
+                    if u1 is None or u2 is None:
+                        continue
+                    vertex_disp = ax.transData.transform(p_vertex)
+                    angle_deg_val = tri_angles.get(vertex_name, 0.0)
+                    if tri.right_angle_mode != "none" and abs(angle_deg_val - 90.0) <= 0.75:
+                        side_len = a_angle_radius_v[vertex_name] * 0.7
+                        p1 = (
+                            vertex_disp[0] + u1[0] * side_len,
+                            vertex_disp[1] + u1[1] * side_len,
+                        )
+                        p2 = (p1[0] + u2[0] * side_len, p1[1] + u2[1] * side_len)
+                        p3 = (
+                            vertex_disp[0] + u2[0] * side_len,
+                            vertex_disp[1] + u2[1] * side_len,
+                        )
+                        square_data = _display_to_data([p1, p2, p3])
+                        ax.plot(
+                            [square_data[0][0], square_data[1][0], square_data[2][0]],
+                            [square_data[0][1], square_data[1][1], square_data[2][1]],
+                            color=tri_angle_color,
+                            lw=max(1.0, tri_lw * 0.8),
+                        )
+                        continue
+
+                    a1 = math.atan2(u1[1], u1[0])
+                    a2 = math.atan2(u2[1], u2[0])
+                    delta = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
+                    _arc_r = a_angle_radius_v[vertex_name]
+                    disp_points = []
+                    for idx in range(49):
+                        theta = a1 + delta * idx / 48.0
+                        disp_points.append(
+                            (
+                                vertex_disp[0] + _arc_r * math.cos(theta),
+                                vertex_disp[1] + _arc_r * math.sin(theta),
+                            )
+                        )
+                    arc_data = _display_to_data(disp_points)
+                    ax.plot(
+                        [pt[0] for pt in arc_data],
+                        [pt[1] for pt in arc_data],
+                        color=tri_angle_color,
+                        lw=max(1.0, tri_lw * 0.8),
+                    )
+
+                # -- Angle labels --------------------------------------------------
+                for vertex_name in ("A", "B", "C"):
+                    label = triangle_angle_label_text(tri, vertex_name)
+                    if vertex_name not in neighbor_map or not label:
+                        continue
+                    p_vertex = verts[vertex_name]
+                    n1, n2 = neighbor_map[vertex_name]
+                    u1 = _display_unit_vector(p_vertex, verts[n1])
+                    u2 = _display_unit_vector(p_vertex, verts[n2])
+                    if u1 is None or u2 is None:
+                        continue
+                    vertex_disp = ax.transData.transform(p_vertex)
+                    _arc_r_v = a_angle_radius_v[vertex_name]
+                    label_disp = _bisector_display_point(
+                        vertex_disp,
+                        u1,
+                        u2,
+                        centroid_disp,
+                        _arc_r_v + a_angle_text_offset,
+                        inward=True,
+                    )
+                    label_xy = _display_to_data([label_disp])[0]
+                    ax.text(
+                        label_xy[0],
+                        label_xy[1],
+                        _escape_latex_cmd(label),
+                        fontsize=max(10, int(fontsize * 0.9)),
+                        ha="center",
+                        va="center",
+                        color=tri_label_color,
+                    )
+
             except Exception:
                 pass
 

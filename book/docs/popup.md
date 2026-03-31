@@ -1,22 +1,8 @@
 # `popup` directive
 
-Creates a button-triggered modal popup dialog.
+The `popup` directive creates a button that opens a modal popup dialog with arbitrary content.
 
-## Signature
-
-- Required arguments: `0`
-- Optional arguments: `1`
-- Body content: `yes`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `title` | string |
-| `width` | positive integer |
-| `height` | string |
-
-## Example
+## Basic usage
 
 ````markdown
 ```{popup} Show details
@@ -27,10 +13,29 @@ This content appears inside the modal.
 ```
 ````
 
-## Notes
+```{popup} Show details
+:title: Extra information
+:width: 500
 
-- This module also registers the inline role `{popup}` for tooltip-like content.
+This content appears inside the modal.
+```
+
+## Syntax overview
+
+The optional positional argument sets the button text. The body content is displayed inside the modal dialog.
+
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `title` | Title displayed in the modal header | button text |
+| `width` | Modal width in pixels | auto |
+| `height` | Modal height | auto |
+
+## Inline role
+
+This module also registers the `{popup}` inline role for tooltip-like popups within running text.
 
 ## Source
 
-`src/munchboka_edutools/directives/popup.py`
+[`src/munchboka_edutools/directives/popup.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/popup.py)

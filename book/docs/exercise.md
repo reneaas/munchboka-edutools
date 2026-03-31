@@ -1,21 +1,8 @@
 # `exercise` directive
 
-Creates a styled exercise/task admonition.
+The `exercise` directive creates a styled exercise/task admonition. It supports difficulty levels and a digital-aids mode that changes the icon.
 
-## Signature
-
-- Required arguments: `1`
-- Optional arguments: `0`
-- Body content: `yes`
-
-## Options
-
-| Option | Type |
-|---|---|
-| `level` | string |
-| `aids` | boolean (`true`/`false`) |
-
-## Example
+## Basic usage
 
 ````markdown
 :::{exercise} Practice
@@ -23,23 +10,37 @@ Find the derivative of $f(x)=x^3-2x$.
 :::
 ````
 
-Digital aids example:
+:::{exercise} Practice
+Find the derivative of $f(x)=x^3-2x$.
+:::
+
+## With digital aids
+
+When `aids: true` is set, the exercise icon changes to a computer icon, signaling that digital tools (CAS, graphing calculators, etc.) are allowed:
 
 ````markdown
-:::{exercise} Practice (digital aids allowed)
+:::{exercise} Calculator exercise
 ---
 aids: true
 ---
-
-Use a CAS/graphing tool to investigate the function.
+Use a CAS tool to solve $x^3 - 3x + 1 = 0$.
 :::
 ````
 
-## Notes
+:::{exercise} Calculator exercise
+---
+aids: true
+---
+Use a CAS tool to solve $x^3 - 3x + 1 = 0$.
+:::
 
-- Optional `:level:` can be used to tag difficulty.
-- Use `aids: true` to switch the exercise icon to a computer.
+## Options
+
+| Option | Meaning | Default |
+|---|---|---|
+| `level` | Difficulty tag (e.g. `"easy"`, `"medium"`, `"hard"`) | — |
+| `aids` | Switch to digital-aids icon: `true`/`false` | `false` |
 
 ## Source
 
-`src/munchboka_edutools/directives/admonitions.py`
+[`src/munchboka_edutools/directives/admonitions.py`](https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/admonitions.py)

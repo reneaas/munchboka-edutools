@@ -960,6 +960,7 @@ class PlotDirective(SphinxDirective):
             "circle": [],
             "ellipse": [],
             "curve": [],
+            "implicit-curve": [],
             "triangle": [],
         }
         # YAML-like fenced front matter
@@ -3412,6 +3413,99 @@ class PlotDirective(SphinxDirective):
             except Exception:
                 pass
 
+        # implicit-curve: LHS = RHS[, (xmin, xmax)][, linestyle][, color]
+        # Draws the zero-contour of LHS - RHS using matplotlib's contour().
+        # The (xmin, xmax) range is optional (defaults to global xmin/xmax).
+        # linestyle and color are optional, any order.
+        implicit_curve_vals: List[
+            Tuple[str, float | None, float | None, str | None, str | None]
+        ] = []
+        _allowed_implicit_styles = {"solid", "dotted", "dashed", "dashdot"}
+        for ic_raw in lists.get("implicit-curve", []):
+            s_ic = str(ic_raw).strip()
+            # Split the equation on '=' that is NOT '==' – we must allow
+            # '**' but split on bare '='.  Strategy: split on '=' then
+            # re-join any accidental splits caused by '==' (expr == expr).
+            _parts_eq = s_ic.split("=")
+            if len(_parts_eq) < 2:
+                continue
+            # Rejoin '==' splits: whenever an empty string appears between
+            # two parts, the original had '=='.
+            joined: List[str] = [_parts_eq[0]]
+            i = 1
+            while i < len(_parts_eq):
+                if joined[-1].endswith("") and _parts_eq[i] == "" and i + 1 < len(_parts_eq):
+                    # Was '==', skip the empty part
+                    i += 1
+                    continue
+                if not _parts_eq[i] and i + 1 < len(_parts_eq):
+                    # lhs== ... rejoin
+                    joined[-1] = joined[-1] + "==" + _parts_eq[i + 1]
+                    i += 2
+                    continue
+                joined.append(_parts_eq[i])
+                i += 1
+            if len(joined) < 2:
+                continue
+            # The first '=' found separates the equation; everything after
+            # the RHS (separated by commas at depth 0) provides optional
+            # (xmin,xmax), linestyle, color.
+            lhs_expr = joined[0].strip()
+            # The RHS may still contain commas for the optional trailing
+            # tokens.  We need to split the remainder at top-level commas.
+            rhs_and_rest = "=".join(joined[1:])  # in case RHS itself had '='
+            # Top-level comma split
+            depth_ic = 0
+            tokens_ic: List[str] = []
+            cur_ic: List[str] = []
+            for ch in rhs_and_rest:
+                if ch in "([{":
+                    depth_ic += 1
+                    cur_ic.append(ch)
+                elif ch in ")]}":
+                    depth_ic = max(0, depth_ic - 1)
+                    cur_ic.append(ch)
+                elif ch == "," and depth_ic == 0:
+                    part = "".join(cur_ic).strip()
+                    if part:
+                        tokens_ic.append(part)
+                    cur_ic = []
+                else:
+                    cur_ic.append(ch)
+            tail_ic = "".join(cur_ic).strip()
+            if tail_ic:
+                tokens_ic.append(tail_ic)
+            if not tokens_ic:
+                continue
+            rhs_expr = tokens_ic[0].strip()
+            # Build the expression string: (LHS) - (RHS)
+            expr_ic = f"({lhs_expr}) - ({rhs_expr})"
+            # Parse remaining tokens: optional (xmin, xmax) tuple, linestyle, color
+            ic_xmin: float | None = None
+            ic_xmax: float | None = None
+            style_ic: str | None = None
+            color_ic: str | None = None
+            for tok in tokens_ic[1:]:
+                tok_s = tok.strip()
+                # Check for (xmin, xmax) tuple
+                if tok_s.startswith("(") and tok_s.endswith(")"):
+                    inner_ic = tok_s[1:-1]
+                    ic_parts = [p.strip() for p in inner_ic.split(",")]
+                    if len(ic_parts) == 2:
+                        try:
+                            ic_xmin = float(_eval_expr(ic_parts[0]))
+                            ic_xmax = float(_eval_expr(ic_parts[1]))
+                        except Exception:
+                            ic_xmin = None
+                            ic_xmax = None
+                    continue
+                low = tok_s.lower()
+                if low in _allowed_implicit_styles and style_ic is None:
+                    style_ic = low
+                elif color_ic is None:
+                    color_ic = tok_s
+            implicit_curve_vals.append((expr_ic, ic_xmin, ic_xmax, style_ic, color_ic))
+
         explicit_name = merged.get("name")
         # Internal rendering mode: used by interactive directives that need
         # PlotDirective's full rendering capabilities but do not want to create
@@ -4362,7 +4456,13 @@ class PlotDirective(SphinxDirective):
                         for start_name, end_name in (("A", "B"), ("B", "C"), ("C", "A")):
                             x1t, y1t = tri.vertices[start_name]
                             x2t, y2t = tri.vertices[end_name]
-                            ax.plot([x1t, x2t], [y1t, y2t], linestyle=tri_ls, color=tri_color, lw=tri_lw)
+                            ax.plot(
+                                [x1t, x2t], [y1t, y2t], linestyle=tri_ls, color=tri_color, lw=tri_lw
+                            )
+
+                    # Finalize the layout so that ax.transData gives accurate
+                    # pixel-space coordinates for label and arc positioning.
+                    fig.canvas.draw()
 
                     def _display_unit_vector(p_from, p_to):
                         x0d, y0d = ax.transData.transform(p_from)
@@ -4383,7 +4483,9 @@ class PlotDirective(SphinxDirective):
                             return None
                         return (vx / norm, vy / norm)
 
-                    def _bisector_display_point(vertex_disp, u1, u2, centroid_disp, distance_px, inward):
+                    def _bisector_display_point(
+                        vertex_disp, u1, u2, centroid_disp, distance_px, inward
+                    ):
                         bis = _normalize_display_vec(u1[0] + u2[0], u1[1] + u2[1])
                         to_centroid = (
                             centroid_disp[0] - vertex_disp[0],
@@ -4405,7 +4507,9 @@ class PlotDirective(SphinxDirective):
                         )
 
                     for tri in triangle_vals:
-                        tri_label_color = _resolve_tri_color(tri.label_color, default_tri_label_color)
+                        tri_label_color = _resolve_tri_color(
+                            tri.label_color, default_tri_label_color
+                        )
                         tri_angle_color = _resolve_tri_color(
                             tri.angle_color,
                             default_tri_angle_color,
@@ -4419,7 +4523,42 @@ class PlotDirective(SphinxDirective):
                             )
                         )
 
-                        for side_name, start_name, end_name in (("AB", "A", "B"), ("BC", "B", "C"), ("CA", "C", "A")):
+                        # -- Adaptive label offsets --------------------------------
+                        # Scale pixel offsets proportionally to the display-space
+                        # size of the triangle so that labels stay close to small
+                        # triangles while remaining unchanged for large ones.
+                        _vd = {n: ax.transData.transform(verts[n]) for n in ("A", "B", "C")}
+                        _sides_disp = {
+                            "AB": math.hypot(_vd["B"][0] - _vd["A"][0], _vd["B"][1] - _vd["A"][1]),
+                            "BC": math.hypot(_vd["C"][0] - _vd["B"][0], _vd["C"][1] - _vd["B"][1]),
+                            "CA": math.hypot(_vd["A"][0] - _vd["C"][0], _vd["A"][1] - _vd["C"][1]),
+                        }
+                        _min_side_disp = min(_sides_disp.values())
+                        _TRI_REF_SIZE = 150.0
+                        _tri_scale = max(0.25, min(1.0, _min_side_disp / _TRI_REF_SIZE))
+
+                        a_label_offset = max(4.0, tri.label_offset_px * _tri_scale)
+                        a_corner_offset = max(4.0, tri.corner_label_offset_px * _tri_scale)
+                        a_angle_radius = max(6.0, tri.angle_radius_px * _tri_scale)
+                        a_angle_text_offset = max(3.0, tri.angle_text_offset_px * _tri_scale)
+
+                        # Per-vertex adaptive angle-arc radius: cap at 35 % of the
+                        # shorter adjacent side so arcs never overshoot the edge.
+                        _adj_sides = {
+                            "A": min(_sides_disp["AB"], _sides_disp["CA"]),
+                            "B": min(_sides_disp["AB"], _sides_disp["BC"]),
+                            "C": min(_sides_disp["BC"], _sides_disp["CA"]),
+                        }
+                        a_angle_radius_v = {
+                            v: min(a_angle_radius, 0.35 * _adj_sides[v]) for v in ("A", "B", "C")
+                        }
+                        # ---------------------------------------------------------
+
+                        for side_name, start_name, end_name in (
+                            ("AB", "A", "B"),
+                            ("BC", "B", "C"),
+                            ("CA", "C", "A"),
+                        ):
                             label = triangle_side_label_text(tri, side_name)
                             if not label:
                                 continue
@@ -4435,7 +4574,10 @@ class PlotDirective(SphinxDirective):
                                 )
                             p0_disp = ax.transData.transform(verts[start_name])
                             p1_disp = ax.transData.transform(verts[end_name])
-                            mid_disp = ((p0_disp[0] + p1_disp[0]) / 2.0, (p0_disp[1] + p1_disp[1]) / 2.0)
+                            mid_disp = (
+                                (p0_disp[0] + p1_disp[0]) / 2.0,
+                                (p0_disp[1] + p1_disp[1]) / 2.0,
+                            )
                             dx = p1_disp[0] - p0_disp[0]
                             dy = p1_disp[1] - p0_disp[1]
                             norm = math.hypot(dx, dy)
@@ -4449,8 +4591,8 @@ class PlotDirective(SphinxDirective):
                                 nx *= -1.0
                                 ny *= -1.0
                             label_disp = (
-                                mid_disp[0] + nx * tri.label_offset_px,
-                                mid_disp[1] + ny * tri.label_offset_px,
+                                mid_disp[0] + nx * a_label_offset,
+                                mid_disp[1] + ny * a_label_offset,
                             )
                             label_xy = _display_to_data([label_disp])[0]
                             ax.text(
@@ -4476,12 +4618,19 @@ class PlotDirective(SphinxDirective):
                             if u1 is None or u2 is None:
                                 continue
                             vertex_disp = ax.transData.transform(p_vertex)
+                            # Angle-aware corner offset: for narrow angles
+                            # (< 60°), push the label further outward so it
+                            # clears the converging edges.
+                            _angle_at_v = tri_angles.get(vertex_name, 60.0)
+                            _half_sin = math.sin(math.radians(max(_angle_at_v, 10.0) / 2.0))
+                            _angle_factor = min(2.0, 0.5 / _half_sin) if _half_sin > 0.01 else 2.0
+                            _corner_offset_v = a_corner_offset * max(1.0, _angle_factor)
                             label_disp = _bisector_display_point(
                                 vertex_disp,
                                 u1,
                                 u2,
                                 centroid_disp,
-                                tri.corner_label_offset_px,
+                                _corner_offset_v,
                                 inward=False,
                             )
                             label_xy = _display_to_data([label_disp])[0]
@@ -4507,10 +4656,16 @@ class PlotDirective(SphinxDirective):
                             vertex_disp = ax.transData.transform(p_vertex)
                             angle_deg_val = tri_angles.get(vertex_name, 0.0)
                             if tri.right_angle_mode != "none" and abs(angle_deg_val - 90.0) <= 0.75:
-                                side_len = tri.angle_radius_px * 0.7
-                                p1 = (vertex_disp[0] + u1[0] * side_len, vertex_disp[1] + u1[1] * side_len)
+                                side_len = a_angle_radius_v[vertex_name] * 0.7
+                                p1 = (
+                                    vertex_disp[0] + u1[0] * side_len,
+                                    vertex_disp[1] + u1[1] * side_len,
+                                )
                                 p2 = (p1[0] + u2[0] * side_len, p1[1] + u2[1] * side_len)
-                                p3 = (vertex_disp[0] + u2[0] * side_len, vertex_disp[1] + u2[1] * side_len)
+                                p3 = (
+                                    vertex_disp[0] + u2[0] * side_len,
+                                    vertex_disp[1] + u2[1] * side_len,
+                                )
                                 square_data = _display_to_data([p1, p2, p3])
                                 ax.plot(
                                     [square_data[0][0], square_data[1][0], square_data[2][0]],
@@ -4523,13 +4678,14 @@ class PlotDirective(SphinxDirective):
                             a1 = math.atan2(u1[1], u1[0])
                             a2 = math.atan2(u2[1], u2[0])
                             delta = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
+                            _arc_r = a_angle_radius_v[vertex_name]
                             disp_points = []
                             for idx in range(49):
                                 theta = a1 + delta * idx / 48.0
                                 disp_points.append(
                                     (
-                                        vertex_disp[0] + tri.angle_radius_px * math.cos(theta),
-                                        vertex_disp[1] + tri.angle_radius_px * math.sin(theta),
+                                        vertex_disp[0] + _arc_r * math.cos(theta),
+                                        vertex_disp[1] + _arc_r * math.sin(theta),
                                     )
                                 )
                             arc_data = _display_to_data(disp_points)
@@ -4551,12 +4707,13 @@ class PlotDirective(SphinxDirective):
                             if u1 is None or u2 is None:
                                 continue
                             vertex_disp = ax.transData.transform(p_vertex)
+                            _arc_r_v = a_angle_radius_v[vertex_name]
                             label_disp = _bisector_display_point(
                                 vertex_disp,
                                 u1,
                                 u2,
                                 centroid_disp,
-                                tri.angle_radius_px + tri.angle_text_offset_px,
+                                _arc_r_v + a_angle_text_offset,
                                 inward=True,
                             )
                             label_xy = _display_to_data([label_disp])[0]
@@ -4833,6 +4990,54 @@ class PlotDirective(SphinxDirective):
                                 col_use = (mapped if mapped else col_c) or default_curve_color
                                 ls_use = style_map_curve.get((st_c or "solid").lower(), "-")
                                 ax.plot(xs, ys, color=col_use, linestyle=ls_use, lw=lw)
+                            except Exception:
+                                continue
+
+                # Implicit curves (contour of LHS - RHS = 0)
+                if "implicit_curve_vals" in locals() and implicit_curve_vals:
+                    try:
+                        import sympy as _sp_ic
+                        import numpy as _np_ic
+                    except Exception:
+                        _sp_ic = None
+                        _np_ic = None
+                    if _sp_ic is not None and _np_ic is not None:
+                        style_map_ic = {
+                            "solid": "-",
+                            "dotted": ":",
+                            "dashed": "--",
+                            "dashdot": "-.",
+                        }
+                        default_ic_color = plotmath.COLORS.get("blue") or "blue"
+                        x_sym_ic = _sp_ic.symbols("x")
+                        y_sym_ic = _sp_ic.symbols("y")
+                        for expr_ic, ic_x0, ic_x1, st_ic, col_ic in implicit_curve_vals:
+                            try:
+                                ic_locals = _sympy_allowed_base()
+                                ic_locals.update(macro_ctx.sympy_locals)
+                                ic_locals["x"] = x_sym_ic
+                                ic_locals["y"] = y_sym_ic
+                                sym_expr = _sp_ic.sympify(expr_ic, locals=ic_locals)
+                                fn_ic = _sp_ic.lambdify((x_sym_ic, y_sym_ic), sym_expr, "numpy")
+                                x0_ic = ic_x0 if ic_x0 is not None else xmin
+                                x1_ic = ic_x1 if ic_x1 is not None else xmax
+                                y0_ic, y1_ic = ax.get_ylim()
+                                xg = _np_ic.linspace(float(x0_ic), float(x1_ic), 800)
+                                yg = _np_ic.linspace(float(y0_ic), float(y1_ic), 800)
+                                X, Y = _np_ic.meshgrid(xg, yg)
+                                Z = fn_ic(X, Y)
+                                mapped = plotmath.COLORS.get(col_ic) if col_ic else None
+                                col_use = (mapped if mapped else col_ic) or default_ic_color
+                                ls_use = style_map_ic.get((st_ic or "solid").lower(), "-")
+                                ax.contour(
+                                    X,
+                                    Y,
+                                    Z,
+                                    levels=[0],
+                                    colors=[col_use],
+                                    linestyles=[ls_use],
+                                    linewidths=[lw],
+                                )
                             except Exception:
                                 continue
 

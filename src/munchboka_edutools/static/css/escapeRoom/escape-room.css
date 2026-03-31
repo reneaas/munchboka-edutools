@@ -1,29 +1,29 @@
 /* Escape Room directive styles with light/dark mode (aligned with Jeopardy) */
 :root {
   color-scheme: light dark;
-  /* Light mode tokens */
-  --er-bg: #FAFAFA;        /* page background */
+  /* Light mode tokens — ocean teal palette (matches Jeopardy) */
+  --er-bg: #EFF7F9;        /* page background */
   --er-surface: #FFFFFF;    /* card surface */
-  --er-text: #1F1F1F;       /* primary text */
-  --er-outline: #E0E3EB;    /* borders */
-  --er-primary: #1A73E8;    /* accent */
-  --er-danger: #D93025;     /* errors */
-  --er-success: #188038;    /* green for progress */
-  --er-accent: #7C3AED;     /* inviting accent for secondary action */
-  --er-accent-border: #6D28D9;
+  --er-text: #11283A;       /* primary text */
+  --er-outline: #D1E0E6;    /* borders */
+  --er-primary: #2A7081;    /* accent */
+  --er-danger: #41688F;     /* steel blue warn */
+  --er-success: #2A8078;    /* teal for progress */
+  --er-accent: #5AA8BA;     /* sea glass accent */
+  --er-accent-border: #3F8EA2;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark mode tokens */
-    --er-bg: #121212;
-    --er-surface: #1E1E1E;
-    --er-text: #E8EAED;
-    --er-outline: #2A2E34;
-    --er-primary: #1B66C9;
-    --er-danger: #EA4335;
-    --er-success: #1E8E3E;  /* green for progress in dark */
-    --er-accent: #8B5CF6;   /* lighter violet for dark */
-    --er-accent-border: #7C3AED;
+    /* Dark mode tokens — ocean teal palette (matches Jeopardy) */
+    --er-bg: #06111B;
+    --er-surface: #0A1D29;
+    --er-text: #E2EEF3;
+    --er-outline: #213D4D;
+    --er-primary: #347E90;
+    --er-danger: #52749F;
+    --er-success: #348981;
+    --er-accent: #61B1C3;
+    --er-accent-border: #458EA2;
   }
 }
 
@@ -33,15 +33,33 @@ body.dark-mode,
 html[data-theme='dark'],
 body[data-theme='dark'],
 html[data-mode='dark'] {
-  --er-bg: #121212;
-  --er-surface: #1E1E1E;
-  --er-text: #E8EAED;
-  --er-outline: #2A2E34;
-  --er-primary: #1B66C9;
-  --er-danger: #EA4335;
-  --er-success: #1E8E3E;
-  --er-accent: #8B5CF6;
-  --er-accent-border: #7C3AED;
+  --er-bg: #06111B;
+  --er-surface: #0A1D29;
+  --er-text: #E2EEF3;
+  --er-outline: #213D4D;
+  --er-primary: #347E90;
+  --er-danger: #52749F;
+  --er-success: #348981;
+  --er-accent: #61B1C3;
+  --er-accent-border: #458EA2;
+}
+
+/* Explicit light tokens when user selects light mode (override system dark) */
+html.light-mode,
+body.light-mode,
+html[data-theme='light'],
+body[data-theme='light'],
+html[data-mode='light'],
+[data-mode='light'] {
+  --er-bg: #EFF7F9;
+  --er-surface: #FFFFFF;
+  --er-text: #11283A;
+  --er-outline: #D1E0E6;
+  --er-primary: #2A7081;
+  --er-danger: #41688F;
+  --er-success: #2A8078;
+  --er-accent: #5AA8BA;
+  --er-accent-border: #3F8EA2;
 }
 
 .escape-room-container {
@@ -62,7 +80,7 @@ html[data-mode='dark'] {
 .er-progress { opacity: 0.8; }
 .er-title { margin: 0.25rem 0 0.5rem 0; }
 .er-body { background: var(--er-surface); border: 1px solid var(--er-outline); border-radius: 8px; padding: 1rem; color: var(--er-text); }
-.er-q { font-size: 1.05rem; background: inherit; }
+.er-q { font-size: 1.05rem; background: inherit; overflow: hidden; }
 
 /* Visual progress bar */
 .er-progressbar {
@@ -101,7 +119,7 @@ html[data-mode='dark'] {
 
 .er-controls { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; }
 .er-controls input[type="text"] { flex: 1; padding: 0.5rem 0.6rem; border: 1px solid var(--er-outline); border-radius: 6px; background: transparent; color: var(--er-text); }
-.er-controls input[type="text"]::placeholder { color: #5F6368; opacity: 0.9; }
+.er-controls input[type="text"]::placeholder { color: #526C80; opacity: 0.9; }
 .er-btn { padding: 0.5rem 0.75rem; border: none; border-radius: 6px; cursor: pointer; }
 .er-btn.primary { background: var(--er-primary); color: #fff; }
 .er-btn.primary:hover { filter: brightness(1.05); }
@@ -117,20 +135,20 @@ html[data-mode='dark'] {
 
 /* Auto theme (OS/browser preference) */
 @media (prefers-color-scheme: light) {
-  .er-body { background: #E8F0FE; color: #000000; }
-  .er-progress { color: #000000; opacity: 1; }
-  .er-progressbar { background: #E0E3EB; }
-  .er-controls input[type="text"] { background: #FFFFFF; color: #000000; border-color: var(--er-outline); }
-  .er-controls input[type="text"]::placeholder { color: #5F6368; }
-  /* Completion tile uses same light blue card as questions */
-  .er-complete { background: #E8F0FE; color: #000000; }
-  /* Resume prompt uses same light blue card */
-  .er-resume-prompt { background: #E8F0FE; color: #000000; }
+  .er-body { background: #E4F1F4; color: var(--er-text); }
+  .er-progress { color: var(--er-text); opacity: 1; }
+  .er-progressbar { background: #D1E0E6; }
+  .er-controls input[type="text"] { background: #FFFFFF; color: var(--er-text); border-color: var(--er-outline); }
+  .er-controls input[type="text"]::placeholder { color: #526C80; }
+  /* Completion tile uses same teal-tinted card as questions */
+  .er-complete { background: #E4F1F4; color: var(--er-text); }
+  /* Resume prompt uses same teal-tinted card */
+  .er-resume-prompt { background: #E4F1F4; color: var(--er-text); }
 }
 @media (prefers-color-scheme: dark) {
   .er-body { background: var(--er-surface); color: var(--er-text); }
-  .er-controls input[type="text"] { background: #2A2E34; color: var(--er-text); border-color: var(--er-outline); }
-  .er-controls input[type="text"]::placeholder { color: #9AA0A6; }
+  .er-controls input[type="text"] { background: #0E2431; color: var(--er-text); border-color: var(--er-outline); }
+  .er-controls input[type="text"]::placeholder { color: #98B0BE; }
 }
 
 /* Explicit theme overrides if site provides toggles (align with Jeopardy approach) */
@@ -138,12 +156,12 @@ html.light-mode .er-body,
 body.light-mode .er-body,
 html[data-theme='light'] .er-body,
 body[data-theme='light'] .er-body,
-[data-mode='light'] .er-body { background: #E8F0FE !important; color: #000000 !important; }
+[data-mode='light'] .er-body { background: #E4F1F4 !important; color: var(--er-text) !important; }
 [data-mode='light'] .er-controls input[type="text"],
 html.light-mode .er-controls input[type="text"],
 body.light-mode .er-controls input[type="text"],
 html[data-theme='light'] .er-controls input[type="text"],
-body[data-theme='light'] .er-controls input[type="text"] { background: #FFFFFF !important; color: #000000 !important; border-color: var(--er-outline) !important; }
+body[data-theme='light'] .er-controls input[type="text"] { background: #FFFFFF !important; color: var(--er-text) !important; border-color: var(--er-outline) !important; }
 
 html.dark-mode .er-body,
 body.dark-mode .er-body,
@@ -154,14 +172,14 @@ body[data-theme='dark'] .er-body,
 html.dark-mode .er-controls input[type="text"],
 body.dark-mode .er-controls input[type="text"],
 html[data-theme='dark'] .er-controls input[type="text"],
-body[data-theme='dark'] .er-controls input[type="text"] { background: #2A2E34 !important; color: var(--er-text) !important; border-color: var(--er-outline) !important; }
+body[data-theme='dark'] .er-controls input[type="text"] { background: #0E2431 !important; color: var(--er-text) !important; border-color: var(--er-outline) !important; }
 
 /* Explicit light-mode overrides for progress text */
 html.light-mode .er-progress,
 body.light-mode .er-progress,
 html[data-theme='light'] .er-progress,
 body[data-theme='light'] .er-progress,
-[data-mode='light'] .er-progress { color: #000000 !important; opacity: 1 !important; }
+[data-mode='light'] .er-progress { color: var(--er-text) !important; opacity: 1 !important; }
 
 /* Explicit dark-mode overrides for progress text */
 html.dark-mode .er-progress,
@@ -175,7 +193,7 @@ html.light-mode .er-progressbar,
 body.light-mode .er-progressbar,
 html[data-theme='light'] .er-progressbar,
 body[data-theme='light'] .er-progressbar,
-[data-mode='light'] .er-progressbar { background: #E0E3EB !important; }
+[data-mode='light'] .er-progressbar { background: #D1E0E6 !important; }
 
 /* Explicit dark-mode progress bar background */
 html.dark-mode .er-progressbar,
@@ -189,7 +207,7 @@ html.light-mode .er-complete,
 body.light-mode .er-complete,
 html[data-theme='light'] .er-complete,
 body[data-theme='light'] .er-complete,
-[data-mode='light'] .er-complete { background: #E8F0FE !important; color: #000000 !important; }
+[data-mode='light'] .er-complete { background: #E4F1F4 !important; color: var(--er-text) !important; }
 
 /* Explicit dark-mode completion tile */
 html.dark-mode .er-complete,
@@ -203,7 +221,7 @@ html.light-mode .er-resume-prompt,
 body.light-mode .er-resume-prompt,
 html[data-theme='light'] .er-resume-prompt,
 body[data-theme='light'] .er-resume-prompt,
-[data-mode='light'] .er-resume-prompt { background: #E8F0FE !important; color: #000000 !important; }
+[data-mode='light'] .er-resume-prompt { background: #E4F1F4 !important; color: var(--er-text) !important; }
 
 /* Explicit dark-mode resume prompt */
 html.dark-mode .er-resume-prompt,

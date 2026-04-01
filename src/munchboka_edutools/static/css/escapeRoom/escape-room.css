@@ -11,6 +11,11 @@
   --er-success: #2A8078;    /* teal for progress */
   --er-accent: #5AA8BA;     /* sea glass accent */
   --er-accent-border: #3F8EA2;
+  /* Outer container box (matches Jeopardy container) */
+  --er-container-bg: #F2F8FA;
+  --er-container-border: rgba(20, 63, 85, 0.16);
+  --er-container-radius: 18px;
+  --er-container-shadow: 0 10px 28px rgba(17,40,58,0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -24,6 +29,11 @@
     --er-success: #348981;
     --er-accent: #61B1C3;
     --er-accent-border: #458EA2;
+    /* Outer container box (dark) */
+    --er-container-bg: var(--er-bg);
+    --er-container-border: rgba(97, 177, 195, 0.28);
+    --er-container-radius: 18px;
+    --er-container-shadow: 0 12px 32px rgba(0,0,0,0.32);
   }
 }
 
@@ -42,6 +52,11 @@ html[data-mode='dark'] {
   --er-success: #348981;
   --er-accent: #61B1C3;
   --er-accent-border: #458EA2;
+  /* Outer container box (dark) */
+  --er-container-bg: var(--er-bg);
+  --er-container-border: rgba(97, 177, 195, 0.28);
+  --er-container-radius: 18px;
+  --er-container-shadow: 0 12px 32px rgba(0,0,0,0.32);
 }
 
 /* Explicit light tokens when user selects light mode (override system dark) */
@@ -60,26 +75,34 @@ html[data-mode='light'],
   --er-success: #2A8078;
   --er-accent: #5AA8BA;
   --er-accent-border: #3F8EA2;
+  /* Outer container box (light) */
+  --er-container-bg: #F2F8FA;
+  --er-container-border: rgba(20, 63, 85, 0.16);
+  --er-container-radius: 18px;
+  --er-container-shadow: 0 10px 28px rgba(17,40,58,0.08);
 }
 
 .escape-room-container {
   box-sizing: border-box;
   width: 100%;
   margin: 1rem auto;
+  padding: 0.5rem;
   color: var(--er-text);
-  /* In light mode, let the page background show through */
-  background: transparent !important;
+  background: var(--er-container-bg) !important;
+  border: 1px solid var(--er-container-border);
+  border-radius: var(--er-container-radius);
+  box-shadow: var(--er-container-shadow);
 }
 /* In dark mode, keep container on the dark surface token */
 @media (prefers-color-scheme: dark) {
-  .escape-room-container { background: var(--er-bg); }
+  .escape-room-container { background: var(--er-container-bg) !important; }
 }
 
 .er-root { background: transparent; }
 .er-header { margin-bottom: 0.5rem; font-weight: 600; }
 .er-progress { opacity: 0.8; }
 .er-title { margin: 0.25rem 0 0.5rem 0; }
-.er-body { background: var(--er-surface); border: 1px solid var(--er-outline); border-radius: 8px; padding: 1rem; color: var(--er-text); }
+.er-body { background: var(--er-surface); border: 1px solid var(--er-outline); border-radius: 8px; padding: 1rem; color: var(--er-text); box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
 .er-q { font-size: 1.05rem; background: inherit; overflow: hidden; }
 
 /* Visual progress bar */
@@ -235,7 +258,13 @@ html.dark-mode .escape-room-container,
 body.dark-mode .escape-room-container,
 html[data-theme='dark'] .escape-room-container,
 body[data-theme='dark'] .escape-room-container,
-[data-mode='dark'] .escape-room-container { background: var(--er-bg) !important; color: var(--er-text) !important; }
+[data-mode='dark'] .escape-room-container { background: var(--er-container-bg) !important; color: var(--er-text) !important; }
 
 /* When embedded inside admonitions, add extra right padding to avoid clipping */
-.admonition .escape-room-container { padding-right: 3rem; }
+.admonition .escape-room-container {
+  width: auto;
+  max-width: 100%;
+  margin-right: 0;
+  padding-right: 1rem;
+  overflow-x: hidden;
+}

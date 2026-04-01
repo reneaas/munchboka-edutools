@@ -135,6 +135,7 @@ def _copy_static(app):
 
         # Optional accessibility font styles (requires fonts packaged under munchboka/fonts/...)
         _register("fonts/opendyslexic/dyslexic.css", priority=400)
+        _register("fonts/opendyslexic/opendylexic-toggle.js", priority=401)
 
         _register("css/admonitions.css")
         _register("css/dialogue.css")

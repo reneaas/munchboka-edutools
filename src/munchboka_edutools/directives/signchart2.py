@@ -281,11 +281,11 @@ def get_factors(polynomial, x):
                     # SymPy's default latex() often reorders addition as `c + x`, which is
                     # visually unusual in this context; we want `x + c` / `x - c`.
                     if root_value == 0:
-                        expression_latex = sp.latex(x)
+                        expression_latex = sp.latex(x, ln_notation=True)
                     elif getattr(root_value, "could_extract_minus_sign", lambda: False)():
-                        expression_latex = f"{sp.latex(x)} + {sp.latex(-root_value)}"
+                        expression_latex = f"{sp.latex(x, ln_notation=True)} + {sp.latex(-root_value, ln_notation=True)}"
                     else:
-                        expression_latex = f"{sp.latex(x)} - {sp.latex(root_value)}"
+                        expression_latex = f"{sp.latex(x, ln_notation=True)} - {sp.latex(root_value, ln_notation=True)}"
 
                     linear_factors.append(
                         {
@@ -732,8 +732,24 @@ def draw_factors(
     root_numeric: Dict[Any, float] | None = None,
     singularities_set: set[Any] | None = None,
 ):
+    """Draw sign lines for each factor.
+
+    Returns:
+        dict mapping root → list of y-positions where a marker (0 or ×) was placed
+        on factor rows.  Used by draw_vertical_lines to create gaps.
+    """
     x_min = -0.05
     x_max = 1.05
+
+    # All roots sorted, used for splitting every factor's sign line
+    all_sorted_roots = sorted(
+        roots,
+        key=lambda r: root_numeric.get(r, _numeric(r, subs)) if root_numeric else _numeric(r, subs),
+    )
+
+    # Collect marker positions for draw_vertical_lines
+    factor_marker_positions: Dict[Any, List[float]] = {}
+
     # Draw horizontal sign lines for each factor
     for i, factor in enumerate(factors):
         expression = factor.get("expression")
@@ -753,7 +769,7 @@ def draw_factors(
             expression_latex = expression_latex_override
         else:
             try:
-                expression_latex = sp.latex(expression)
+                expression_latex = sp.latex(expression, ln_notation=True)
             except:
                 # Fallback to string representation if latex fails
                 expression_latex = str(expression)
@@ -772,13 +788,20 @@ def draw_factors(
             va="center",
         )
 
-        # If no real roots (constant factor)
-        if -np.inf in factor_roots or not factor_roots:
-            submap = {x: 0}
-            if subs:
-                submap.update(subs)
-            y_value = sp.sympify(expression).evalf(subs=submap)
-            if y_value > 0:
+        # Build the full expression with exponent for evaluation
+        expr = expression
+        if exponent > 1:
+            full_expr = expr**exponent
+        else:
+            full_expr = expr
+
+        # Set of the factor's own roots for O(1) lookup
+        factor_own_roots = set(r for r in factor_roots if r != -np.inf)
+
+        # If no real roots AND no global roots (constant factor with no breakpoints)
+        if (not factor_own_roots) and (not all_sorted_roots):
+            sgn = _eval_sign_at(full_expr, x, 0, subs)
+            if sgn is not None and sgn > 0:
                 ax.plot(
                     [x_min, x_max],
                     [(i + 1) * dy, (i + 1) * dy],
@@ -786,7 +809,7 @@ def draw_factors(
                     linestyle="-",
                     lw=2,
                 )
-            else:
+            elif sgn is not None and sgn < 0:
                 ax.plot(
                     [x_min, x_max],
                     [(i + 1) * dy, (i + 1) * dy],
@@ -794,92 +817,103 @@ def draw_factors(
                     linestyle="--",
                     lw=2,
                 )
-        else:
-            # Sort roots for drawing
-            symbolic_roots = [r for r in factor_roots if r != -np.inf]
-            if root_numeric is None:
-                root_numeric = {r: _numeric(r, subs) for r in symbolic_roots}
-            sorted_roots = sorted(
-                symbolic_roots, key=lambda r: root_numeric.get(r, _numeric(r, subs))
-            )
-
-            # Determine if even exponent (doesn't change sign) or odd (changes sign)
-            is_even_exponent = exponent % 2 == 0
-
-            # Create the full expression with exponent for evaluation
-            expr = expression
-            if exponent > 1:
-                full_expr = expr**exponent
             else:
-                full_expr = expr
+                ax.plot(
+                    [x_min, x_max],
+                    [(i + 1) * dy, (i + 1) * dy],
+                    color="black",
+                    linestyle=":",
+                    lw=2,
+                    alpha=0.6,
+                )
+            continue
 
-            # Draw segments between roots
-            # We need to evaluate signs in each interval
-            all_positions = [x_min] + [root_positions[r] for r in sorted_roots] + [x_max]
+        # Use ALL roots for splitting intervals (not just the factor's own roots).
+        # This ensures test points fall within valid sub-intervals (e.g. for log(x),
+        # the test point will be between 0 and e^{-1/2} rather than at a negative x).
+        breakpoints = all_sorted_roots if all_sorted_roots else []
+        bp_positions = [x_min] + [root_positions[r] for r in breakpoints] + [x_max]
 
-            for j in range(len(all_positions) - 1):
-                left_pos = all_positions[j]
-                right_pos = all_positions[j + 1]
+        for j in range(len(bp_positions) - 1):
+            left_pos = bp_positions[j]
+            right_pos = bp_positions[j + 1]
 
-                # Add gap around roots (except at boundaries)
-                if j > 0:  # Not the leftmost segment
-                    left_pos += dx
-                if j < len(all_positions) - 2:  # Not the rightmost segment
-                    right_pos -= dx
+            # Add gap around roots (except at boundaries)
+            if j > 0:
+                left_pos += dx
+            if j < len(bp_positions) - 2:
+                right_pos -= dx
 
-                # Map position back to actual x value for evaluation
-                # Position is normalized 0-1, map to actual domain
-                if j < len(sorted_roots):
-                    if j == 0:
-                        # Before first root
-                        test_x = root_numeric[sorted_roots[0]] - 1
-                    else:
-                        # Between roots
-                        test_x = (
-                            root_numeric[sorted_roots[j - 1]] + root_numeric[sorted_roots[j]]
-                        ) / 2
-                else:
-                    # After last root
-                    test_x = root_numeric[sorted_roots[-1]] + 1
+            # Choose a test x-value inside this interval
+            if j == 0:
+                test_x = root_numeric[breakpoints[0]] - 1
+            elif j >= len(breakpoints):
+                test_x = root_numeric[breakpoints[-1]] + 1
+            else:
+                test_x = (root_numeric[breakpoints[j - 1]] + root_numeric[breakpoints[j]]) / 2
 
-                # Evaluate sign at test point
-                try:
-                    submap = {x: test_x}
-                    if subs:
-                        submap.update(subs)
-                    y_val = sp.sympify(full_expr).evalf(subs=submap)
-                    is_positive = y_val > 0
-                    color = color_pos if is_positive else color_neg
-                    linestyle = "-" if is_positive else "--"
-                except:
-                    # Fallback
-                    color = color_pos
-                    linestyle = "-"
+            # Evaluate sign using the robust helper (handles complex/undefined)
+            sgn = _eval_sign_at(full_expr, x, test_x, subs)
 
-                # Draw segment
+            if sgn is None:
+                # Undefined in this interval
                 ax.plot(
                     [left_pos, right_pos],
                     [(i + 1) * dy, (i + 1) * dy],
-                    color=color,
-                    linestyle=linestyle,
+                    color="black",
+                    linestyle=":",
+                    lw=2,
+                    alpha=0.6,
+                )
+            elif sgn > 0:
+                ax.plot(
+                    [left_pos, right_pos],
+                    [(i + 1) * dy, (i + 1) * dy],
+                    color=color_pos,
+                    linestyle="-",
+                    lw=2,
+                )
+            else:
+                ax.plot(
+                    [left_pos, right_pos],
+                    [(i + 1) * dy, (i + 1) * dy],
+                    color=color_neg,
+                    linestyle="--",
                     lw=2,
                 )
 
-            # Draw markers at roots
-            for root in sorted_roots:
-                root_pos = root_positions[root]
+        # Draw markers at ALL root positions
+        for root in breakpoints:
+            root_pos = root_positions[root]
+            y_pos = (i + 1) * dy
 
-                # Factor rows represent the factor itself, so at its roots it is 0.
-                # Poles (undefined values) are a property of the full function f(x)
-                # and should be rendered only on the f(x) row.
+            if root in factor_own_roots:
+                # Factor's own root → show "0"
                 plt.text(
                     x=root_pos,
-                    y=(i + 1) * dy,
+                    y=y_pos,
                     s=f"$0$",
                     fontsize=fontsize,
                     ha="center",
                     va="center",
                 )
+                factor_marker_positions.setdefault(root, []).append(y_pos)
+            else:
+                # Not the factor's root — check if factor is undefined here
+                sgn = _eval_sign_at(full_expr, x, root_numeric[root], subs)
+                if sgn is None:
+                    # Factor is undefined at this point → show "×"
+                    plt.text(
+                        x=root_pos + 0.005,
+                        y=y_pos,
+                        s=f"$\\times$",
+                        fontsize=fontsize,
+                        ha="center",
+                        va="center",
+                    )
+                    factor_marker_positions.setdefault(root, []).append(y_pos)
+
+    return factor_marker_positions
 
 
 def draw_function(
@@ -1061,28 +1095,32 @@ def draw_vertical_lines(
     ax,
     include_factors=True,
     dy=-1,
+    factor_marker_positions: Dict[Any, List[float]] | None = None,
 ):
     # Draw vertical lines to separate regions
     offset_dy = 0.2
 
     if include_factors:
-        # Collect y positions of zeros from factors
-        y_zeros_dict = {}
-        for i, factor in enumerate(factors):
-            # Handle both old format ("root") and new format ("roots")
-            factor_roots = (
-                factor.get("roots", [factor.get("root")])
-                if factor.get("root") is not None or factor.get("roots")
-                else []
-            )
+        # Collect y positions of markers from factors (both 0 and ×)
+        y_zeros_dict: Dict[Any, List[float]] = {}
 
-            for root in factor_roots:
-                if root != -np.inf:
-                    y_zero = (i + 1) * dy
-                    if root in y_zeros_dict:
-                        y_zeros_dict[root].append(y_zero)
-                    else:
-                        y_zeros_dict[root] = [y_zero]
+        if factor_marker_positions:
+            # Use pre-computed marker positions from draw_factors
+            for root, y_positions in factor_marker_positions.items():
+                y_zeros_dict.setdefault(root, []).extend(y_positions)
+        else:
+            # Fallback: compute from factor roots only (legacy behavior)
+            for i, factor in enumerate(factors):
+                factor_roots = (
+                    factor.get("roots", [factor.get("root")])
+                    if factor.get("root") is not None or factor.get("roots")
+                    else []
+                )
+                for root in factor_roots:
+                    if root != -np.inf:
+                        y_zero = (i + 1) * dy
+                        y_zeros_dict.setdefault(root, []).append(y_zero)
+
         # Add y position of zero from function
         y_function = (len(factors) + 1) * dy
     else:
@@ -1374,15 +1412,16 @@ def plot(
     plt.xticks(
         ticks=positions,
         labels=[
-            f"${sp.latex(root)}$" if not generic_labels else f"$x_{i + 1}$"
+            f"${sp.latex(root, ln_notation=True)}$" if not generic_labels else f"$x_{i + 1}$"
             for i, root in enumerate(roots)
         ],
         fontsize=fontsize,
     )
 
     # Draw factors
+    factor_marker_positions = None
     if include_factors:
-        draw_factors(
+        factor_marker_positions = draw_factors(
             f,
             factors,
             roots,
@@ -1431,7 +1470,14 @@ def plot(
     else:
         fig.set_size_inches(8, 2)
 
-    draw_vertical_lines(roots, root_positions, factors, ax, include_factors)
+    draw_vertical_lines(
+        roots,
+        root_positions,
+        factors,
+        ax,
+        include_factors,
+        factor_marker_positions=factor_marker_positions,
+    )
 
     plt.tight_layout()
 

@@ -579,14 +579,27 @@ div.answer > .admonition-title::before {
   }
 }
 
+/* Subtler hover for answer in light mode */
+[data-mode=light] div.answer.toggle > .admonition-title:hover {
+  box-shadow: inset 0 0 0 20px rgba(171, 86, 241, 0.04) !important;
+}
 
+@media (prefers-color-scheme: light) {
+  div.answer.toggle > .admonition-title:hover {
+    box-shadow: inset 0 0 0 20px rgba(171, 86, 241, 0.04) !important;
+  }
+}
 
+/* Slightly brighter hover for answer in dark mode */
+[data-mode=dark] div.answer.toggle > .admonition-title:hover {
+  box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0.02) !important;
+}
 
-
-
-
-
-
+@media (prefers-color-scheme: dark) {
+  div.answer.toggle > .admonition-title:hover {
+    box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0.02) !important;
+  }
+}
 
 
 /* Stil for løsningsforslag */
@@ -703,6 +716,28 @@ div.solution.solution-soft-locked > .admonition-title::after {
 @media (prefers-color-scheme: light) {
   div.solution {
     background-color: var(--admonition-background-color-light);
+  }
+}
+
+/* Subtler hover for solution in light mode */
+[data-mode=light] div.solution.toggle > .admonition-title:hover {
+  box-shadow: inset 0 0 0 20px rgba(171, 86, 241, 0.04) !important;
+}
+
+@media (prefers-color-scheme: light) {
+  div.solution.toggle > .admonition-title:hover {
+    box-shadow: inset 0 0 0 20px rgba(171, 86, 241, 0.04) !important;
+  }
+}
+
+/* Slightly brighter hover for solution in dark mode */
+[data-mode=dark] div.solution.toggle > .admonition-title:hover {
+  box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0.02) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  div.solution.toggle > .admonition-title:hover {
+    box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0.02) !important;
   }
 }
 

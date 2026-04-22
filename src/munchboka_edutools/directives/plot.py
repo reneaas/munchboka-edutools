@@ -3824,6 +3824,91 @@ class PlotDirective(SphinxDirective):
                         except Exception:
                             pass
 
+                # fill-between (draw before functions so curves overlay the fill)
+                if fill_between_vals:
+                    default_fb_color = plotmath.COLORS.get("blue")
+                    try:
+                        from matplotlib import colors as _mcolors_fb
+                    except Exception:
+                        _mcolors_fb = None
+                    for (
+                        f1_fb,
+                        f2_fb,
+                        dom_fb,
+                        exs_fb,
+                        col_fb,
+                        a_fb,
+                        where_fb,
+                    ) in fill_between_vals:
+                        x0_fb, x1_fb = dom_fb if dom_fb is not None else (xmin, xmax)
+                        try:
+                            x0_fb, x1_fb = float(x0_fb), float(x1_fb)
+                        except Exception:
+                            x0_fb, x1_fb = xmin, xmax
+                        if x1_fb < x0_fb:
+                            x0_fb, x1_fb = x1_fb, x0_fb
+                        N_fb = int(2**14)
+                        x_fb = np.linspace(x0_fb, x1_fb, N_fb)
+                        try:
+                            y1_fb = f1_fb(x_fb)
+                            y2_fb = f2_fb(x_fb)
+                        except Exception:
+                            continue
+                        y1_fb = np.asarray(y1_fb, dtype=float)
+                        y2_fb = np.asarray(y2_fb, dtype=float)
+                        y1_fb[~np.isfinite(y1_fb)] = np.nan
+                        y2_fb[~np.isfinite(y2_fb)] = np.nan
+
+                        # exclusions: blank a small window around each excluded x to prevent bridges
+                        exs_in_fb = [e for e in exs_fb if x0_fb < e < x1_fb]
+                        if exs_in_fb and N_fb > 1:
+                            dx_fb = (x1_fb - x0_fb) / (N_fb - 1)
+                            w_fb = max(4 * dx_fb, 1e-6 * (1.0 + max(abs(e) for e in exs_in_fb)))
+                            for e in exs_in_fb:
+                                try:
+                                    maskx = np.abs(x_fb - e) <= w_fb
+                                    if maskx.any():
+                                        y1_fb[maskx] = np.nan
+                                        y2_fb[maskx] = np.nan
+                                    j = int(np.argmin(np.abs(x_fb - e)))
+                                    for k in (j - 2, j - 1, j, j + 1, j + 2):
+                                        if 0 <= k < y1_fb.size:
+                                            y1_fb[k] = np.nan
+                                            y2_fb[k] = np.nan
+                                except Exception:
+                                    pass
+
+                        mask_fb = np.isfinite(y1_fb) & np.isfinite(y2_fb)
+                        where_mode = (where_fb or "all").strip().lower()
+                        if where_mode == "above":
+                            mask_fb = mask_fb & (y1_fb >= y2_fb)
+                        elif where_mode == "below":
+                            mask_fb = mask_fb & (y1_fb <= y2_fb)
+
+                        if col_fb:
+                            _mapped_fb = plotmath.COLORS.get(col_fb)
+                        else:
+                            _mapped_fb = None
+                        col_use_fb = (_mapped_fb if _mapped_fb else col_fb) or default_fb_color
+                        if _mcolors_fb is not None:
+                            try:
+                                _ = _mcolors_fb.to_rgba(col_use_fb)
+                            except Exception:
+                                col_use_fb = default_fb_color
+                        try:
+                            ax.fill_between(
+                                x_fb,
+                                y1_fb,
+                                y2_fb,
+                                where=mask_fb,
+                                interpolate=True,
+                                color=col_use_fb,
+                                alpha=float(a_fb) if a_fb is not None else 0.2,
+                                linewidth=0,
+                            )
+                        except Exception:
+                            pass
+
                 # Plot requested functions directly on ax, with optional labels, per-function domains, and exclusions
                 if functions:
                     import numpy as np
@@ -4059,91 +4144,6 @@ class PlotDirective(SphinxDirective):
                                 solid_capstyle="butt",
                                 zorder=10,
                             )
-
-                    # fill-between (draw before functions so curves overlay the fill)
-                    if "fill_between_vals" in locals() and fill_between_vals:
-                        default_fb_color = plotmath.COLORS.get("blue")
-                        try:
-                            from matplotlib import colors as _mcolors_fb
-                        except Exception:
-                            _mcolors_fb = None
-                        for (
-                            f1_fb,
-                            f2_fb,
-                            dom_fb,
-                            exs_fb,
-                            col_fb,
-                            a_fb,
-                            where_fb,
-                        ) in fill_between_vals:
-                            x0_fb, x1_fb = dom_fb if dom_fb is not None else (xmin, xmax)
-                            try:
-                                x0_fb, x1_fb = float(x0_fb), float(x1_fb)
-                            except Exception:
-                                x0_fb, x1_fb = xmin, xmax
-                            if x1_fb < x0_fb:
-                                x0_fb, x1_fb = x1_fb, x0_fb
-                            N_fb = int(2**14)
-                            x_fb = np.linspace(x0_fb, x1_fb, N_fb)
-                            try:
-                                y1_fb = f1_fb(x_fb)
-                                y2_fb = f2_fb(x_fb)
-                            except Exception:
-                                continue
-                            y1_fb = np.asarray(y1_fb, dtype=float)
-                            y2_fb = np.asarray(y2_fb, dtype=float)
-                            y1_fb[~np.isfinite(y1_fb)] = np.nan
-                            y2_fb[~np.isfinite(y2_fb)] = np.nan
-
-                            # exclusions: blank a small window around each excluded x to prevent bridges
-                            exs_in_fb = [e for e in exs_fb if x0_fb < e < x1_fb]
-                            if exs_in_fb and N_fb > 1:
-                                dx_fb = (x1_fb - x0_fb) / (N_fb - 1)
-                                w_fb = max(4 * dx_fb, 1e-6 * (1.0 + max(abs(e) for e in exs_in_fb)))
-                                for e in exs_in_fb:
-                                    try:
-                                        maskx = np.abs(x_fb - e) <= w_fb
-                                        if maskx.any():
-                                            y1_fb[maskx] = np.nan
-                                            y2_fb[maskx] = np.nan
-                                        j = int(np.argmin(np.abs(x_fb - e)))
-                                        for k in (j - 2, j - 1, j, j + 1, j + 2):
-                                            if 0 <= k < y1_fb.size:
-                                                y1_fb[k] = np.nan
-                                                y2_fb[k] = np.nan
-                                    except Exception:
-                                        pass
-
-                            mask_fb = np.isfinite(y1_fb) & np.isfinite(y2_fb)
-                            where_mode = (where_fb or "all").strip().lower()
-                            if where_mode == "above":
-                                mask_fb = mask_fb & (y1_fb >= y2_fb)
-                            elif where_mode == "below":
-                                mask_fb = mask_fb & (y1_fb <= y2_fb)
-
-                            if col_fb:
-                                _mapped_fb = plotmath.COLORS.get(col_fb)
-                            else:
-                                _mapped_fb = None
-                            col_use_fb = (_mapped_fb if _mapped_fb else col_fb) or default_fb_color
-                            if _mcolors_fb is not None:
-                                try:
-                                    _ = _mcolors_fb.to_rgba(col_use_fb)
-                                except Exception:
-                                    col_use_fb = default_fb_color
-                            try:
-                                ax.fill_between(
-                                    x_fb,
-                                    y1_fb,
-                                    y2_fb,
-                                    where=mask_fb,
-                                    interpolate=True,
-                                    color=col_use_fb,
-                                    alpha=float(a_fb) if a_fb is not None else 0.2,
-                                    linewidth=0,
-                                )
-                            except Exception:
-                                pass
 
                     any_label = False
                     for f, lbl, dom, exs, col_fun, endpoints in zip(

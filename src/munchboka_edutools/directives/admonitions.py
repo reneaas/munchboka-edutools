@@ -148,6 +148,18 @@ class ExerciseDirective(SphinxDirective):
         if aids_enabled:
             admonition_node["classes"].append("exercise-aids")
 
+        # Feature for future: difficulty levels based on option
+        # level = self.options.get("level")
+        # if level is not None:
+        #     if level == "1":
+        #         admonition_node["classes"].append("common")
+        #     elif level == "2":
+        #         admonition_node["classes"].append("rare")
+        #     elif level == "3":
+        #         admonition_node["classes"].append("epic")
+        #     elif level == "4":
+        #         admonition_node["classes"].append("legendary")
+
         # Create the title node
         title_node = nodes.title()
         parsed_title, _ = self.state.inline_text(title, self.lineno)

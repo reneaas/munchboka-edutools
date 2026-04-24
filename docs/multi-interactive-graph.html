@@ -493,7 +493,7 @@ xmax: 6
     <div class="multi-interactive-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, auto); gap: 10px; margin-bottom: 15px;">
         
             <div class="multi-interactive-item">
-                <img id="multi-interactive-img-64cb6ceb-0" 
+                <img id="multi-interactive-img-135341fd-0" 
                      class="adaptive-figure"
                      src="../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0010.svg" 
                      alt="Interactive graph 1"
@@ -503,7 +503,7 @@ xmax: 6
             
 
             <div class="multi-interactive-item">
-                <img id="multi-interactive-img-64cb6ceb-1" 
+                <img id="multi-interactive-img-135341fd-1" 
                      class="adaptive-figure"
                      src="../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0010.svg" 
                      alt="Interactive graph 2"
@@ -516,7 +516,7 @@ xmax: 6
         <div style="display: flex; align-items: center; gap: 10px; max-width: 600px; margin: 0 auto;">
             <span style="font-family: monospace; min-width: 40px; text-align: right; font-size: 14px;">0.00</span>
             <input type="range" 
-                   id="multi-interactive-slider-64cb6ceb"
+                   id="multi-interactive-slider-135341fd"
                    class="multi-interactive-slider"
                    min="0" 
                    max="20" 
@@ -526,7 +526,7 @@ xmax: 6
             <span style="font-family: monospace; min-width: 40px; text-align: left; font-size: 14px;">4.00</span>
         </div>
         <div style="margin-top: 10px; font-family: monospace; font-size: 16px; font-weight: bold;">
-            <span id="multi-interactive-value-64cb6ceb">a = 2.00</span>
+            <span id="multi-interactive-value-135341fd">a = 2.00</span>
         </div>
     </div>
 </div>
@@ -583,13 +583,13 @@ html[data-theme="dark"] .multi-interactive-item {
 (function() {
     const allFrames = [["../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0000.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0001.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0002.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0003.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0004.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0005.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0006.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0007.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0008.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0009.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0010.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0011.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0012.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0013.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0014.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0015.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0016.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0017.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0018.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0019.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_0/frame_0020.svg"],["../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0000.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0001.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0002.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0003.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0004.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0005.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0006.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0007.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0008.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0009.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0010.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0011.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0012.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0013.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0014.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0015.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0016.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0017.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0018.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0019.svg","../_static/multi_interactive/multi_interactive_c061ff265c71/graph_1/frame_0020.svg"]];
     const values = [0.0000000000,0.2000000000,0.4000000000,0.6000000000,0.8000000000,1.0000000000,1.2000000000,1.4000000000,1.6000000000,1.8000000000,2.0000000000,2.2000000000,2.4000000000,2.6000000000,2.8000000000,3.0000000000,3.2000000000,3.4000000000,3.6000000000,3.8000000000,4.0000000000];
-    const slider = document.getElementById('multi-interactive-slider-64cb6ceb');
-    const valueDisplay = document.getElementById('multi-interactive-value-64cb6ceb');
+    const slider = document.getElementById('multi-interactive-slider-135341fd');
+    const valueDisplay = document.getElementById('multi-interactive-value-135341fd');
     
     // Get all image elements
     const images = [];
     for (let i = 0; i < 2; i++) {
-        const img = document.getElementById('multi-interactive-img-64cb6ceb-' + i);
+        const img = document.getElementById('multi-interactive-img-135341fd-' + i);
         if (img) {
             images.push(img);
         }

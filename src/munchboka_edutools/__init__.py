@@ -6,7 +6,6 @@ import os
 import re
 from importlib.resources import files
 
-
 _EXERCISE_FENCE_COLON_RE = re.compile(r"^(\s*)(:{3,})\{exercise\}.*$")
 _EXERCISE_FENCE_BACKTICK_RE = re.compile(r"^(\s*)(`{3,})\{exercise\}.*$")
 _YAML_FENCE_RE = re.compile(r"^\s*---\s*$")
@@ -154,6 +153,7 @@ def _copy_static(app):
         _register("css/pairPuzzle/style.css")
         _register("css/escapeRoom/escape-room.css")
         _register("css/parsons/parsonsPuzzle.css")
+        _register("css/part.css")
         _register("css/print_pdf.css")  # Print-friendly PDF styles
 
         # Register JS files with explicit priorities to match matematikk_r1 loading order:

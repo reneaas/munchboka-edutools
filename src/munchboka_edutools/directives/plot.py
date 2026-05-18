@@ -293,7 +293,6 @@ from munchboka_edutools.directives._triangle import (
     triangle_side_label_text,
 )
 
-
 # ------------------------------------
 # Utilities
 # ------------------------------------
@@ -921,6 +920,7 @@ class PlotDirective(SphinxDirective):
         "grid": directives.unchanged,
         "xticks": directives.unchanged,
         "yticks": directives.unchanged,
+        "xtick-format": directives.unchanged,
         "lw": directives.unchanged,
         "alpha": directives.unchanged,
         "figsize": directives.unchanged,
@@ -1300,6 +1300,13 @@ class PlotDirective(SphinxDirective):
                 return default
             try:
                 return float(v)
+            except Exception:
+                pass
+            # Try SymPy for expressions like "pi/2", "2*pi", etc.
+            try:
+                import sympy as _sp
+
+                return float(_sp.sympify(str(v), locals={"pi": _sp.pi}))
             except Exception:
                 return default
 
@@ -5315,6 +5322,44 @@ class PlotDirective(SphinxDirective):
                 if isinstance(yticks_raw, str) and yticks_raw.strip().lower() == "off":
                     try:
                         ax.set_yticks([])
+                    except Exception:
+                        pass
+
+                # Apply pi-based x-tick formatter
+                xtick_format_raw = merged.get("xtick-format")
+                if isinstance(xtick_format_raw, str) and xtick_format_raw.strip().lower() == "pi":
+                    from fractions import Fraction
+                    from matplotlib.ticker import FuncFormatter, MultipleLocator
+
+                    def _pi_label(val, pos):
+                        if abs(val) < 1e-9:
+                            return ""
+                        # Snap to nearest rational multiple of pi (denominator ≤ 16)
+                        frac = Fraction(val / math.pi).limit_denominator(16)
+                        n, d = frac.numerator, frac.denominator
+                        if n == 0:
+                            return ""
+                        if use_usetex:
+                            # LaTeX label: e.g. $-2\pi$, $\displaystyle\frac{3\pi}{2}$
+                            sign = "-" if n < 0 else ""
+                            an = abs(n)
+                            pi_str = r"\pi"
+                            coeff = "" if an == 1 else str(an)
+                            if d == 1:
+                                return f"${sign}{coeff}{pi_str}$"
+                            return rf"$\displaystyle{sign}\frac{{{coeff}{pi_str}}}{{{d}}}$"
+                        else:
+                            # Unicode label: e.g. -2π, 3π/2
+                            if abs(n) == 1:
+                                num_str = "-π" if n == -1 else "π"
+                            else:
+                                num_str = f"{n}π"
+                            return num_str if d == 1 else f"{num_str}/{d}"
+
+                    try:
+                        ax.xaxis.set_major_formatter(FuncFormatter(_pi_label))
+                        # If xstep was set, use it as the tick locator base
+                        ax.xaxis.set_major_locator(MultipleLocator(xstep))
                     except Exception:
                         pass
 

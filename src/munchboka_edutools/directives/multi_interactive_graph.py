@@ -39,6 +39,8 @@ import shutil
 import tempfile
 from typing import Any, Dict, List, Tuple
 
+from tqdm import tqdm
+
 from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
@@ -51,6 +53,7 @@ from .animate import (
     _parse_bool,
     _substitute_variable,
 )
+from .svg_delta import compute_svg_deltas, save_delta_format
 
 
 class MultiInteractiveGraphDirective(SphinxDirective):
@@ -63,6 +66,7 @@ class MultiInteractiveGraphDirective(SphinxDirective):
 
     option_spec = {
         "interactive-var": directives.unchanged,
+        "interactive-var-start": directives.unchanged,
         "rows": directives.unchanged,
         "cols": directives.unchanged,
         "width": directives.unchanged,
@@ -134,24 +138,26 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         )
         base_name = f"multi_interactive_{hash_key}"
 
-        # Create frame directories for each graph
+        # Create delta asset directories for each graph panel
         frame_dirs = []
         for i in range(len(graph_blocks)):
             frame_dir = os.path.join(static_dir, base_name, f"graph_{i}")
             frame_dirs.append(frame_dir)
 
+        def _delta_assets_exist(d: str) -> bool:
+            return os.path.isfile(os.path.join(d, "base.svg")) and os.path.isfile(
+                os.path.join(d, "deltas.json")
+            )
+
         # Check if regeneration needed
         nocache = "nocache" in merged_options
-        all_frames_exist = all(
-            os.path.isdir(d) and len(os.listdir(d)) == len(var_values) for d in frame_dirs
-        )
+        all_frames_exist = all(_delta_assets_exist(d) for d in frame_dirs)
         regenerate = nocache or not all_frames_exist
 
         if regenerate:
             try:
-                # Generate frames for all graphs
-                self._generate_all_frames(
-                    app,
+                # Generate delta assets for all graph panels
+                self._generate_all_frames_delta(
                     var_name,
                     var_values,
                     graph_blocks,
@@ -169,7 +175,7 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         for frame_dir in frame_dirs:
             env.note_dependency(frame_dir)
 
-        # Copy frames to build output
+        # Copy delta assets to build output
         try:
             build_base_dir = os.path.join(app.outdir, "_static", "multi_interactive", base_name)
             os.makedirs(os.path.dirname(build_base_dir), exist_ok=True)
@@ -182,8 +188,8 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         except Exception:
             pass  # Non-fatal if copy fails during build
 
-        # Generate HTML output with synchronized slider
-        html_content = self._generate_html(
+        # Generate HTML output with synchronized slider using delta engine
+        html_content = self._generate_html_delta(
             base_name,
             var_name,
             var_values,
@@ -348,34 +354,33 @@ class MultiInteractiveGraphDirective(SphinxDirective):
             # Fall back to middle if parsing fails
             return len(var_values) // 2
 
-    def _generate_all_frames(
+    def _generate_all_frames_delta(
         self,
-        app: Sphinx,
         var_name: str,
         var_values: List[float],
         graph_blocks: List[List[str]],
         frame_dirs: List[str],
     ) -> None:
-        """Generate frames for all graphs.
+        """Generate delta assets (base.svg + deltas.json) for each graph panel.
 
-        Args:
-            app: Sphinx application
-            var_name: Variable name
-            var_values: List of values
-            graph_blocks: List of content blocks
-            frame_dirs: List of output directories
+        For each panel we render all N frames, compute SVG deltas, and write
+        ``base.svg`` + ``deltas.json`` using the same engine as
+        ``interactive-graph``.  This typically reduces storage from
+        O(N × frame_size) to O(frame_size + N × delta_size).
         """
         from docutils.statemachine import StringList
+        from sphinx.util import logging
 
         from .plot import PlotDirective
 
-        # Generate frames for each graph
+        logger = logging.getLogger(__name__)
+
         for graph_idx, (content_lines, frame_dir) in enumerate(zip(graph_blocks, frame_dirs)):
             os.makedirs(frame_dir, exist_ok=True)
 
             internal_plot_name = f"__{os.path.basename(frame_dir)}_plot_tmp"
 
-            def _render_svg(frame_content: str) -> str:
+            def _render_svg(frame_content: str, _name: str = internal_plot_name) -> str:
                 plot_directive = PlotDirective(
                     name="plot",
                     arguments=[],
@@ -389,12 +394,12 @@ class MultiInteractiveGraphDirective(SphinxDirective):
                 )
                 plot_directive.options["nocache"] = None
                 plot_directive.options["internal"] = None
-                plot_directive.options["internal-name"] = internal_plot_name
+                plot_directive.options["internal-name"] = _name
 
                 rendered_nodes = plot_directive.run()
                 svg_text: str | None = None
                 for top in rendered_nodes:
-                    for raw in top.traverse(nodes.raw):
+                    for raw in top.findall(nodes.raw):
                         txt = raw.astext()
                         if "<svg" in txt:
                             svg_text = txt
@@ -405,41 +410,22 @@ class MultiInteractiveGraphDirective(SphinxDirective):
                     raise ValueError("PlotDirective did not return inline SVG")
                 return svg_text
 
-            # Generate each frame as SVG
-            for i, value in enumerate(var_values):
-                # Substitute variable in content
+            # Render all frames for this panel
+            svg_frames: List[str] = []
+            desc = f"multi-interactive-graph panel {graph_idx + 1}/{len(graph_blocks)}"
+            for value in tqdm(var_values, desc=desc, unit="frame", leave=False):
                 frame_content = "\n".join(content_lines)
                 frame_content = _substitute_variable(frame_content, var_name, value)
+                svg_frames.append(_render_svg(frame_content))
 
-                svg_path = os.path.join(frame_dir, f"frame_{i:04d}.svg")
-
-                svg_content = _render_svg(frame_content)
-
-                with open(svg_path, "w", encoding="utf-8") as f:
-                    f.write(svg_content)
-
-                # Make SVG IDs unique by adding frame and graph index prefix
-                with open(svg_path, "r", encoding="utf-8") as f:
-                    svg_content = f.read()
-
-                # Add unique prefix to all IDs to avoid conflicts
-                import uuid
-
-                unique_prefix = f"g{graph_idx}f{i:04d}_{uuid.uuid4().hex[:6]}_"
-                svg_content = re.sub(
-                    r'id="([^"]+)"', lambda m: f'id="{unique_prefix}{m.group(1)}"', svg_content
-                )
-                svg_content = re.sub(
-                    r"url\(#([^)]+)\)", lambda m: f"url(#{unique_prefix}{m.group(1)})", svg_content
-                )
-                svg_content = re.sub(
-                    r'href="#([^"]+)"',
-                    lambda m: f'href="#{unique_prefix}{m.group(1)}"',
-                    svg_content,
-                )
-
-                with open(svg_path, "w", encoding="utf-8") as f:
-                    f.write(svg_content)
+            # Compute and store deltas
+            logger.info(f"  {desc}: computing SVG deltas")
+            base_svg, deltas = compute_svg_deltas(svg_frames)
+            save_delta_format(base_svg, deltas, frame_dir)
+            logger.info(
+                f"  ✓ {desc}: {len(var_values)} frames → base.svg + deltas.json "
+                f"(saved to {frame_dir})"
+            )
 
     def _parse_graph_content(self, content_lines: List[str]) -> Dict[str, Any]:
         """Parse graph content to extract options.
@@ -461,7 +447,7 @@ class MultiInteractiveGraphDirective(SphinxDirective):
 
         return options
 
-    def _generate_html(
+    def _generate_html_delta(
         self,
         base_name: str,
         var_name: str,
@@ -471,19 +457,10 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         cols: int,
         options: Dict[str, Any],
     ) -> str:
-        """Generate HTML with synchronized slider.
+        """Generate HTML for multi-panel delta-based interactive graph.
 
-        Args:
-            base_name: Base name for frame directories
-            var_name: Variable name
-            var_values: List of values
-            num_graphs: Number of graphs
-            rows: Number of rows
-            cols: Number of columns
-            options: Directive options
-
-        Returns:
-            HTML string
+        Each panel has its own inline SVG container driven by the shared delta
+        engine; only one slider is rendered and controls all panels in sync.
         """
         import uuid
 
@@ -496,70 +473,50 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         initial_idx = self._get_initial_frame_index(var_values, options)
         initial_value = var_values[initial_idx]
 
-        # Calculate relative path based on document depth (same as interactive_graph)
         docname = self.env.docname
         depth = docname.count("/")
         rel_prefix = "../" * depth
 
-        # Generate frame paths for all graphs
-        all_frame_paths = []
-        for graph_idx in range(num_graphs):
-            frame_paths = [
-                f"{rel_prefix}_static/multi_interactive/{base_name}/graph_{graph_idx}/frame_{i:04d}.svg"
-                for i in range(len(var_values))
-            ]
-            all_frame_paths.append(frame_paths)
-
-        # JavaScript arrays for all graphs
-        frames_arrays_js = (
+        # URLs for base SVG and deltas per panel
+        base_svg_urls_js = (
             "["
-            + ",".join("[" + ",".join(f'"{p}"' for p in paths) + "]" for paths in all_frame_paths)
+            + ",".join(
+                f'"{rel_prefix}_static/multi_interactive/{base_name}/graph_{i}/base.svg"'
+                for i in range(num_graphs)
+            )
+            + "]"
+        )
+        deltas_urls_js = (
+            "["
+            + ",".join(
+                f'"{rel_prefix}_static/multi_interactive/{base_name}/graph_{i}/deltas.json"'
+                for i in range(num_graphs)
+            )
             + "]"
         )
 
         values_js = "[" + ",".join(f"{v:.10f}" for v in var_values) + "]"
 
-        # Add preload hints for initial frames and nearby frames for faster loading
-        preload_links = []
-        for frame_idx in range(max(0, initial_idx - 3), min(len(var_values), initial_idx + 4)):
-            for graph_idx in range(num_graphs):
-                preload_links.append(
-                    f'<link rel="preload" as="image" href="{all_frame_paths[graph_idx][frame_idx]}">'
-                )
-        preload_html = "\n".join(preload_links)
+        # Build SVG container divs for each panel
+        grid_items = "\n".join(f"""            <div class="multi-interactive-item">
+                <div id="multi-svg-container-{unique_id}-{i}" class="adaptive-figure" style="width: 100%; display: block;"></div>
+            </div>""" for i in range(num_graphs))
 
-        # Generate grid of images
-        grid_items = []
-        for graph_idx in range(num_graphs):
-            grid_items.append(
-                f"""
-            <div class="multi-interactive-item">
-                <img id="multi-interactive-img-{unique_id}-{graph_idx}" 
-                     class="adaptive-figure"
-                     src="{all_frame_paths[graph_idx][initial_idx]}" 
-                     alt="Interactive graph {graph_idx + 1}"
-                     style="width: 100%; height: {height}; display: block;"
-                     loading="eager">
-            </div>
-            """
-            )
+        svg_height_css = f"; height: {height}" if height and height != "auto" else ""
 
-        grid_html = "\n".join(grid_items)
-
-        html = f"""
-{preload_html}
+        return f"""
 <div class="multi-interactive-container" style="width: {width}; margin: 0 auto;">
     <div class="multi-interactive-grid" style="display: grid; grid-template-columns: repeat({cols}, 1fr); grid-template-rows: repeat({rows}, auto); gap: 10px; margin-bottom: 15px;">
-        {grid_html}
+{grid_items}
     </div>
     <div class="multi-interactive-controls" style="padding: 15px 10px; text-align: center; border-top: 1px solid #ddd;">
         <div style="display: flex; align-items: center; gap: 10px; max-width: 600px; margin: 0 auto;">
             <span style="font-family: monospace; min-width: 40px; text-align: right; font-size: 14px;">{var_min:.2f}</span>
-            <input type="range" 
+            <input type="range"
                    id="multi-interactive-slider-{unique_id}"
                    class="multi-interactive-slider"
-                   min="0" 
-                   max="{len(var_values) - 1}" 
+                   min="0"
+                   max="{len(var_values) - 1}"
                    value="{initial_idx}"
                    step="1"
                    style="flex: 1; cursor: pointer; -webkit-appearance: none; appearance: none; height: 8px; border-radius: 5px; background: #ddd; outline: none; pointer-events: auto; z-index: 100; position: relative;">
@@ -582,7 +539,6 @@ class MultiInteractiveGraphDirective(SphinxDirective):
     cursor: pointer;
     pointer-events: auto;
 }}
-
 .multi-interactive-slider::-moz-range-thumb {{
     width: 20px;
     height: 20px;
@@ -592,19 +548,8 @@ class MultiInteractiveGraphDirective(SphinxDirective):
     pointer-events: auto;
     border: none;
 }}
-
-.multi-interactive-slider:hover {{
-    opacity: 1;
-}}
-
-.multi-interactive-slider:active::-webkit-slider-thumb {{
-    background: #1976D2;
-}}
-
-.multi-interactive-slider:active::-moz-range-thumb {{
-    background: #1976D2;
-}}
-
+.multi-interactive-slider:active::-webkit-slider-thumb {{ background: #1976D2; }}
+.multi-interactive-slider:active::-moz-range-thumb  {{ background: #1976D2; }}
 .multi-interactive-item {{
     border: 1px solid var(--pst-color-border, #e0e0e0);
     border-radius: 8px;
@@ -612,8 +557,6 @@ class MultiInteractiveGraphDirective(SphinxDirective):
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     background: transparent;
 }}
-
-/* Dark mode adjustments */
 html[data-theme="dark"] .multi-interactive-item {{
     box-shadow: 0 2px 4px rgba(255,255,255,0.05);
 }}
@@ -621,124 +564,284 @@ html[data-theme="dark"] .multi-interactive-item {{
 
 <script>
 (function() {{
-    const allFrames = {frames_arrays_js};
-    const values = {values_js};
-    const slider = document.getElementById('multi-interactive-slider-{unique_id}');
-    const valueDisplay = document.getElementById('multi-interactive-value-{unique_id}');
-    
-    // Get all image elements
-    const images = [];
-    for (let i = 0; i < {num_graphs}; i++) {{
-        const img = document.getElementById('multi-interactive-img-{unique_id}-' + i);
-        if (img) {{
-            images.push(img);
-        }}
+    const uid = '{unique_id}';
+    const allBaseSvgUrls = {base_svg_urls_js};
+    const allDeltasUrls  = {deltas_urls_js};
+    const values   = {values_js};
+    const varName  = '{var_name}';
+    const numPanels = {num_graphs};
+
+    const slider       = document.getElementById('multi-interactive-slider-' + uid);
+    const valueDisplay = document.getElementById('multi-interactive-value-' + uid);
+
+    if (!slider) return;
+
+    // ── per-panel state objects ──────────────────────────────────────────────
+    const panels = allBaseSvgUrls.map(function(_, i) {{
+        return {{
+            container:        document.getElementById('multi-svg-container-' + uid + '-' + i),
+            svgDoc:           null,
+            baseSvgTemplate:  null,
+            svgElements:      {{}},
+            baseElementsById: {{}},
+            baseOuterHtmlById:{{}},
+            deltas:           null,
+            lastFrameIndex:   null,
+        }};
+    }});
+
+    // ── helpers (applied per-panel) ──────────────────────────────────────────
+    function styleSvg(svg) {{
+        if (!svg) return;
+        try {{ svg.removeAttribute('width');  }} catch(e) {{}}
+        try {{ svg.removeAttribute('height'); }} catch(e) {{}}
+        try {{ svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); }} catch(e) {{}}
+        svg.style.width  = '100%';
+        const h = '{height}';
+        svg.style.height  = (h && h !== 'auto') ? h : 'auto';
+        svg.style.display = 'block';
+        svg.style.shapeRendering = 'geometricPrecision';
+        svg.style.textRendering  = 'geometricPrecision';
+        svg.classList.add('adaptive-figure');
     }}
-    
-    if (!slider || !valueDisplay || images.length === 0) {{
-        return;
+
+    function buildElementCache(p) {{
+        if (!p.svgDoc) return;
+        p.svgElements = {{}};
+        p.svgDoc.querySelectorAll('[id]').forEach(function(el) {{
+            p.svgElements[el.id] = el;
+        }});
     }}
-    
-    function updateFrames() {{
-        const index = parseInt(slider.value);
-        
-        // Update all images
-        for (let i = 0; i < images.length; i++) {{
-            images[i].src = allFrames[i][index];
-        }}
-        
-        valueDisplay.textContent = '{var_name} = ' + values[index].toFixed(2);
+
+    function buildBaseCache(p) {{
+        if (!p.baseSvgTemplate) return;
+        p.baseElementsById  = {{}};
+        p.baseOuterHtmlById = {{}};
+        p.baseSvgTemplate.querySelectorAll('[id]').forEach(function(el) {{
+            p.baseElementsById[el.id] = el;
+            try {{ p.baseOuterHtmlById[el.id] = el.outerHTML; }} catch(e) {{}}
+        }});
     }}
-    
-    // Preload images with priority
-    const preloadedFrames = new Set();
-    
-    function preloadFrame(index) {{
-        if (preloadedFrames.has(index) || index < 0 || index >= allFrames[0].length) return;
-        preloadedFrames.add(index);
-        // Preload all graph frames for this index
-        for (let graphIdx = 0; graphIdx < allFrames.length; graphIdx++) {{
-            const img = new Image();
-            img.src = allFrames[graphIdx][index];
-        }}
+
+    function mountFreshBase(p) {{
+        if (!p.baseSvgTemplate || !p.container) return;
+        const fresh = p.baseSvgTemplate.cloneNode(true);
+        p.container.innerHTML = '';
+        p.container.appendChild(fresh);
+        p.svgDoc = fresh;
+        styleSvg(p.svgDoc);
+        buildElementCache(p);
     }}
-    
-    function preloadNearbyFrames(currentIdx, radius) {{
-        for (let offset = 0; offset <= radius; offset++) {{
-            if (offset === 0) {{
-                preloadFrame(currentIdx);
-            }} else {{
-                preloadFrame(currentIdx + offset);
-                preloadFrame(currentIdx - offset);
+
+    function parseNsAttr(attr) {{
+        if (!attr || attr.length < 3) return null;
+        const LB = 123, RB = 125;
+        if (attr.charCodeAt(0) !== LB) return null;
+        if (attr.length >= 4 && attr.charCodeAt(1) === LB) {{
+            for (let i = 2; i < attr.length - 1; i++) {{
+                if (attr.charCodeAt(i) === RB && attr.charCodeAt(i+1) === RB) {{
+                    const ns = attr.slice(2, i), local = attr.slice(i+2);
+                    return (ns && local) ? {{ns, local}} : null;
+                }}
             }}
+            return null;
         }}
+        const close = attr.indexOf(String.fromCharCode(RB));
+        if (close <= 1) return null;
+        const ns = attr.slice(1, close), local = attr.slice(close+1);
+        return (ns && local) ? {{ns, local}} : null;
     }}
-    
-    function preloadAllFrames() {{
-        const currentIdx = parseInt(slider.value);
-        const total = allFrames[0].length;
-        let loaded = 0;
-        const batchSize = 5;
-        
-        function loadBatch() {{
-            for (let i = 0; i < batchSize && loaded < total; i++) {{
-                const offset = Math.floor(loaded / 2) + 1;
-                const idx = loaded % 2 === 0 
-                    ? (currentIdx + offset) % total
-                    : (currentIdx - offset + total) % total;
-                preloadFrame(idx);
-                loaded++;
+
+    function replaceOuterHtml(existingElem, outerHtml) {{
+        try {{
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(
+                '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' + outerHtml + '</svg>',
+                'image/svg+xml');
+            const err = doc.querySelector('parsererror');
+            if (err) return false;
+            const repl = doc.documentElement.firstElementChild;
+            if (!repl) return false;
+            existingElem.replaceWith(document.importNode(repl, true));
+            return true;
+        }} catch(e) {{ return false; }}
+    }}
+
+    function revertToBase(p) {{
+        if (p.lastFrameIndex === null || !p.deltas) return;
+        const entry = p.deltas[p.lastFrameIndex] || {{}};
+        if (Object.prototype.hasOwnProperty.call(entry, 'fullSvg')) {{
+            mountFreshBase(p); p.lastFrameIndex = null; return;
+        }}
+        let needReset = false, didReplace = false;
+        for (const [id, changes] of Object.entries(entry.changes || {{}})) {{
+            const live = p.svgElements[id], base = p.baseElementsById[id];
+            if (!live || !base) {{ needReset = true; break; }}
+            if (Object.prototype.hasOwnProperty.call(changes, 'outerHTML')) {{
+                const baseOuter = p.baseOuterHtmlById[id];
+                if (!baseOuter || !replaceOuterHtml(live, baseOuter)) {{ needReset = true; break; }}
+                didReplace = true; continue;
             }}
-            
-            if (loaded < total) {{
-                if (window.requestIdleCallback) {{
-                    requestIdleCallback(loadBatch, {{ timeout: 1000 }});
+            for (const attr of Object.keys(changes)) {{
+                if (attr === 'textContent') {{
+                    live.textContent = base.textContent || '';
+                }} else if (attr === 'tailContent') {{
+                    // skip
                 }} else {{
-                    setTimeout(loadBatch, 50);
+                    const ns = parseNsAttr(attr);
+                    const bv = ns ? base.getAttributeNS(ns.ns, ns.local) : base.getAttribute(attr);
+                    if (bv === null) {{ ns ? live.removeAttributeNS(ns.ns, ns.local) : live.removeAttribute(attr); }}
+                    else            {{ ns ? live.setAttributeNS(ns.ns, ns.local, bv) : live.setAttribute(attr, bv); }}
                 }}
             }}
         }}
-        
-        loadBatch();
+        if (needReset) {{ mountFreshBase(p); }}
+        else if (didReplace) {{ buildElementCache(p); }}
+        p.lastFrameIndex = null;
     }}
-    
-    // Initialize preloading
-    function initializeGraphs() {{
-        updateFrames();
-        const currentIdx = parseInt(slider.value);
-        preloadNearbyFrames(currentIdx, 10);
-        setTimeout(preloadAllFrames, 100);
+
+    function applyDelta(p, frameIndex) {{
+        if (!p.deltas || frameIndex < 0 || frameIndex >= p.deltas.length) return;
+        const delta = p.deltas[frameIndex];
+        if (Object.prototype.hasOwnProperty.call(delta, 'fullSvg')) {{
+            try {{
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(delta.fullSvg, 'image/svg+xml');
+                const err = doc.querySelector('parsererror');
+                if (err) throw new Error(err.textContent || 'SVG parse error');
+                const svgEl = doc.documentElement;
+                if (!svgEl || svgEl.localName !== 'svg') throw new Error('No SVG element');
+                const imp = document.importNode(svgEl, true);
+                p.container.innerHTML = '';
+                p.container.appendChild(imp);
+                p.svgDoc = imp;
+                styleSvg(p.svgDoc);
+                buildElementCache(p);
+            }} catch(e) {{ mountFreshBase(p); }}
+            return;
+        }}
+        let didReplace = false;
+        for (const [id, changes] of Object.entries(delta.changes || {{}})) {{
+            const elem = p.svgElements[id];
+            if (!elem) continue;
+            for (const [attr, value] of Object.entries(changes)) {{
+                if (attr === 'outerHTML') {{
+                    if (replaceOuterHtml(elem, value)) didReplace = true;
+                }} else if (attr === 'textContent') {{
+                    elem.textContent = value;
+                }} else if (attr === 'tailContent') {{
+                    // skip
+                }} else if (value === null) {{
+                    const ns = parseNsAttr(attr);
+                    ns ? elem.removeAttributeNS(ns.ns, ns.local) : elem.removeAttribute(attr);
+                }} else {{
+                    const ns = parseNsAttr(attr);
+                    ns ? elem.setAttributeNS(ns.ns, ns.local, value) : elem.setAttribute(attr, value);
+                }}
+            }}
+        }}
+        if (didReplace) buildElementCache(p);
     }}
-    
-    function onSliderChange() {{
-        updateFrames();
-        const currentIdx = parseInt(slider.value);
-        preloadNearbyFrames(currentIdx, 5);
+
+    function renderFrame(p, frameIndex) {{
+        if (!p.svgDoc || !p.deltas || !p.baseSvgTemplate) return;
+        if (!p.svgElements || Object.keys(p.svgElements).length === 0) buildElementCache(p);
+        if (!p.baseElementsById || Object.keys(p.baseElementsById).length === 0) buildBaseCache(p);
+        if (p.lastFrameIndex !== null) revertToBase(p);
+        applyDelta(p, frameIndex);
+        p.lastFrameIndex = frameIndex;
     }}
-    
-    slider.addEventListener('input', updateFrames);
-    slider.addEventListener('change', onSliderChange);
-    slider.addEventListener('touchmove', updateFrames);
-    
-    // Keyboard navigation
+
+    // ── value display ─────────────────────────────────────────────────────────
+    function updateValueDisplay(index) {{
+        const v    = values[index];
+        const vStr = (typeof v === 'number') ? v.toFixed(2) : String(v);
+        if (window.katex && valueDisplay) {{
+            try {{
+                valueDisplay.innerHTML = window.katex.renderToString(
+                    varName + ' = ' + vStr, {{throwOnError: false, displayMode: false}});
+                return;
+            }} catch(e) {{}}
+        }}
+        if (valueDisplay) valueDisplay.textContent = varName + ' = ' + vStr;
+    }}
+
+    // ── slider logic ──────────────────────────────────────────────────────────
+    let pendingFrame = null;
+    function updateAllFrames() {{
+        const index = parseInt(slider.value);
+        if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+        pendingFrame = requestAnimationFrame(function() {{
+            panels.forEach(function(p) {{ renderFrame(p, index); }});
+            updateValueDisplay(index);
+            pendingFrame = null;
+        }});
+    }}
+
+    slider.addEventListener('input',     updateAllFrames);
+    slider.addEventListener('change',    updateAllFrames);
+    slider.addEventListener('touchmove', updateAllFrames);
     slider.addEventListener('keydown', function(e) {{
         if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {{
             e.preventDefault();
             this.value = Math.max(0, parseInt(this.value) - 1);
-            updateFrames();
+            updateAllFrames();
         }} else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {{
             e.preventDefault();
             this.value = Math.min({len(var_values) - 1}, parseInt(this.value) + 1);
-            updateFrames();
+            updateAllFrames();
         }}
     }});
-    
-    // Start initialization
-    initializeGraphs();
+
+    // ── load all panels then render initial frame ─────────────────────────────
+    function initPanel(p, baseUrl, deltasUrl) {{
+        return Promise.all([
+            fetch(baseUrl).then(function(r) {{
+                if (!r.ok) throw new Error('Failed to load base SVG: ' + r.status);
+                return r.text();
+            }}),
+            fetch(deltasUrl).then(function(r) {{
+                if (!r.ok) throw new Error('Failed to load deltas JSON: ' + r.status);
+                return r.json();
+            }})
+        ]).then(function(results) {{
+            let svgText   = results[0];
+            const deltasData = results[1];
+            svgText = svgText.replace(/<\?xml[^?]*\?>/g, '');
+            svgText = svgText.replace(/<!DOCTYPE[^>]*>/g, '');
+            svgText = svgText.replace(/<metadata>[\s\S]*?<\/metadata>/g, '');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgText, 'image/svg+xml');
+            const parserError = doc.querySelector('parsererror');
+            if (parserError) throw new Error('Failed to parse base.svg as SVG XML');
+            const svgElement = doc.documentElement;
+            if (!svgElement || svgElement.localName !== 'svg')
+                throw new Error('No SVG element found in base.svg');
+            const imported = document.importNode(svgElement, true);
+            p.container.innerHTML = '';
+            p.container.appendChild(imported);
+            p.svgDoc = imported;
+            p.deltas = deltasData;
+            styleSvg(p.svgDoc);
+            p.baseSvgTemplate = imported.cloneNode(true);
+            buildElementCache(p);
+            buildBaseCache(p);
+        }}).catch(function(err) {{
+            if (p.container)
+                p.container.innerHTML = '<p style="color:red;padding:10px;">Failed to load panel: ' + err.message + '</p>';
+        }});
+    }}
+
+    Promise.all(panels.map(function(p, i) {{
+        return initPanel(p, allBaseSvgUrls[i], allDeltasUrls[i]);
+    }})).then(function() {{
+        const index = parseInt(slider.value);
+        panels.forEach(function(p) {{ renderFrame(p, index); }});
+        updateValueDisplay(index);
+    }});
 }})();
 </script>
 """
-        return html
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:

@@ -55,6 +55,7 @@ chapters:
   - file: docs/timed-quiz.md
   - file: docs/timedquiz.md
   - file: docs/turtle.md
+  - file: docs/dev.md
   # - file: test_function_domains.md
   # - file: examples/plot.md
   # - file: examples/animate.md

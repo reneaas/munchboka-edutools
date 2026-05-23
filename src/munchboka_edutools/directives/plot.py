@@ -4423,7 +4423,7 @@ class PlotDirective(SphinxDirective):
                                 else:
                                     _mapped = None
                                 col_use = (_mapped if _mapped else col_a) or default_arc_color
-                                ax.plot(xs, ys, lw=1, color=col_use, linestyle=ls_use)
+                                ax.plot(xs, ys, lw=lw, color=col_use, linestyle=ls_use)
                             except Exception:
                                 pass
 

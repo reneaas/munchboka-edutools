@@ -333,9 +333,9 @@ def _base_options(options: Dict[str, str], eval_num: Callable[[str], float]) -> 
         "angle_color": options.get("angle-color"),
         "label_color": options.get("label-color"),
         "line_width": float(eval_num(options["lw"])) if "lw" in options else None,
-        "angle_radius_px": float(eval_num(options.get("angle-radius", "25"))),
+        "angle_radius_px": float(eval_num(options.get("angle-radius", "40"))),
         "label_offset_px": float(
-            eval_num(options.get("side-offset", options.get("label-offset", "12")))
+            eval_num(options.get("side-offset", options.get("label-offset", "30")))
         ),
         "side_format": options.get("side-format", "g").strip() or "g",
         "side_format_explicit": "side-format" in options,
@@ -343,10 +343,10 @@ def _base_options(options: Dict[str, str], eval_num: Callable[[str], float]) -> 
         "corner_labels": corner_labels,
         "angle_text": angle_text,
         "corner_label_offset_px": float(
-            eval_num(options.get("corner-offset", options.get("corner-label-offset", "12")))
+            eval_num(options.get("corner-offset", options.get("corner-label-offset", "16")))
         ),
         "angle_text_offset_px": float(
-            eval_num(options.get("angle-offset", options.get("angle-text-offset", "18")))
+            eval_num(options.get("angle-offset", options.get("angle-text-offset", "30")))
         ),
     }
 

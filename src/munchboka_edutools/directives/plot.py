@@ -832,7 +832,10 @@ def _rewrite_ids(txt: str, prefix: str) -> str:
 
 def _safe_literal(val: str):
     try:
-        return ast.literal_eval(val)
+        import warnings as _warnings
+        with _warnings.catch_warnings():
+            _warnings.simplefilter("ignore", SyntaxWarning)
+            return ast.literal_eval(val)
     except Exception:
         return None
 

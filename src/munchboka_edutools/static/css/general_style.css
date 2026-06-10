@@ -72,3 +72,17 @@ svg.graph-inline-svg.no-invert,
 [data-mode="auto"] .adaptive-figure.no-invert svg {
   filter: invert(0%) hue-rotate(0deg) !important;
 }
+
+
+h2 {
+    margin-top: 3rem;
+
+    padding: 0.75rem 1rem;
+
+    background: #0d48a108;
+
+    /* border-left: 6px solid var(--pst-color-primary); */
+    border: 4px solid #0d48a134;
+    border-radius: 0.7rem;
+
+}

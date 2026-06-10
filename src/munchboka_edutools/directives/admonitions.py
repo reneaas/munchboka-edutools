@@ -8,10 +8,13 @@ Directives included:
 - answer: For showing answers to problems (with dropdown option)
 - example: For worked examples
 - exercise: For exercise problems
+- exercise-2: Styled h2 heading to mark exercise boundaries (no content)
 - explore: For exploratory activities
 - goals: For learning objectives/goals
 - hints: For providing hints (with dropdown option)
 - solution: For full solutions (with dropdown option, default on)
+- solution-2: Inline non-admonition solution reveal (clickable button, full parent width)
+- answer-2: Inline non-admonition answer reveal (clickable button, full parent width)
 - summary: For chapter/section summaries
 - theory: For theoretical content
 
@@ -22,8 +25,18 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def _slugify(text):
+    """Convert a heading title to a URL-safe id attribute value."""
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s-]', '', text)
+    text = re.sub(r'[\s_]+', '-', text)
+    text = re.sub(r'^-+|-+$', '', text)
+    return text or 'heading'
 
 
 class AnswerDirective(SphinxDirective):
@@ -170,6 +183,33 @@ class ExerciseDirective(SphinxDirective):
         self.state.nested_parse(self.content, self.content_offset, admonition_node)
 
         return [admonition_node]
+
+
+class Exercise2Directive(SphinxDirective):
+    """
+    Exercise-2 directive: a styled h2-level heading that marks where an exercise begins.
+
+    Emits raw HTML instead of an admonition so it sits flush with the page
+    width and doesn't add a bordered box.  No body content is expected.
+
+    Usage:
+        .. exercise-2:: Oppgave 3
+    """
+
+    has_content = True   # allow empty fenced body without errors
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+
+    def run(self):
+        title = self.arguments[0]
+        heading_id = _slugify(title)
+        html = (
+            f'<div class="exercise-2-heading">'
+            f'<h2 id="{heading_id}" class="exercise-2-title">{title}</h2>'
+            f'</div>'
+        )
+        return [nodes.raw("", html, format="html")]
 
 
 class ExploreDirective(SphinxDirective):
@@ -343,6 +383,93 @@ class SolutionDirective(SphinxDirective):
         return [admonition_node]
 
 
+class Solution2Directive(SphinxDirective):
+    """
+    Solution-2 directive: inline, non-admonition solution reveal.
+
+    Renders a clickable "Vis løsningsforslag" button that expands the
+    solution content inline inside its parent container (e.g. an answer
+    admonition), giving the content the full available horizontal width.
+
+    Usage:
+        .. solution-2::
+        .. solution-2:: Custom button label
+    """
+
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+
+    def run(self):
+        label = self.arguments[0] if self.arguments else "Vis løsningsforslag"
+
+        # Outer wrapper div.solution-2
+        wrapper = nodes.container()
+        wrapper["classes"] = ["solution-2"]
+
+        # Clickable toggle button (raw HTML so we can set data attributes)
+        button_html = (
+            f'<button class="solution-2-toggle" aria-expanded="false"'
+            f' data-label="{label}">'
+            f'{label}'
+            f'</button>'
+        )
+        wrapper += nodes.raw("", button_html, format="html")
+
+        # Content container — hidden by default via CSS, revealed by JS
+        content_node = nodes.container()
+        content_node["classes"] = ["solution-2-content"]
+        self.state.nested_parse(self.content, self.content_offset, content_node)
+        wrapper += content_node
+
+        return [wrapper]
+
+
+class Answer2Directive(SphinxDirective):
+    """
+    Answer-2 directive: inline, non-admonition answer reveal.
+
+    Renders a clickable "Vis fasit" button that expands the answer content
+    inline inside its parent container, giving the content the full available
+    horizontal width. Uses a green colour scheme to distinguish it from
+    solution-2's purple scheme.
+
+    Usage:
+        .. answer-2::
+        .. answer-2:: Custom button label
+    """
+
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+
+    def run(self):
+        label = self.arguments[0] if self.arguments else "Vis fasit"
+
+        # Outer wrapper div.answer-2
+        wrapper = nodes.container()
+        wrapper["classes"] = ["answer-2"]
+
+        # Clickable toggle button
+        button_html = (
+            f'<button class="answer-2-toggle" aria-expanded="false"'
+            f' data-label="{label}">'
+            f'{label}'
+            f'</button>'
+        )
+        wrapper += nodes.raw("", button_html, format="html")
+
+        # Content container — hidden by default via CSS, revealed by JS
+        content_node = nodes.container()
+        content_node["classes"] = ["answer-2-content"]
+        self.state.nested_parse(self.content, self.content_offset, content_node)
+        wrapper += content_node
+
+        return [wrapper]
+
+
 class SummaryDirective(SphinxDirective):
     """
     Summary directive for chapter/section summaries.
@@ -415,12 +542,15 @@ def setup(app):
     """
     app.add_config_value("munchboka_solution_delay_seconds", 300, "html")
     app.add_directive("answer", AnswerDirective)
+    app.add_directive("answer-2", Answer2Directive)
     app.add_directive("example", ExampleDirective)
     app.add_directive("exercise", ExerciseDirective)
+    app.add_directive("exercise-2", Exercise2Directive)
     app.add_directive("explore", ExploreDirective)
     app.add_directive("goals", GoalsDirective)
     app.add_directive("hints", HintsDirective)
     app.add_directive("solution", SolutionDirective)
+    app.add_directive("solution-2", Solution2Directive)
     app.add_directive("summary", SummaryDirective)
     app.add_directive("theory", TheoryDirective)
     app.add_js_file("munchboka/js/solution_timer.js")

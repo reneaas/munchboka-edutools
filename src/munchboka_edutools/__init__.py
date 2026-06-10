@@ -196,6 +196,8 @@ def _copy_static(app):
         _register("js/escapeRoom/escape-room.js", priority=730)
         _register("js/parsons/parsonsPuzzle.js", priority=740)
         _register("js/print_answer_key.js", priority=750)  # Print answer key generator
+        _register("js/solution2.js", priority=760)  # solution-2 inline toggle
+        _register("js/part.js", priority=761)        # part collapsible toggle
 
         # Add jQuery and jQuery UI for dialog functionality
         app.add_js_file(

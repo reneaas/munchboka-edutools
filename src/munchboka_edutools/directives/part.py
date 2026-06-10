@@ -4,6 +4,7 @@ Part Directive
 
 A directive for sub-parts of a problem or exercise, styled with a colored
 left stripe and a label (e.g. "a)") sitting to the left of the content.
+Parts labelled "a" start expanded; all others start collapsed.
 
 Usage:
     :::{part} a
@@ -28,8 +29,8 @@ class PartDirective(SphinxDirective):
     Part directive for labelled sub-parts of a problem.
 
     The argument is the label letter/number (e.g. ``a``, ``b``, ``1``).
-    It is rendered as "a)", "b)", etc. to the left of the content,
-    separated by a colored vertical stripe.
+    Parts labelled ``a`` are open by default; all other labels start collapsed
+    behind a "Vis oppgaven" toggle button.
     """
 
     has_content = True
@@ -38,17 +39,35 @@ class PartDirective(SphinxDirective):
     final_argument_whitespace = False
 
     def run(self):
-        label_text = self.arguments[0].strip() + ")"
+        label_raw = self.arguments[0].strip()
+        label_text = label_raw + ")"
+        is_open = label_raw.lower() == "a"
 
-        # Outer wrapper — carries the stripe and flex layout
+        # Outer wrapper — flex column card
         outer = nodes.container()
         outer["classes"] = ["part"]
+        if is_open:
+            outer["classes"].append("part-open")
 
-        # Label column
+        # Header row: label column + toggle button
+        header = nodes.container()
+        header["classes"] = ["part-header"]
+
         label_node = nodes.container()
         label_node["classes"] = ["part-label"]
         label_node += nodes.Text(label_text)
-        outer += label_node
+        header += label_node
+
+        toggle_text = "Skjul oppgaven" if is_open else "Vis oppgaven"
+        toggle_html = (
+            f'<button class="part-toggle"'
+            f' data-open="Skjul oppgaven"'
+            f' data-closed="Vis oppgaven">'
+            f'{toggle_text}'
+            f'</button>'
+        )
+        header += nodes.raw("", toggle_html, format="html")
+        outer += header
 
         # Body column — nested_parse so any directive works inside
         body = nodes.container()

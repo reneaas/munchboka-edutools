@@ -106,6 +106,9 @@
 .mcq-container {
     margin: 20px 0;
     position: relative;
+    border: 1px solid var(--card-border-color);
+    border-radius: 12px;
+    padding: 20px;
 }
 
 /* Hidden source markup for native-rendered quiz content (harvested by JS) */

@@ -37,6 +37,7 @@ chapters:
   - file: docs/parsons-puzzle.md
   - file: docs/parsonspuzzle.md
   - file: docs/plot.md
+  - file: docs/plot3d.md
   - file: docs/polydiv.md
   - file: docs/popup.md
   - file: docs/quiz.md

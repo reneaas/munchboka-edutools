@@ -975,6 +975,7 @@ button.solution-2-toggle[aria-expanded="true"]::before {
 div.solution-2-content {
   display: none;
   margin-top: 0.6rem;
+  padding-left: 0.8rem !important;
 }
 
 
@@ -986,7 +987,7 @@ div.solution-2-content {
 div.answer-2 {
   margin-top: 0.75rem;
   border-left: 2px solid transparent;
-  padding-left: 0.55rem;
+  padding-left: 0.55rem !important;
   transition: border-left-color 0.3s ease;
 }
 
@@ -1068,6 +1069,7 @@ button.answer-2-toggle[aria-expanded="true"]::before {
 div.answer-2-content {
   display: none;
   margin-top: 0.6rem;
+  padding-left: 0.4rem;
 }
 
 

@@ -25,6 +25,7 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util import logging
+from sphinx.util.nodes import make_id
 import re
 
 logger = logging.getLogger(__name__)
@@ -186,30 +187,74 @@ class ExerciseDirective(SphinxDirective):
 
 
 class Exercise2Directive(SphinxDirective):
-    """
-    Exercise-2 directive: a styled h2-level heading that marks where an exercise begins.
 
-    Emits raw HTML instead of an admonition so it sits flush with the page
-    width and doesn't add a bordered box.  No body content is expected.
+    has_content = True
 
-    Usage:
-        .. exercise-2:: Oppgave 3
-    """
-
-    has_content = True   # allow empty fenced body without errors
     required_arguments = 1
+
     optional_arguments = 0
+
     final_argument_whitespace = True
 
+    option_spec = {
+
+        "level": directives.unchanged,
+
+        "aids": directives.unchanged,
+
+    }
+
     def run(self):
+
         title = self.arguments[0]
-        heading_id = _slugify(title)
-        html = (
-            f'<div class="exercise-2-heading">'
-            f'<h2 id="{heading_id}" class="exercise-2-title">{title}</h2>'
-            f'</div>'
-        )
-        return [nodes.raw("", html, format="html")]
+
+        section_node = nodes.section()
+
+        section_id = make_id(self.env, self.state.document, "exercise", title)
+
+        section_node["ids"].append(section_id)
+
+        section_node["classes"].append("exercise-section")
+
+        title_node = nodes.title()
+
+        parsed_title, _ = self.state.inline_text(title, self.lineno)
+
+        title_node += parsed_title
+
+        section_node += title_node
+
+        body_node = nodes.container()
+
+        body_node["classes"] = ["exercise-body"]
+
+        if self._aids_enabled():
+
+            body_node["classes"].append("exercise-aids")
+
+        self.state.nested_parse(self.content, self.content_offset, body_node)
+
+        section_node += body_node
+
+        return [section_node]
+
+    def _aids_enabled(self):
+
+        aids_opt = self.options.get("aids")
+
+        if isinstance(aids_opt, bool):
+
+            return aids_opt
+
+        if aids_opt is None:
+
+            return False
+
+        return str(aids_opt).strip().lower() in {
+
+            "1", "true", "yes", "y", "on"
+
+        }
 
 
 class ExploreDirective(SphinxDirective):

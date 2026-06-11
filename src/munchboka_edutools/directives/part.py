@@ -21,6 +21,7 @@ Usage:
 """
 
 from docutils import nodes
+from docutils.parsers.rst import directives
 from sphinx.util.docutils import SphinxDirective
 
 
@@ -38,10 +39,14 @@ class PartDirective(SphinxDirective):
     optional_arguments = 0
     final_argument_whitespace = False
 
+    option_spec = {
+        "open": directives.flag,
+    }
+
     def run(self):
         label_raw = self.arguments[0].strip()
         label_text = label_raw + ")"
-        is_open = label_raw.lower() == "a"
+        is_open = label_raw.lower() == "a" or "open" in self.options
 
         # Outer wrapper — flex column card
         outer = nodes.container()

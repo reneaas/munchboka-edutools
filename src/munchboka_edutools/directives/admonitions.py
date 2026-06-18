@@ -207,25 +207,15 @@ class Exercise2Directive(SphinxDirective):
     def run(self):
 
         title = self.arguments[0]
-
         section_node = nodes.section()
-
         section_id = make_id(self.env, self.state.document, "exercise", title)
-
         section_node["ids"].append(section_id)
-
         section_node["classes"].append("exercise-section")
-
         title_node = nodes.title()
-
         parsed_title, _ = self.state.inline_text(title, self.lineno)
-
         title_node += parsed_title
-
         section_node += title_node
-
         body_node = nodes.container()
-
         body_node["classes"] = ["exercise-body"]
 
         if self._aids_enabled():
@@ -239,21 +229,16 @@ class Exercise2Directive(SphinxDirective):
         return [section_node]
 
     def _aids_enabled(self):
-
         aids_opt = self.options.get("aids")
 
         if isinstance(aids_opt, bool):
-
             return aids_opt
 
         if aids_opt is None:
-
             return False
 
         return str(aids_opt).strip().lower() in {
-
             "1", "true", "yes", "y", "on"
-
         }
 
 
@@ -288,36 +273,6 @@ class ExploreDirective(SphinxDirective):
 
         return [admonition_node]
 
-
-class GoalsDirective(SphinxDirective):
-    """
-    Goals directive for learning objectives.
-
-    Usage:
-        .. goals:: Learning Goals
-    """
-
-    has_content = True
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = True
-
-    def run(self):
-        title = self.arguments[0]
-
-        # Create the admonition node
-        admonition_node = nodes.admonition()
-        admonition_node["classes"] = ["admonition", "tip"]
-
-        title_node = nodes.title()
-        parsed_title, _ = self.state.inline_text(title, self.lineno)
-        title_node += parsed_title
-        admonition_node += title_node
-
-        # Parse the content
-        self.state.nested_parse(self.content, self.content_offset, admonition_node)
-
-        return [admonition_node]
 
 
 class HintsDirective(SphinxDirective):
@@ -446,18 +401,27 @@ class Solution2Directive(SphinxDirective):
     optional_arguments = 1
     final_argument_whitespace = True
 
+    option_spec = {
+        "open": directives.flag,
+    }
+
     def run(self):
         label = self.arguments[0] if self.arguments else "Vis løsningsforslag"
+        is_open = "open" in self.options
+        aria_expanded = "true" if is_open else "false"
+        button_label = "Skjul løsningsforslag" if is_open else label
 
         # Outer wrapper div.solution-2
         wrapper = nodes.container()
         wrapper["classes"] = ["solution-2"]
+        if is_open:
+            wrapper["classes"].append("is-open")
 
         # Clickable toggle button (raw HTML so we can set data attributes)
         button_html = (
-            f'<button class="solution-2-toggle" aria-expanded="false"'
+            f'<button class="solution-2-toggle" aria-expanded="{aria_expanded}"'
             f' data-label="{label}">'
-            f'{label}'
+            f'{button_label}'
             f'</button>'
         )
         wrapper += nodes.raw("", button_html, format="html")
@@ -576,6 +540,140 @@ class TheoryDirective(SphinxDirective):
         self.state.nested_parse(self.content, self.content_offset, admonition_node)
 
         return [admonition_node]
+    
+
+
+class Summary2Directive(SphinxDirective):
+
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+
+    def run(self):
+
+        title = self.arguments[0]
+        section_node = nodes.section()
+        section_id = make_id(self.env, self.state.document, "summary", title)
+        section_node["ids"].append(section_id)
+        section_node["classes"].append("summary-section")
+        title_node = nodes.title()
+        parsed_title, _ = self.state.inline_text(title, self.lineno)
+        title_node += parsed_title
+        section_node += title_node
+        body_node = nodes.container()
+        body_node["classes"] = ["summary-body"]
+
+
+        self.state.nested_parse(self.content, self.content_offset, body_node)
+
+        section_node += body_node
+
+        return [section_node]
+    
+
+class Example2Directive(SphinxDirective):
+
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+
+    def run(self):
+
+        title = self.arguments[0]
+        section_node = nodes.section()
+        section_id = make_id(self.env, self.state.document, "example", title)
+        section_node["ids"].append(section_id)
+        section_node["classes"].append("example-section")
+        title_node = nodes.title()
+        parsed_title, _ = self.state.inline_text(title, self.lineno)
+        title_node += parsed_title
+        section_node += title_node
+        body_node = nodes.container()
+        body_node["classes"] = ["example-body"]
+
+
+        self.state.nested_parse(self.content, self.content_offset, body_node)
+
+        section_node += body_node
+
+        return [section_node]
+    
+
+class Explore2Directive(SphinxDirective):
+
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+
+    def run(self):
+
+        title = self.arguments[0]
+        section_node = nodes.section()
+        section_id = make_id(self.env, self.state.document, "explore", title)
+        section_node["ids"].append(section_id)
+        section_node["classes"].append("explore-section")
+        title_node = nodes.title()
+        parsed_title, _ = self.state.inline_text(title, self.lineno)
+        title_node += parsed_title
+        section_node += title_node
+        body_node = nodes.container()
+        body_node["classes"] = ["explore-body"]
+
+
+        self.state.nested_parse(self.content, self.content_offset, body_node)
+
+        section_node += body_node
+
+        return [section_node]
+    
+
+
+class GoalsDirective(SphinxDirective):
+    """
+    Goals directive: inline, non-admonition goals reveal.
+
+    Renders a clickable "Vis kompetansemål" button that expands the goals content
+    inline inside its parent container, giving the content the full available
+    horizontal width. Uses a green colour scheme to distinguish it from
+    solution-2's purple scheme.
+
+    Usage:
+        .. goals::
+        .. goals:: Custom button label
+    """
+
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+
+    def run(self):
+        label = self.arguments[0] if self.arguments else "Vis kompetansemål"
+
+        # Outer wrapper div.answer-2
+        wrapper = nodes.container()
+        wrapper["classes"] = ["goals"]
+
+        # Clickable toggle button
+        button_html = (
+            f'<button class="goals-toggle" aria-expanded="false"'
+            f' data-label="{label}">'
+            f'{label}'
+            f'</button>'
+        )
+        wrapper += nodes.raw("", button_html, format="html")
+
+        # Content container — hidden by default via CSS, revealed by JS
+        content_node = nodes.container()
+        content_node["classes"] = ["goals-content"]
+        self.state.nested_parse(self.content, self.content_offset, content_node)
+        wrapper += content_node
+
+        return [wrapper]
+
 
 
 def setup(app):
@@ -589,14 +687,17 @@ def setup(app):
     app.add_directive("answer", AnswerDirective)
     app.add_directive("answer-2", Answer2Directive)
     app.add_directive("example", ExampleDirective)
+    app.add_directive("example-2", Example2Directive)
     app.add_directive("exercise", ExerciseDirective)
     app.add_directive("exercise-2", Exercise2Directive)
     app.add_directive("explore", ExploreDirective)
+    app.add_directive("explore-2", Explore2Directive)
     app.add_directive("goals", GoalsDirective)
     app.add_directive("hints", HintsDirective)
     app.add_directive("solution", SolutionDirective)
     app.add_directive("solution-2", Solution2Directive)
     app.add_directive("summary", SummaryDirective)
+    app.add_directive("summary-2", Summary2Directive)
     app.add_directive("theory", TheoryDirective)
     app.add_js_file("munchboka/js/solution_timer.js")
 

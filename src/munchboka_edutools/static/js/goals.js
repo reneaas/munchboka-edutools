@@ -3,14 +3,9 @@
 
   var TOGGLES = [
     {
-      buttonClass: "solution-2-toggle",
-      contentClass: "solution-2-content",
-      hideLabel: "Skjul løsningsforslag",
-    },
-    {
-      buttonClass: "answer-2-toggle",
-      contentClass: "answer-2-content",
-      hideLabel: "Skjul fasit",
+      buttonClass: "goals-toggle",
+      contentClass: "goals-content",
+      hideLabel: "Skjul",
     },
   ];
 
@@ -49,29 +44,13 @@
   }
 
   function initToggle(btn, config) {
-    var content = btn.nextElementSibling;
-    var wrapper = btn.parentElement;
-
-    if (!content || !content.classList.contains(config.contentClass)) {
-      return;
-    }
-
-    if (!btn.dataset.label) {
-      btn.dataset.label = btn.textContent;
-    }
-
-    if (btn.getAttribute("aria-expanded") === "true") {
-      btn.textContent = config.hideLabel;
-      content.style.display = "block";
-      if (wrapper) wrapper.classList.add("is-open");
-    } else {
-      btn.setAttribute("aria-expanded", "false");
-      content.style.display = "none";
-      if (wrapper) wrapper.classList.remove("is-open");
-    }
-
     btn.addEventListener("click", function () {
       var expanded = btn.getAttribute("aria-expanded") === "true";
+      var content = btn.nextElementSibling;
+      var wrapper = btn.parentElement;
+      if (!content || !content.classList.contains(config.contentClass)) {
+        return;
+      }
 
       if (expanded) {
         btn.setAttribute("aria-expanded", "false");

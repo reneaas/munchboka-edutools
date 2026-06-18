@@ -127,7 +127,8 @@ h3 {
 
 .exercise-section > h2,
 .exercise-section > h3,
-.exercise-section > h4 {
+.exercise-section > h4,
+.exercise-section > h5 {
     padding: 0.6rem 0.9rem;
     margin-bottom: 0;
     border-left: none;
@@ -156,7 +157,8 @@ h3 {
     }
     .exercise-section > h2,
     .exercise-section > h3,
-    .exercise-section > h4 {
+    .exercise-section > h4,
+    .exercise-section > h5 {
         border-color: var(--exercise-color-dark);
     }
     .exercise-body {
@@ -170,7 +172,8 @@ h3 {
 
 [data-mode="dark"] .exercise-section > h2,
 [data-mode="dark"] .exercise-section > h3,
-[data-mode="dark"] .exercise-section > h4 {
+[data-mode="dark"] .exercise-section > h4,
+[data-mode="dark"] .exercise-section > h5 {
     border-color: var(--exercise-color-dark);
 }
 
@@ -209,7 +212,8 @@ h3 {
 
 .summary-section > h2,
 .summary-section > h3,
-.summary-section > h4 {
+.summary-section > h4,
+.summary-section > h5 {
     padding: 0.6rem 0.9rem;
     margin-bottom: 0;
     border-left: none;
@@ -225,14 +229,16 @@ h3 {
 
 [data-mode="dark"] .summary-section > h2,
 [data-mode="dark"] .summary-section > h3,
-[data-mode="dark"] .summary-section > h4 {
+[data-mode="dark"] .summary-section > h4,
+[data-mode="dark"] .summary-section > h5 {
     border-color: var(--summary-color-dark) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     [data-mode="auto"] .summary-section > h2,
     [data-mode="auto"] .summary-section > h3,
-    [data-mode="auto"] .summary-section > h4 {
+    [data-mode="auto"] .summary-section > h4,
+    [data-mode="auto"] .summary-section > h5 {
         border-color: var(--summary-color-dark) !important;
     }
 }
@@ -297,7 +303,8 @@ h3 {
 
 .example-section > h2,
 .example-section > h3,
-.example-section > h4 {
+.example-section > h4,
+.example-section > h5 {
     padding: 0.6rem 0.9rem;
     margin-bottom: 0;
     border-left: none;
@@ -313,14 +320,16 @@ h3 {
 
 [data-mode="dark"] .example-section > h2,
 [data-mode="dark"] .example-section > h3,
-[data-mode="dark"] .example-section > h4 {
+[data-mode="dark"] .example-section > h4,
+[data-mode="dark"] .example-section > h5 {
     border-color: var(--example-color-dark) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     [data-mode="auto"] .example-section > h2,
     [data-mode="auto"] .example-section > h3,
-    [data-mode="auto"] .example-section > h4 {
+    [data-mode="auto"] .example-section > h4,
+    [data-mode="auto"] .example-section > h5 {
         border-color: var(--example-color-dark) !important;
     }
 }
@@ -387,7 +396,8 @@ h3 {
 
 .explore-section > h2,
 .explore-section > h3,
-.explore-section > h4 {
+.explore-section > h4,
+.explore-section > h5 {
     padding: 0.6rem 0.9rem;
     margin-bottom: 0;
     border-left: none;
@@ -403,14 +413,16 @@ h3 {
 
 [data-mode="dark"] .explore-section > h2,
 [data-mode="dark"] .explore-section > h3,
-[data-mode="dark"] .explore-section > h4 {
+[data-mode="dark"] .explore-section > h4,
+[data-mode="dark"] .explore-section > h5 {
     border-color: var(--explore-color-dark) !important;
 }
 
 @media (prefers-color-scheme: dark) {
     [data-mode="auto"] .explore-section > h2,
     [data-mode="auto"] .explore-section > h3,
-    [data-mode="auto"] .explore-section > h4 {
+    [data-mode="auto"] .explore-section > h4,
+    [data-mode="auto"] .explore-section > h5 {
         border-color: var(--explore-color-dark) !important;
     }
 }

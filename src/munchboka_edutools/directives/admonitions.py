@@ -673,6 +673,50 @@ class GoalsDirective(SphinxDirective):
         wrapper += content_node
 
         return [wrapper]
+    
+
+class ProofDirective(SphinxDirective):
+    """
+    Proof directive: inline, non-admonition goals reveal.
+
+    Renders a clickable "Vis proof" button that expands the goals content
+    inline inside its parent container, giving the content the full available
+    horizontal width. Uses a green colour scheme to distinguish it from
+    solution-2's purple scheme.
+
+    Usage:
+        .. goals::
+        .. goals:: Custom button label
+    """
+
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+
+    def run(self):
+        label = self.arguments[0] if self.arguments else "Vis forklaring"
+
+        # Outer wrapper div.proof
+        wrapper = nodes.container()
+        wrapper["classes"] = ["proof"]
+
+        # Clickable toggle button
+        button_html = (
+            f'<button class="proof-toggle" aria-expanded="false"'
+            f' data-label="{label}">'
+            f'{label}'
+            f'</button>'
+        )
+        wrapper += nodes.raw("", button_html, format="html")
+
+        # Content container — hidden by default via CSS, revealed by JS
+        content_node = nodes.container()
+        content_node["classes"] = ["proof-content"]
+        self.state.nested_parse(self.content, self.content_offset, content_node)
+        wrapper += content_node
+
+        return [wrapper]
 
 
 
@@ -699,6 +743,7 @@ def setup(app):
     app.add_directive("summary", SummaryDirective)
     app.add_directive("summary-2", Summary2Directive)
     app.add_directive("theory", TheoryDirective)
+    app.add_directive("proof", ProofDirective)
     app.add_js_file("munchboka/js/solution_timer.js")
 
     return {

@@ -976,7 +976,24 @@ div.solution-2-content {
   display: none;
   margin-top: 0.6rem;
   padding-left: 0.8rem !important;
+  clear: both;
 }
+
+
+/* div.solution-2-content {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  margin-top: 0.6rem;
+  padding-left: 0.8rem !important;
+}
+
+div.solution-2.is-open > div.solution-2-content {
+  visibility: visible;
+  pointer-events: auto;
+} */
 
 
 /* -------------------------------------------------------------------------
@@ -1070,7 +1087,24 @@ div.answer-2-content {
   display: none;
   margin-top: 0.6rem;
   padding-left: 0.4rem;
+  clear: both;
 }
+
+
+/* div.answer-2-content {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  margin-top: 0.6rem;
+  padding-left: 0.8rem !important;
+}
+
+div.answer-2.is-open > div.answer-2-content {
+  visibility: visible !important;
+  pointer-events: auto;
+} */
 
 
 
@@ -2689,6 +2723,101 @@ button.proof-toggle[aria-expanded="true"]::before {
 
 /* Hidden by default; JS drives the open/close animation */
 div.proof-content {
+  display: none;
+  margin-top: 0.6rem;
+  padding-left: 0.4rem;
+}
+
+
+
+
+
+
+
+div.hint {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-left: 2px solid transparent;
+  padding-left: 0.55rem !important;
+  transition: border-left-color 0.3s ease;
+}
+
+div.hint.is-open {
+  border-left-color: rgba(34, 170, 197, 0.5);
+}
+
+button.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border: 1.5px solid rgba(34, 170, 197, 0.5);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+button.hint-toggle::before {
+  content: "▶";
+  font-size: 0.65em;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+button.hint-toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+[data-mode=light] button.hint-toggle {
+  color: rgba(19, 97, 113, 0.881);
+  border-color: rgba(34, 170, 197, 0.5);
+}
+
+[data-mode=light] button.hint-toggle:hover {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 170, 197, 0.75);
+}
+
+@media (prefers-color-scheme: light) {
+  button.hint-toggle {
+    color: rgba(19, 97, 113, 0.881);
+    border-color: rgba(34, 170, 197, 0.5);
+  }
+
+  button.hint-toggle:hover {
+    background: rgba(34, 170, 197, 0.08);
+    border-color: rgba(34, 170, 197, 0.75);
+  }
+}
+
+[data-mode=dark] button.hint-toggle {
+  color: rgba(34, 170, 197, 0.881);
+  border-color: rgba(34, 170, 197, 0.4);
+}
+
+[data-mode=dark] button.hint-toggle:hover {
+  background: rgba(34, 170, 197, 0.12);
+  border-color: rgba(34, 170, 197, 0.65);
+}
+
+@media (prefers-color-scheme: dark) {
+  button.hint-toggle {
+    color: rgba(34, 170, 197, 0.881);
+    border-color: rgba(34, 170, 197, 0.4);
+  }
+
+  button.hint-toggle:hover {
+    background: rgba(34, 170, 197, 0.12);
+    border-color: rgba(34, 170, 197, 0.65);
+  }
+}
+
+/* Hidden by default; JS drives the open/close animation */
+div.hint-content {
   display: none;
   margin-top: 0.6rem;
   padding-left: 0.4rem;

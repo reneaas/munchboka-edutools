@@ -200,6 +200,7 @@ def _copy_static(app):
         _register("js/part.js", priority=761)        # part collapsible toggle
         _register("js/goals.js", priority=762)       # goals inline toggle
         _register("js/proof.js", priority=763)
+        _register("js/hint.js", priority=764)        # hint inline toggle
 
         # Add jQuery and jQuery UI for dialog functionality
         app.add_js_file(

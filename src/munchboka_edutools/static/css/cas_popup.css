@@ -263,12 +263,13 @@
     width: 200px;
     margin: 0.5em 0 0.5em 0.5em;
     padding: 0.5em;
-    background-color: none;
-    border-left: 4px solid var(--pst-color-primary, #007ACC);
-    border-radius: 0.5em;
+    background-color: transparent;
+    border-left: 4px solid var(--exercise-color);
+    border-radius: 1.4rem;
     box-shadow: 0 0 5px rgba(0,0,0,0.1);
 }
 
 .sidebar-cas .ggb-cas-button {
     width: 100%;
 }
+

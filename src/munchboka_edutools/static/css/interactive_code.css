@@ -342,10 +342,11 @@ html[data-mode="dark"] .pythonoutput:empty::before {
     box-sizing: border-box;
     padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 1.4rem;
     resize: vertical;
     font-family: Arial, sans-serif;
     font-size: 14px;
+    background: inherit;
 }
 
 .button-lock-prediction {
@@ -464,7 +465,7 @@ html[data-mode="dark"] .pythonoutput:empty::before {
     width: 100%;
     box-sizing: border-box;
     padding: 10px;
-    border-radius: 4px;
+    border-radius: 1.2rem !important;
     resize: vertical;
     font-family: Arial, sans-serif;
     font-size: 16px;
@@ -482,7 +483,7 @@ html[data-mode="dark"] .pythonoutput:empty::before {
 
 /* Dark mode styles for the prediction textarea */
 [data-mode="dark"] .prediction-container textarea {
-    background-color: #2b2b2b;
+    background-color: #0b0b0b;
     color: #e1e1e1;
     border-color: #444444;
 }
@@ -490,7 +491,7 @@ html[data-mode="dark"] .pythonoutput:empty::before {
 /* Auto mode styles for the prediction textarea */
 @media (prefers-color-scheme: dark) {
     [data-mode="auto"] .prediction-container textarea {
-        background-color: #2b2b2b;
+        background-color: #0b0b0b;
         color: #e1e1e1;
         border-color: #444444;
     }

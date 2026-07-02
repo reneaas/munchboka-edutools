@@ -46,7 +46,10 @@ class PartDirective(SphinxDirective):
     def run(self):
         label_raw = self.arguments[0].strip()
         label_text = label_raw + ")"
-        is_open = label_raw.lower() == "a" or "open" in self.options
+        # is_open = label_raw.lower() == "a" or "open" in self.options
+        is_open = label_raw.lower() == "a"
+        if not "close" in self.options:
+            is_open = True
 
         # Outer wrapper — flex column card
         outer = nodes.container()

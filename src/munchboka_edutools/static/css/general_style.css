@@ -15,6 +15,23 @@ a.no-click,
   pointer-events: none !important;
 }
 
+
+.bd-content .sd-tab-set .sd-tab-content {
+    background-color: transparent !important;
+}
+
+
+figure {
+    pointer-events: none !important;
+}
+
+figure.interactive-figure,
+figure.interactive-figure * {
+
+  pointer-events: auto !important;
+
+}
+
 /* Container-level adaptive figure: ensure any contained raster/SVG scales responsively */
 .adaptive-figure img,
 .adaptive-figure svg,
@@ -92,6 +109,36 @@ h2 {
 
 
 h3 {
+    margin-top: 3rem;
+
+    padding: 0.75rem 1rem;
+
+    /* background: #0d48a108; */
+
+    /* border-left: 6px solid var(--pst-color-primary); */
+    border: 4px solid #4799b0d5;
+    /* border-radius: 0.7rem; */
+    border-radius: 1.4rem;
+    background: var(--exercise-body-bg) !important;
+}
+
+
+h4 {
+    margin-top: 3rem;
+
+    padding: 0.75rem 1rem;
+
+    /* background: #0d48a108; */
+
+    /* border-left: 6px solid var(--pst-color-primary); */
+    border: 4px solid #4799b0d5;
+    /* border-radius: 0.7rem; */
+    border-radius: 1.4rem;
+    background: var(--exercise-body-bg) !important;
+}
+
+
+h5 {
     margin-top: 3rem;
 
     padding: 0.75rem 1rem;

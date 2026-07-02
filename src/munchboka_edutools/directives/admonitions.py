@@ -275,54 +275,6 @@ class ExploreDirective(SphinxDirective):
 
 
 
-class HintsDirective(SphinxDirective):
-    """
-    Hints directive with optional dropdown.
-
-    Usage:
-        .. hints::
-        .. hints:: Custom Title
-        .. hints::
-            :dropdown: 0
-    """
-
-    has_content = True
-    required_arguments = 0
-    optional_arguments = 1
-    final_argument_whitespace = True
-
-    option_spec = {
-        "dropdown": directives.unchanged,
-    }
-
-    def run(self):
-        if len(self.arguments) > 0:
-            title = self.arguments[0]
-        else:
-            title = "Hint"
-
-        # Create the admonition node
-        admonition_node = nodes.admonition()
-        admonition_node["classes"] = ["admonition", "hints"]
-
-        if "dropdown" in self.options:
-            dropdown_val = int(self.options["dropdown"])
-        else:
-            dropdown_val = 1
-
-        if dropdown_val == 1:
-            admonition_node["classes"].append("dropdown")
-
-        # Create the title node
-        title_node = nodes.title(text=title)
-        admonition_node += title_node
-
-        # Parse the content
-        self.state.nested_parse(self.content, self.content_offset, admonition_node)
-
-        return [admonition_node]
-
-
 class SolutionDirective(SphinxDirective):
     """
     Solution directive with dropdown (default on).
@@ -717,6 +669,50 @@ class ProofDirective(SphinxDirective):
         wrapper += content_node
 
         return [wrapper]
+    
+
+class HintDirective(SphinxDirective):
+    """
+    Hint directive: inline, non-admonition goals reveal.
+
+    Renders a clickable "Vis hint" button that expands the goals content
+    inline inside its parent container, giving the content the full available
+    horizontal width. Uses a green colour scheme to distinguish it from
+    solution-2's purple scheme.
+
+    Usage:
+        .. goals::
+        .. goals:: Custom button label
+    """
+
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+
+    def run(self):
+        label = self.arguments[0] if self.arguments else "Vis hint"
+
+        # Outer wrapper div.proof
+        wrapper = nodes.container()
+        wrapper["classes"] = ["hint"]
+
+        # Clickable toggle button
+        button_html = (
+            f'<button class="hint-toggle" aria-expanded="false"'
+            f' data-label="{label}">'
+            f'{label}'
+            f'</button>'
+        )
+        wrapper += nodes.raw("", button_html, format="html")
+
+        # Content container — hidden by default via CSS, revealed by JS
+        content_node = nodes.container()
+        content_node["classes"] = ["hint-content"]
+        self.state.nested_parse(self.content, self.content_offset, content_node)
+        wrapper += content_node
+
+        return [wrapper]
 
 
 
@@ -728,22 +724,23 @@ def setup(app):
     The admonitions.css file contains all styling for these directives.
     """
     app.add_config_value("munchboka_solution_delay_seconds", 300, "html")
-    app.add_directive("answer", AnswerDirective)
+    app.add_directive("answer", Answer2Directive)
     app.add_directive("answer-2", Answer2Directive)
-    app.add_directive("example", ExampleDirective)
+    app.add_directive("example", Example2Directive)
     app.add_directive("example-2", Example2Directive)
-    app.add_directive("exercise", ExerciseDirective)
+    app.add_directive("exercise", Exercise2Directive)
     app.add_directive("exercise-2", Exercise2Directive)
-    app.add_directive("explore", ExploreDirective)
+    app.add_directive("explore", Explore2Directive)
     app.add_directive("explore-2", Explore2Directive)
     app.add_directive("goals", GoalsDirective)
-    app.add_directive("hints", HintsDirective)
-    app.add_directive("solution", SolutionDirective)
+    app.add_directive("solution", Solution2Directive)
     app.add_directive("solution-2", Solution2Directive)
-    app.add_directive("summary", SummaryDirective)
+    app.add_directive("summary", Summary2Directive)
     app.add_directive("summary-2", Summary2Directive)
     app.add_directive("theory", TheoryDirective)
     app.add_directive("proof", ProofDirective)
+    app.add_directive("hint", HintDirective)
+    app.add_directive("hints", HintDirective)
     app.add_js_file("munchboka/js/solution_timer.js")
 
     return {

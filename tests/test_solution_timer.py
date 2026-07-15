@@ -25,20 +25,24 @@ Solution timer
 
    Kort fasit.
 
-.. solution::
+   .. solution::
 
-   Full løsning.
+      Full løsning (default delay from config = 300 s).
 
 .. solution:: Tilpasset løsning
    :delay: 42
 
    Kortere forsinkelse.
 
-.. solution:: Uten dropdown
-    :delay: 15
-    :dropdown: 0
+.. solution:: Ingen forsinkelse
+   :delay: 0
 
-    Denne skal ikke tidslåses fordi dropdown er slått av.
+   Skal ikke tidslåses.
+
+.. solution:: Allerede åpen
+   :open:
+
+   Vises med det samme — ingen lås.
 """.lstrip(),
         encoding="utf8",
     )
@@ -65,16 +69,24 @@ def test_solution_timer_build(tmp_path):
     app.build()
 
     html = (build / "index.html").read_text(encoding="utf8")
-    assert "class=\"admonition answer" in html
-    assert "solution-timed" in html
-    assert "solution-delay-300" in html
-    assert "solution-delay-42" in html
-    assert "solution-ref-index-" in html
-    assert "Uten dropdown" in html
-    assert "solution-delay-15" not in html
 
-    untimed_solution = '<div class="admonition solution">\n<p class="admonition-title">Uten dropdown</p>'
-    assert untimed_solution in html
+    # Parent answer block is present (answer-2-toggle button from Answer2Directive)
+    assert 'class="answer-2-toggle"' in html
+
+    # Solution inside answer gets default 300 s delay on its toggle button
+    assert 'data-delay-seconds="300"' in html
+
+    # Custom per-directive delay
+    assert 'data-delay-seconds="42"' in html
+
+    # :delay: 0 — no data attribute emitted
+    assert 'data-delay-seconds="0"' not in html
+
+    # :open: — solution is expanded from the start, no lock
+    assert "Allerede åpen" in html
+
+    # Toggle button class is present
+    assert 'class="solution-2-toggle"' in html
 
     js = (build / "_static" / "munchboka" / "js" / "solution_timer.js").read_text(encoding="utf8")
     assert "IntersectionObserver" in js

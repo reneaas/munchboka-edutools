@@ -355,6 +355,7 @@ class Solution2Directive(SphinxDirective):
 
     option_spec = {
         "open": directives.flag,
+        "delay": directives.nonnegative_int,
     }
 
     def run(self):
@@ -363,16 +364,30 @@ class Solution2Directive(SphinxDirective):
         aria_expanded = "true" if is_open else "false"
         button_label = "Skjul løsningsforslag" if is_open else label
 
+        # Compute delay: per-directive option wins over global config.
+        delay_seconds = int(
+            self.options.get(
+                "delay",
+                getattr(self.env.config, "munchboka_solution_delay_seconds", 300),
+            )
+        )
+
         # Outer wrapper div.solution-2
         wrapper = nodes.container()
         wrapper["classes"] = ["solution-2"]
         if is_open:
             wrapper["classes"].append("is-open")
 
+        # Only emit data-delay-seconds when the solution starts hidden and a
+        # positive delay is configured.  Already-open solutions need no lock.
+        delay_attr = ""
+        if not is_open and delay_seconds > 0:
+            delay_attr = f' data-delay-seconds="{delay_seconds}"'
+
         # Clickable toggle button (raw HTML so we can set data attributes)
         button_html = (
             f'<button class="solution-2-toggle" aria-expanded="{aria_expanded}"'
-            f' data-label="{label}">'
+            f' data-label="{label}"{delay_attr}>'
             f'{button_label}'
             f'</button>'
         )

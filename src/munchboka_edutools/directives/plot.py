@@ -181,10 +181,11 @@ Color mapped through palette then fallback to literal then black.
 
 Angle arcs
 ----------
-``angle-arc: (cx, cy), radius, start_deg, end_deg[, linestyle][, color]``.
+``angle-arc: (cx, cy), radius, start_deg, end_deg[, linestyle][, color][, arrow]``.
 Angles in *degrees* (mathematical CCW convention). All numeric parts allow
-expressions. Optional style/color order‑independent after the first three
-expressions.
+expressions. Optional tokens (``linestyle``, ``color``, ``arrow``) are
+order‑independent after the first three expressions. The ``arrow`` keyword
+places an arrowhead at the end of the arc to indicate direction.
 
 Circles & ellipses
 ------------------
@@ -305,10 +306,14 @@ class _PlotMacroContext:
     - sympy_locals: constants + sympy.Lambda definitions for use with sympify.
     - numeric_functions: def(name)(...) callables used by the numeric evaluator
       (resolved safely without Python eval).
+    - raw_bindings: sorted list of raw ``let: NAME = EXPR`` / ``def: ...`` lines
+      as written in the directive, used so that their values are included in
+      the SVG cache key.
     """
 
     sympy_locals: Dict[str, Any]
     numeric_functions: Dict[str, Callable[..., float]]
+    raw_bindings: tuple = ()
 
 
 def _sympy_allowed_base():
@@ -520,6 +525,7 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
     sympy_locals: Dict[str, Any] = {}
     numeric_functions: Dict[str, Callable[..., float]] = {}
     macros: Dict[str, Tuple[List[str], List[str]]] = {}
+    raw_binding_lines: List[str] = []
 
     def _sympify(expr_s: str, extra: Dict[str, Any] | None = None):
         loc = {**base_locals, **sympy_locals}
@@ -601,6 +607,7 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
         m_let = let_re.match(line.strip())
         if m_let:
             name, expr_s = m_let.group(1), m_let.group(2)
+            raw_binding_lines.append(f"let:{name}={expr_s.strip()}")
             try:
                 sympy_locals[name] = _sympify(expr_s)
             except Exception:
@@ -611,6 +618,7 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
         m_def = def_re.match(line.strip())
         if m_def:
             fname, arglist_s, body_s = m_def.group(1), m_def.group(2), m_def.group(3)
+            raw_binding_lines.append(f"def:{fname}({arglist_s.strip()})={body_s.strip()}")
             try:
                 arg_names = _parse_arg_names(arglist_s)
                 arg_symbols = sympy.symbols(", ".join(arg_names))
@@ -705,11 +713,15 @@ def _parse_plot_macros(lines: List[str]) -> Tuple[List[str], _PlotMacroContext]:
         else:
             out.extend(lines[fm_end:])
         return out, _PlotMacroContext(
-            sympy_locals=sympy_locals, numeric_functions=numeric_functions
+            sympy_locals=sympy_locals, numeric_functions=numeric_functions,
+            raw_bindings=tuple(sorted(raw_binding_lines)),
         )
 
     out = expanded_fm + lines[fm_end:]
-    return out, _PlotMacroContext(sympy_locals=sympy_locals, numeric_functions=numeric_functions)
+    return out, _PlotMacroContext(
+        sympy_locals=sympy_locals, numeric_functions=numeric_functions,
+        raw_bindings=tuple(sorted(raw_binding_lines)),
+    )
 
 
 def _hash_key(*parts) -> str:
@@ -1146,14 +1158,23 @@ class PlotDirective(SphinxDirective):
             """Evaluate `{...}` placeholders in plot text.
 
             Supports `{expr}` / `{expr:fmt}` and comparisons like `{f(a) < f(a+h)}`.
-            Preserves LaTeX command argument braces and escaped braces.
+            Preserves LaTeX command argument braces.
+            Outside ``$...$`` math mode, ``{{`` / ``}}`` are Python-format escaped
+            braces that produce literal ``{`` / ``}``.
+            Inside ``$...$`` math mode, ``{`` / ``}`` are always LaTeX group
+            delimiters and are never consumed as escaped braces.  This prevents
+            adjacent closing braces such as ``\\frac{\\sqrt{3}}{2}`` (which
+            contain ``}}`` at the boundary of two groups) from being
+            incorrectly collapsed into a single ``}``.
             """
             if "{" not in text or "}" not in text:
                 return text
 
-            lbrace_token = "\u0000LBRACE\u0000"
-            rbrace_token = "\u0000RBRACE\u0000"
-            tmp = text.replace("{{", lbrace_token).replace("}}", rbrace_token)
+            # NOTE: do NOT pre-replace {{ / }} here.  Doing so before the scan
+            # causes adjacent LaTeX closing braces (e.g. \frac{\sqrt{3}}{2}
+            # where }} spans the inner and outer closing brace) to be treated
+            # as a single escaped }} and the outer } is lost.  Instead we
+            # handle {{ / }} inline, but ONLY outside $...$ math mode.
 
             def _is_latex_command_argument(s: str, lbrace_index: int) -> bool:
                 j = lbrace_index - 1
@@ -1224,28 +1245,48 @@ class PlotDirective(SphinxDirective):
 
             out_chars: list[str] = []
             i = 0
-            while i < len(tmp):
-                ch = tmp[i]
+            in_math = False  # True while inside $...$ — braces are LaTeX, not placeholders
+            while i < len(text):
+                ch = text[i]
+
+                # Track $...$ math mode (unescaped $ toggles math mode).
+                if ch == "$" and (i == 0 or text[i - 1] != "\\"):
+                    in_math = not in_math
+                    out_chars.append(ch)
+                    i += 1
+                    continue
+
+                # Outside math mode: {{ and }} are Python-format escaped braces.
+                if not in_math:
+                    if ch == "{" and i + 1 < len(text) and text[i + 1] == "{":
+                        out_chars.append("{")
+                        i += 2
+                        continue
+                    if ch == "}" and i + 1 < len(text) and text[i + 1] == "}":
+                        out_chars.append("}")
+                        i += 2
+                        continue
+
                 if ch != "{":
                     out_chars.append(ch)
                     i += 1
                     continue
 
-                j = tmp.find("}", i + 1)
+                j = text.find("}", i + 1)
                 if j == -1:
                     out_chars.append(ch)
                     i += 1
                     continue
 
-                latex_arg = _is_latex_command_argument(tmp, i)
+                latex_arg = _is_latex_command_argument(text, i)
                 if latex_arg:
-                    out_chars.append(tmp[i : j + 1])
+                    out_chars.append(text[i : j + 1])
                     i = j + 1
                     continue
 
-                inner = tmp[i + 1 : j].strip()
+                inner = text[i + 1 : j].strip()
                 if not inner or "\\" in inner:
-                    out_chars.append(tmp[i : j + 1])
+                    out_chars.append(text[i : j + 1])
                     i = j + 1
                     continue
 
@@ -1261,7 +1302,7 @@ class PlotDirective(SphinxDirective):
                 looks_expr = has_any_known or (not latex_arg and (has_ops_or_parens or has_ident))
 
                 if not looks_expr:
-                    out_chars.append(tmp[i : j + 1])
+                    out_chars.append(text[i : j + 1])
                     i = j + 1
                     continue
 
@@ -1276,11 +1317,11 @@ class PlotDirective(SphinxDirective):
                         rendered = _format_number_like(val)
                     out_chars.append(rendered)
                 except Exception:
-                    out_chars.append(tmp[i : j + 1])
+                    out_chars.append(text[i : j + 1])
 
                 i = j + 1
 
-            return "".join(out_chars).replace(lbrace_token, "{").replace(rbrace_token, "}")
+            return "".join(out_chars)
 
         def _escape_simple_latex_command_args(text: str) -> str:
             """Protect simple LaTeX command arguments from downstream brace formatting.
@@ -2083,9 +2124,62 @@ class PlotDirective(SphinxDirective):
                     continue
                 except Exception:
                     pass
-            # Fallback: allow unquoted tokens like top-left using a CSV-style parse
+            # Fallback: robust comma-split respecting "...", $...$, and balanced
+            # (){} so that LaTeX text such as $\frac{\sqrt{3}}{2}, \frac{1}{2}$
+            # (with a comma inside math) is kept as a single token even when
+            # the user does not quote it with double-quotes.
             try:
-                import csv
+                def _split_text_args(s: str) -> list[str]:
+                    """Split on top-level commas, honouring quoted strings,
+                    $...$ math regions, and balanced ()[]{}."""
+                    tokens: list[str] = []
+                    cur: list[str] = []
+                    depth_p = depth_b = depth_br = 0  # () [] {}
+                    in_str = False   # inside "..."
+                    in_math = False  # inside $...$
+                    k = 0
+                    while k < len(s):
+                        c = s[k]
+                        if in_str:
+                            cur.append(c)
+                            if c == '"':
+                                in_str = False
+                        elif in_math:
+                            cur.append(c)
+                            if c == '$' and (k == 0 or s[k - 1] != '\\'):
+                                in_math = False
+                        elif c == '"':
+                            in_str = True
+                            cur.append(c)
+                        elif c == '$' and (k == 0 or s[k - 1] != '\\'):
+                            in_math = True
+                            cur.append(c)
+                        elif c == '(':
+                            depth_p += 1
+                            cur.append(c)
+                        elif c == ')':
+                            depth_p -= 1
+                            cur.append(c)
+                        elif c == '[':
+                            depth_b += 1
+                            cur.append(c)
+                        elif c == ']':
+                            depth_b -= 1
+                            cur.append(c)
+                        elif c == '{':
+                            depth_br += 1
+                            cur.append(c)
+                        elif c == '}':
+                            depth_br -= 1
+                            cur.append(c)
+                        elif c == ',' and depth_p == 0 and depth_b == 0 and depth_br == 0:
+                            tokens.append(''.join(cur).strip())
+                            cur = []
+                        else:
+                            cur.append(c)
+                        k += 1
+                    tokens.append(''.join(cur).strip())
+                    return [t for t in tokens if t]
 
                 s = str(t).strip()
                 # strip surrounding brackets/parentheses if present
@@ -2093,8 +2187,15 @@ class PlotDirective(SphinxDirective):
                     s.startswith("(") and s.endswith(")")
                 ):
                     s = s[1:-1]
-                # parse as a single CSV row
-                row = next(csv.reader([s], skipinitialspace=True))
+                # strip outer CSV-style double-quotes from the text token if present
+                def _strip_quotes(tok: str) -> str:
+                    if len(tok) >= 2 and tok[0] == '"' and tok[-1] == '"':
+                        return tok[1:-1]
+                    return tok
+                row = _split_text_args(s)
+                # strip quotes from text token (index 2 when present)
+                if len(row) >= 3:
+                    row[2] = _strip_quotes(row[2])
                 if len(row) in (3, 4, 5):
                     # Evaluate x,y as expressions
                     x = _eval_expr(row[0].strip())
@@ -3137,9 +3238,9 @@ class PlotDirective(SphinxDirective):
                 # skip silently to preserve robustness
                 continue
 
-        # angle-arc: (x, y), radius, start_angle_deg, end_angle_deg[, linestyle][, color]
-        # Expression support for center, radius and angles; optional linestyle/color tokens in any order after the first three numeric expressions.
-        angle_arcs: List[Tuple[float, float, float, float, float, str | None, str | None]] = []
+        # angle-arc: (x, y), radius, start_angle_deg, end_angle_deg[, linestyle][, color][, arrow]
+        # Expression support for center, radius and angles; optional linestyle/color/arrow tokens in any order after the first three numeric expressions.
+        angle_arcs: List[Tuple[float, float, float, float, float, str | None, str | None, bool]] = []
         _allowed_arc_styles = {"solid", "dotted", "dashed", "dashdot"}
         for arc in lists.get("angle-arc", []):
             raw_arc = str(arc).strip()
@@ -3215,9 +3316,12 @@ class PlotDirective(SphinxDirective):
             end_expr = tokens_r[2]
             style_arc: str | None = None
             color_arc: str | None = None
+            arrow_arc: bool = False
             for extra_tok in tokens_r[3:]:
                 low = extra_tok.lower()
-                if low in _allowed_arc_styles and style_arc is None:
+                if low == "arrow":
+                    arrow_arc = True
+                elif low in _allowed_arc_styles and style_arc is None:
                     style_arc = low
                 elif color_arc is None:
                     color_arc = extra_tok
@@ -3238,6 +3342,7 @@ class PlotDirective(SphinxDirective):
                         end_deg_val,
                         style_arc,
                         color_arc,
+                        arrow_arc,
                     )
                 )
             except Exception:
@@ -3685,8 +3790,8 @@ class PlotDirective(SphinxDirective):
             ),
             ";".join(
                 [
-                    f"{cx},{cy}:{r}:{sa}:{ea}:{(st or '')}:{(col or '')}"
-                    for (cx, cy, r, sa, ea, st, col) in angle_arcs
+                    f"{cx},{cy}:{r}:{sa}:{ea}:{(st or '')}:{(col or '')}:{int(arr)}"
+                    for (cx, cy, r, sa, ea, st, col, arr) in angle_arcs
                 ]
             ),
             ";".join([str(raw) for raw in lists.get("triangle", [])]),
@@ -3727,6 +3832,7 @@ class PlotDirective(SphinxDirective):
             str(parsed_figsize),
             int(bool(use_usetex)),
             int(bool(handdrawn)),
+            "|".join(macro_ctx.raw_bindings),
         )
         base_name = stable_name or f"plot_{content_hash}"
 
@@ -4412,13 +4518,11 @@ class PlotDirective(SphinxDirective):
                             "dashdot": "-.",
                         }
                         default_arc_color = plotmath.COLORS.get("black") or "black"
-                        for cx, cy, r, sa_deg, ea_deg, st_a, col_a in angle_arcs:
+                        for cx, cy, r, sa_deg, ea_deg, st_a, col_a, arrow_a in angle_arcs:
                             try:
                                 sa = _np_ang.deg2rad(sa_deg)
                                 ea = _np_ang.deg2rad(ea_deg)
-                                theta = _np_ang.linspace(sa, ea, 1024)
-                                xs = cx + r * _np_ang.cos(theta)
-                                ys = cy + r * _np_ang.sin(theta)
+                                span = abs(ea - sa)
                                 ls_use = style_map_arc.get((st_a or "solid").lower(), "-")
                                 # Resolve color via plotmath palette
                                 if col_a:
@@ -4426,7 +4530,45 @@ class PlotDirective(SphinxDirective):
                                 else:
                                     _mapped = None
                                 col_use = (_mapped if _mapped else col_a) or default_arc_color
+
+                                if span > 2 * _np_ang.pi:
+                                    # --- Archimedean spiral ---
+                                    # The radius grows linearly from r at the start angle to
+                                    # r_end = r + growth_per_turn * n_turns at the end angle.
+                                    # growth_per_turn is chosen as 20 % of r per full turn so
+                                    # the spiral is clearly readable without becoming huge.
+                                    n_turns = span / (2 * _np_ang.pi)
+                                    growth_per_turn = 0.20 * r
+                                    r_end = r + growth_per_turn * n_turns
+                                    # Sample densely enough (≥1024 points per turn)
+                                    n_pts = max(1024, int(512 * n_turns))
+                                    theta = _np_ang.linspace(sa, ea, n_pts)
+                                    # Fraction along the sweep [0, 1]
+                                    t_frac = (theta - sa) / (ea - sa)
+                                    radii = r + (r_end - r) * t_frac
+                                    xs = cx + radii * _np_ang.cos(theta)
+                                    ys = cy + radii * _np_ang.sin(theta)
+                                else:
+                                    # --- Normal circular arc ---
+                                    theta = _np_ang.linspace(sa, ea, 1024)
+                                    xs = cx + r * _np_ang.cos(theta)
+                                    ys = cy + r * _np_ang.sin(theta)
+
                                 ax.plot(xs, ys, lw=lw, color=col_use, linestyle=ls_use)
+                                if arrow_a:
+                                    # Arrowhead at arc end using the last two sampled points
+                                    ax.annotate(
+                                        "",
+                                        xy=(xs[-1], ys[-1]),
+                                        xytext=(xs[-2], ys[-2]),
+                                        arrowprops=dict(
+                                            arrowstyle="-|>",
+                                            color=col_use,
+                                            lw=lw,
+                                            mutation_scale=12,
+                                        ),
+                                        annotation_clip=False,
+                                    )
                             except Exception:
                                 pass
 
@@ -5363,6 +5505,54 @@ class PlotDirective(SphinxDirective):
                         ax.xaxis.set_major_formatter(FuncFormatter(_pi_label))
                         # If xstep was set, use it as the tick locator base
                         ax.xaxis.set_major_locator(MultipleLocator(xstep))
+                    except Exception:
+                        pass
+
+                # When axis: equal is active, expand limits so no text is clipped.
+                # ax.axis("equal") was already applied early to set the coordinate
+                # space for drawing; here we check whether any text artist extends
+                # beyond the current limits and expand + re-apply equal aspect.
+                if axis_equal:
+                    try:
+                        fig.canvas.draw()  # realise text bboxes
+                        _renderer = fig.canvas.get_renderer()
+                        _inv = ax.transData.inverted()
+                        _xl0, _xl1 = ax.get_xlim()
+                        _yl0, _yl1 = ax.get_ylim()
+                        _expanded = False
+                        for _txt in ax.texts:
+                            try:
+                                _bb = _txt.get_window_extent(renderer=_renderer)
+                                for _px, _py in (
+                                    (_bb.x0, _bb.y0),
+                                    (_bb.x1, _bb.y0),
+                                    (_bb.x0, _bb.y1),
+                                    (_bb.x1, _bb.y1),
+                                ):
+                                    _dx, _dy = _inv.transform((_px, _py))
+                                    if _dx < _xl0:
+                                        _xl0 = _dx
+                                        _expanded = True
+                                    if _dx > _xl1:
+                                        _xl1 = _dx
+                                        _expanded = True
+                                    if _dy < _yl0:
+                                        _yl0 = _dy
+                                        _expanded = True
+                                    if _dy > _yl1:
+                                        _yl1 = _dy
+                                        _expanded = True
+                            except Exception:
+                                pass
+                        if _expanded:
+                            # Add a 2 % padding so text does not touch the edge
+                            _px_pad = ((_xl1 - _xl0) or 1.0) * 0.02
+                            _py_pad = ((_yl1 - _yl0) or 1.0) * 0.02
+                            ax.set_xlim(_xl0 - _px_pad, _xl1 + _px_pad)
+                            ax.set_ylim(_yl0 - _py_pad, _yl1 + _py_pad)
+                            # Re-apply equal aspect; adjustable='datalim' only expands,
+                            # never shrinks, so the new limits are preserved or grown.
+                            ax.set_aspect("equal", adjustable="datalim")
                     except Exception:
                         pass
 

@@ -70,6 +70,10 @@ Primitives (repeatable keys):
     angle:       ``(vx,vy,vz), (ax,ay,az), (bx,by,bz)[, radius][, color]``
                  — arc at vertex V from direction A to direction B
     pyramid:     ``apex=(x,y,z), base=((x1,y1,z1),(x2,y2,z2),...)[, color][, alpha]``
+    polygon:     ``(x1,y1,z1), (x2,y2,z2), ...[, color][, alpha=0.15]``
+                 — filled planar polygon with Lambert shading and hidden-line edges;
+                 at least 3 corners required.  ``alpha`` keyword accepted anywhere
+                 after the corners.
     projection:  ``object=point:(x,y,z)|segment:(A),(B)|sphere:(c),r, onto=xy|xz|yz|(nx,ny,nz):(px,py,pz)[, color][, alpha][, drop=true]``
                  — orthogonal shadow of a point, line segment, or sphere onto a plane.
     text:        ``(x,y,z), "string"[, color]``
@@ -799,6 +803,38 @@ def _parse_text_primitive(val: str) -> Dict[str, Any] | None:
             if c:
                 color = c
         return {"type": "text", "pos": pos, "text": text, "color": color}
+    except Exception:
+        return None
+
+
+def _parse_polygon_primitive(val: str) -> Dict[str, Any] | None:
+    """Parse ``(x1,y1,z1), (x2,y2,z2), ...[, color][, alpha=0.15]``.
+
+    At least 3 corner triples are required.  Optional ``alpha=<float>``
+    keyword (or bare float after all corners) and colour token are
+    accepted in any order after the corners.
+    """
+    try:
+        alpha_m = re.search(r"\balpha\s*=\s*([0-9.]+)", val)
+        alpha = float(alpha_m.group(1)) if alpha_m else 0.15
+
+        tokens = _split_top(val)
+        corner_toks = [t for t in tokens if t.strip().startswith("(")]
+        rest = [t for t in tokens if not t.strip().startswith("(")]
+        # Strip alpha= tokens from rest before colour extraction
+        rest = [t for t in rest if not re.match(r"^\s*alpha\s*=", t)]
+
+        if len(corner_toks) < 3:
+            return None
+        corners = [_parse_triple(t) for t in corner_toks]
+
+        _, color = _split_style_color(rest)
+        return {
+            "type": "polygon",
+            "corners": corners,
+            "color": color or _COLORS["blue"],
+            "alpha": alpha,
+        }
     except Exception:
         return None
 
@@ -2177,6 +2213,85 @@ def _draw_right_angle(ax, proj: Callable, prim: Dict, lw: float):
     ax.plot(pxs, pys, color=prim["color"], lw=lw * 0.85, zorder=5, solid_capstyle="round")
 
 
+def _draw_polygon(ax, proj: Callable, prim: Dict, lw: float):
+    """Draw a filled planar polygon with Lambert shading and hidden-line edges.
+
+    Shading strategy is identical to :func:`_draw_pyramid`: the face alpha is
+    modulated by the Lambert diffuse term so that the shading effect is
+    preserved in both light mode and dark mode without any SVG post-processing.
+
+    Visibility of edges follows the hidden-line convention: an edge is drawn
+    solid at full opacity when the polygon's normal faces the viewer, and dashed
+    at reduced opacity otherwise.
+    """
+    from matplotlib.patches import Polygon as MplPolygon
+
+    corners = [np.array(c, dtype=float) for c in prim["corners"]]
+    n = len(corners)
+    if n < 3:
+        return
+
+    color = prim["color"]
+    alpha = prim["alpha"]
+
+    # Compute polygon normal via Newell's method (robust for any convex/planar poly)
+    normal = np.zeros(3)
+    for i in range(n):
+        ci = corners[i]
+        cj = corners[(i + 1) % n]
+        normal[0] += (ci[1] - cj[1]) * (ci[2] + cj[2])
+        normal[1] += (ci[2] - cj[2]) * (ci[0] + cj[0])
+        normal[2] += (ci[0] - cj[0]) * (ci[1] + cj[1])
+    norm_len = np.linalg.norm(normal)
+    if norm_len < 1e-12:
+        return
+    normal = normal / norm_len
+
+    # Viewing direction (layout-dependent)
+    if getattr(proj, "_layout", "standard") == "symmetric":
+        view = np.array(proj._view_dir)
+    else:
+        view = np.array([1.0, getattr(proj, "_cx", 0.5), getattr(proj, "_sx", 0.4)])
+
+    view_hat = view / (np.linalg.norm(view) + 1e-12)
+
+    # Ensure normal points toward the viewer
+    if np.dot(normal, view_hat) < 0:
+        normal = -normal
+
+    # Light direction (consistent with sphere/pyramid shading)
+    _Lx, _Ly, _Lz = -0.5, 0.55, 0.9
+    _Lmag = math.sqrt(_Lx**2 + _Ly**2 + _Lz**2)
+    L = np.array([_Lx / _Lmag, _Ly / _Lmag, _Lz / _Lmag])
+
+    NdotL = float(np.clip(np.dot(normal, L), 0.0, 1.0))
+    face_alpha = alpha * (0.35 + 0.65 * NdotL)
+
+    # ---- Filled face ----
+    verts2d = [proj(*c) for c in corners]
+    ax.add_patch(MplPolygon(
+        verts2d, closed=True,
+        facecolor=color, edgecolor="none",
+        alpha=face_alpha, zorder=2,
+    ))
+
+    # ---- Edges with hidden-line rendering ----
+    is_front = np.dot(normal, view_hat) > 0
+    for i in range(n):
+        p0 = corners[i]
+        p1 = corners[(i + 1) % n]
+        xs = np.array([p0[0], p1[0]])
+        ys = np.array([p0[1], p1[1]])
+        zs = np.array([p0[2], p1[2]])
+        pxs, pys = _proj_array(xs, ys, zs, proj)
+        if is_front:
+            ax.plot(pxs, pys, color=color, lw=lw, alpha=1.0,
+                    linestyle="-", zorder=4, solid_capstyle="round")
+        else:
+            ax.plot(pxs, pys, color=color, lw=lw * 0.7, alpha=0.4,
+                    linestyle="--", dashes=(4, 4), zorder=3)
+
+
 # ---------------------------------------------------------------------------
 # Core render function
 # ---------------------------------------------------------------------------
@@ -2232,7 +2347,7 @@ def _render_plot3d(
 
     # Primitives in declaration order (planes/spheres first for painter's algorithm)
     def _prim_zorder_key(p):
-        return {"plane": 0, "limited-plane": 0, "projection": 0, "solid-of-revolution": 1, "sphere": 1, "pyramid": 2,
+        return {"plane": 0, "limited-plane": 0, "projection": 0, "solid-of-revolution": 1, "sphere": 1, "pyramid": 2, "polygon": 2,
                 "curve": 3, "line": 3, "line-segment": 4,
                 "angle": 5, "right-angle": 5, "vector": 6, "point": 7, "text": 8}.get(p["type"], 3)
 
@@ -2261,6 +2376,8 @@ def _render_plot3d(
                 _draw_right_angle(ax, proj, prim, lw)
             elif t == "pyramid":
                 _draw_pyramid(ax, proj, prim, lw)
+            elif t == "polygon":
+                _draw_polygon(ax, proj, prim, lw)
             elif t == "solid-of-revolution":
                 _draw_solid_of_revolution(ax, proj, prim, lw)
             elif t == "projection":
@@ -2281,7 +2398,7 @@ def _render_plot3d(
 
 _MULTI_KEYS = {
     "point", "vector", "line-segment", "line",
-    "plane", "limited-plane", "sphere", "curve", "angle", "right-angle", "pyramid", "projection", "text",
+    "plane", "limited-plane", "sphere", "curve", "angle", "right-angle", "pyramid", "polygon", "projection", "text",
     "solid-of-revolution",
 }
 
@@ -2297,6 +2414,7 @@ _PRIMITIVE_PARSERS: Dict[str, Callable[[str], Dict | None]] = {
     "angle": _parse_angle_primitive,
     "right-angle": _parse_right_angle_primitive,
     "pyramid": _parse_pyramid_primitive,
+    "polygon": _parse_polygon_primitive,
     "projection": _parse_projection_primitive,
     "solid-of-revolution": _parse_solid_of_revolution_primitive,
     "text": _parse_text_primitive,

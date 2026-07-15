@@ -979,6 +979,35 @@ div.solution-2-content {
   clear: both;
 }
 
+/* -------------------------------------------------------------------------
+   Timer lock state for solution-2
+   ---------------------------------------------------------------------- */
+
+/* Status text inserted after the toggle button by solution_timer.js */
+div.solution-2 > .solution-lock-status {
+  display: block;
+  margin-top: 0.35rem;
+  padding-left: 0.1rem;
+  font-size: 0.88rem;
+  color: #5c5873;
+}
+
+[data-mode=dark] div.solution-2 > .solution-lock-status {
+  color: #b9c1d9;
+}
+
+@media (prefers-color-scheme: dark) {
+  div.solution-2 > .solution-lock-status {
+    color: #b9c1d9;
+  }
+}
+
+/* Visual cue on the button while the solution is locked */
+div.solution-2.solution-soft-locked > button.solution-2-toggle {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
 
 /* div.solution-2-content {
   display: block;

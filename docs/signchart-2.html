@@ -27,8 +27,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
@@ -82,10 +82,10 @@
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
@@ -125,6 +125,7 @@
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'docs/signchart-2';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
@@ -147,20 +148,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -186,7 +193,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -434,7 +485,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
@@ -487,8 +538,8 @@ factors: true
  <defs>
   <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
  </defs>
- <g id="sgc2_7e017cad5fdd_855631_figure_1">
-  <g id="sgc2_7e017cad5fdd_855631_patch_1">
+ <g id="sgc2_7e017cad5fdd_4966b0_figure_1">
+  <g id="sgc2_7e017cad5fdd_4966b0_patch_1">
    <path d="M 0 209.702022 
 L 569.764115 209.702022 
 L 569.764115 0 
@@ -497,8 +548,8 @@ L 0 209.702022
 z
 " style="fill: none"/>
   </g>
-  <g id="sgc2_7e017cad5fdd_855631_axes_1">
-   <g id="sgc2_7e017cad5fdd_855631_patch_2">
+  <g id="sgc2_7e017cad5fdd_4966b0_axes_1">
+   <g id="sgc2_7e017cad5fdd_4966b0_patch_2">
     <path d="M 91.953584 197.225598 
 L 559.564115 197.225598 
 L 559.564115 50.750087 
@@ -507,19 +558,19 @@ L 91.953584 197.225598
 z
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_matplotlib.axis_1">
-    <g id="sgc2_7e017cad5fdd_855631_xtick_1">
-     <g id="sgc2_7e017cad5fdd_855631_line2d_1">
+   <g id="sgc2_7e017cad5fdd_4966b0_matplotlib.axis_1">
+    <g id="sgc2_7e017cad5fdd_4966b0_xtick_1">
+     <g id="sgc2_7e017cad5fdd_4966b0_line2d_1">
       <defs>
-       <path id="sgc2_7e017cad5fdd_855631_m7369cde211" d="M 0 0 
+       <path id="sgc2_7e017cad5fdd_4966b0_m7369cde211" d="M 0 0 
 L 0 -10 
 " style="stroke: #000000; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_855631_m7369cde211" x="198.228704" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_4966b0_m7369cde211" x="198.228704" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_855631_text_1">
+     <g id="sgc2_7e017cad5fdd_4966b0_text_1">
       <!-- $0$ -->
       <g transform="translate(192.745847 32.59933) scale(0.24 -0.24)">
        <defs>
@@ -549,13 +600,13 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_855631_xtick_2">
-     <g id="sgc2_7e017cad5fdd_855631_line2d_2">
+    <g id="sgc2_7e017cad5fdd_4966b0_xtick_2">
+     <g id="sgc2_7e017cad5fdd_4966b0_line2d_2">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_855631_m7369cde211" x="283.248801" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_4966b0_m7369cde211" x="283.248801" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_855631_text_2">
+     <g id="sgc2_7e017cad5fdd_4966b0_text_2">
       <!-- $\frac{\pi}{2}$ -->
       <g transform="translate(278.30034 29.004838) scale(0.24 -0.24)">
        <defs>
@@ -620,26 +671,26 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_855631_xtick_3">
-     <g id="sgc2_7e017cad5fdd_855631_line2d_3">
+    <g id="sgc2_7e017cad5fdd_4966b0_xtick_3">
+     <g id="sgc2_7e017cad5fdd_4966b0_line2d_3">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_855631_m7369cde211" x="368.268898" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_4966b0_m7369cde211" x="368.268898" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_855631_text_3">
+     <g id="sgc2_7e017cad5fdd_4966b0_text_3">
       <!-- $\pi$ -->
       <g transform="translate(361.628577 32.59933) scale(0.24 -0.24)">
        <use xlink:href="#CMMI12-19" transform="scale(0.996264)"/>
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_855631_xtick_4">
-     <g id="sgc2_7e017cad5fdd_855631_line2d_4">
+    <g id="sgc2_7e017cad5fdd_4966b0_xtick_4">
+     <g id="sgc2_7e017cad5fdd_4966b0_line2d_4">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_855631_m7369cde211" x="453.288994" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_4966b0_m7369cde211" x="453.288994" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_855631_text_4">
+     <g id="sgc2_7e017cad5fdd_4966b0_text_4">
       <!-- $\frac{3 \pi}{2}$ -->
       <g transform="translate(444.243463 29.004838) scale(0.24 -0.24)">
        <defs>
@@ -685,7 +736,7 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_855631_text_5">
+    <g id="sgc2_7e017cad5fdd_4966b0_text_5">
      <!-- $x$ -->
      <g transform="translate(546.259941 23.804405) scale(0.24 -0.24)">
       <defs>
@@ -727,135 +778,135 @@ z
      </g>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_matplotlib.axis_2"/>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_5">
+   <g id="sgc2_7e017cad5fdd_4966b0_matplotlib.axis_2"/>
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_5">
     <defs>
-     <path id="sgc2_7e017cad5fdd_855631_m0f98f9ff23" d="M 3 0 
+     <path id="sgc2_7e017cad5fdd_4966b0_m0f98f9ff23" d="M 3 0 
 L -3 -3 
 L -3 3 
 z
 " style="stroke: #000000; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#sgc2_7e017cad5fdd_855631_m0f98f9ff23" x="559.564115" y="57.408065" style="stroke: #000000; stroke-linejoin: miter"/>
+     <use xlink:href="#sgc2_7e017cad5fdd_4966b0_m0f98f9ff23" x="559.564115" y="57.408065" style="stroke: #000000; stroke-linejoin: miter"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_6">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_6">
     <path d="M 91.953584 101.794583 
 L 189.726695 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_7">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_7">
     <path d="M 206.730714 101.794583 
 L 359.766888 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_8">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_8">
     <path d="M 376.770907 101.794583 
 L 559.564115 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_9">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_9">
     <path d="M 91.953584 146.181101 
 L 274.746791 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_10">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_10">
     <path d="M 291.750811 146.181101 
 L 444.786985 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_11">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_11">
     <path d="M 461.791004 146.181101 
 L 559.564115 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_12">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_12">
     <path d="M 91.953584 190.56762 
 L 189.726695 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_13">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_13">
     <path d="M 206.730714 190.56762 
 L 274.746791 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_14">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_14">
     <path d="M 291.750811 190.56762 
 L 359.766888 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_15">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_15">
     <path d="M 376.770907 190.56762 
 L 444.786985 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_16">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_16">
     <path d="M 461.791004 190.56762 
 L 559.564115 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_17">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_17">
     <path d="M 198.228704 168.374361 
 L 198.228704 110.671887 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_18">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_18">
     <path d="M 198.228704 92.917279 
 L 198.228704 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_19">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_19">
     <path d="M 283.248801 168.374361 
 L 283.248801 155.058405 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_20">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_20">
     <path d="M 283.248801 137.303798 
 L 283.248801 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_21">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_21">
     <path d="M 368.268898 168.374361 
 L 368.268898 110.671887 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_22">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_22">
     <path d="M 368.268898 92.917279 
 L 368.268898 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_23">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_23">
     <path d="M 453.288994 168.374361 
 L 453.288994 155.058405 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_line2d_24">
+   <g id="sgc2_7e017cad5fdd_4966b0_line2d_24">
     <path d="M 453.288994 137.303798 
 L 453.288994 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_855631_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_4966b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_patch_3">
+   <g id="sgc2_7e017cad5fdd_4966b0_patch_3">
     <path d="M 91.953584 197.225598 
 L 91.953584 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_patch_4">
+   <g id="sgc2_7e017cad5fdd_4966b0_patch_4">
     <path d="M 559.564115 197.225598 
 L 559.564115 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_patch_5">
+   <g id="sgc2_7e017cad5fdd_4966b0_patch_5">
     <path d="M 91.953584 57.408065 
 L 559.564115 57.408065 
 " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_patch_6">
+   <g id="sgc2_7e017cad5fdd_4966b0_patch_6">
     <path d="M 91.953584 50.750087 
 L 559.564115 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_6">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_6">
     <!-- $\sin{\left(x \right)}$ -->
     <g transform="translate(9.698322 107.772167) scale(0.24 -0.24)">
      <defs>
@@ -971,19 +1022,19 @@ z
      <use xlink:href="#CMR17-29" transform="translate(218.886998 0.003177) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_7">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_7">
     <!-- $0$ -->
     <g transform="translate(192.745847 107.771407) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_8">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_8">
     <!-- $0$ -->
     <g transform="translate(362.78604 107.771407) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_9">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_9">
     <!-- $\cos{\left(x \right)}$ -->
     <g transform="translate(7.2 152.158685) scale(0.24 -0.24)">
      <defs>
@@ -1029,19 +1080,19 @@ z
      <use xlink:href="#CMR17-29" transform="translate(229.296708 0.003177) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_10">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_10">
     <!-- $0$ -->
     <g transform="translate(277.765944 152.157925) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_11">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_11">
     <!-- $0$ -->
     <g transform="translate(447.806137 152.157925) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_12">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_12">
     <!-- $f(x)$ -->
     <g transform="translate(26.366757 196.544444) scale(0.24 -0.24)">
      <defs>
@@ -1081,25 +1132,25 @@ z
      <use xlink:href="#CMR17-29" transform="translate(149.435132 0) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_13">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_13">
     <!-- $0$ -->
     <g transform="translate(192.745847 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_14">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_14">
     <!-- $0$ -->
     <g transform="translate(277.765944 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_15">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_15">
     <!-- $0$ -->
     <g transform="translate(362.78604 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_855631_text_16">
+   <g id="sgc2_7e017cad5fdd_4966b0_text_16">
     <!-- $0$ -->
     <g transform="translate(447.806137 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
@@ -1108,7 +1159,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="sgc2_7e017cad5fdd_855631_p1a50ef78ca">
+  <clipPath id="sgc2_7e017cad5fdd_4966b0_p1a50ef78ca">
    <rect x="91.953584" y="50.750087" width="467.610531" height="146.475511"/>
   </clipPath>
  </defs>
@@ -1271,7 +1322,7 @@ z
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
@@ -1324,8 +1375,8 @@ By René Ask
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
 
   <footer class="bd-footer">
   </footer>

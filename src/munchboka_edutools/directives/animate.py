@@ -803,11 +803,21 @@ def _substitute_variable(content: str, var_name: str, var_value: float) -> str:
 
         return "".join(out).replace(lbrace_token, "{").replace(rbrace_token, "}")
 
+    static_metadata_keys = {"xlabel", "ylabel", "zlabel"}
+
+    def _is_static_plot_metadata_line(line: str) -> bool:
+        m = re.match(r"^\s*([A-Za-z_][\w-]*)\s*:", line)
+        return bool(m and m.group(1) in static_metadata_keys)
+
     # Process line by line to handle text: lines specially
     lines = content.split("\n")
     result_lines = []
 
     for line in lines:
+        if _is_static_plot_metadata_line(line):
+            result_lines.append(line)
+            continue
+
         # Check if this is a text: line with quotes
         if line.strip().startswith("text:"):
             # Don't substitute inside quoted strings on text: lines
@@ -1103,11 +1113,21 @@ def _substitute_variables(content: str, variables: dict[str, float]) -> str:
         # Preserve the original prefix exactly.
         return f"{prefix}:{x_expr_sub}, {y_expr_sub}, ({t_min_expr}, {t_max_expr}){after_sub}"
 
+    static_metadata_keys = {"xlabel", "ylabel", "zlabel"}
+
+    def _is_static_plot_metadata_line(line: str) -> bool:
+        m = re.match(r"^\s*([A-Za-z_][\w-]*)\s*:", line)
+        return bool(m and m.group(1) in static_metadata_keys)
+
     lines = content.split("\n")
     result_lines: list[str] = []
 
     for line in lines:
         stripped = line.strip()
+
+        if _is_static_plot_metadata_line(line):
+            result_lines.append(line)
+            continue
 
         if stripped.startswith("text:"):
             # Match the single-var behavior: do not substitute inside quoted

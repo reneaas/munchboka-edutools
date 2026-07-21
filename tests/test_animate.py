@@ -40,6 +40,39 @@ def test_variable_substitution():
     assert "alpha" in result  # Should remain unchanged
 
 
+def test_variable_substitution_preserves_axis_labels():
+    """Interactive substitutions should not rewrite static axis labels."""
+    from munchboka_edutools.directives.animate import (
+        _substitute_variable,
+        _substitute_variables,
+    )
+
+    content = "\n".join(
+        [
+            "interactive-var: x, 0, 1, 2",
+            "function: x**2",
+            "xlabel: x",
+            "ylabel: $x$",
+            "zlabel: x-axis",
+            "text: x, 0, \"x = {x:.1f}\"",
+        ]
+    )
+
+    single = _substitute_variable(content, "x", 0.5)
+    assert "function: 0.5**2" in single
+    assert "xlabel: x" in single
+    assert "ylabel: $x$" in single
+    assert "zlabel: x-axis" in single
+    assert 'text: 0.5, 0, "x = 0.5"' in single
+
+    multi = _substitute_variables(content, {"x": 0.5, "a": 2})
+    assert "function: 0.5**2" in multi
+    assert "xlabel: x" in multi
+    assert "ylabel: $x$" in multi
+    assert "zlabel: x-axis" in multi
+    assert 'text: 0.5, 0, "x = 0.5"' in multi
+
+
 def test_eval_expr():
     """Test expression evaluation."""
     from munchboka_edutools.directives.animate import _eval_expr

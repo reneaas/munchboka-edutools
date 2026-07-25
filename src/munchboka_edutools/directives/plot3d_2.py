@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 import hashlib
 import math
 import os
@@ -20,14 +22,42 @@ from munchboka_edutools.directives._plot_common import (
     parse_kv_block,
     prepare_inline_svg,
 )
+from munchboka_edutools.directives._plot_macros import PlotMacroContext, parse_plot_macros
+
+
+_PLOT3D2_SYMPY_LOCALS: ContextVar[dict[str, Any] | None] = ContextVar(
+    "_PLOT3D2_SYMPY_LOCALS",
+    default=None,
+)
+
+
+def _current_macro_sympy_locals(*, exclude: set[str] | None = None) -> dict[str, Any]:
+    locals_ = dict(_PLOT3D2_SYMPY_LOCALS.get() or {})
+    for name in exclude or set():
+        locals_.pop(name, None)
+    return locals_
+
+
+@contextmanager
+def _plot3d2_macro_context(sympy_locals: dict[str, Any] | None):
+    token = _PLOT3D2_SYMPY_LOCALS.set(dict(sympy_locals or {}))
+    try:
+        yield
+    finally:
+        _PLOT3D2_SYMPY_LOCALS.reset(token)
 
 
 _MULTI_KEYS: set[str] = {
     "curve",
+    "line",
+    "line-segment",
+    "ngon",
+    "normal-segment",
     "point",
     "plane",
     "prism",
     "pyramid",
+    "right-angle",
     "sphere",
     "text",
     "vector",
@@ -92,9 +122,27 @@ def _eval_float(value: Any, default: float) -> float:
 
         allowed = {
             name: getattr(sympy, name)
-            for name in ["pi", "E", "sqrt", "exp", "log", "sin", "cos", "tan"]
+            for name in [
+                "pi",
+                "E",
+                "sqrt",
+                "exp",
+                "log",
+                "sin",
+                "cos",
+                "tan",
+                "asin",
+                "acos",
+                "atan",
+                "sinh",
+                "cosh",
+                "tanh",
+                "Rational",
+                "Abs",
+            ]
             if hasattr(sympy, name)
         }
+        allowed.update(_current_macro_sympy_locals())
         return float(sympy.sympify(str(value), locals=allowed).evalf())
     except Exception:
         return default
@@ -196,6 +244,16 @@ def _parse_triple_list(value: str) -> list[tuple[float, float, float]]:
     return points
 
 
+def _parse_triple_pair(value: str) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    text = value.strip()
+    if text.startswith("[") and text.endswith("]"):
+        text = text[1:-1]
+    points = [_parse_triple(part) for part in _split_top_level_commas(text)]
+    if len(points) != 2:
+        raise ValueError("Expected exactly two points")
+    return points[0], points[1]
+
+
 def _parse_vector_primitive(value: str) -> dict[str, Any] | None:
     try:
         parts = _split_top_level_commas(value)
@@ -205,6 +263,214 @@ def _parse_vector_primitive(value: str) -> dict[str, Any] | None:
         end = _parse_triple(parts[1])
         color = _resolve_color(parts[2] if len(parts) >= 3 else None)
         return {"start": start, "end": end, "color": color}
+    except Exception:
+        return None
+
+
+def _parse_line_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        if "point" in kwargs and "direction" in kwargs:
+            point = _parse_triple(kwargs["point"])
+            direction = _parse_triple(kwargs["direction"])
+        elif "through" in kwargs:
+            p0, p1 = _parse_triple_pair(kwargs["through"])
+            point = p0
+            direction = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+        else:
+            parts = _split_top_level_commas(value)
+            point_parts: list[str] = []
+            for part in parts:
+                if "=" in part:
+                    break
+                point_parts.append(part)
+            if len(point_parts) < 2:
+                return None
+            p0 = _parse_triple(point_parts[0])
+            p1 = _parse_triple(point_parts[1])
+            point = p0
+            direction = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+
+        if math.sqrt(sum(component * component for component in direction)) < 1e-12:
+            return None
+
+        style = kwargs.get("style", kwargs.get("linestyle", "solid")).strip().lower()
+        if style not in {"solid", "dashed", "dashdot", "dotted"}:
+            style = "solid"
+
+        return {
+            "point": point,
+            "direction": direction,
+            "color": _resolve_color(kwargs.get("color")),
+            "lw": _eval_float(kwargs["lw"], 1.5) if "lw" in kwargs else None,
+            "style": style,
+        }
+    except Exception:
+        return None
+
+
+def _parse_line_segment_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        if "from" in kwargs and "to" in kwargs:
+            start = _parse_triple(kwargs["from"])
+            end = _parse_triple(kwargs["to"])
+            color = _resolve_color(kwargs.get("color"))
+        elif "start" in kwargs and "end" in kwargs:
+            start = _parse_triple(kwargs["start"])
+            end = _parse_triple(kwargs["end"])
+            color = _resolve_color(kwargs.get("color"))
+        else:
+            parts = _split_top_level_commas(value)
+            positional_parts: list[str] = []
+            for part in parts:
+                if "=" in part:
+                    break
+                positional_parts.append(part)
+            if len(positional_parts) < 2:
+                return None
+            start = _parse_triple(positional_parts[0])
+            end = _parse_triple(positional_parts[1])
+            color = _resolve_color(positional_parts[2] if len(positional_parts) >= 3 else kwargs.get("color"))
+
+        direction = (end[0] - start[0], end[1] - start[1], end[2] - start[2])
+        if math.sqrt(sum(component * component for component in direction)) < 1e-12:
+            return None
+
+        style = kwargs.get("style", kwargs.get("linestyle", "solid")).strip().lower()
+        if style not in {"solid", "dashed", "dashdot", "dotted"}:
+            style = "solid"
+
+        return {
+            "start": start,
+            "end": end,
+            "color": color,
+            "lw": _eval_float(kwargs["lw"], 1.5) if "lw" in kwargs else None,
+            "style": style,
+        }
+    except Exception:
+        return None
+
+
+def _parse_normal_segment_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        style = kwargs.get("style", kwargs.get("linestyle", "solid")).strip().lower()
+        if style not in {"solid", "dashed", "dashdot", "dotted"}:
+            style = "solid"
+        options = {
+            "color": _resolve_color(kwargs.get("color")),
+            "lw": _eval_float(kwargs["lw"], 1.5) if "lw" in kwargs else None,
+            "style": style,
+            "right_angles": bool(parse_bool(kwargs.get("right-angles", kwargs.get("right_angles")), default=True)),
+            "right_angle_color": _resolve_color(
+                kwargs.get("right-angle-color", kwargs.get("right_angle_color")),
+                default="black",
+            ),
+            "right_angle_size": abs(
+                _eval_float(kwargs.get("right-angle-size", kwargs.get("right_angle_size", kwargs.get("size"))), 0.35)
+            ),
+            "endpoint_points": bool(
+                parse_bool(
+                    kwargs.get("endpoint-points", kwargs.get("endpoint_points", kwargs.get("points"))),
+                    default=True,
+                )
+            ),
+            "endpoint_color": _resolve_color(
+                kwargs.get("endpoint-color", kwargs.get("endpoint_color", kwargs.get("point-color"))),
+                default="black",
+            ),
+        }
+
+        point1_raw = kwargs.get("point1", kwargs.get("p1"))
+        direction1_raw = kwargs.get("direction1", kwargs.get("dir1", kwargs.get("v1")))
+        point2_raw = kwargs.get("point2", kwargs.get("p2"))
+        direction2_raw = kwargs.get("direction2", kwargs.get("dir2", kwargs.get("v2")))
+        if all([point1_raw, direction1_raw, point2_raw, direction2_raw]):
+            point1 = _parse_triple(point1_raw)
+            direction1 = _parse_triple(direction1_raw)
+            point2 = _parse_triple(point2_raw)
+            direction2 = _parse_triple(direction2_raw)
+            if math.sqrt(sum(component * component for component in direction1)) < 1e-12:
+                return None
+            if math.sqrt(sum(component * component for component in direction2)) < 1e-12:
+                return None
+
+            return {
+                "kind": "line-line",
+                "point1": point1,
+                "direction1": direction1,
+                "point2": point2,
+                "direction2": direction2,
+                **options,
+            }
+
+        point_raw = kwargs.get("point", kwargs.get("p"))
+        if point_raw is None:
+            return None
+        point = _parse_triple(point_raw)
+        normal_raw = kwargs.get("plane-normal", kwargs.get("plane_normal", kwargs.get("normal")))
+        plane_point_raw = kwargs.get(
+            "plane-point",
+            kwargs.get("plane_point", kwargs.get("on-plane", kwargs.get("on_plane"))),
+        )
+        if normal_raw is not None and plane_point_raw is not None:
+            plane_normal = _parse_triple(normal_raw)
+            plane_point = _parse_triple(plane_point_raw)
+        else:
+            plane_definition = kwargs.get("plane", kwargs.get("equation"))
+            if plane_definition is None:
+                return None
+            parsed_plane = _plane_equation_normal_point(plane_definition)
+            if parsed_plane is None:
+                return None
+            plane_normal, plane_point = parsed_plane
+
+        if math.sqrt(sum(component * component for component in plane_normal)) < 1e-12:
+            return None
+        return {
+            "kind": "point-plane",
+            "point": point,
+            "plane_normal": plane_normal,
+            "plane_point": plane_point,
+            **options,
+        }
+    except Exception:
+        return None
+
+
+def _parse_right_angle_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        if "at" not in kwargs:
+            return None
+        at = _parse_triple(kwargs["at"])
+        if "dir1" in kwargs and "dir2" in kwargs:
+            dir1 = _parse_triple(kwargs["dir1"])
+            dir2 = _parse_triple(kwargs["dir2"])
+            clamp_to_targets = False
+        elif "to1" in kwargs and "to2" in kwargs:
+            to1 = _parse_triple(kwargs["to1"])
+            to2 = _parse_triple(kwargs["to2"])
+            dir1 = (to1[0] - at[0], to1[1] - at[1], to1[2] - at[2])
+            dir2 = (to2[0] - at[0], to2[1] - at[1], to2[2] - at[2])
+            clamp_to_targets = True
+        else:
+            return None
+
+        size = abs(_eval_float(kwargs.get("size"), 0.35))
+        if size < 1e-12:
+            return None
+
+        return {
+            "at": at,
+            "dir1": dir1,
+            "dir2": dir2,
+            "clamp_to_targets": clamp_to_targets,
+            "size": size,
+            "color": _resolve_color(kwargs.get("color"), default="black"),
+            "lw": _eval_float(kwargs["lw"], 1.5) if "lw" in kwargs else None,
+        }
     except Exception:
         return None
 
@@ -357,6 +623,36 @@ def _parse_pyramid_primitive(value: str) -> dict[str, Any] | None:
         return None
 
 
+def _parse_ngon_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        color = _resolve_color(kwargs.get("color"))
+        edgecolor = _resolve_color(kwargs.get("edgecolor"), default="black")
+        alpha = _parse_alpha(kwargs.get("alpha"), 0.45)
+
+        if "points" in kwargs:
+            vertices = _parse_triple_list(kwargs["points"])
+        elif "vertices" in kwargs:
+            vertices = _parse_triple_list(kwargs["vertices"])
+        else:
+            parts = _split_top_level_commas(value)
+            vertex_parts: list[str] = []
+            for part in parts:
+                if "=" in part:
+                    break
+                vertex_parts.append(part)
+            vertices = _parse_triple_list(", ".join(vertex_parts))
+
+        return {
+            "vertices": vertices,
+            "color": color,
+            "edgecolor": edgecolor,
+            "alpha": alpha,
+        }
+    except Exception:
+        return None
+
+
 def _parse_prism_primitive(value: str) -> dict[str, Any] | None:
     try:
         kwargs = _parse_primitive_kwargs(value)
@@ -466,6 +762,10 @@ def _format_tick(value: float) -> str:
     return f"{value:.3g}"
 
 
+def _show_axis_label(label: str) -> bool:
+    return str(label).strip().lower() != "none"
+
+
 def _draw_centered_axes(
     ax,
     *,
@@ -535,10 +835,12 @@ def _draw_centered_axes(
 
     xpad = 0.08 * (xhi - xlo or 1.0)
     ypad = 0.08 * (yhi - ylo or 1.0)
-    zpad = 0.08 * (zhi - zlo or 1.0)
-    ax.text(xhi + xpad, 0, 0, xlabel, fontsize=fontsize, color=axis_color)
-    ax.text(0, yhi + ypad, 0, ylabel, fontsize=fontsize, color=axis_color)
-    ax.text(0, 0, zhi + zpad, zlabel, fontsize=fontsize, color=axis_color)
+    if _show_axis_label(xlabel):
+        ax.text(xhi, -0.65 * ypad, 0, xlabel, fontsize=fontsize, color=axis_color, ha="center", va="top")
+    if _show_axis_label(ylabel):
+        ax.text(0, yhi + ypad, 0, ylabel, fontsize=fontsize, color=axis_color)
+    if _show_axis_label(zlabel):
+        ax.text(-0.325 * xpad, 0, zhi, zlabel, fontsize=fontsize, color=axis_color, ha="right", va="bottom")
 
     if not ticks:
         return
@@ -559,25 +861,88 @@ def _draw_centered_axes(
         ax.text(0, -2.5 * tick_len, z, _format_tick(z), fontsize=tick_fontsize, color=tick_color)
 
 
-def _draw_vector(ax, vector: dict[str, Any], *, lw: float) -> None:
-    x0, y0, z0 = vector["start"]
-    x1, y1, z1 = vector["end"]
-    dx = x1 - x0
-    dy = y1 - y0
-    dz = z1 - z0
-    if abs(dx) < 1e-12 and abs(dy) < 1e-12 and abs(dz) < 1e-12:
+def _vector_arrow_geometry(
+    vector: dict[str, Any],
+    *,
+    elev: float,
+    azim: float,
+    xrange: tuple[float, float],
+    yrange: tuple[float, float],
+    zrange: tuple[float, float],
+) -> tuple[tuple[tuple[float, float, float], tuple[float, float, float]], list[list[tuple[float, float, float]]]] | None:
+    import numpy as np
+
+    start = np.asarray(vector["start"], dtype=float)
+    tip = np.asarray(vector["end"], dtype=float)
+    direction = tip - start
+    length = float(np.linalg.norm(direction))
+    if length < 1e-12:
+        return None
+
+    unit = direction / length
+    scene_extent = max(xrange[1] - xrange[0], yrange[1] - yrange[0], zrange[1] - zrange[0], 1.0)
+    head_length = min(0.16 * length, 0.04 * scene_extent)
+    head_width = 0.42 * head_length
+    base_center = tip - unit * head_length
+
+    view_direction = _view_direction(elev, azim)
+    side = np.cross(view_direction, unit)
+    side_norm = float(np.linalg.norm(side))
+    if side_norm < 1e-12:
+        reference = np.array([0.0, 0.0, 1.0], dtype=float)
+        if abs(float(np.dot(reference, unit))) > 0.92:
+            reference = np.array([0.0, 1.0, 0.0], dtype=float)
+        side = np.cross(reference, unit)
+        side_norm = float(np.linalg.norm(side))
+    if side_norm < 1e-12:
+        return None
+    side = side / side_norm
+
+    faces = [
+        [
+            tuple(tip),
+            tuple(base_center + side * head_width),
+            tuple(base_center - side * head_width),
+        ]
+    ]
+    return (tuple(start), tuple(base_center)), faces
+
+
+def _draw_vector(
+    ax,
+    vector: dict[str, Any],
+    *,
+    lw: float,
+    elev: float,
+    azim: float,
+    xrange: tuple[float, float],
+    yrange: tuple[float, float],
+    zrange: tuple[float, float],
+) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
+
+    geometry = _vector_arrow_geometry(vector, elev=elev, azim=azim, xrange=xrange, yrange=yrange, zrange=zrange)
+    if geometry is None:
         return
-    ax.quiver(
-        x0,
-        y0,
-        z0,
-        dx,
-        dy,
-        dz,
-        color=vector["color"],
-        linewidth=lw,
-        arrow_length_ratio=0.12,
-        normalize=False,
+    shaft, head_faces = geometry
+    ax.add_collection3d(
+        Line3DCollection(
+            [shaft],
+            colors=[vector["color"]],
+            linewidths=lw,
+            linestyles="solid",
+            zorder=40,
+        )
+    )
+    ax.add_collection3d(
+        Poly3DCollection(
+            head_faces,
+            facecolors=[vector["color"]] * len(head_faces),
+            edgecolors=[vector["color"]] * len(head_faces),
+            linewidths=max(0.3, lw * 0.4),
+            alpha=0.98,
+            zorder=45,
+        )
     )
 
 
@@ -590,7 +955,7 @@ def _draw_point(ax, point: dict[str, Any]) -> None:
         color=point["color"],
         s=42,
         depthshade=False,
-        zorder=20,
+        zorder=50,
     )
 
 
@@ -608,6 +973,372 @@ def _draw_text(ax, text_item: dict[str, Any], *, default_fontsize: float) -> Non
         ha=text_item["ha"],
         va=text_item["va"],
         zorder=30,
+    )
+
+
+def _line_box_segment(
+    line: dict[str, Any],
+    *,
+    xrange: tuple[float, float],
+    yrange: tuple[float, float],
+    zrange: tuple[float, float],
+) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
+    p = line["point"]
+    d = line["direction"]
+    t_min = -math.inf
+    t_max = math.inf
+    for coord, delta, bounds in zip(p, d, (xrange, yrange, zrange)):
+        lo, hi = bounds
+        if abs(delta) < 1e-12:
+            if coord < lo - 1e-12 or coord > hi + 1e-12:
+                return None
+            continue
+        t0 = (lo - coord) / delta
+        t1 = (hi - coord) / delta
+        if t0 > t1:
+            t0, t1 = t1, t0
+        t_min = max(t_min, t0)
+        t_max = min(t_max, t1)
+        if t_min > t_max + 1e-12:
+            return None
+
+    if not math.isfinite(t_min) or not math.isfinite(t_max):
+        return None
+    start = tuple(float(coord + t_min * delta) for coord, delta in zip(p, d))
+    end = tuple(float(coord + t_max * delta) for coord, delta in zip(p, d))
+    return start, end
+
+
+def _line_style_is_visible(style: str, position: float) -> bool:
+    position = position % 1.0
+    if style == "solid":
+        return True
+    if style == "dashed":
+        return position % 0.16 < 0.095
+    if style == "dotted":
+        return position % 0.055 < 0.018
+    if style == "dashdot":
+        phase = position % 0.22
+        return phase < 0.105 or 0.145 <= phase < 0.17
+    return True
+
+
+def _line_shaded_segments(
+    line: dict[str, Any],
+    segment: tuple[tuple[float, float, float], tuple[float, float, float]],
+    *,
+    elev: float,
+    azim: float,
+    samples: int = 96,
+):
+    import numpy as np
+    from matplotlib import colors as mcolors
+
+    start = np.asarray(segment[0], dtype=float)
+    end = np.asarray(segment[1], dtype=float)
+    t_values = np.linspace(0.0, 1.0, max(2, samples))
+    points = start + (end - start) * t_values[:, None]
+    view_direction = _view_direction(elev, azim)
+    depths = points @ view_direction
+    depth_span = float(np.ptp(depths))
+    base_rgb = np.array(mcolors.to_rgb(line["color"]), dtype=float)
+
+    segments = []
+    colors = []
+    for idx in range(len(points) - 1):
+        midpoint_t = float((t_values[idx] + t_values[idx + 1]) / 2)
+        if not _line_style_is_visible(line["style"], midpoint_t):
+            continue
+        if depth_span < 1e-12:
+            shade_weight = 0.5
+        else:
+            midpoint_depth = float((depths[idx] + depths[idx + 1]) / 2)
+            shade_weight = (midpoint_depth - float(np.min(depths))) / depth_span
+        segments.append(np.asarray([points[idx], points[idx + 1]], dtype=float))
+        colors.append(_curve_depth_color(base_rgb, float(shade_weight)))
+
+    return segments, colors
+
+
+def _draw_line(
+    ax,
+    line: dict[str, Any],
+    *,
+    lw: float,
+    elev: float,
+    azim: float,
+    xrange: tuple[float, float],
+    yrange: tuple[float, float],
+    zrange: tuple[float, float],
+) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+    segment = _line_box_segment(line, xrange=xrange, yrange=yrange, zrange=zrange)
+    if segment is None:
+        return
+    segments, colors = _line_shaded_segments(line, segment, elev=elev, azim=azim)
+    if not segments:
+        return
+    ax.add_collection3d(
+        Line3DCollection(
+            segments,
+            colors=colors,
+            linewidths=line["lw"] if line["lw"] is not None else lw,
+            linestyles="solid",
+            zorder=10,
+        )
+    )
+
+
+def _draw_line_segment(
+    ax,
+    line_segment: dict[str, Any],
+    *,
+    lw: float,
+    elev: float,
+    azim: float,
+) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+    line_like = {
+        "color": line_segment["color"],
+        "style": line_segment["style"],
+    }
+    segment = (line_segment["start"], line_segment["end"])
+    segments, colors = _line_shaded_segments(line_like, segment, elev=elev, azim=azim)
+    if not segments:
+        return
+    ax.add_collection3d(
+        Line3DCollection(
+            segments,
+            colors=colors,
+            linewidths=line_segment["lw"] if line_segment["lw"] is not None else lw,
+            linestyles="solid",
+            zorder=12,
+        )
+    )
+
+
+def _normal_segment_points(
+    normal_segment: dict[str, Any],
+) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
+    import numpy as np
+
+    if normal_segment.get("kind") == "point-plane":
+        point = np.asarray(normal_segment["point"], dtype=float)
+        plane_normal = np.asarray(normal_segment["plane_normal"], dtype=float)
+        plane_point = np.asarray(normal_segment["plane_point"], dtype=float)
+        normal_norm = float(np.linalg.norm(plane_normal))
+        if normal_norm < 1e-12:
+            return None
+        unit_normal = plane_normal / normal_norm
+        foot = point - float(np.dot(point - plane_point, unit_normal)) * unit_normal
+        return tuple(float(value) for value in foot), tuple(float(value) for value in point)
+
+    p1 = np.asarray(normal_segment["point1"], dtype=float)
+    d1 = np.asarray(normal_segment["direction1"], dtype=float)
+    p2 = np.asarray(normal_segment["point2"], dtype=float)
+    d2 = np.asarray(normal_segment["direction2"], dtype=float)
+    a = float(np.dot(d1, d1))
+    b = float(np.dot(d1, d2))
+    c = float(np.dot(d2, d2))
+    w0 = p1 - p2
+    d = float(np.dot(d1, w0))
+    e = float(np.dot(d2, w0))
+    denominator = a * c - b * b
+    if abs(denominator) < 1e-12:
+        return None
+
+    s = (b * e - c * d) / denominator
+    t = (a * e - b * d) / denominator
+    foot1 = p1 + s * d1
+    foot2 = p2 + t * d2
+    return tuple(float(value) for value in foot1), tuple(float(value) for value in foot2)
+
+
+def _plane_basis_from_normal(normal: tuple[float, float, float]):
+    import numpy as np
+
+    unit_normal = np.asarray(normal, dtype=float)
+    normal_norm = float(np.linalg.norm(unit_normal))
+    if normal_norm < 1e-12:
+        return None
+    unit_normal = unit_normal / normal_norm
+    first = None
+    for reference in (
+        np.array([1.0, 0.0, 0.0]),
+        np.array([0.0, 1.0, 0.0]),
+        np.array([0.0, 0.0, 1.0]),
+    ):
+        projected = reference - float(np.dot(reference, unit_normal)) * unit_normal
+        projected_norm = float(np.linalg.norm(projected))
+        if projected_norm >= 1e-12:
+            first = projected / projected_norm
+            break
+    if first is None:
+        return None
+    first_norm = float(np.linalg.norm(first))
+    if first_norm < 1e-12:
+        return None
+    second = np.cross(unit_normal, first)
+    return first, second
+
+
+def _draw_plane_right_angle_marker(
+    ax,
+    *,
+    at: tuple[float, float, float],
+    normal: tuple[float, float, float],
+    segment_direction: tuple[float, float, float],
+    size: float,
+    color: Any,
+    line_width: float,
+) -> None:
+    basis = _plane_basis_from_normal(normal)
+    if basis is None:
+        return
+    plane_direction = tuple(float(value) for value in basis[0])
+    _draw_right_angle(
+        ax,
+        {
+            "at": at,
+            "dir1": segment_direction,
+            "dir2": plane_direction,
+            "clamp_to_targets": True,
+            "size": size,
+            "color": color,
+            "lw": line_width,
+        },
+        lw=line_width,
+    )
+
+
+def _draw_normal_segment(
+    ax,
+    normal_segment: dict[str, Any],
+    *,
+    lw: float,
+    elev: float,
+    azim: float,
+) -> None:
+    points = _normal_segment_points(normal_segment)
+    if points is None:
+        return
+    foot1, foot2 = points
+    line_segment = {
+        "start": foot1,
+        "end": foot2,
+        "color": normal_segment["color"],
+        "lw": normal_segment["lw"],
+        "style": normal_segment["style"],
+    }
+    _draw_line_segment(ax, line_segment, lw=lw, elev=elev, azim=azim)
+
+    if normal_segment.get("kind") == "point-plane" and normal_segment.get("endpoint_points", True):
+        _draw_point(ax, {"coords": foot1, "color": normal_segment["endpoint_color"]})
+        _draw_point(ax, {"coords": foot2, "color": normal_segment["endpoint_color"]})
+
+    if not normal_segment.get("right_angles", True):
+        return
+
+    size = normal_segment["right_angle_size"]
+    if size < 1e-12:
+        return
+    segment_direction = (
+        foot2[0] - foot1[0],
+        foot2[1] - foot1[1],
+        foot2[2] - foot1[2],
+    )
+    if normal_segment.get("kind") == "point-plane":
+        _draw_plane_right_angle_marker(
+            ax,
+            at=foot1,
+            normal=normal_segment["plane_normal"],
+            segment_direction=segment_direction,
+            size=size,
+            color=normal_segment["right_angle_color"],
+            line_width=normal_segment["lw"] if normal_segment["lw"] is not None else lw,
+        )
+        return
+
+    _draw_right_angle(
+        ax,
+        {
+            "at": foot1,
+            "dir1": segment_direction,
+            "dir2": normal_segment["direction1"],
+            "clamp_to_targets": True,
+            "size": size,
+            "color": normal_segment["right_angle_color"],
+            "lw": normal_segment["lw"],
+        },
+        lw=lw,
+    )
+    _draw_right_angle(
+        ax,
+        {
+            "at": foot2,
+            "dir1": (-segment_direction[0], -segment_direction[1], -segment_direction[2]),
+            "dir2": normal_segment["direction2"],
+            "clamp_to_targets": True,
+            "size": size,
+            "color": normal_segment["right_angle_color"],
+            "lw": normal_segment["lw"],
+        },
+        lw=lw,
+    )
+
+
+def _right_angle_points(
+    right_angle: dict[str, Any],
+) -> list[tuple[float, float, float]] | None:
+    import numpy as np
+
+    at = np.asarray(right_angle["at"], dtype=float)
+    dir1 = np.asarray(right_angle["dir1"], dtype=float)
+    dir2 = np.asarray(right_angle["dir2"], dtype=float)
+    norm1 = float(np.linalg.norm(dir1))
+    if norm1 < 1e-12:
+        return None
+    u = dir1 / norm1
+    dir2_orthogonal = dir2 - float(np.dot(dir2, u)) * u
+    norm2 = float(np.linalg.norm(dir2_orthogonal))
+    if norm2 < 1e-12:
+        return None
+    v = dir2_orthogonal / norm2
+    size = float(right_angle["size"])
+    side1 = size
+    side2 = size
+    if right_angle.get("clamp_to_targets"):
+        side1 = min(side1, norm1)
+        side2 = min(side2, norm2)
+    if side1 < 1e-12 or side2 < 1e-12:
+        return None
+    return [
+        tuple(at + side1 * u),
+        tuple(at + side1 * u + side2 * v),
+        tuple(at + side2 * v),
+    ]
+
+
+def _draw_right_angle(ax, right_angle: dict[str, Any], *, lw: float) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+    points = _right_angle_points(right_angle)
+    if points is None:
+        return
+    segments = [
+        [points[0], points[1]],
+        [points[1], points[2]],
+    ]
+    ax.add_collection3d(
+        Line3DCollection(
+            segments,
+            colors=[right_angle["color"]],
+            linewidths=right_angle["lw"] if right_angle["lw"] is not None else lw,
+            linestyles="solid",
+            zorder=35,
+        )
     )
 
 
@@ -635,7 +1366,49 @@ def _sympy_plane_locals() -> dict[str, Any]:
             if hasattr(sympy, name)
         }
     )
+    allowed.update(_current_macro_sympy_locals(exclude={"x", "y", "z"}))
     return allowed
+
+
+def _plane_equation_normal_point(
+    equation: str,
+) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
+    import numpy as np
+    import sympy
+
+    locals_ = _sympy_plane_locals()
+    x, y, z = locals_["x"], locals_["y"], locals_["z"]
+    equation = str(equation).replace("^", "**")
+    if "=" in equation:
+        lhs_raw, rhs_raw = equation.split("=", 1)
+        lhs = sympy.sympify(lhs_raw.strip(), locals=locals_)
+        rhs = sympy.sympify(rhs_raw.strip(), locals=locals_)
+        expr = lhs - rhs
+    else:
+        expr = sympy.sympify(equation, locals=locals_)
+
+    try:
+        poly = sympy.Poly(sympy.expand(expr), x, y, z)
+    except Exception:
+        return None
+    if poly.total_degree() > 1:
+        return None
+
+    coefficients = [poly.coeff_monomial(symbol) for symbol in (x, y, z)]
+    try:
+        normal = np.asarray([float(coefficient.evalf()) for coefficient in coefficients], dtype=float)
+        constant = float(poly.coeff_monomial(1).evalf())
+    except Exception:
+        return None
+
+    normal_norm_squared = float(np.dot(normal, normal))
+    if normal_norm_squared < 1e-12:
+        return None
+    point = -constant / normal_norm_squared * normal
+    return (
+        tuple(float(value) for value in normal),
+        tuple(float(value) for value in point),
+    )
 
 
 def _plane_surface_grids(
@@ -962,6 +1735,19 @@ def _draw_pyramid(ax, pyramid: dict[str, Any], *, lw: float, elev: float, azim: 
     )
 
 
+def _draw_ngon(ax, ngon: dict[str, Any], *, lw: float, elev: float, azim: float) -> None:
+    _add_front_back_poly_collections(
+        ax,
+        [ngon["vertices"]],
+        color=ngon["color"],
+        edgecolor=ngon["edgecolor"],
+        alpha=ngon["alpha"],
+        lw=lw,
+        elev=elev,
+        azim=azim,
+    )
+
+
 def _draw_prism(ax, prism: dict[str, Any], *, lw: float, elev: float, azim: float) -> None:
     base = prism["base"]
     top = prism["top"]
@@ -1136,6 +1922,7 @@ def _sympy_curve_locals() -> dict[str, Any]:
             if hasattr(sympy, name)
         }
     )
+    allowed.update(_current_macro_sympy_locals(exclude={"t"}))
     return allowed
 
 
@@ -1235,46 +2022,34 @@ def _curve_depth_color(base_rgb: Any, shade_weight: float):
     return (float(rgb[0]), float(rgb[1]), float(rgb[2]), float(alpha))
 
 
-_CURVE_DEPTH_STYLES: tuple[dict[str, Any], ...] = (
+_CURVE_XY_STYLES: tuple[dict[str, Any], ...] = (
     {
-        "max_weight": 0.18,
-        "linestyle": (0, (1.4, 3.8)),
-        "linewidth_scale": 1.35,
-    },
-    {
-        "max_weight": 0.36,
-        "linestyle": (0, (2.2, 3.0)),
-        "linewidth_scale": 1.25,
-    },
-    {
-        "max_weight": 0.54,
-        "linestyle": (0, (3.5, 2.4)),
+        "name": "dashed",
+        "linestyle": "dashed",
         "linewidth_scale": 1.16,
     },
     {
-        "max_weight": 0.72,
-        "linestyle": (0, (6.0, 1.7)),
+        "name": "dashdot",
+        "linestyle": "dashdot",
         "linewidth_scale": 1.08,
     },
     {
-        "max_weight": 0.86,
-        "linestyle": (0, (10.0, 1.2)),
-        "linewidth_scale": 1.03,
-    },
-    {
-        "max_weight": 1.0,
+        "name": "solid",
         "linestyle": "solid",
         "linewidth_scale": 1.0,
     },
 )
 
 
-def _curve_depth_style_index(depth_weight: float) -> int:
-    weight = float(depth_weight)
-    for idx, style in enumerate(_CURVE_DEPTH_STYLES):
-        if weight <= float(style["max_weight"]):
-            return idx
-    return len(_CURVE_DEPTH_STYLES) - 1
+def _curve_xy_style_index(x: float, y: float, *, fallback: int | None = None) -> int:
+    eps = 1e-12
+    if abs(x) <= eps or abs(y) <= eps:
+        return fallback if fallback is not None else 1
+    if x > 0 and y < 0:
+        return 2
+    if x < 0 and y < 0:
+        return 0
+    return 1
 
 
 def _curve_front_back_segments(curve: dict[str, Any], *, elev: float, azim: float):
@@ -1343,10 +2118,11 @@ def _curve_segment_collections(curve: dict[str, Any], *, elev: float, azim: floa
         {
             "segments": [],
             "colors": [],
+            "name": style["name"],
             "linestyle": style["linestyle"],
             "linewidth_scale": style["linewidth_scale"],
         }
-        for style in _CURVE_DEPTH_STYLES
+        for style in _CURVE_XY_STYLES
     ]
 
     current: list[Any] = []
@@ -1371,10 +2147,12 @@ def _curve_segment_collections(curve: dict[str, Any], *, elev: float, azim: floa
             current_style_idx = None
             continue
 
-        start_weight = float(depth_weights[idx])
-        end_weight = float(depth_weights[idx + 1])
-        segment_weight = (start_weight + end_weight) / 2
-        style_idx = _curve_depth_style_index(segment_weight)
+        midpoint = (points[idx] + points[idx + 1]) / 2
+        style_idx = _curve_xy_style_index(
+            float(midpoint[0]),
+            float(midpoint[1]),
+            fallback=current_style_idx,
+        )
         start_shade_weight = float(shade_weights[idx])
         end_shade_weight = float(shade_weights[idx + 1])
         segment_shade_weight = (start_shade_weight + end_shade_weight) / 2
@@ -1522,6 +2300,7 @@ def _draw_solid_of_revolution(ax, solid: dict[str, Any]) -> None:
         ]
         if hasattr(sympy, name)
     }
+    allowed.update(_current_macro_sympy_locals(exclude={"x"}))
     expr = sympy.sympify(solid["expr"], locals=allowed)
     fn = sympy.lambdify(x, expr, modules=["numpy"])
 
@@ -1564,9 +2343,9 @@ def _render_plot3d2(
     xrange: tuple[float, float] = (-5.0, 5.0),
     yrange: tuple[float, float] = (-5.0, 5.0),
     zrange: tuple[float, float] = (-5.0, 5.0),
-    xlabel: str = "x",
-    ylabel: str = "y",
-    zlabel: str = "z",
+    xlabel: str = "$x$",
+    ylabel: str = "$y$",
+    zlabel: str = "$z$",
     ticks: bool = True,
     xstep: float = 1.0,
     ystep: float = 1.0,
@@ -1578,10 +2357,15 @@ def _render_plot3d2(
     lw: float = 1.5,
     figsize: tuple[float, float] = (6.0, 5.0),
     curves: list[dict[str, Any]] | None = None,
+    line_segments: list[dict[str, Any]] | None = None,
+    lines: list[dict[str, Any]] | None = None,
+    ngons: list[dict[str, Any]] | None = None,
+    normal_segments: list[dict[str, Any]] | None = None,
     points: list[dict[str, Any]] | None = None,
     planes: list[dict[str, Any]] | None = None,
     prisms: list[dict[str, Any]] | None = None,
     pyramids: list[dict[str, Any]] | None = None,
+    right_angles: list[dict[str, Any]] | None = None,
     spheres: list[dict[str, Any]] | None = None,
     texts: list[dict[str, Any]] | None = None,
     vectors: list[dict[str, Any]] | None = None,
@@ -1594,6 +2378,7 @@ def _render_plot3d2(
 
     fig = plt.figure(figsize=figsize, frameon=False)
     ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
+    ax.computed_zorder = False
     ax.view_init(elev=elev, azim=azim)
     try:
         ax.set_proj_type("ortho")
@@ -1627,6 +2412,12 @@ def _render_plot3d2(
     for plane in planes or []:
         try:
             _draw_plane(ax, plane, xrange=xrange, yrange=yrange, zrange=zrange)
+        except Exception:
+            pass
+
+    for ngon in ngons or []:
+        try:
+            _draw_ngon(ax, ngon, lw=lw, elev=elev, azim=azim)
         except Exception:
             pass
 
@@ -1670,8 +2461,20 @@ def _render_plot3d2(
         except Exception:
             pass
 
+    for line in lines or []:
+        _draw_line(ax, line, lw=lw, elev=elev, azim=azim, xrange=xrange, yrange=yrange, zrange=zrange)
+
+    for line_segment in line_segments or []:
+        _draw_line_segment(ax, line_segment, lw=lw, elev=elev, azim=azim)
+
+    for normal_segment in normal_segments or []:
+        _draw_normal_segment(ax, normal_segment, lw=lw, elev=elev, azim=azim)
+
+    for right_angle in right_angles or []:
+        _draw_right_angle(ax, right_angle, lw=lw)
+
     for vector in vectors or []:
-        _draw_vector(ax, vector, lw=lw)
+        _draw_vector(ax, vector, lw=lw, elev=elev, azim=azim, xrange=xrange, yrange=yrange, zrange=zrange)
 
     for point in points or []:
         _draw_point(ax, point)
@@ -1733,100 +2536,139 @@ class Plot3d2Directive(SphinxDirective):
         "zoom": directives.unchanged,
     }
 
-    def _parse_kv_block(self) -> tuple[dict[str, Any], dict[str, list[str]], int]:
-        return parse_kv_block(list(self.content), _MULTI_KEYS)
+    def _parse_kv_block(self, lines: list[str]) -> tuple[dict[str, Any], dict[str, list[str]], int]:
+        return parse_kv_block(lines, _MULTI_KEYS)
 
     def run(self):
         env = self.state.document.settings.env
         app = env.app
-        scalars, lists, caption_idx = self._parse_kv_block()
-        merged = {**scalars, **self.options}
+        raw_lines = [str(line).rstrip("\n") for line in self.content]
+        try:
+            expanded_lines, macro_ctx = parse_plot_macros(raw_lines)
+        except Exception:
+            expanded_lines = raw_lines
+            macro_ctx = PlotMacroContext(sympy_locals={}, numeric_functions={}, raw_bindings=())
 
-        def _f(key: str, default: float) -> float:
-            return _eval_float(merged.get(key), default)
+        with _plot3d2_macro_context(macro_ctx.sympy_locals):
+            scalars, lists, caption_idx = self._parse_kv_block(expanded_lines)
+            merged = {**scalars, **self.options}
 
-        figsize = (6.0, 5.0)
-        figsize_raw = merged.get("figsize")
-        if figsize_raw:
-            parts = [part.strip() for part in str(figsize_raw).strip("()[] ").split(",")]
-            if len(parts) >= 2:
-                figsize = (_eval_float(parts[0], 6.0), _eval_float(parts[1], 5.0))
+            def _f(key: str, default: float) -> float:
+                return _eval_float(merged.get(key), default)
 
-        curves = [
-            curve
-            for raw_curve in lists.get("curve", [])
-            if (curve := _parse_curve_primitive(raw_curve)) is not None
-        ]
-        points = [
-            point
-            for raw_point in lists.get("point", [])
-            if (point := _parse_point_primitive(raw_point)) is not None
-        ]
-        planes = [
-            plane
-            for raw_plane in lists.get("plane", [])
-            if (plane := _parse_plane_primitive(raw_plane)) is not None
-        ]
-        prisms = [
-            prism
-            for raw_prism in lists.get("prism", [])
-            if (prism := _parse_prism_primitive(raw_prism)) is not None
-        ]
-        pyramids = [
-            pyramid
-            for raw_pyramid in lists.get("pyramid", [])
-            if (pyramid := _parse_pyramid_primitive(raw_pyramid)) is not None
-        ]
-        spheres = [
-            sphere
-            for raw_sphere in lists.get("sphere", [])
-            if (sphere := _parse_sphere_primitive(raw_sphere)) is not None
-        ]
-        texts = [
-            text_item
-            for raw_text in lists.get("text", [])
-            if (text_item := _parse_text_primitive(raw_text)) is not None
-        ]
-        vectors = [
-            vector
-            for raw_vector in lists.get("vector", [])
-            if (vector := _parse_vector_primitive(raw_vector)) is not None
-        ]
-        solids_of_revolution = [
-            solid
-            for raw_solid in lists.get("solid-of-revolution", [])
-            if (solid := _parse_solid_of_revolution_primitive(raw_solid)) is not None
-        ]
+            figsize = (6.0, 5.0)
+            figsize_raw = merged.get("figsize")
+            if figsize_raw:
+                parts = [part.strip() for part in str(figsize_raw).strip("()[] ").split(",")]
+                if len(parts) >= 2:
+                    figsize = (_eval_float(parts[0], 6.0), _eval_float(parts[1], 5.0))
 
-        params = {
-            "xrange": _parse_range(merged.get("xrange"), 5.0),
-            "yrange": _parse_range(merged.get("yrange"), 5.0),
-            "zrange": _parse_range(merged.get("zrange"), 5.0),
-            "xlabel": str(merged.get("xlabel", "x")),
-            "ylabel": str(merged.get("ylabel", "y")),
-            "zlabel": str(merged.get("zlabel", "z")),
-            "ticks": bool(parse_bool(merged.get("ticks"), default=True)),
-            "xstep": _f("xstep", 1.0),
-            "ystep": _f("ystep", 1.0),
-            "zstep": _f("zstep", 1.0),
-            "elev": _f("elev", 22.0),
-            "azim": _f("azim", -55.0),
-            "zoom": _f("zoom", 1.28),
-            "fontsize": _f("fontsize", 12.0),
-            "lw": _f("lw", 1.5),
-            "figsize": figsize,
-            "curves": curves,
-            "points": points,
-            "planes": planes,
-            "prisms": prisms,
-            "pyramids": pyramids,
-            "spheres": spheres,
-            "texts": texts,
-            "vectors": vectors,
-            "solids_of_revolution": solids_of_revolution,
-        }
+            curves = [
+                curve
+                for raw_curve in lists.get("curve", [])
+                if (curve := _parse_curve_primitive(raw_curve)) is not None
+            ]
+            lines = [
+                line
+                for raw_line in lists.get("line", [])
+                if (line := _parse_line_primitive(raw_line)) is not None
+            ]
+            line_segments = [
+                line_segment
+                for raw_line_segment in lists.get("line-segment", [])
+                if (line_segment := _parse_line_segment_primitive(raw_line_segment)) is not None
+            ]
+            ngons = [
+                ngon
+                for raw_ngon in lists.get("ngon", [])
+                if (ngon := _parse_ngon_primitive(raw_ngon)) is not None
+            ]
+            normal_segments = [
+                normal_segment
+                for raw_normal_segment in lists.get("normal-segment", [])
+                if (normal_segment := _parse_normal_segment_primitive(raw_normal_segment)) is not None
+            ]
+            points = [
+                point
+                for raw_point in lists.get("point", [])
+                if (point := _parse_point_primitive(raw_point)) is not None
+            ]
+            planes = [
+                plane
+                for raw_plane in lists.get("plane", [])
+                if (plane := _parse_plane_primitive(raw_plane)) is not None
+            ]
+            prisms = [
+                prism
+                for raw_prism in lists.get("prism", [])
+                if (prism := _parse_prism_primitive(raw_prism)) is not None
+            ]
+            pyramids = [
+                pyramid
+                for raw_pyramid in lists.get("pyramid", [])
+                if (pyramid := _parse_pyramid_primitive(raw_pyramid)) is not None
+            ]
+            right_angles = [
+                right_angle
+                for raw_right_angle in lists.get("right-angle", [])
+                if (right_angle := _parse_right_angle_primitive(raw_right_angle)) is not None
+            ]
+            spheres = [
+                sphere
+                for raw_sphere in lists.get("sphere", [])
+                if (sphere := _parse_sphere_primitive(raw_sphere)) is not None
+            ]
+            texts = [
+                text_item
+                for raw_text in lists.get("text", [])
+                if (text_item := _parse_text_primitive(raw_text)) is not None
+            ]
+            vectors = [
+                vector
+                for raw_vector in lists.get("vector", [])
+                if (vector := _parse_vector_primitive(raw_vector)) is not None
+            ]
+            solids_of_revolution = [
+                solid
+                for raw_solid in lists.get("solid-of-revolution", [])
+                if (solid := _parse_solid_of_revolution_primitive(raw_solid)) is not None
+            ]
 
-        content_hash = hashlib.sha1(repr(sorted(params.items())).encode("utf-8")).hexdigest()[:16]
+            params = {
+                "xrange": _parse_range(merged.get("xrange"), 5.0),
+                "yrange": _parse_range(merged.get("yrange"), 5.0),
+                "zrange": _parse_range(merged.get("zrange"), 5.0),
+                "xlabel": str(merged.get("xlabel", "$x$")),
+                "ylabel": str(merged.get("ylabel", "$y$")),
+                "zlabel": str(merged.get("zlabel", "$z$")),
+                "ticks": bool(parse_bool(merged.get("ticks"), default=True)),
+                "xstep": _f("xstep", 1.0),
+                "ystep": _f("ystep", 1.0),
+                "zstep": _f("zstep", 1.0),
+                "elev": _f("elev", 22.0),
+                "azim": _f("azim", -55.0),
+                "zoom": _f("zoom", 1.28),
+                "fontsize": _f("fontsize", 12.0),
+                "lw": _f("lw", 1.5),
+                "figsize": figsize,
+                "curves": curves,
+                "line_segments": line_segments,
+                "lines": lines,
+                "ngons": ngons,
+                "normal_segments": normal_segments,
+                "points": points,
+                "planes": planes,
+                "prisms": prisms,
+                "pyramids": pyramids,
+                "right_angles": right_angles,
+                "spheres": spheres,
+                "texts": texts,
+                "vectors": vectors,
+                "solids_of_revolution": solids_of_revolution,
+            }
+
+            hash_material = {**params, "_macro_bindings": macro_ctx.raw_bindings}
+            content_hash = hashlib.sha1(repr(sorted(hash_material.items())).encode("utf-8")).hexdigest()[:16]
         explicit_name = str(merged.get("name", "")).strip() or None
         stable_name = re.sub(r"[^A-Za-z0-9_-]", "_", explicit_name) if explicit_name else None
         base_name = stable_name or f"plot3d2_{content_hash}"
@@ -1856,7 +2698,8 @@ class Plot3d2Directive(SphinxDirective):
             fig = None
             try:
                 matplotlib.rcParams["svg.fonttype"] = "none"
-                fig, _ax = _render_plot3d2(**params)
+                with _plot3d2_macro_context(macro_ctx.sympy_locals):
+                    fig, _ax = _render_plot3d2(**params)
                 _save_plot3d2_svg(fig, abs_svg)
                 if stable_name:
                     with open(abs_meta, "w", encoding="utf-8") as f:
@@ -1905,7 +2748,7 @@ class Plot3d2Directive(SphinxDirective):
             id_prefix_base="p3d2",
         )
 
-        caption_lines = list(self.content)[caption_idx:]
+        caption_lines = expanded_lines[caption_idx:]
         return [
             build_inline_svg_figure(
                 self,

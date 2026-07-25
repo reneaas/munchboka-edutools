@@ -799,23 +799,9 @@ def _rewrite_ids(txt: str, prefix: str) -> str:
     ids = re.findall(r'\bid="([^"]+)"', txt)
     if not ids:
         return txt
-    skip_prefixes = (
-        "DejaVu",
-        "CM",
-        "STIX",
-        "Nimbus",
-        "Bitstream",
-        "Arial",
-        "Times",
-        "Helvetica",
-    )
-    mapping = {}
-    for i in ids:
-        if i.startswith(skip_prefixes):
-            continue
-        mapping[i] = f"{prefix}{i}"
-    if not mapping:
-        return txt
+    # Inline SVG ids share the whole HTML document namespace. Matplotlib also
+    # emits ids for math/font glyph paths, so those must be namespaced too.
+    mapping = {i: f"{prefix}{i}" for i in ids}
 
     def repl_id(m: re.Match) -> str:
         old = m.group(1)
@@ -906,6 +892,26 @@ def _parse_text_positioning(pos: str) -> Tuple[str, str]:
         "center-center": ("center", "center"),
     }
     return mapping.get(key, ("top", "left"))
+
+
+def _endpoint_excluding_multiple_ticks(lo: float, hi: float, step: float) -> list[float]:
+    """Return multiples of step inside the interval, excluding exact endpoints."""
+
+    if step <= 0:
+        return []
+    if hi < lo:
+        lo, hi = hi, lo
+    tolerance = 1e-9 * max(abs(lo), abs(hi), abs(step), 1.0)
+    start_index = math.ceil((lo - tolerance) / step)
+    end_index = math.floor((hi + tolerance) / step)
+    ticks: list[float] = []
+    for index in range(start_index, end_index + 1):
+        value = index * step
+        if abs(value - lo) <= tolerance or abs(value - hi) <= tolerance:
+            continue
+        if lo - tolerance <= value <= hi + tolerance:
+            ticks.append(0.0 if abs(value) <= tolerance else value)
+    return ticks
 
 
 class PlotDirective(SphinxDirective):
@@ -5474,7 +5480,7 @@ class PlotDirective(SphinxDirective):
                 xtick_format_raw = merged.get("xtick-format")
                 if isinstance(xtick_format_raw, str) and xtick_format_raw.strip().lower() == "pi":
                     from fractions import Fraction
-                    from matplotlib.ticker import FuncFormatter, MultipleLocator
+                    from matplotlib.ticker import FixedLocator, FuncFormatter
 
                     def _pi_label(val, pos):
                         if abs(val) < 1e-9:
@@ -5504,7 +5510,9 @@ class PlotDirective(SphinxDirective):
                     try:
                         ax.xaxis.set_major_formatter(FuncFormatter(_pi_label))
                         # If xstep was set, use it as the tick locator base
-                        ax.xaxis.set_major_locator(MultipleLocator(xstep))
+                        ax.xaxis.set_major_locator(
+                            FixedLocator(_endpoint_excluding_multiple_ticks(xmin, xmax, xstep))
+                        )
                     except Exception:
                         pass
 

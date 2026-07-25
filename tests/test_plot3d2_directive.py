@@ -6,6 +6,7 @@ import plotmath
 from matplotlib.colors import to_hex
 from sphinx.application import Sphinx
 
+from munchboka_edutools.directives._plot_macros import parse_plot_macros
 from munchboka_edutools.directives.plot3d_2 import (
     _curve_arrow_faces,
     _curve_depth_weights,
@@ -13,23 +14,35 @@ from munchboka_edutools.directives.plot3d_2 import (
     _curve_local_depth_weights,
     _curve_points,
     _curve_segment_collections,
+    _curve_xy_style_index,
+    _line_box_segment,
+    _line_shaded_segments,
     _parse_curve_primitive,
+    _parse_line_segment_primitive,
+    _parse_line_primitive,
+    _parse_ngon_primitive,
+    _parse_normal_segment_primitive,
     _parse_point_primitive,
     _parse_plane_primitive,
     _parse_prism_primitive,
     _parse_pyramid_primitive,
+    _parse_right_angle_primitive,
     _parse_sphere_primitive,
     _parse_solid_of_revolution_primitive,
     _parse_text_primitive,
     _parse_vector_primitive,
+    _plot3d2_macro_context,
     _front_back_poly_facecolors,
     _front_back_poly_faces,
     _plane_surface_grids,
     _render_plot3d2,
+    _normal_segment_points,
+    _right_angle_points,
     _save_plot3d2_svg,
     _sphere_guide_segments,
     _sphere_surface_grids,
     _tick_values,
+    _vector_arrow_geometry,
 )
 
 
@@ -46,6 +59,233 @@ def test_plot3d2_vector_parser_uses_plotmath_blue_by_default():
         "end": (1.0, 2.0, 3.0),
         "color": plotmath.COLORS["blue"],
     }
+
+
+def test_plot3d2_vector_arrow_geometry_uses_small_capped_head_at_endpoint():
+    vector = _parse_vector_primitive("(0, 0, 0), (10, 0, 0), red")
+    geometry = _vector_arrow_geometry(
+        vector,
+        elev=22,
+        azim=-55,
+        xrange=(-5, 5),
+        yrange=(-5, 5),
+        zrange=(-5, 5),
+    )
+    shaft, head_faces = geometry
+    shaft_start, shaft_end = (np.asarray(point, dtype=float) for point in shaft)
+    tip = np.asarray(head_faces[0][0], dtype=float)
+    head_length = float(np.linalg.norm(tip - shaft_end))
+
+    assert np.allclose(shaft_start, [0, 0, 0])
+    assert np.allclose(tip, [10, 0, 0])
+    assert np.allclose(shaft_end, [9.6, 0, 0])
+    assert np.isclose(head_length, 0.4)
+    assert len(head_faces) == 1
+    assert len(head_faces[0]) == 3
+
+
+def test_plot3d2_line_parser_accepts_point_direction_form():
+    line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 2, 3), color=red, lw=2, style=dashed")
+
+    assert line == {
+        "point": (0.0, 0.0, 0.0),
+        "direction": (1.0, 2.0, 3.0),
+        "color": plotmath.COLORS["red"],
+        "lw": 2.0,
+        "style": "dashed",
+    }
+
+
+def test_plot3d2_line_parser_accepts_through_form_and_defaults():
+    line = _parse_line_primitive("through=[(-1, 0, 1), (1, 2, 3)]")
+
+    assert line == {
+        "point": (-1.0, 0.0, 1.0),
+        "direction": (2.0, 2.0, 2.0),
+        "color": plotmath.COLORS["blue"],
+        "lw": None,
+        "style": "solid",
+    }
+
+
+def test_plot3d2_line_parser_rejects_zero_direction():
+    assert _parse_line_primitive("point=(1, 2, 3), direction=(0, 0, 0)") is None
+    assert _parse_line_primitive("through=[(1, 2, 3), (1, 2, 3)]") is None
+
+
+def test_plot3d2_line_box_segment_clips_to_plot_ranges():
+    line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 1, 1)")
+    segment = _line_box_segment(
+        line,
+        xrange=(-1, 2),
+        yrange=(-2, 1),
+        zrange=(-3, 3),
+    )
+
+    assert segment == ((-1.0, -1.0, -1.0), (1.0, 1.0, 1.0))
+
+
+def test_plot3d2_line_shaded_segments_use_camera_depth_gradient():
+    line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 1, 1), color=red")
+    segment = ((-1.0, -1.0, -1.0), (1.0, 1.0, 1.0))
+    segments, colors = _line_shaded_segments(line, segment, elev=22, azim=-55)
+    rounded_colors = {
+        tuple(round(float(channel), 4) for channel in color)
+        for color in colors
+    }
+
+    assert len(segments) > 20
+    assert len(rounded_colors) > 2
+
+
+def test_plot3d2_line_segment_parser_accepts_positional_form():
+    segment = _parse_line_segment_primitive("(0, 0, 0), (1, 2, 3), red, style=dashed, lw=2")
+
+    assert segment == {
+        "start": (0.0, 0.0, 0.0),
+        "end": (1.0, 2.0, 3.0),
+        "color": plotmath.COLORS["red"],
+        "lw": 2.0,
+        "style": "dashed",
+    }
+
+
+def test_plot3d2_line_segment_parser_accepts_keyword_form_and_defaults():
+    segment = _parse_line_segment_primitive("from=(-1, 0, 1), to=(1, 2, 3)")
+
+    assert segment == {
+        "start": (-1.0, 0.0, 1.0),
+        "end": (1.0, 2.0, 3.0),
+        "color": plotmath.COLORS["blue"],
+        "lw": None,
+        "style": "solid",
+    }
+
+
+def test_plot3d2_line_segment_parser_rejects_zero_length_segment():
+    assert _parse_line_segment_primitive("(1, 2, 3), (1, 2, 3)") is None
+
+
+def test_plot3d2_normal_segment_parser_accepts_line_definitions():
+    normal_segment = _parse_normal_segment_primitive(
+        "point1=(0, 0, 0), direction1=(1, 0, 0), point2=(0, 1, 1), direction2=(0, 1, 0), color=#777777, style=dashed, right-angle-size=0.25"
+    )
+
+    assert normal_segment == {
+        "kind": "line-line",
+        "point1": (0.0, 0.0, 0.0),
+        "direction1": (1.0, 0.0, 0.0),
+        "point2": (0.0, 1.0, 1.0),
+        "direction2": (0.0, 1.0, 0.0),
+        "color": "#777777",
+        "lw": None,
+        "style": "dashed",
+        "right_angles": True,
+        "right_angle_color": "black",
+        "right_angle_size": 0.25,
+        "endpoint_points": True,
+        "endpoint_color": "black",
+    }
+
+
+def test_plot3d2_normal_segment_points_are_perpendicular_to_both_lines():
+    normal_segment = _parse_normal_segment_primitive(
+        "point1=(3, 0, 4), direction1=(2, 0, 0.5), point2=(1, 3, 1), direction2=(2, 0, -0.5)"
+    )
+    foot1, foot2 = _normal_segment_points(normal_segment)
+    segment = np.asarray(foot2) - np.asarray(foot1)
+
+    assert np.allclose(foot1, (-4.0, 0.0, 2.25))
+    assert np.allclose(foot2, (-4.0, 3.0, 2.25))
+    assert abs(float(np.dot(segment, normal_segment["direction1"]))) < 1e-12
+    assert abs(float(np.dot(segment, normal_segment["direction2"]))) < 1e-12
+
+
+def test_plot3d2_normal_segment_parser_accepts_point_plane_normal_form():
+    normal_segment = _parse_normal_segment_primitive(
+        "point=(1, 2, 3), plane-normal=(0, 0, 1), plane-point=(0, 0, 0), color=#777777, style=dotted, right-angle-size=0.2"
+    )
+
+    assert normal_segment == {
+        "kind": "point-plane",
+        "point": (1.0, 2.0, 3.0),
+        "plane_normal": (0.0, 0.0, 1.0),
+        "plane_point": (0.0, 0.0, 0.0),
+        "color": "#777777",
+        "lw": None,
+        "style": "dotted",
+        "right_angles": True,
+        "right_angle_color": "black",
+        "right_angle_size": 0.2,
+        "endpoint_points": True,
+        "endpoint_color": "black",
+    }
+
+
+def test_plot3d2_normal_segment_points_project_point_to_plane():
+    normal_segment = _parse_normal_segment_primitive(
+        "point=(1, 2, 5), plane=z = 2, color=gray"
+    )
+    foot, point = _normal_segment_points(normal_segment)
+
+    assert np.allclose(foot, (1.0, 2.0, 2.0))
+    assert np.allclose(point, (1.0, 2.0, 5.0))
+
+
+def test_plot3d2_normal_segment_endpoint_points_can_be_disabled():
+    normal_segment = _parse_normal_segment_primitive(
+        "point=(1, 2, 5), plane=z = 2, points=off"
+    )
+
+    assert normal_segment["endpoint_points"] is False
+
+
+def test_plot3d2_right_angle_parser_accepts_direction_form():
+    right_angle = _parse_right_angle_primitive(
+        "at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.4, color=red, lw=2"
+    )
+
+    assert right_angle == {
+        "at": (0.0, 0.0, 0.0),
+        "dir1": (1.0, 0.0, 0.0),
+        "dir2": (0.0, 1.0, 0.0),
+        "clamp_to_targets": False,
+        "size": 0.4,
+        "color": plotmath.COLORS["red"],
+        "lw": 2.0,
+    }
+
+
+def test_plot3d2_right_angle_parser_accepts_to_form_and_defaults():
+    right_angle = _parse_right_angle_primitive("at=(1, 1, 1), to1=(2, 1, 1), to2=(1, 1, 3)")
+
+    assert right_angle == {
+        "at": (1.0, 1.0, 1.0),
+        "dir1": (1.0, 0.0, 0.0),
+        "dir2": (0.0, 0.0, 2.0),
+        "clamp_to_targets": True,
+        "size": 0.35,
+        "color": "black",
+        "lw": None,
+    }
+
+
+def test_plot3d2_right_angle_points_are_orthogonalized():
+    right_angle = _parse_right_angle_primitive(
+        "at=(0, 0, 0), dir1=(1, 0, 0), dir2=(1, 1, 0), size=0.5"
+    )
+    points = _right_angle_points(right_angle)
+
+    assert np.allclose(points, [(0.5, 0, 0), (0.5, 0.5, 0), (0, 0.5, 0)])
+
+
+def test_plot3d2_right_angle_to_form_terminates_on_short_normal_segment():
+    right_angle = _parse_right_angle_primitive(
+        "at=(0, 0, 0), to1=(1, 0, 0), to2=(0, 0.2, 0), size=0.5"
+    )
+    points = _right_angle_points(right_angle)
+
+    assert np.allclose(points, [(0.5, 0, 0), (0.5, 0.2, 0), (0, 0.2, 0)])
 
 
 def test_plot3d2_point_parser_uses_plotmath_blue_by_default():
@@ -117,6 +357,67 @@ def test_plot3d2_curve_points_evaluate_parametric_expressions():
     assert np.allclose(zs, [0, 0, 0])
 
 
+def test_plot3d2_macros_expand_repeat_and_let_for_points():
+    expanded, macro_ctx = parse_plot_macros(
+        [
+            "let: h = 2",
+            "repeat: n=1..2; point: (n, 0, h)",
+        ]
+    )
+
+    with _plot3d2_macro_context(macro_ctx.sympy_locals):
+        points = [
+            _parse_point_primitive(line.split(":", 1)[1].strip())
+            for line in expanded
+        ]
+
+    assert expanded == ["point: (1, 0, h)", "point: (2, 0, h)"]
+    assert [point["coords"] for point in points] == [
+        (1.0, 0.0, 2.0),
+        (2.0, 0.0, 2.0),
+    ]
+
+
+def test_plot3d2_macros_support_defs_in_curve_expressions():
+    expanded, macro_ctx = parse_plot_macros(
+        [
+            "let: h = 3",
+            "def: scale(t) = h*t",
+            "curve: x=scale(t), y=0, z=t, t=(0, 1), samples=2",
+        ]
+    )
+
+    with _plot3d2_macro_context(macro_ctx.sympy_locals):
+        curve = _parse_curve_primitive(expanded[0].split(":", 1)[1].strip())
+        xs, ys, zs = _curve_points(curve)
+
+    assert np.allclose(xs, [0, 3])
+    assert np.allclose(ys, [0, 0])
+    assert np.allclose(zs, [0, 1])
+
+
+def test_plot3d2_macros_expand_macro_use_for_ngon():
+    expanded, macro_ctx = parse_plot_macros(
+        [
+            "macro: face(s, c)",
+            "   ngon: [(0, 0, 0), (s, 0, 0), (0, s, s)], color=c",
+            "endmacro",
+            "use: face(2, #13579b)",
+        ]
+    )
+
+    with _plot3d2_macro_context(macro_ctx.sympy_locals):
+        ngon = _parse_ngon_primitive(expanded[0].split(":", 1)[1].strip())
+
+    assert expanded == ["ngon: [(0, 0, 0), (2, 0, 0), (0, 2, 2)], color=#13579b"]
+    assert ngon["vertices"] == [
+        (0.0, 0.0, 0.0),
+        (2.0, 0.0, 0.0),
+        (0.0, 2.0, 2.0),
+    ]
+    assert ngon["color"] == "#13579b"
+
+
 def test_plot3d2_curve_segments_split_front_and_back():
     curve = _parse_curve_primitive("x=sin(t), y=sin(t), z=t, t=(0, 4*pi), samples=64")
     front_segments, back_segments = _curve_front_back_segments(curve, elev=22, azim=-55)
@@ -146,7 +447,7 @@ def test_plot3d2_curve_segments_split_front_and_back():
     )
 
 
-def test_plot3d2_curve_segments_use_camera_depth_gradient():
+def test_plot3d2_curve_segments_use_xy_quadrant_styles_and_local_shading():
     curve = _parse_curve_primitive("x=cos(t), y=sin(t), z=t, t=(0, 4*pi), samples=64")
     segment_groups = _curve_segment_collections(
         curve,
@@ -158,11 +459,20 @@ def test_plot3d2_curve_segments_use_camera_depth_gradient():
         for group in segment_groups
         for color in group["colors"]
     }
+    style_names = {group["name"] for group in segment_groups}
 
-    assert len(segment_groups) >= 4
-    assert any(group["linestyle"] == "solid" for group in segment_groups)
-    assert any(group["linestyle"] != "solid" for group in segment_groups)
+    assert {"solid", "dashdot", "dashed"}.issubset(style_names)
     assert len(rounded) > 2
+
+
+def test_plot3d2_curve_linestyle_uses_xy_quadrants():
+    assert _curve_xy_style_index(1, -1) == 2
+    assert _curve_xy_style_index(1, 1) == 1
+    assert _curve_xy_style_index(-1, 1) == 1
+    assert _curve_xy_style_index(-1, -1) == 0
+    assert _curve_xy_style_index(0, -1, fallback=2) == 2
+    assert _curve_xy_style_index(1, 0, fallback=0) == 0
+    assert _curve_xy_style_index(0, 0) == 1
 
 
 def test_plot3d2_curve_shading_uses_local_depth_contrast():
@@ -305,6 +615,39 @@ def test_plot3d2_pyramid_parser_accepts_regular_ngon_form():
             (0.0, -2.0, 0.0),
         ],
     )
+
+
+def test_plot3d2_ngon_parser_accepts_explicit_vertices():
+    ngon = _parse_ngon_primitive(
+        "[(0, 0, 0), (2, 0, 0), (2, 1, 1), (0, 1, 1)], color=green, alpha=0.5"
+    )
+
+    assert ngon == {
+        "vertices": [
+            (0.0, 0.0, 0.0),
+            (2.0, 0.0, 0.0),
+            (2.0, 1.0, 1.0),
+            (0.0, 1.0, 1.0),
+        ],
+        "color": plotmath.COLORS["green"],
+        "edgecolor": "black",
+        "alpha": 0.5,
+    }
+
+
+def test_plot3d2_ngon_parser_accepts_points_keyword_and_defaults():
+    ngon = _parse_ngon_primitive("points=[(0, 0, 0), (1, 0, 0), (0, 1, 0)]")
+
+    assert ngon == {
+        "vertices": [
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+        ],
+        "color": plotmath.COLORS["blue"],
+        "edgecolor": "black",
+        "alpha": 0.45,
+    }
 
 
 def test_plot3d2_prism_parser_accepts_explicit_base_vector_form():
@@ -544,11 +887,50 @@ def test_plot3d2_renderer_draws_centered_axes_labels_and_ticks():
         assert len(ax.lines) >= 3
         assert len(ax.collections) >= 3
 
+        x_label = next(text for text in ax.texts if text.get_text() == "X-axis")
+        assert x_label.get_position_3d() == (2, -0.312, 0)
+
+        z_label = next(text for text in ax.texts if text.get_text() == "Z-axis")
+        assert z_label.get_position_3d() == (-0.10400000000000001, 0, 1)
+
         x_axis = ax.lines[0]
         xs, ys, zs = x_axis.get_data_3d()
         assert list(xs) == [-2, 2]
         assert list(ys) == [0, 0]
         assert list(zs) == [0, 0]
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_suppresses_axis_labels_with_none():
+    fig, ax = _render_plot3d2(
+        ticks=False,
+        xlabel="X-axis",
+        ylabel="none",
+        zlabel="NoNe",
+    )
+    try:
+        labels = {text.get_text() for text in ax.texts}
+
+        assert "X-axis" in labels
+        assert "none" not in labels
+        assert "NoNe" not in labels
+        assert "$y$" not in labels
+        assert "$z$" not in labels
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_uses_math_axis_label_defaults():
+    fig, ax = _render_plot3d2(ticks=False)
+    try:
+        labels = {text.get_text() for text in ax.texts}
+
+        assert {"$x$", "$y$", "$z$"}.issubset(labels)
     finally:
         import matplotlib.pyplot as plt
 
@@ -588,6 +970,205 @@ def test_plot3d2_renderer_draws_curve():
         }
         assert len(curve_colors) > 2
         assert any(len(collection.get_facecolors()) == 3 for collection in arrow_collections)
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_clipped_line():
+    line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 1, 1), color=red, lw=2, style=dashdot")
+    fig, ax = _render_plot3d2(
+        lines=[line],
+        xrange=(-1, 2),
+        yrange=(-2, 1),
+        zrange=(-3, 3),
+        ticks=False,
+    )
+    try:
+        line_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and float(collection.get_linewidths()[0]) == 2.0
+            and len(collection.get_colors()) > 2
+        ]
+        assert line_collections
+        rendered = line_collections[-1]
+        segments = rendered._segments3d
+        endpoints = np.concatenate([segments[0], segments[-1]], axis=0)
+        colors = {
+            tuple(round(float(channel), 4) for channel in color)
+            for color in rendered.get_colors()
+        }
+
+        assert np.allclose(np.min(endpoints, axis=0), [-1.0, -1.0, -1.0], atol=0.05)
+        assert np.allclose(np.max(endpoints, axis=0), [1.0, 1.0, 1.0], atol=0.05)
+        assert len(segments) < 95
+        assert len(colors) > 2
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_line_segment_between_endpoints():
+    line_segment = _parse_line_segment_primitive("(0, 0, 0), (1, 1, 1), red, style=dashed, lw=2")
+    fig, ax = _render_plot3d2(line_segments=[line_segment], ticks=False)
+    try:
+        segment_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and float(collection.get_linewidths()[0]) == 2.0
+            and len(collection.get_colors()) > 2
+        ]
+        assert segment_collections
+        rendered = segment_collections[-1]
+        segments = rendered._segments3d
+        endpoints = np.concatenate([segments[0], segments[-1]], axis=0)
+        colors = {
+            tuple(round(float(channel), 4) for channel in color)
+            for color in rendered.get_colors()
+        }
+
+        assert np.allclose(np.min(endpoints, axis=0), [0.0, 0.0, 0.0], atol=0.02)
+        assert np.allclose(np.max(endpoints, axis=0), [1.0, 1.0, 1.0], atol=0.02)
+        assert len(segments) < 95
+        assert len(colors) > 2
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_normal_segment_with_right_angle_markers():
+    normal_segment = _parse_normal_segment_primitive(
+        "point1=(0, 0, 0), direction1=(1, 0, 0), point2=(0, 1, 1), direction2=(0, 1, 0), color=#777777, style=dashed, right-angle-size=0.25"
+    )
+    fig, ax = _render_plot3d2(normal_segments=[normal_segment], ticks=False)
+    try:
+        normal_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and collection.get_zorder() == 12
+        ]
+        marker_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and collection.get_zorder() == 35
+        ]
+
+        assert normal_collections
+        assert len(marker_collections) == 2
+        assert all(len(collection._segments3d) == 2 for collection in marker_collections)
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_point_plane_normal_marker_with_segment_direction():
+    normal_segment = _parse_normal_segment_primitive(
+        "point=(1, 2, 3), plane-normal=(0, 0, 1), plane-point=(0, 0, 0), color=#777777, style=dashed, right-angle-size=0.25"
+    )
+    fig, ax = _render_plot3d2(normal_segments=[normal_segment], ticks=False)
+    try:
+        marker_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and collection.get_zorder() == 35
+        ]
+
+        assert len(marker_collections) == 1
+        marker_segments = marker_collections[0]._segments3d
+        marker_points = np.concatenate(marker_segments, axis=0)
+        marker_vectors = [np.asarray(segment[1]) - np.asarray(segment[0]) for segment in marker_segments]
+        endpoint_collections = [
+            collection
+            for collection in ax.collections
+            if hasattr(collection, "_offsets3d")
+            and to_hex(collection.get_facecolors()[0]) == to_hex("black")
+        ]
+
+        assert np.isclose(np.min(marker_points[:, 2]), 0.0)
+        assert np.isclose(np.max(marker_points[:, 2]), 0.25)
+        assert any(np.allclose(vector[:2], (0.0, 0.0)) for vector in marker_vectors)
+        assert any(
+            np.isclose(abs(vector[0]), 0.25)
+            and np.isclose(vector[1], 0.0)
+            and np.isclose(vector[2], 0.0)
+            for vector in marker_vectors
+        )
+        assert len(endpoint_collections) == 2
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_right_angle_marker():
+    right_angle = _parse_right_angle_primitive(
+        "at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.5, color=red, lw=2"
+    )
+    fig, ax = _render_plot3d2(right_angles=[right_angle], ticks=False)
+    try:
+        marker_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and float(collection.get_linewidths()[0]) == 2.0
+            and to_hex(collection.get_colors()[0]) == to_hex(plotmath.COLORS["red"])
+        ]
+
+        assert marker_collections
+        assert marker_collections[-1].get_zorder() == 35
+        assert len(marker_collections[-1]._segments3d) == 2
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_layers_vectors_and_points_above_lines():
+    line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 1, 1), color=blue")
+    vector = _parse_vector_primitive("(0, 0, 0), (1, 1, 1), red")
+    point = _parse_point_primitive("(1, 1, 1), green")
+    fig, ax = _render_plot3d2(lines=[line], vectors=[vector], points=[point], ticks=False)
+    try:
+        line_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and len(collection.get_colors()) > 2
+        ]
+        vector_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and len(collection.get_colors()) == 1
+            and to_hex(collection.get_colors()[0]) == to_hex(plotmath.COLORS["red"])
+        ]
+        point_collections = [
+            collection
+            for collection in ax.collections
+            if hasattr(collection, "_offsets3d")
+            and to_hex(collection.get_facecolors()[0]) == to_hex(plotmath.COLORS["green"])
+        ]
+
+        assert ax.computed_zorder is False
+        assert line_collections
+        assert vector_collections
+        assert point_collections
+        assert max(collection.get_zorder() for collection in line_collections) < min(
+            collection.get_zorder() for collection in vector_collections
+        )
+        assert max(collection.get_zorder() for collection in vector_collections) < min(
+            collection.get_zorder() for collection in point_collections
+        )
     finally:
         import matplotlib.pyplot as plt
 
@@ -677,6 +1258,26 @@ def test_plot3d2_renderer_draws_pyramid():
             for facecolor in collection.get_facecolors()
         }
         assert len(alpha_values) > 1
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_ngon():
+    ngon = _parse_ngon_primitive(
+        "[(0, 0, 0), (2, 0, 0), (2, 1, 1), (0, 1, 1)], color=green"
+    )
+    fig, ax = _render_plot3d2(ngons=[ngon])
+    try:
+        fig.canvas.draw()
+        ngon_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Poly3DCollection"
+            and len(collection.get_facecolors()) == 1
+        ]
+        assert ngon_collections
     finally:
         import matplotlib.pyplot as plt
 
@@ -808,15 +1409,27 @@ Plot3d 2 test
    yrange: (-2, 2)
    zrange: (-1, 3)
    xlabel: X-axis
-   ylabel: Y-axis
+   ylabel: none
    zlabel: Z-axis
    xstep: 1
    ystep: 1
    zstep: 1
+   let: h = 2
+   def: lift(n) = h + n / 10
+   macro: raised_point(n, c)
+      point: (n, 0, lift(n)), c
+   endmacro
+   repeat: n=1..2; use: raised_point(n, #13579b)
    curve: x=cos(t), y=sin(t), z=t/3, trange=(0, 2*pi), color=red, samples=64
+   line: point=(0, 0, 0), direction=(1, -1, 1), color=#2468ac, style=dashed
+   line-segment: (-1, 0, 0), (0, 1, 1), color=#8642aa, style=dotted
+   normal-segment: point1=(0, 0, 0), direction1=(1, 0, 0), point2=(0, 1, 1), direction2=(0, 1, 0), color=#777777, style=dashed, right-angle-size=0.25
+   normal-segment: point=(1, 1, 2), plane=z = 0, color=#777777, style=dotted, right-angle-size=0.2
+   right-angle: at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.35, color=red
    vector: (0, 0, 0), (1, 1, 2)
    point: (1, 0, 2), red
    plane: equation=z = x + y, xrange=(-1, 1), yrange=(-1, 1), color=orange, alpha=0.3
+   ngon: [(0, 0, 0), (1, 0, 0), (0, 1, 1)], color=green, alpha=0.4
    prism: center=(0, 0, 0), radius=0.7, sides=4, height=1.5, color=yellow, alpha=0.35
    pyramid: base=[(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0)], apex=(0, 0, 2), color=purple
    sphere: center=(-1, 1, 1), radius=0.5, color=skyblue, alpha=0.6, resolution=16
@@ -845,11 +1458,12 @@ Plot3d 2 test
     assert 'graph-inline-svg' in html
     assert 'aria-label="3D-koordinatsystem"' in html
     assert "X-axis" in html
-    assert "Y-axis" in html
+    assert "Y-axis" not in html
     assert "Z-axis" in html
     assert to_hex(plotmath.COLORS["blue"]) in html
     assert to_hex(plotmath.COLORS["red"]) in html
     assert to_hex(plotmath.COLORS["orange"]) in html
     assert to_hex(plotmath.COLORS["teal"]) in html
+    assert "#13579b" in html
     assert "A, B" in html
     assert "En enkel 3D-figur." in html

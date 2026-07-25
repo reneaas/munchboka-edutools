@@ -94,3 +94,9 @@ def test_solution_timer_build(tmp_path):
     assert "START_MARGIN_PX" in js
     assert "isNearViewport" in js
     assert "Du har bare prøvd på oppgaven i" in js
+
+    toggle_js = (build / "_static" / "munchboka" / "js" / "solution2.js").read_text(encoding="utf8")
+    assert 'buttonClass: "solution-2-toggle"' in toggle_js
+    assert 'buttonClass: "answer-2-toggle"' in toggle_js
+    assert "cancelContentTransition" in toggle_js
+    assert "_munchbokaToggleCleanup" in toggle_js

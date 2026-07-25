@@ -734,9 +734,9 @@ def _hash_key(*parts) -> str:
     return h.hexdigest()[:12]
 
 
-# Bump this when placeholder formatting behavior changes, to avoid reusing old
+# Bump this when rendering-sensitive behavior changes, to avoid reusing old
 # cached SVGs whose content no longer matches the current renderer.
-_TEXT_PLACEHOLDER_FORMAT_VERSION = 3
+_TEXT_PLACEHOLDER_FORMAT_VERSION = 4
 
 
 def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
@@ -4611,12 +4611,26 @@ class PlotDirective(SphinxDirective):
                         tri_color = _resolve_tri_color(tri.edge_color, default_tri_color)
                         tri_lw = tri.line_width if tri.line_width is not None else lw
                         tri_ls = style_map_tri.get((tri.edge_style or "solid").lower(), "-")
-                        for start_name, end_name in (("A", "B"), ("B", "C"), ("C", "A")):
-                            x1t, y1t = tri.vertices[start_name]
-                            x2t, y2t = tri.vertices[end_name]
-                            ax.plot(
-                                [x1t, x2t], [y1t, y2t], linestyle=tri_ls, color=tri_color, lw=tri_lw
-                            )
+                        tri_path = [
+                            tri.vertices["A"],
+                            tri.vertices["B"],
+                            tri.vertices["C"],
+                            tri.vertices["A"],
+                        ]
+                        line_kwargs = {
+                            "linestyle": tri_ls,
+                            "color": tri_color,
+                            "lw": tri_lw,
+                            "solid_joinstyle": "round",
+                            "solid_capstyle": "round",
+                            "dash_joinstyle": "round",
+                            "dash_capstyle": "round",
+                        }
+                        ax.plot(
+                            [pt[0] for pt in tri_path],
+                            [pt[1] for pt in tri_path],
+                            **line_kwargs,
+                        )
 
                     # Finalize the layout so that ax.transData gives accurate
                     # pixel-space coordinates for label and arc positioning.

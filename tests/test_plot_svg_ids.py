@@ -118,3 +118,38 @@ Plot labels
     assert "<!-- $Q(a, 0)$ -->" in svg_html
     assert "<!-- $P(0, \\ell)$ -->" not in svg_html
     assert "<!-- $Q(\\ell, 0)$ -->" not in svg_html
+
+
+def test_plot_triangle_edges_are_rendered_as_one_joined_path(tmp_path):
+    html = _build_plot_page(
+        tmp_path,
+        r"""
+Triangle edges
+==============
+
+.. plot::
+
+   axis: off
+   axis: equal
+   let: s = 6
+   let: Ax = 0
+   let: Ay = 0
+   let: v = 30 * pi / 180
+   let: Bx = s * cos(v)
+   let: By = 0
+   let: Cx = s * cos(v)
+   let: Cy = s * sin(v)
+   triangle: points=((Ax, Ay), (Bx, By), (Cx, Cy)), angles=(A, B), angle-radius=60
+""".lstrip(),
+    )
+
+    svg_html = _inline_plot_svgs(html)
+    blue_paths = [
+        match.group(0)
+        for match in re.finditer(r"<path[^>]+>", svg_html)
+        if "#0072b2" in match.group(0)
+    ]
+
+    assert len(blue_paths) == 1
+    assert blue_paths[0].count("\nL ") == 3
+    assert "stroke-linecap: round" in blue_paths[0]

@@ -42,6 +42,13 @@ def _inline_plot_svgs(html: str) -> str:
     return "\n".join(svgs)
 
 
+def _path_points(path_tag: str) -> list[tuple[float, float]]:
+    return [
+        (float(x), float(y))
+        for x, y in re.findall(r"[ML]\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)", path_tag)
+    ]
+
+
 def test_plot_inline_svg_font_glyph_ids_are_namespaced_across_plots(tmp_path):
     html = _build_plot_page(
         tmp_path,
@@ -120,7 +127,7 @@ Plot labels
     assert "<!-- $Q(\\ell, 0)$ -->" not in svg_html
 
 
-def test_plot_triangle_edges_are_rendered_as_one_joined_path(tmp_path):
+def test_plot_axis_equal_does_not_clip_triangle_edges(tmp_path):
     html = _build_plot_page(
         tmp_path,
         r"""
@@ -145,11 +152,24 @@ Triangle edges
 
     svg_html = _inline_plot_svgs(html)
     blue_paths = [
-        match.group(0)
+        match
         for match in re.finditer(r"<path[^>]+>", svg_html)
         if "#0072b2" in match.group(0)
     ]
 
-    assert len(blue_paths) == 1
-    assert blue_paths[0].count("\nL ") == 3
-    assert "stroke-linecap: round" in blue_paths[0]
+    assert blue_paths
+
+    clip_match = re.search(
+        r"<clipPath[^>]*>\s*<rect x=\"([^\"]+)\" y=\"([^\"]+)\" "
+        r"width=\"([^\"]+)\" height=\"([^\"]+)\"",
+        svg_html,
+    )
+    assert clip_match is not None
+    clip_x, clip_y, clip_w, clip_h = (float(value) for value in clip_match.groups())
+    clip_x2 = clip_x + clip_w
+    clip_y2 = clip_y + clip_h
+
+    for blue_path in blue_paths:
+        for x_coord, y_coord in _path_points(blue_path.group(0)):
+            assert clip_x <= x_coord <= clip_x2
+            assert clip_y <= y_coord <= clip_y2

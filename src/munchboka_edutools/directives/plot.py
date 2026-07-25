@@ -736,7 +736,7 @@ def _hash_key(*parts) -> str:
 
 # Bump this when rendering-sensitive behavior changes, to avoid reusing old
 # cached SVGs whose content no longer matches the current renderer.
-_TEXT_PLACEHOLDER_FORMAT_VERSION = 4
+_TEXT_PLACEHOLDER_FORMAT_VERSION = 6
 
 
 def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
@@ -3919,7 +3919,7 @@ class PlotDirective(SphinxDirective):
                     # Apply equal aspect if requested
                     if axis_equal:
                         try:
-                            ax.axis("equal")
+                            ax.set_aspect("equal", adjustable="box")
                         except Exception:
                             pass
                 else:
@@ -3942,7 +3942,7 @@ class PlotDirective(SphinxDirective):
                     # If equal requested (without off), apply after plot creation
                     if axis_equal:
                         try:
-                            ax.axis("equal")
+                            ax.set_aspect("equal", adjustable="box")
                         except Exception:
                             pass
 
@@ -4611,26 +4611,12 @@ class PlotDirective(SphinxDirective):
                         tri_color = _resolve_tri_color(tri.edge_color, default_tri_color)
                         tri_lw = tri.line_width if tri.line_width is not None else lw
                         tri_ls = style_map_tri.get((tri.edge_style or "solid").lower(), "-")
-                        tri_path = [
-                            tri.vertices["A"],
-                            tri.vertices["B"],
-                            tri.vertices["C"],
-                            tri.vertices["A"],
-                        ]
-                        line_kwargs = {
-                            "linestyle": tri_ls,
-                            "color": tri_color,
-                            "lw": tri_lw,
-                            "solid_joinstyle": "round",
-                            "solid_capstyle": "round",
-                            "dash_joinstyle": "round",
-                            "dash_capstyle": "round",
-                        }
-                        ax.plot(
-                            [pt[0] for pt in tri_path],
-                            [pt[1] for pt in tri_path],
-                            **line_kwargs,
-                        )
+                        for start_name, end_name in (("A", "B"), ("B", "C"), ("C", "A")):
+                            x1t, y1t = tri.vertices[start_name]
+                            x2t, y2t = tri.vertices[end_name]
+                            ax.plot(
+                                [x1t, x2t], [y1t, y2t], linestyle=tri_ls, color=tri_color, lw=tri_lw
+                            )
 
                     # Finalize the layout so that ax.transData gives accurate
                     # pixel-space coordinates for label and arc positioning.
@@ -5572,9 +5558,9 @@ class PlotDirective(SphinxDirective):
                             _py_pad = ((_yl1 - _yl0) or 1.0) * 0.02
                             ax.set_xlim(_xl0 - _px_pad, _xl1 + _px_pad)
                             ax.set_ylim(_yl0 - _py_pad, _yl1 + _py_pad)
-                            # Re-apply equal aspect; adjustable='datalim' only expands,
-                            # never shrinks, so the new limits are preserved or grown.
-                            ax.set_aspect("equal", adjustable="datalim")
+                            # Re-apply equal aspect without moving data outside
+                            # the axes clip rectangle.
+                            ax.set_aspect("equal", adjustable="box")
                     except Exception:
                         pass
 

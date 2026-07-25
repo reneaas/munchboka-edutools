@@ -1,0 +1,1433 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>plot3d-2 directive &#8212; munchboka-edutools</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/general_style.css?v=11bbc4b6" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/admonitions.css?v=9237f12a" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/popup.css?v=2d27c3a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/escape-room.css?v=bfeb5342" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/interactive_code.css?v=23cd07d5" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=d35dfce7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/style.css?v=b30732ed" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/mathjax/style.css?v=194b018e" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/figures.css?v=46e199f0" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/geogebra.css?v=fd180d66" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/grids.css?v=7667ba21" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/misc.css?v=55d93a12" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/popup_code.css?v=4b4feebf" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/tabs.css?v=a560da15" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/multipleChoiceQuiz/style.css?v=d667b426" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/fonts/opendyslexic/dyslexic.css?v=80f1227b" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=951b6e4f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=722631f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=d1549766" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=1b585024" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=acd93126" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/timedQuiz.css?v=89e27729" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/cas_popup.css?v=bae4ad7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=f75ab0f7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=2454bc3f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark-high-contrast.css?v=4c0c1b0f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=30eed71c" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=f77426ac" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=8c5c5c21" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/print_pdf.css?v=448841f9" />
+    <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
+    <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/munchboka/js/utils.js?v=b59157b9"></script>
+    <script src="../_static/munchboka/js/casThemeManager.js?v=88874cc7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+    <script src="../_static/munchboka/js/skulpt/skulpt.js?v=51c28977"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/munchboka/js/solution_timer.js?v=e7176ead"></script>
+    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=fec3e31f"></script>
+    <script src="../_static/munchboka/js/flashcards.js?v=293ceac2"></script>
+    <script src="../_static/munchboka/js/interactiveCode/interactiveCodeSetup.js?v=733f5585"></script>
+    <script src="../_static/munchboka/js/interactiveCode/codeEditor.js?v=d7a9df79"></script>
+    <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
+    <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=024a7849"></script>
+    <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
+    <script src="../_static/munchboka/js/jeopardy.js?v=375a3583"></script>
+    <script src="../_static/munchboka/js/quiz.js?v=f8bcd7a1"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/munchboka/js/popup.js?v=5db611f4"></script>
+    <script src="../_static/munchboka/js/timedQuiz/utils.js?v=2c6f871c"></script>
+    <script src="../_static/munchboka/js/timedQuiz/multipleChoiceQuestion.js?v=c6ce1ca2"></script>
+    <script src="../_static/munchboka/js/timedQuiz/timedMultipleChoiceQuiz.js?v=9accc73d"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/plot3d-2';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
+    <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
+    <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
+    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=fec3e31f"></script>
+    <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
+    <script src="../_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script src="../_static/munchboka/js/highlight-init.js?v=6bc17905"></script>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <link rel="canonical" href="https://dev.munchboka.no/docs/plot3d-2.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="polydiv directive" href="polydiv.html" />
+    <link rel="prev" title="plot directive" href="plot.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">munchboka-edutools</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Directive Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="animate.html"><code class="docutils literal notranslate"><span class="pre">animate</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="answer.html"><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cas-popup.html"><code class="docutils literal notranslate"><span class="pre">cas-popup</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clear.html"><code class="docutils literal notranslate"><span class="pre">clear</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="circuit.html"><code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dialogue.html"><code class="docutils literal notranslate"><span class="pre">dialogue</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escape-room.html"><code class="docutils literal notranslate"><span class="pre">escape-room</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escape-room-2.html"><code class="docutils literal notranslate"><span class="pre">escape-room-2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="escaperoom.html"><code class="docutils literal notranslate"><span class="pre">escaperoom</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html"><code class="docutils literal notranslate"><span class="pre">example</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exercise.html"><code class="docutils literal notranslate"><span class="pre">exercise</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explore.html"><code class="docutils literal notranslate"><span class="pre">explore</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factor-tree.html"><code class="docutils literal notranslate"><span class="pre">factor-tree</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flashcards.html"><code class="docutils literal notranslate"><span class="pre">flashcards</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggb.html"><code class="docutils literal notranslate"><span class="pre">ggb</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggb-popup.html"><code class="docutils literal notranslate"><span class="pre">ggb-popup</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ggbpopup.html"><code class="docutils literal notranslate"><span class="pre">ggbpopup</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="goals.html"><code class="docutils literal notranslate"><span class="pre">goals</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hints.html"><code class="docutils literal notranslate"><span class="pre">hints</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="horner.html"><code class="docutils literal notranslate"><span class="pre">horner</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive-code.html"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jeopardy.html"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jeopardy-question.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-question</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">multi-interactive-graph</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-plot.html"><code class="docutils literal notranslate"><span class="pre">multi-plot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-plot2.html"><code class="docutils literal notranslate"><span class="pre">multi-plot2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multiplot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pair-puzzle.html"><code class="docutils literal notranslate"><span class="pre">pair-puzzle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pairpuzzle.html"><code class="docutils literal notranslate"><span class="pre">pairpuzzle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parsons-puzzle.html"><code class="docutils literal notranslate"><span class="pre">parsons-puzzle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parsonspuzzle.html"><code class="docutils literal notranslate"><span class="pre">parsonspuzzle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="polydiv.html"><code class="docutils literal notranslate"><span class="pre">polydiv</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="popup.html"><code class="docutils literal notranslate"><span class="pre">popup</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quiz.html"><code class="docutils literal notranslate"><span class="pre">quiz</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quiz-2.html"><code class="docutils literal notranslate"><span class="pre">quiz-2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quiz-answer.html"><code class="docutils literal notranslate"><span class="pre">quiz-answer</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quiz-question.html"><code class="docutils literal notranslate"><span class="pre">quiz-question</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="room.html"><code class="docutils literal notranslate"><span class="pre">room</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign-chart.html"><code class="docutils literal notranslate"><span class="pre">sign-chart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart-2.html"><code class="docutils literal notranslate"><span class="pre">signchart-2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="signchart2.html"><code class="docutils literal notranslate"><span class="pre">signchart2</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="solution.html"><code class="docutils literal notranslate"><span class="pre">solution</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html"><code class="docutils literal notranslate"><span class="pre">summary</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table.html"><code class="docutils literal notranslate"><span class="pre">table</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html"><code class="docutils literal notranslate"><span class="pre">theory</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="timed-quiz.html"><code class="docutils literal notranslate"><span class="pre">timed-quiz</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="timedquiz.html"><code class="docutils literal notranslate"><span class="pre">timedquiz</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="turtle.html"><code class="docutils literal notranslate"><span class="pre">turtle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">Dev</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/docs/plot3d-2.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>plot3d-2 directive</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-front-matter-works">How front matter works</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expression-support">Expression support</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colors-and-line-styles">Colors and line styles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors">Vectors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#points">Points</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#text">Text</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lines">Lines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#line-segments">Line segments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segments">Normal segments</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment-between-two-lines">Normal segment between two lines</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment-from-a-point-to-a-plane">Normal segment from a point to a plane</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angles">Right angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#planes">Planes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#equation-form">Equation form</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-point-form">Normal-point form</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curves">Curves</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solid-of-revolution">Solid of revolution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-gons">N-gons</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyramids">Pyramids</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prisms">Prisms</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spheres">Spheres</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#macros-and-reusable-constructions">Macros and reusable constructions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#let"><code class="docutils literal notranslate"><span class="pre">let</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#def"><code class="docutils literal notranslate"><span class="pre">def</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repeat"><code class="docutils literal notranslate"><span class="pre">repeat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macro-and-use"><code class="docutils literal notranslate"><span class="pre">macro</span></code> and <code class="docutils literal notranslate"><span class="pre">use</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips">Tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="plot3d-2-directive">
+<h1><code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> directive<a class="headerlink" href="#plot3d-2-directive" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> directive creates 3D mathematical figures in MyST / Jupyter Book using a compact key-value syntax. It uses Matplotlib’s 3D axes as the backend, but draws custom centered axes, arrowheads, depth-aware lines, and geometry primitives intended for textbook-style figures.</p>
+<p><code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> is experimental and is meant to evolve toward feature parity with the mature <code class="docutils literal notranslate"><span class="pre">plot</span></code> directive while keeping the implementation easier to refactor.</p>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+width: 70%
+xrange: (-2, 4)
+yrange: (-2, 4)
+zrange: (-1, 4)
+vector: (0, 0, 0), (2, 1, 3), blue
+point: (2, 1, 3), red
+text: at=(2, 1, 3), value=&quot;$P$&quot;, ha=left, va=bottom
+
+Vectoren $\vec{OP}$ i rommet.
+:::
+</pre></div>
+</div>
+<p>The directive also has the alias <code class="docutils literal notranslate"><span class="pre">plot3d2</span></code>.</p>
+</section>
+<section id="syntax-overview">
+<h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
+<p>The directive is usually written in MyST form:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+key: value
+key: value
+
+Optional caption text.
+:::
+</pre></div>
+</div>
+<p>You can also use classic reStructuredText syntax:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>```{eval-rst}
+.. plot3d-2::
+
+   width: 70%
+   vector: (0, 0, 0), (1, 2, 3), blue
+
+   Optional caption text.
+```
+</pre></div>
+</div>
+<section id="how-front-matter-works">
+<h3>How front matter works<a class="headerlink" href="#how-front-matter-works" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Each non-empty line before the first blank line is interpreted as <code class="docutils literal notranslate"><span class="pre">key:</span> <span class="pre">value</span></code> front matter.</p></li>
+<li><p>Repeated drawing keys are allowed.</p></li>
+<li><p>Lines after the first blank line become the figure caption.</p></li>
+<li><p>Most numeric values support arithmetic expressions such as <code class="docutils literal notranslate"><span class="pre">sqrt(2)</span></code>, <code class="docutils literal notranslate"><span class="pre">pi/3</span></code>, and variables created with <code class="docutils literal notranslate"><span class="pre">let</span></code>.</p></li>
+</ul>
+</section>
+</section>
+<section id="supported-keys">
+<h2>Supported keys<a class="headerlink" href="#supported-keys" title="Link to this heading">#</a></h2>
+<p>Repeated drawing keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">curve</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">line</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ngon</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">point</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plane</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prism</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pyramid</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">right-angle</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphere</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vector</span></code></p></li>
+</ul>
+<p>Macro keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">let</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">def</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">repeat</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">macro</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">use</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">endmacro</span></code></p></li>
+</ul>
+</section>
+<section id="global-options">
+<h2>Global options<a class="headerlink" href="#global-options" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<td class="text-right"><p>none</p></td>
+<td><p>CSS width such as <code class="docutils literal notranslate"><span class="pre">70%</span></code> or <code class="docutils literal notranslate"><span class="pre">500</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">figsize</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(6,</span> <span class="pre">5)</span></code></p></td>
+<td><p>Matplotlib figure size in inches</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">align</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, or <code class="docutils literal notranslate"><span class="pre">right</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
+<td class="text-right"><p>none</p></td>
+<td><p>Extra CSS classes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td class="text-right"><p>generated</p></td>
+<td><p>Stable output name / figure anchor</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alt</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">3D-koordinatsystem</span></code></p></td>
+<td><p>Alt text for accessibility</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
+<td class="text-right"><p>off</p></td>
+<td><p>Force regeneration</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">12</span></code></p></td>
+<td><p>Base font size for labels and text</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">1.5</span></code></p></td>
+<td><p>Default line width</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xrange</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(-5,</span> <span class="pre">5)</span></code></p></td>
+<td><p>Visible x-axis range</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">yrange</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(-5,</span> <span class="pre">5)</span></code></p></td>
+<td><p>Visible y-axis range</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">zrange</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(-5,</span> <span class="pre">5)</span></code></p></td>
+<td><p>Visible z-axis range</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xstep</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>x-axis tick spacing</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ystep</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>y-axis tick spacing</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">zstep</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>z-axis tick spacing</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xlabel</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">$x$</span></code></p></td>
+<td><p>x-axis label; use <code class="docutils literal notranslate"><span class="pre">none</span></code> to hide</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ylabel</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">$y$</span></code></p></td>
+<td><p>y-axis label; use <code class="docutils literal notranslate"><span class="pre">none</span></code> to hide</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">zlabel</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">$z$</span></code></p></td>
+<td><p>z-axis label; use <code class="docutils literal notranslate"><span class="pre">none</span></code> to hide</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ticks</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Turn ticks on or off</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">elev</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">22</span></code></p></td>
+<td><p>Camera elevation in degrees</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">azim</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">-55</span></code></p></td>
+<td><p>Camera azimuth in degrees</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">zoom</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">1.28</span></code></p></td>
+<td><p>Camera zoom factor</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Example:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+width: 100%
+figsize: (6, 4)
+fontsize: 18
+lw: 2
+xrange: (-1, 5)
+yrange: (-1, 4)
+zrange: (-1, 4)
+xstep: 1
+ystep: 1
+zstep: 1
+elev: 20
+azim: -70
+ylabel: none
+vector: (0, 0, 0), (3, 2, 2), teal
+:::
+</pre></div>
+</div>
+<p>Ticks never include the origin or the two endpoints of an axis. This prevents tick labels from colliding with the origin and the arrowheads.</p>
+</section>
+<section id="expression-support">
+<h2>Expression support<a class="headerlink" href="#expression-support" title="Link to this heading">#</a></h2>
+<p>Numeric fields support SymPy-style expressions:</p>
+<ul class="simple">
+<li><p>arithmetic: <code class="docutils literal notranslate"><span class="pre">1/3</span></code>, <code class="docutils literal notranslate"><span class="pre">2*sqrt(5)</span></code>, <code class="docutils literal notranslate"><span class="pre">3*pi/4</span></code></p></li>
+<li><p>constants: <code class="docutils literal notranslate"><span class="pre">pi</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code></p></li>
+<li><p>functions: <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, <code class="docutils literal notranslate"><span class="pre">sin</span></code>, <code class="docutils literal notranslate"><span class="pre">cos</span></code>, <code class="docutils literal notranslate"><span class="pre">tan</span></code>, <code class="docutils literal notranslate"><span class="pre">asin</span></code>, <code class="docutils literal notranslate"><span class="pre">acos</span></code>, <code class="docutils literal notranslate"><span class="pre">atan</span></code>, <code class="docutils literal notranslate"><span class="pre">sinh</span></code>, <code class="docutils literal notranslate"><span class="pre">cosh</span></code>, <code class="docutils literal notranslate"><span class="pre">tanh</span></code>, <code class="docutils literal notranslate"><span class="pre">Abs</span></code></p></li>
+<li><p>macro variables and functions created with <code class="docutils literal notranslate"><span class="pre">let</span></code> and <code class="docutils literal notranslate"><span class="pre">def</span></code></p></li>
+</ul>
+<p>Use <code class="docutils literal notranslate"><span class="pre">**</span></code> for powers.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+point: (sqrt(2), cos(pi/3), 1/2), red
+vector: (0, 0, 0), (2*cos(pi/6), 2*sin(pi/6), sqrt(3)), blue
+:::
+</pre></div>
+</div>
+</section>
+<section id="colors-and-line-styles">
+<h2>Colors and line styles<a class="headerlink" href="#colors-and-line-styles" title="Link to this heading">#</a></h2>
+<p>Color values may be named plotmath colors such as <code class="docutils literal notranslate"><span class="pre">blue</span></code>, <code class="docutils literal notranslate"><span class="pre">red</span></code>, <code class="docutils literal notranslate"><span class="pre">green</span></code>, <code class="docutils literal notranslate"><span class="pre">orange</span></code>, <code class="docutils literal notranslate"><span class="pre">purple</span></code>, <code class="docutils literal notranslate"><span class="pre">teal</span></code>, <code class="docutils literal notranslate"><span class="pre">gray</span></code>, and <code class="docutils literal notranslate"><span class="pre">black</span></code>, or CSS/Matplotlib color values such as <code class="docutils literal notranslate"><span class="pre">#13579b</span></code>.</p>
+<p>Supported line styles for line-like primitives:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">solid</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dashed</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dashdot</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dotted</span></code></p></li>
+</ul>
+</section>
+<section id="vectors">
+<h2>Vectors<a class="headerlink" href="#vectors" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">vector</span></code> draws an arrow from a start point to an end point.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>vector: (x0, y0, z0), (x1, y1, z1), color
+</pre></div>
+</div>
+<p>The color is optional and defaults to <code class="docutils literal notranslate"><span class="pre">blue</span></code>.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-1, 4)
+yrange: (-1, 4)
+zrange: (-1, 4)
+vector: (0, 0, 0), (3, 1, 2), blue
+vector: (1, 0, 0), (1, 2, 3), orange
+:::
+</pre></div>
+</div>
+</section>
+<section id="points">
+<h2>Points<a class="headerlink" href="#points" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">point</span></code> draws a marker at a coordinate.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>point: (x, y, z), color
+</pre></div>
+</div>
+<p>The color is optional and defaults to <code class="docutils literal notranslate"><span class="pre">blue</span></code>.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+point: (0, 0, 0), black
+point: (1, 2, 3), red
+text: at=(1, 2, 3), value=&quot;$P$&quot;, ha=left, va=bottom
+:::
+</pre></div>
+</div>
+</section>
+<section id="text">
+<h2>Text<a class="headerlink" href="#text" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">text</span></code> places a label at a 3D coordinate.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>text: at=(x, y, z), value=&quot;label&quot;, color=color, fontsize=12, offset=(dx, dy, dz), ha=center, va=center
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">at</span></code></p></td>
+<td class="text-right"><p>required</p></td>
+<td><p>Anchor coordinate</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">value</span></code> or <code class="docutils literal notranslate"><span class="pre">label</span></code></p></td>
+<td class="text-right"><p>required</p></td>
+<td><p>Text content</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Text color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td><p>Override font size</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">offset</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code></p></td>
+<td><p>Coordinate offset applied to <code class="docutils literal notranslate"><span class="pre">at</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ha</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, or <code class="docutils literal notranslate"><span class="pre">right</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">va</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">top</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">bottom</span></code>, or <code class="docutils literal notranslate"><span class="pre">baseline</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+point: (2, 1, 3), black
+text: at=(2, 1, 3), value=&quot;$A$&quot;, offset=(0.1, 0, 0.1), ha=left, va=bottom
+:::
+</pre></div>
+</div>
+</section>
+<section id="lines">
+<h2>Lines<a class="headerlink" href="#lines" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">line</span></code> draws an infinite line clipped to the visible plotting box. Lines use depth shading.</p>
+<p>Syntax forms:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>line: point=(x0, y0, z0), direction=(dx, dy, dz), color=blue, lw=1.5, style=solid
+line: through=[(x0, y0, z0), (x1, y1, z1)], color=blue, lw=1.5, style=solid
+line: (x0, y0, z0), (x1, y1, z1), color=blue, lw=1.5, style=solid
+</pre></div>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-1, 5)
+yrange: (-1, 4)
+zrange: (-1, 4)
+line: point=(0, 0, 0), direction=(2, 1, 1), color=blue, lw=2
+line: through=[(0, 3, 0), (4, 0, 3)], color=red, style=dashed
+:::
+</pre></div>
+</div>
+</section>
+<section id="line-segments">
+<h2>Line segments<a class="headerlink" href="#line-segments" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">line-segment</span></code> draws only the finite segment between two points. Segments use the same depth-aware rendering as <code class="docutils literal notranslate"><span class="pre">line</span></code>.</p>
+<p>Syntax forms:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>line-segment: from=(x0, y0, z0), to=(x1, y1, z1), color=blue, lw=1.5, style=solid
+line-segment: start=(x0, y0, z0), end=(x1, y1, z1), color=blue, lw=1.5, style=solid
+line-segment: (x0, y0, z0), (x1, y1, z1), color, lw=1.5, style=solid
+</pre></div>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+line-segment: (0, 0, 0), (3, 2, 1), blue, lw=2
+line-segment: from=(3, 2, 1), to=(1, 3, 3), color=orange, style=dashed
+point: (0, 0, 0), black
+point: (3, 2, 1), black
+point: (1, 3, 3), black
+:::
+</pre></div>
+</div>
+</section>
+<section id="normal-segments">
+<h2>Normal segments<a class="headerlink" href="#normal-segments" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code> draws a perpendicular connector. It has two main forms.</p>
+<section id="normal-segment-between-two-lines">
+<h3>Normal segment between two lines<a class="headerlink" href="#normal-segment-between-two-lines" title="Link to this heading">#</a></h3>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point1=(x, y, z), direction1=(dx, dy, dz), point2=(x, y, z), direction2=(dx, dy, dz), color=blue, style=solid
+</pre></div>
+</div>
+<p>Aliases:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">p1</span></code> for <code class="docutils literal notranslate"><span class="pre">point1</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">p2</span></code> for <code class="docutils literal notranslate"><span class="pre">point2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dir1</span></code> or <code class="docutils literal notranslate"><span class="pre">v1</span></code> for <code class="docutils literal notranslate"><span class="pre">direction1</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dir2</span></code> or <code class="docutils literal notranslate"><span class="pre">v2</span></code> for <code class="docutils literal notranslate"><span class="pre">direction2</span></code></p></li>
+</ul>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+ticks: off
+xrange: (-1, 7)
+yrange: (-1, 5)
+zrange: (-1, 5)
+line: point=(3, 0, 4), direction=(2, 0, 0.5), color=blue, lw=2
+line: point=(1, 3, 1), direction=(2, 0, -0.5), color=red, lw=2
+normal-segment: point1=(3, 0, 4), direction1=(2, 0, 0.5), point2=(1, 3, 1), direction2=(2, 0, -0.5), color=gray, style=dashed, right-angle-size=0.35
+:::
+</pre></div>
+</div>
+<p>By default, the directive draws right-angle markers at both endpoints.</p>
+</section>
+<section id="normal-segment-from-a-point-to-a-plane">
+<h3>Normal segment from a point to a plane<a class="headerlink" href="#normal-segment-from-a-point-to-a-plane" title="Link to this heading">#</a></h3>
+<p>Syntax with plane equation:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point=(px, py, pz), plane=z = x + y, color=blue, style=solid
+</pre></div>
+</div>
+<p>Syntax with normal vector and point on the plane:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point=(px, py, pz), plane-normal=(a, b, c), plane-point=(x0, y0, z0), color=blue, style=solid
+</pre></div>
+</div>
+<p>Aliases:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">p</span></code> for <code class="docutils literal notranslate"><span class="pre">point</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normal</span></code> for <code class="docutils literal notranslate"><span class="pre">plane-normal</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plane_point</span></code>, <code class="docutils literal notranslate"><span class="pre">on-plane</span></code>, or <code class="docutils literal notranslate"><span class="pre">on_plane</span></code> for <code class="docutils literal notranslate"><span class="pre">plane-point</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">equation</span></code> for <code class="docutils literal notranslate"><span class="pre">plane</span></code></p></li>
+</ul>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Segment color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Segment width</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">style</span></code> or <code class="docutils literal notranslate"><span class="pre">linestyle</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">solid</span></code></p></td>
+<td><p>Segment style</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">right-angles</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Draw right-angle marker</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">right-angle-color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Right-angle marker color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">right-angle-size</span></code> or <code class="docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">0.35</span></code></p></td>
+<td><p>Right-angle marker size</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">points</span></code> or <code class="docutils literal notranslate"><span class="pre">endpoint-points</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Draw endpoints automatically</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">endpoint-color</span></code> or <code class="docutils literal notranslate"><span class="pre">point-color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Endpoint marker color</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-1, 4)
+yrange: (-1, 4)
+zrange: (-1, 5)
+plane: equation=z = 1, xrange=(-1, 4), yrange=(-1, 4), color=orange, alpha=0.25
+normal-segment: point=(2, 2, 4), plane=z = 1, color=gray, style=dashed, right-angle-size=0.35
+text: at=(2, 2, 4), value=&quot;$P$&quot;, ha=left, va=bottom
+:::
+</pre></div>
+</div>
+<p>The point-plane form automatically draws a point at the external point and at the foot on the plane. Use <code class="docutils literal notranslate"><span class="pre">points=off</span></code> to suppress those endpoint markers.</p>
+</section>
+</section>
+<section id="right-angles">
+<h2>Right angles<a class="headerlink" href="#right-angles" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">right-angle</span></code> draws a square right-angle marker at a coordinate.</p>
+<p>Syntax with directions:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>right-angle: at=(x, y, z), dir1=(dx, dy, dz), dir2=(dx, dy, dz), size=0.35, color=black, lw=1.5
+</pre></div>
+</div>
+<p>Syntax with target points:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>right-angle: at=(x, y, z), to1=(x1, y1, z1), to2=(x2, y2, z2), size=0.35, color=black, lw=1.5
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">to1</span></code> / <code class="docutils literal notranslate"><span class="pre">to2</span></code> form clamps the marker to the distances from <code class="docutils literal notranslate"><span class="pre">at</span></code> to the two target points. This is useful for short segments.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+line-segment: (0, 0, 0), (2, 0, 0), black
+line-segment: (0, 0, 0), (0, 2, 0), black
+right-angle: at=(0, 0, 0), to1=(2, 0, 0), to2=(0, 2, 0), size=0.4, color=red
+:::
+</pre></div>
+</div>
+</section>
+<section id="planes">
+<h2>Planes<a class="headerlink" href="#planes" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">plane</span></code> draws a finite patch of a plane.</p>
+<section id="equation-form">
+<h3>Equation form<a class="headerlink" href="#equation-form" title="Link to this heading">#</a></h3>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>plane: equation=z = x + y, xrange=(-2, 2), yrange=(-2, 2), color=orange, alpha=0.35
+</pre></div>
+</div>
+<p>The equation may solve for <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, or <code class="docutils literal notranslate"><span class="pre">z</span></code>. Use <code class="docutils literal notranslate"><span class="pre">xrange</span></code>, <code class="docutils literal notranslate"><span class="pre">yrange</span></code>, and <code class="docutils literal notranslate"><span class="pre">zrange</span></code> to limit the displayed patch.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-2, 2)
+yrange: (-2, 2)
+zrange: (-2, 4)
+plane: equation=z = x + y, xrange=(-2, 2), yrange=(-2, 2), color=orange, alpha=0.35
+:::
+</pre></div>
+</div>
+</section>
+<section id="normal-point-form">
+<h3>Normal-point form<a class="headerlink" href="#normal-point-form" title="Link to this heading">#</a></h3>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>plane: normal=(a, b, c), point=(x0, y0, z0), span=(width, height), color=orange, alpha=0.35
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">span</span></code> controls the finite width and height of the plane patch. If only one value is supplied, the patch is square.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+plane: normal=(1, 1, 1), point=(0, 0, 1), span=(4, 3), color=teal, alpha=0.3
+normal-segment: point=(2, 2, 4), plane-normal=(1, 1, 1), plane-point=(0, 0, 1), color=gray, style=dashed
+:::
+</pre></div>
+</div>
+</section>
+</section>
+<section id="curves">
+<h2>Curves<a class="headerlink" href="#curves" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">curve</span></code> draws a parametric 3D curve.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>curve: x=f(t), y=g(t), z=h(t), t=(tmin, tmax), color=blue, lw=1.5, samples=300, arrows=true, arrow-count=3
+</pre></div>
+</div>
+<p>Aliases:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">trange</span></code> for <code class="docutils literal notranslate"><span class="pre">t</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arrows-count</span></code> for <code class="docutils literal notranslate"><span class="pre">arrow-count</span></code></p></li>
+</ul>
+<p>Rendering notes:</p>
+<ul class="simple">
+<li><p>Curves use local depth shading.</p></li>
+<li><p>Curve style changes by xy-quadrant: solid for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, dashdot for mixed foreground quadrants, dashed for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&lt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>.</p></li>
+<li><p>Arrowheads lie on the curve and indicate direction.</p></li>
+</ul>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-2, 2)
+yrange: (-2, 2)
+zrange: (-1, 14)
+curve: x=sin(t), y=cos(t), z=t, t=(0, 4*pi), color=blue, lw=2, samples=400, arrow-count=5
+:::
+</pre></div>
+</div>
+<p>Disable arrows with <code class="docutils literal notranslate"><span class="pre">arrows=false</span></code>.</p>
+</section>
+<section id="solid-of-revolution">
+<h2>Solid of revolution<a class="headerlink" href="#solid-of-revolution" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code> draws the surface obtained by rotating <code class="docutils literal notranslate"><span class="pre">f(x)</span></code> about the x-axis.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>solid-of-revolution: f(x), (xmin, xmax), color
+</pre></div>
+</div>
+<p>The color is optional and defaults to <code class="docutils literal notranslate"><span class="pre">blue</span></code>.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-1, 5)
+yrange: (-3, 3)
+zrange: (-3, 3)
+solid-of-revolution: sqrt(x), (0, 4), green
+:::
+</pre></div>
+</div>
+</section>
+<section id="n-gons">
+<h2>N-gons<a class="headerlink" href="#n-gons" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ngon</span></code> draws one filled polygonal face with n corners.</p>
+<p>Syntax forms:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ngon: [(x0, y0, z0), (x1, y1, z1), ...], color=blue, edgecolor=black, alpha=0.45
+ngon: points=[(x0, y0, z0), (x1, y1, z1), ...], color=blue, edgecolor=black, alpha=0.45
+ngon: vertices=[(x0, y0, z0), (x1, y1, z1), ...], color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+ngon: [(0, 0, 0), (2, 0, 0), (2, 1, 1), (0, 1, 1)], color=green, alpha=0.4
+:::
+</pre></div>
+</div>
+</section>
+<section id="pyramids">
+<h2>Pyramids<a class="headerlink" href="#pyramids" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pyramid</span></code> draws a pyramid with an n-gon base and an apex.</p>
+<p>Syntax with explicit base:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyramid: base=[(x0, y0, z0), (x1, y1, z1), ...], apex=(x, y, z), color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<p>Syntax with regular n-gon base in the xy-plane:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyramid: center=(cx, cy, cz), radius=r, sides=n, apex=(x, y, z), rotation=0, color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-2, 2)
+yrange: (-2, 2)
+zrange: (-1, 3)
+pyramid: center=(0, 0, 0), radius=1.4, sides=5, apex=(0, 0, 2.4), color=purple, alpha=0.5
+:::
+</pre></div>
+</div>
+</section>
+<section id="prisms">
+<h2>Prisms<a class="headerlink" href="#prisms" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">prism</span></code> draws a prism from an n-gon base and an extrusion.</p>
+<p>Syntax with explicit base and vector:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>prism: base=[(x0, y0, z0), (x1, y1, z1), ...], vector=(dx, dy, dz), color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<p>Syntax with explicit base and vertical height:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>prism: base=[(x0, y0, z0), (x1, y1, z1), ...], height=h, color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<p>Syntax with regular n-gon base:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>prism: center=(cx, cy, cz), radius=r, sides=n, height=h, rotation=0, color=blue, edgecolor=black, alpha=0.45
+</pre></div>
+</div>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-2, 2)
+yrange: (-2, 2)
+zrange: (-1, 3)
+prism: center=(0, 0, 0), radius=1.2, sides=6, height=2, color=yellow, alpha=0.35
+:::
+</pre></div>
+</div>
+</section>
+<section id="spheres">
+<h2>Spheres<a class="headerlink" href="#spheres" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">sphere</span></code> draws a sphere with depth-aware surface shading and guide curves.</p>
+<p>Syntax:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sphere: center=(x, y, z), radius=r, color=blue, alpha=0.55, resolution=48
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">resolution</span></code> is clamped between <code class="docutils literal notranslate"><span class="pre">8</span></code> and <code class="docutils literal notranslate"><span class="pre">128</span></code>.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-2, 2)
+yrange: (-2, 2)
+zrange: (-2, 2)
+sphere: center=(0, 0, 0), radius=1, color=skyblue, alpha=0.65, resolution=48
+:::
+</pre></div>
+</div>
+</section>
+<section id="macros-and-reusable-constructions">
+<h2>Macros and reusable constructions<a class="headerlink" href="#macros-and-reusable-constructions" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> supports the same macro system style as <code class="docutils literal notranslate"><span class="pre">plot</span></code>.</p>
+<section id="let">
+<h3><code class="docutils literal notranslate"><span class="pre">let</span></code><a class="headerlink" href="#let" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">let</span></code> defines a constant expression.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+let: h = 2
+point: (1, 0, h), red
+vector: (0, 0, 0), (1, 0, h), blue
+:::
+</pre></div>
+</div>
+</section>
+<section id="def">
+<h3><code class="docutils literal notranslate"><span class="pre">def</span></code><a class="headerlink" href="#def" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">def</span></code> defines a helper function. Multi-argument definitions are supported.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+def: px(i, j) = i + j/2
+def: pz(i, j) = i*j/3
+point: (px(1, 2), 1, pz(1, 2)), red
+:::
+</pre></div>
+</div>
+</section>
+<section id="repeat">
+<h3><code class="docutils literal notranslate"><span class="pre">repeat</span></code><a class="headerlink" href="#repeat" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">repeat</span></code> expands one line many times.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+xrange: (-1, 5)
+yrange: (-1, 2)
+zrange: (-1, 4)
+repeat: n=0..4; point: (n, 0, n/2), blue
+repeat: n=0..3; line-segment: (n, 0, n/2), (n + 1, 0, (n + 1)/2), gray
+:::
+</pre></div>
+</div>
+</section>
+<section id="macro-and-use">
+<h3><code class="docutils literal notranslate"><span class="pre">macro</span></code> and <code class="docutils literal notranslate"><span class="pre">use</span></code><a class="headerlink" href="#macro-and-use" title="Link to this heading">#</a></h3>
+<p>Macros package several plot lines into a reusable block.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+macro: pillar(x, y, h, c)
+   line-segment: (x, y, 0), (x, y, h), color=c, lw=2
+   point: (x, y, h), c
+endmacro
+
+use: pillar(0, 0, 1, blue)
+use: pillar(1, 1, 2, red)
+use: pillar(2, 0, 3, green)
+:::
+</pre></div>
+</div>
+</section>
+</section>
+<section id="complete-example">
+<h2>Complete example<a class="headerlink" href="#complete-example" title="Link to this heading">#</a></h2>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+width: 100%
+fontsize: 18
+elev: 20
+azim: -70
+xrange: (-1, 5)
+yrange: (-1, 4)
+zrange: (-1, 5)
+ylabel: none
+plane: equation=z = 1, xrange=(-1, 5), yrange=(-1, 4), color=orange, alpha=0.25
+line: point=(0, 0, 1), direction=(1, 0.4, 0), color=blue, lw=2
+curve: x=1 + sin(t), y=1 + cos(t), z=1 + t/4, t=(0, 4*pi), color=teal, lw=2, arrow-count=4
+normal-segment: point=(3, 2, 4), plane=z = 1, color=gray, style=dashed, right-angle-size=0.35
+vector: (0, 0, 0), (3, 2, 4), purple
+text: at=(3, 2, 4), value=&quot;$P$&quot;, ha=left, va=bottom
+
+Et punkt, en normal til planet og en romkurve.
+:::
+</pre></div>
+</div>
+</section>
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">elev</span></code> and <code class="docutils literal notranslate"><span class="pre">azim</span></code> deliberately; the same figure can read very differently from another camera angle.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">ylabel:</span> <span class="pre">none</span></code> or similar when a label collides with the figure.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">nocache:</span></code> while authoring figures that change often.</p></li>
+<li><p>Prefer <code class="docutils literal notranslate"><span class="pre">line-segment</span></code> for finite geometry and <code class="docutils literal notranslate"><span class="pre">line</span></code> for infinite objects clipped to the plotting box.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">normal-segment</span></code> for perpendicular constructions instead of manually computing foot points.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">points=off</span></code> on point-plane normal segments when automatic endpoint markers create clutter.</p></li>
+<li><p>Increase <code class="docutils literal notranslate"><span class="pre">right-angle-size</span></code> when a perpendicular marker is too subtle.</p></li>
+<li><p>Keep <code class="docutils literal notranslate"><span class="pre">samples</span></code> moderate for curves unless the curve really needs high resolution.</p></li>
+</ul>
+</section>
+<section id="source">
+<h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
+<p>The implementation lives in <a class="reference internal" href="#/Users/reneaas/codes/vgs_books/munchboka-edutools/src/munchboka_edutools/directives/plot3d_2.py"><span class="xref myst">src/munchboka_edutools/directives/plot3d_2.py</span></a>.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./docs"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="plot.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="polydiv.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">polydiv</span></code> directive</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-front-matter-works">How front matter works</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expression-support">Expression support</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colors-and-line-styles">Colors and line styles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors">Vectors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#points">Points</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#text">Text</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lines">Lines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#line-segments">Line segments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segments">Normal segments</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment-between-two-lines">Normal segment between two lines</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment-from-a-point-to-a-plane">Normal segment from a point to a plane</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angles">Right angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#planes">Planes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#equation-form">Equation form</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-point-form">Normal-point form</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curves">Curves</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solid-of-revolution">Solid of revolution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-gons">N-gons</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyramids">Pyramids</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prisms">Prisms</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spheres">Spheres</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#macros-and-reusable-constructions">Macros and reusable constructions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#let"><code class="docutils literal notranslate"><span class="pre">let</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#def"><code class="docutils literal notranslate"><span class="pre">def</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repeat"><code class="docutils literal notranslate"><span class="pre">repeat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macro-and-use"><code class="docutils literal notranslate"><span class="pre">macro</span></code> and <code class="docutils literal notranslate"><span class="pre">use</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips">Tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By René Ask
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

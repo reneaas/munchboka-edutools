@@ -1,4 +1,11 @@
 /* Minimal default styles for munchboka-edutools */
+
+
+.pst-header {
+  display: none !important;
+}
+
+
 .quiz-main-container {
   margin: 1rem 0;
 }

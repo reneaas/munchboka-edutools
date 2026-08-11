@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 from sphinx.application import Sphinx
 
 
@@ -27,7 +28,7 @@ Solution timer
 
    .. solution::
 
-      Full løsning (default delay from config = 300 s).
+      Full løsning uten tidslås.
 
 .. solution:: Tilpasset løsning
    :delay: 42
@@ -73,10 +74,11 @@ def test_solution_timer_build(tmp_path):
     # Parent answer block is present (answer-2-toggle button from Answer2Directive)
     assert 'class="answer-2-toggle"' in html
 
-    # Solution inside answer gets default 300 s delay on its toggle button
-    assert 'data-delay-seconds="300"' in html
+    # Plain solutions are not timed by default.
+    assert "Full løsning uten tidslås." in html
+    assert 'data-delay-seconds="300"' not in html
 
-    # Custom per-directive delay
+    # Legacy per-directive delay is still interpreted as seconds.
     assert 'data-delay-seconds="42"' in html
 
     # :delay: 0 — no data attribute emitted
@@ -100,3 +102,63 @@ def test_solution_timer_build(tmp_path):
     assert 'buttonClass: "answer-2-toggle"' in toggle_js
     assert "cancelContentTransition" in toggle_js
     assert "_munchbokaToggleCleanup" in toggle_js
+
+
+def test_solution_timer_myst_timer_option_is_minutes(tmp_path):
+    myst = pytest.importorskip("myst_parser")
+    _ = myst  # silence unused
+
+    src = tmp_path / "src"
+    build = tmp_path / "build"
+    doctree = tmp_path / "doctree"
+    src.mkdir()
+    build.mkdir()
+    doctree.mkdir()
+
+    (src / "conf.py").write_text(
+        """
+project = 'test'
+extensions = [
+    'myst_parser',
+    'munchboka_edutools',
+]
+
+myst_enable_extensions = ['colon_fence']
+html_theme = 'basic'
+master_doc = 'index'
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    (src / "index.md").write_text(
+        """
+# Solution timer
+
+:::{solution}
+---
+timer: 5
+---
+Timeren er fem minutter.
+:::
+
+:::{solution}
+Uten timer.
+:::
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    app = Sphinx(
+        srcdir=str(src),
+        confdir=str(src),
+        outdir=str(build),
+        doctreedir=str(doctree),
+        buildername="html",
+        warningiserror=False,
+        freshenv=True,
+    )
+    app.build()
+
+    html = (build / "index.html").read_text(encoding="utf8")
+    assert 'data-delay-seconds="300"' in html
+    assert html.count("data-delay-seconds") == 1

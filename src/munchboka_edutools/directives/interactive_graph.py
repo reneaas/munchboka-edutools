@@ -52,6 +52,9 @@ from .animate import (
 )
 
 
+_INTERACTIVE_GRAPH_RENDER_VERSION = 2
+
+
 def _render_svg_frame_worker(task: Tuple[str, Dict[str, Any]]) -> str:
     """Render one already-substituted frame in a worker process."""
     frame_content, render_options = task
@@ -212,6 +215,7 @@ class InteractiveGraphDirective(SphinxDirective):
         content_for_hash = "\n".join(plot_content_lines)
         var_specs_for_hash = "\n".join(var_specs)
         hash_key = _hash_key(
+            _INTERACTIVE_GRAPH_RENDER_VERSION,
             var_specs_for_hash,
             content_for_hash,
             str(merged),

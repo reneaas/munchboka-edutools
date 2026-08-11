@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from sphinx.application import Sphinx
@@ -29,6 +30,14 @@ Exercise test
 .. exercise:: Without aids
 
    This exercise does not.
+
+.. exercise:: Oppgave 2
+
+   First duplicate-title exercise.
+
+.. exercise:: Oppgave 2
+
+   Second duplicate-title exercise.
 """.lstrip(),
         encoding="utf8",
     )
@@ -56,8 +65,22 @@ def test_exercise_aids_icon(tmp_path):
 
     html = (build / "index.html").read_text(encoding="utf8")
     assert "exercise-aids" in html
+    section_ids = re.findall(r'<section class="exercise-section" id="([^"]+)"', html)
+    oppgave_ids = [
+        section_id
+        for section_id in section_ids
+        if section_id.startswith("exercise-Oppgave-2")
+    ]
+    sidebar_links = re.findall(
+        r'<li><a class="reference internal" href="#([^"]+)">Oppgave 2</a></li>',
+        html,
+    )
+    assert oppgave_ids == ["exercise-Oppgave-2", "exercise-Oppgave-2-2"]
+    assert sidebar_links == oppgave_ids
 
-    css = (build / "_static" / "munchboka" / "css" / "admonitions.css").read_text(encoding="utf8")
+    css = (build / "_static" / "munchboka" / "css" / "admonitions.css").read_text(
+        encoding="utf8"
+    )
     assert "light_mode/computer.svg" in css
     assert "dark_mode/computer.svg" in css
 

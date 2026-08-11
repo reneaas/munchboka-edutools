@@ -736,7 +736,7 @@ def _hash_key(*parts) -> str:
 
 # Bump this when rendering-sensitive behavior changes, to avoid reusing old
 # cached SVGs whose content no longer matches the current renderer.
-_TEXT_PLACEHOLDER_FORMAT_VERSION = 6
+_TEXT_PLACEHOLDER_FORMAT_VERSION = 13
 
 
 def _compile_function(expr: str, *, sympy_locals: Dict[str, Any] | None = None) -> Callable:
@@ -3919,7 +3919,7 @@ class PlotDirective(SphinxDirective):
                     # Apply equal aspect if requested
                     if axis_equal:
                         try:
-                            ax.set_aspect("equal", adjustable="box")
+                            ax.axis("equal")
                         except Exception:
                             pass
                 else:
@@ -3942,7 +3942,7 @@ class PlotDirective(SphinxDirective):
                     # If equal requested (without off), apply after plot creation
                     if axis_equal:
                         try:
-                            ax.set_aspect("equal", adjustable="box")
+                            ax.axis("equal")
                         except Exception:
                             pass
 
@@ -5516,10 +5516,10 @@ class PlotDirective(SphinxDirective):
                     except Exception:
                         pass
 
-                # When axis: equal is active, expand limits so no text is clipped.
+                # When axis: equal is active, expand limits so no drawn content is clipped.
                 # ax.axis("equal") was already applied early to set the coordinate
-                # space for drawing; here we check whether any text artist extends
-                # beyond the current limits and expand + re-apply equal aspect.
+                # space for drawing; here we include known data-space geometry plus
+                # rendered text extents before re-applying equal aspect.
                 if axis_equal:
                     try:
                         fig.canvas.draw()  # realise text bboxes
@@ -5528,6 +5528,76 @@ class PlotDirective(SphinxDirective):
                         _xl0, _xl1 = ax.get_xlim()
                         _yl0, _yl1 = ax.get_ylim()
                         _expanded = False
+
+                        def _include_point(_x: float, _y: float) -> None:
+                            nonlocal _xl0, _xl1, _yl0, _yl1, _expanded
+                            try:
+                                _xf = float(_x)
+                                _yf = float(_y)
+                            except Exception:
+                                return
+                            if not (math.isfinite(_xf) and math.isfinite(_yf)):
+                                return
+                            if _xf < _xl0:
+                                _xl0 = _xf
+                                _expanded = True
+                            if _xf > _xl1:
+                                _xl1 = _xf
+                                _expanded = True
+                            if _yf < _yl0:
+                                _yl0 = _yf
+                                _expanded = True
+                            if _yf > _yl1:
+                                _yl1 = _yf
+                                _expanded = True
+
+                        def _include_bbox(_x0: float, _x1: float, _y0: float, _y1: float) -> None:
+                            _include_point(_x0, _y0)
+                            _include_point(_x0, _y1)
+                            _include_point(_x1, _y0)
+                            _include_point(_x1, _y1)
+
+                        try:
+                            _dl = ax.dataLim
+                            if _dl is not None:
+                                _include_bbox(_dl.x0, _dl.x1, _dl.y0, _dl.y1)
+                        except Exception:
+                            pass
+
+                        for _x, _y in point_vals:
+                            _include_point(_x, _y)
+                        for _p1, _p2, _st_seg, _col_seg in line_segment_vals:
+                            _include_point(_p1[0], _p1[1])
+                            _include_point(_p2[0], _p2[1])
+                        for _pts, _show, _poly_color, _poly_alpha in poly_vals:
+                            for _x, _y in _pts:
+                                _include_point(_x, _y)
+                        for (_x, _y), _length, _orientation in bar_vals:
+                            _include_point(_x, _y)
+                            if _orientation == "horizontal":
+                                _include_point(_x + _length, _y)
+                            else:
+                                _include_point(_x, _y + _length)
+                        for _x, _y0, _y1, _st, _col in vline_vals:
+                            _include_point(_x, ymin if _y0 is None else _y0)
+                            _include_point(_x, ymax if _y1 is None else _y1)
+                        for _y, _x0, _x1, _st, _col in hline_vals:
+                            _include_point(xmin if _x0 is None else _x0, _y)
+                            _include_point(xmax if _x1 is None else _x1, _y)
+                        for _x, _y, _dx, _dy, _col in vector_vals:
+                            _include_point(_x, _y)
+                            _include_point(_x + _dx, _y + _dy)
+                        for _cx, _cy, _r, _fill, _st, _col in circle_vals:
+                            _include_bbox(_cx - _r, _cx + _r, _cy - _r, _cy + _r)
+                        for _cx, _cy, _a, _b, _st, _col in ellipse_vals:
+                            _include_bbox(_cx - _a, _cx + _a, _cy - _b, _cy + _b)
+                        for _cx, _cy, _r, _start, _end, _st, _col, _arrow in angle_arcs:
+                            _steps = 64
+                            for _i in range(_steps + 1):
+                                _t = _start + (_end - _start) * (_i / _steps)
+                                _rad = math.radians(_t)
+                                _include_point(_cx + _r * math.cos(_rad), _cy + _r * math.sin(_rad))
+
                         for _txt in ax.texts:
                             try:
                                 _bb = _txt.get_window_extent(renderer=_renderer)
@@ -5558,8 +5628,9 @@ class PlotDirective(SphinxDirective):
                             _py_pad = ((_yl1 - _yl0) or 1.0) * 0.02
                             ax.set_xlim(_xl0 - _px_pad, _xl1 + _px_pad)
                             ax.set_ylim(_yl0 - _py_pad, _yl1 + _py_pad)
-                            # Re-apply equal aspect without moving data outside
-                            # the axes clip rectangle.
+                            # Keep the corrected data limits fixed.  Using
+                            # adjustable='datalim' here lets Matplotlib change
+                            # the limits again, which can re-clip quiver arrows.
                             ax.set_aspect("equal", adjustable="box")
                     except Exception:
                         pass

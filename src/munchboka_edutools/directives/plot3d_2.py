@@ -48,6 +48,7 @@ def _plot3d2_macro_context(sympy_locals: dict[str, Any] | None):
 
 
 _MULTI_KEYS: set[str] = {
+    "angle",
     "curve",
     "line",
     "line-segment",
@@ -206,6 +207,13 @@ def _resolve_color(value: str | None, default: str = "blue") -> Any:
         if mapped is not None:
             return mapped
     return token
+
+
+def _resolve_optional_face_color(value: str | None, default: str = "blue") -> Any | None:
+    token = (value or default).strip()
+    if token.lower() == "none":
+        return None
+    return _resolve_color(token, default=default)
 
 
 def _parse_primitive_kwargs(value: str) -> dict[str, str]:
@@ -475,6 +483,38 @@ def _parse_right_angle_primitive(value: str) -> dict[str, Any] | None:
         return None
 
 
+def _parse_angle_primitive(value: str) -> dict[str, Any] | None:
+    try:
+        kwargs = _parse_primitive_kwargs(value)
+        dir1_raw = kwargs.get("dir1", kwargs.get("direction1", kwargs.get("v1")))
+        dir2_raw = kwargs.get("dir2", kwargs.get("direction2", kwargs.get("v2")))
+        if dir1_raw is None or dir2_raw is None:
+            return None
+        dir1 = _parse_triple(dir1_raw)
+        dir2 = _parse_triple(dir2_raw)
+        if math.sqrt(sum(component * component for component in dir1)) < 1e-12:
+            return None
+        if math.sqrt(sum(component * component for component in dir2)) < 1e-12:
+            return None
+
+        radius = abs(_eval_float(kwargs.get("radius", kwargs.get("r")), 0.35))
+        if radius < 1e-12:
+            return None
+
+        samples = max(8, int(round(_eval_float(kwargs.get("samples"), 64))))
+        return {
+            "at": _parse_triple(kwargs.get("at", "(0, 0, 0)")),
+            "dir1": dir1,
+            "dir2": dir2,
+            "radius": radius,
+            "color": _resolve_color(kwargs.get("color"), default="black"),
+            "lw": _eval_float(kwargs["lw"], 1.5) if "lw" in kwargs else None,
+            "samples": samples,
+        }
+    except Exception:
+        return None
+
+
 def _parse_point_primitive(value: str) -> dict[str, Any] | None:
     try:
         parts = _split_top_level_commas(value)
@@ -592,7 +632,20 @@ def _parse_pyramid_primitive(value: str) -> dict[str, Any] | None:
         if "apex" not in kwargs:
             return None
 
-        color = _resolve_color(kwargs.get("color"))
+        if "color" in kwargs:
+            color = _resolve_color(kwargs.get("color"))
+            base_color = color
+            side_color = color
+        else:
+            color = None
+            base_color = _resolve_optional_face_color(
+                kwargs.get("base-color", kwargs.get("base_color"))
+            )
+            side_color_raw = kwargs.get(
+                "side-color",
+                kwargs.get("side_color", kwargs.get("body-color", kwargs.get("body_color"))),
+            )
+            side_color = _resolve_optional_face_color(side_color_raw)
         edgecolor = _resolve_color(kwargs.get("edgecolor"), default="black")
         alpha = _parse_alpha(kwargs.get("alpha"), 0.45)
         apex = _parse_triple(kwargs["apex"])
@@ -616,6 +669,8 @@ def _parse_pyramid_primitive(value: str) -> dict[str, Any] | None:
             "base": base,
             "apex": apex,
             "color": color,
+            "base_color": base_color,
+            "side_color": side_color,
             "edgecolor": edgecolor,
             "alpha": alpha,
         }
@@ -756,6 +811,21 @@ def _tick_values(lo: float, hi: float, step: float) -> list[float]:
     return vals
 
 
+def _grid_values(lo: float, hi: float, step: float) -> list[float]:
+    if step <= 0:
+        step = 1.0
+    start = math.ceil(lo / step) * step
+    vals: list[float] = []
+    cur = start
+    guard = 0
+    while cur <= hi + 1e-9 and guard < 1000:
+        if lo - 1e-9 <= cur <= hi + 1e-9:
+            vals.append(0.0 if abs(cur) < 1e-9 else cur)
+        cur += step
+        guard += 1
+    return vals
+
+
 def _format_tick(value: float) -> str:
     if abs(value - round(value)) < 1e-9:
         return str(int(round(value)))
@@ -764,6 +834,73 @@ def _format_tick(value: float) -> str:
 
 def _show_axis_label(label: str) -> bool:
     return str(label).strip().lower() != "none"
+
+
+@contextmanager
+def _plot3d2_matplotlib_text_context(matplotlib: Any, *, use_usetex: bool):
+    """Temporarily enforce text rendering rcParams for plot3d-2 figures."""
+
+    keys = (
+        "text.usetex",
+        "mathtext.fontset",
+        "font.family",
+        "font.serif",
+    )
+    old_values = {key: matplotlib.rcParams.get(key) for key in keys}
+    try:
+        matplotlib.rcParams["text.usetex"] = bool(use_usetex)
+        if use_usetex:
+            matplotlib.rcParams["font.family"] = "serif"
+            matplotlib.rcParams["font.serif"] = [
+                "Computer Modern Roman",
+                "CMU Serif",
+                "DejaVu Serif",
+            ]
+        else:
+            matplotlib.rcParams["mathtext.fontset"] = "cm"
+        yield
+    finally:
+        for key, value in old_values.items():
+            try:
+                matplotlib.rcParams[key] = value
+            except Exception:
+                pass
+
+
+def _draw_xy_grid(
+    ax,
+    *,
+    xrange: tuple[float, float],
+    yrange: tuple[float, float],
+    xstep: float,
+    ystep: float,
+    lw: float,
+) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+    xlo, xhi = xrange
+    ylo, yhi = yrange
+    segments = [
+        [(x, ylo, 0.0), (x, yhi, 0.0)]
+        for x in _grid_values(xlo, xhi, xstep)
+    ]
+    segments.extend(
+        [(xlo, y, 0.0), (xhi, y, 0.0)]
+        for y in _grid_values(ylo, yhi, ystep)
+    )
+    if not segments:
+        return
+
+    ax.add_collection3d(
+        Line3DCollection(
+            segments,
+            colors=["#9a9a9a"],
+            linewidths=max(0.4, lw * 0.45),
+            linestyles="dashed",
+            alpha=0.75,
+            zorder=1,
+        )
+    )
 
 
 def _draw_centered_axes(
@@ -1342,6 +1479,123 @@ def _draw_right_angle(ax, right_angle: dict[str, Any], *, lw: float) -> None:
     )
 
 
+def _angle_arc_points(
+    angle: dict[str, Any],
+    *,
+    elev: float,
+    azim: float,
+):
+    import numpy as np
+
+    at = np.asarray(angle["at"], dtype=float)
+    dir1 = np.asarray(angle["dir1"], dtype=float)
+    dir2 = np.asarray(angle["dir2"], dtype=float)
+    norm1 = float(np.linalg.norm(dir1))
+    norm2 = float(np.linalg.norm(dir2))
+    if norm1 < 1e-12 or norm2 < 1e-12:
+        return None
+
+    u = dir1 / norm1
+    w = dir2 / norm2
+    dot = float(np.clip(np.dot(u, w), -1.0, 1.0))
+    theta_end = float(math.acos(dot))
+    if theta_end < 1e-12:
+        return None
+
+    projected_w = w - dot * u
+    projected_norm = float(np.linalg.norm(projected_w))
+    if projected_norm >= 1e-12:
+        v = projected_w / projected_norm
+    else:
+        # Opposite directions do not define a unique plane. Pick the plane
+        # whose normal is closest to the camera direction, making the marker
+        # read as a visible semicircle from the current view.
+        view_direction = _view_direction(elev, azim)
+        normal = view_direction - float(np.dot(view_direction, u)) * u
+        normal_norm = float(np.linalg.norm(normal))
+        if normal_norm < 1e-12:
+            for reference in (
+                np.array([1.0, 0.0, 0.0], dtype=float),
+                np.array([0.0, 1.0, 0.0], dtype=float),
+                np.array([0.0, 0.0, 1.0], dtype=float),
+            ):
+                normal = reference - float(np.dot(reference, u)) * u
+                normal_norm = float(np.linalg.norm(normal))
+                if normal_norm >= 1e-12:
+                    break
+        if normal_norm < 1e-12:
+            return None
+        normal = normal / normal_norm
+        v = np.cross(normal, u)
+        v_norm = float(np.linalg.norm(v))
+        if v_norm < 1e-12:
+            return None
+        v = v / v_norm
+
+    theta = np.linspace(0.0, theta_end, int(angle["samples"]))
+    radius = float(angle["radius"])
+    points = at + radius * (
+        np.cos(theta)[:, None] * u[None, :]
+        + np.sin(theta)[:, None] * v[None, :]
+    )
+    return points
+
+
+def _angle_arc_segment_collection(angle: dict[str, Any], *, elev: float, azim: float):
+    import numpy as np
+    from matplotlib import colors as mcolors
+
+    points = _angle_arc_points(angle, elev=elev, azim=azim)
+    if points is None or len(points) < 2:
+        return [], []
+
+    finite = np.all(np.isfinite(points), axis=1)
+    view_direction = _view_direction(elev, azim)
+    depths = points @ view_direction
+    depth_span = float(np.ptp(depths[finite])) if np.any(finite) else 0.0
+    min_depth = float(np.min(depths[finite])) if np.any(finite) else 0.0
+    base_rgb = np.array(mcolors.to_rgb(angle["color"]), dtype=float)
+
+    segments = []
+    colors = []
+    for idx in range(len(points) - 1):
+        if not finite[idx] or not finite[idx + 1]:
+            continue
+        if depth_span < 1e-12:
+            shade_weight = 0.62
+        else:
+            midpoint_depth = float((depths[idx] + depths[idx + 1]) / 2.0)
+            shade_weight = (midpoint_depth - min_depth) / depth_span
+        segments.append(np.asarray([points[idx], points[idx + 1]], dtype=float))
+        colors.append(_curve_depth_color(base_rgb, float(shade_weight)))
+
+    return segments, colors
+
+
+def _draw_angle_arc(
+    ax,
+    angle: dict[str, Any],
+    *,
+    lw: float,
+    elev: float,
+    azim: float,
+) -> None:
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+    segments, colors = _angle_arc_segment_collection(angle, elev=elev, azim=azim)
+    if not segments:
+        return
+    ax.add_collection3d(
+        Line3DCollection(
+            segments,
+            colors=colors,
+            linewidths=angle["lw"] if angle["lw"] is not None else lw,
+            linestyles="solid",
+            zorder=35,
+        )
+    )
+
+
 def _sympy_plane_locals() -> dict[str, Any]:
     import sympy
 
@@ -1571,6 +1825,7 @@ def _front_back_poly_faces(
     *,
     elev: float,
     azim: float,
+    object_center: Any | None = None,
 ) -> tuple[list[list[tuple[float, float, float]]], list[list[tuple[float, float, float]]]]:
     import numpy as np
 
@@ -1578,10 +1833,13 @@ def _front_back_poly_faces(
         return [], []
 
     view_direction = _view_direction(elev, azim)
-    object_center = np.mean(
-        np.concatenate([np.asarray(face, dtype=float) for face in faces], axis=0),
-        axis=0,
-    )
+    if object_center is None:
+        object_center = np.mean(
+            np.concatenate([np.asarray(face, dtype=float) for face in faces], axis=0),
+            axis=0,
+        )
+    else:
+        object_center = np.asarray(object_center, dtype=float)
 
     front_faces: list[list[tuple[float, float, float]]] = []
     back_faces: list[list[tuple[float, float, float]]] = []
@@ -1622,19 +1880,27 @@ def _poly_face_view_score(
 def _front_back_poly_facecolors(
     faces: list[list[tuple[float, float, float]]],
     *,
-    color: Any,
+    color: Any | None,
     alpha: float,
     elev: float,
     azim: float,
     front: bool,
+    object_center: Any | None = None,
+    preserve_back_hue: bool = False,
 ) -> list[tuple[float, float, float, float]]:
     import numpy as np
     from matplotlib import colors as mcolors
 
+    if color is None:
+        return [(0.0, 0.0, 0.0, 0.0) for _face in faces]
+
     base_rgb = np.array(mcolors.to_rgb(color), dtype=float)
     gray_rgb = np.full(3, float(np.mean(base_rgb)), dtype=float)
     view_direction = _view_direction(elev, azim)
-    object_center = _poly_object_center(faces)
+    if object_center is None:
+        object_center = _poly_object_center(faces)
+    else:
+        object_center = np.asarray(object_center, dtype=float)
     colors: list[tuple[float, float, float, float]] = []
 
     for face in faces:
@@ -1652,12 +1918,17 @@ def _front_back_poly_facecolors(
             face_alpha = alpha * (0.62 + 0.38 * facing)
         else:
             facing_away = max(0.0, -score)
-            # Back faces are deliberately muted and transparent, but still
-            # vary by angle so the hidden solid structure remains legible.
-            muted_rgb = base_rgb * 0.10 + gray_rgb * 0.90
-            rgb = muted_rgb * (0.24 + 0.42 * facing_away)
-            rgb = rgb + np.array([1.0, 1.0, 1.0]) * (0.08 + 0.12 * (1.0 - facing_away))
-            face_alpha = alpha * (0.06 + 0.26 * facing_away)
+            if preserve_back_hue:
+                rgb = base_rgb * (0.26 + 0.46 * facing_away)
+                rgb = rgb + np.array([1.0, 1.0, 1.0]) * (0.03 + 0.10 * (1.0 - facing_away))
+                face_alpha = alpha * (0.18 + 0.44 * facing_away)
+            else:
+                # Back faces are deliberately muted and transparent, but still
+                # vary by angle so the hidden solid structure remains legible.
+                muted_rgb = base_rgb * 0.10 + gray_rgb * 0.90
+                rgb = muted_rgb * (0.24 + 0.42 * facing_away)
+                rgb = rgb + np.array([1.0, 1.0, 1.0]) * (0.08 + 0.12 * (1.0 - facing_away))
+                face_alpha = alpha * (0.06 + 0.26 * facing_away)
 
         rgb = np.clip(rgb, 0.0, 1.0)
         colors.append((float(rgb[0]), float(rgb[1]), float(rgb[2]), float(face_alpha)))
@@ -1669,16 +1940,23 @@ def _add_front_back_poly_collections(
     ax,
     faces: list[list[tuple[float, float, float]]],
     *,
-    color: Any,
+    color: Any | None,
     edgecolor: Any,
     alpha: float,
     lw: float,
     elev: float,
     azim: float,
+    object_center: Any | None = None,
+    preserve_back_hue: bool = False,
 ) -> None:
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-    front_faces, back_faces = _front_back_poly_faces(faces, elev=elev, azim=azim)
+    front_faces, back_faces = _front_back_poly_faces(
+        faces,
+        elev=elev,
+        azim=azim,
+        object_center=object_center,
+    )
     line_width = max(0.4, lw * 0.55)
 
     if back_faces:
@@ -1691,8 +1969,10 @@ def _add_front_back_poly_collections(
                 elev=elev,
                 azim=azim,
                 front=False,
+                object_center=object_center,
+                preserve_back_hue=preserve_back_hue,
             ),
-            edgecolors="#999999",
+            edgecolors=edgecolor if preserve_back_hue else "#999999",
             linewidths=line_width * 0.8,
             linestyles="dashed",
         )
@@ -1708,6 +1988,8 @@ def _add_front_back_poly_collections(
                 elev=elev,
                 azim=azim,
                 front=True,
+                object_center=object_center,
+                preserve_back_hue=preserve_back_hue,
             ),
             edgecolors=edgecolor,
             linewidths=line_width,
@@ -1719,19 +2001,37 @@ def _add_front_back_poly_collections(
 def _draw_pyramid(ax, pyramid: dict[str, Any], *, lw: float, elev: float, azim: float) -> None:
     base = pyramid["base"]
     apex = pyramid["apex"]
-    faces = [base] + [
+    side_faces = [
         [base[idx], base[(idx + 1) % len(base)], apex]
         for idx in range(len(base))
     ]
+    faces = [base] + side_faces
+    object_center = _poly_object_center(faces)
+    preserve_face_hues = pyramid["color"] is None
+
     _add_front_back_poly_collections(
         ax,
-        faces,
-        color=pyramid["color"],
+        [base],
+        color=pyramid["base_color"],
         edgecolor=pyramid["edgecolor"],
         alpha=pyramid["alpha"],
         lw=lw,
         elev=elev,
         azim=azim,
+        object_center=object_center,
+        preserve_back_hue=preserve_face_hues,
+    )
+    _add_front_back_poly_collections(
+        ax,
+        side_faces,
+        color=pyramid["side_color"],
+        edgecolor=pyramid["edgecolor"],
+        alpha=pyramid["alpha"],
+        lw=lw,
+        elev=elev,
+        azim=azim,
+        object_center=object_center,
+        preserve_back_hue=preserve_face_hues,
     )
 
 
@@ -2346,6 +2646,8 @@ def _render_plot3d2(
     xlabel: str = "$x$",
     ylabel: str = "$y$",
     zlabel: str = "$z$",
+    axis: bool = True,
+    grid: bool = False,
     ticks: bool = True,
     xstep: float = 1.0,
     ystep: float = 1.0,
@@ -2356,6 +2658,8 @@ def _render_plot3d2(
     fontsize: float = 12.0,
     lw: float = 1.5,
     figsize: tuple[float, float] = (6.0, 5.0),
+    use_usetex: bool = False,
+    angles: list[dict[str, Any]] | None = None,
     curves: list[dict[str, Any]] | None = None,
     line_segments: list[dict[str, Any]] | None = None,
     lines: list[dict[str, Any]] | None = None,
@@ -2375,6 +2679,20 @@ def _render_plot3d2(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
+    try:
+        matplotlib.rcParams["text.usetex"] = bool(use_usetex)
+        if use_usetex:
+            matplotlib.rcParams["font.family"] = "serif"
+            matplotlib.rcParams["font.serif"] = [
+                "Computer Modern Roman",
+                "CMU Serif",
+                "DejaVu Serif",
+            ]
+        else:
+            matplotlib.rcParams["mathtext.fontset"] = "cm"
+    except Exception:
+        pass
 
     fig = plt.figure(figsize=figsize, frameon=False)
     ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
@@ -2402,6 +2720,16 @@ def _render_plot3d2(
         ax.set_box_aspect(box_aspect)
     ax.set_axis_off()
     ax.margins(0)
+
+    if grid:
+        _draw_xy_grid(
+            ax,
+            xrange=xrange,
+            yrange=yrange,
+            xstep=xstep,
+            ystep=ystep,
+            lw=lw,
+        )
 
     for solid in solids_of_revolution or []:
         try:
@@ -2439,21 +2767,22 @@ def _render_plot3d2(
         except Exception:
             pass
 
-    _draw_centered_axes(
-        ax,
-        xrange=xrange,
-        yrange=yrange,
-        zrange=zrange,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        zlabel=zlabel,
-        ticks=ticks,
-        xstep=xstep,
-        ystep=ystep,
-        zstep=zstep,
-        fontsize=fontsize,
-        lw=lw,
-    )
+    if axis:
+        _draw_centered_axes(
+            ax,
+            xrange=xrange,
+            yrange=yrange,
+            zrange=zrange,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            ticks=ticks,
+            xstep=xstep,
+            ystep=ystep,
+            zstep=zstep,
+            fontsize=fontsize,
+            lw=lw,
+        )
 
     for curve in curves or []:
         try:
@@ -2472,6 +2801,9 @@ def _render_plot3d2(
 
     for right_angle in right_angles or []:
         _draw_right_angle(ax, right_angle, lw=lw)
+
+    for angle in angles or []:
+        _draw_angle_arc(ax, angle, lw=lw, elev=elev, azim=azim)
 
     for vector in vectors or []:
         _draw_vector(ax, vector, lw=lw, elev=elev, azim=azim, xrange=xrange, yrange=yrange, zrange=zrange)
@@ -2518,6 +2850,7 @@ class Plot3d2Directive(SphinxDirective):
         "name": directives.unchanged,
         "nocache": directives.flag,
         "alt": directives.unchanged,
+        "usetex": directives.unchanged,
         "fontsize": directives.unchanged,
         "lw": directives.unchanged,
         "figsize": directives.unchanged,
@@ -2530,6 +2863,8 @@ class Plot3d2Directive(SphinxDirective):
         "xlabel": directives.unchanged,
         "ylabel": directives.unchanged,
         "zlabel": directives.unchanged,
+        "axis": directives.unchanged,
+        "grid": directives.unchanged,
         "ticks": directives.unchanged,
         "elev": directives.unchanged,
         "azim": directives.unchanged,
@@ -2567,6 +2902,11 @@ class Plot3d2Directive(SphinxDirective):
                 curve
                 for raw_curve in lists.get("curve", [])
                 if (curve := _parse_curve_primitive(raw_curve)) is not None
+            ]
+            angles = [
+                angle
+                for raw_angle in lists.get("angle", [])
+                if (angle := _parse_angle_primitive(raw_angle)) is not None
             ]
             lines = [
                 line
@@ -2641,6 +2981,8 @@ class Plot3d2Directive(SphinxDirective):
                 "xlabel": str(merged.get("xlabel", "$x$")),
                 "ylabel": str(merged.get("ylabel", "$y$")),
                 "zlabel": str(merged.get("zlabel", "$z$")),
+                "axis": bool(parse_bool(merged.get("axis"), default=True)),
+                "grid": bool(parse_bool(merged.get("grid"), default=False)),
                 "ticks": bool(parse_bool(merged.get("ticks"), default=True)),
                 "xstep": _f("xstep", 1.0),
                 "ystep": _f("ystep", 1.0),
@@ -2651,6 +2993,13 @@ class Plot3d2Directive(SphinxDirective):
                 "fontsize": _f("fontsize", 12.0),
                 "lw": _f("lw", 1.5),
                 "figsize": figsize,
+                "use_usetex": bool(
+                    parse_bool(
+                        merged.get("usetex"),
+                        default=getattr(app.config, "plot_default_usetex", True),
+                    )
+                ),
+                "angles": angles,
                 "curves": curves,
                 "line_segments": line_segments,
                 "lines": lines,
@@ -2698,9 +3047,12 @@ class Plot3d2Directive(SphinxDirective):
             fig = None
             try:
                 matplotlib.rcParams["svg.fonttype"] = "none"
-                with _plot3d2_macro_context(macro_ctx.sympy_locals):
+                with _plot3d2_matplotlib_text_context(
+                    matplotlib,
+                    use_usetex=bool(params["use_usetex"]),
+                ), _plot3d2_macro_context(macro_ctx.sympy_locals):
                     fig, _ax = _render_plot3d2(**params)
-                _save_plot3d2_svg(fig, abs_svg)
+                    _save_plot3d2_svg(fig, abs_svg)
                 if stable_name:
                     with open(abs_meta, "w", encoding="utf-8") as f:
                         f.write(content_hash)
@@ -2768,4 +3120,8 @@ class Plot3d2Directive(SphinxDirective):
 def setup(app):  # pragma: no cover
     app.add_directive("plot3d-2", Plot3d2Directive)
     app.add_directive("plot3d2", Plot3d2Directive)
+    try:
+        app.add_config_value("plot_default_usetex", True, "env")
+    except Exception:
+        pass
     return {"version": "0.1", "parallel_read_safe": True, "parallel_write_safe": True}

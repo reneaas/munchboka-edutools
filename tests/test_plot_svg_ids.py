@@ -173,3 +173,68 @@ Triangle edges
         for x_coord, y_coord in _path_points(blue_path.group(0)):
             assert clip_x <= x_coord <= clip_x2
             assert clip_y <= y_coord <= clip_y2
+
+
+def test_plot_axis_equal_includes_vector_endpoints_and_labels(tmp_path):
+    html = _build_plot_page(
+        tmp_path,
+        r"""
+Vector bounds
+=============
+
+.. plot::
+
+   nocache:
+   usetex: false
+   axis: off
+   axis: equal
+   let: Gx = 0
+   let: Gy = 1
+   let: hx = 0.6
+   let: hy = 0.8
+   vector: (0, 0), (Gx, Gy), blue
+   vector: (0, 0), (hx, hy), red
+   text: Gx, Gy + 0.1, "$\vec{G}$", center-center
+   text: hx, hy + 0.1, "$\vec{c}$", center-center
+   let: theta = atan(hy / hx)
+   let: phi = acos((Gx * hx + Gy * hy) / (sqrt(Gx^2 + Gy^2) * sqrt(hx^2 + hy^2)))
+   angle-arc: (0, 0), 0.2, theta * 180 / pi, (theta + phi) * 180/pi, black
+   lw: 1.5
+   text: 0.3 * cos((2*theta + phi)/2), 0.3 * sin((2*theta + phi)/2), "$\varphi$", center-center
+   line-segment: (hx, hy), (0, hy), dashdot, gray
+   let: ds = 0.1
+   line-segment: (0, hy - ds), (ds, hy - ds), solid, gray
+   line-segment: (ds, hy - ds), (ds, hy), solid, gray
+   bar: (-ds, 0), hy, vertical
+   text: -1.5*ds, 0.5 * hy, "$h$", center-center
+""".lstrip(),
+    )
+
+    svg_html = _inline_plot_svgs(html)
+    assert "<!-- $\\vec{{G}}$ -->" in svg_html
+    assert "<!-- $\\vec{{c}}$ -->" in svg_html
+
+    clip_match = re.search(
+        r"<clipPath[^>]*>\s*<rect x=\"([^\"]+)\" y=\"([^\"]+)\" "
+        r"width=\"([^\"]+)\" height=\"([^\"]+)\"",
+        svg_html,
+    )
+    assert clip_match is not None
+    clip_x, clip_y, clip_w, clip_h = (float(value) for value in clip_match.groups())
+    clip_x2 = clip_x + clip_w
+    clip_y2 = clip_y + clip_h
+
+    vector_paths = [
+        match
+        for match in re.finditer(r"<path[^>]+>", svg_html)
+        if "#0072b2" in match.group(0) or "#dc5e8b" in match.group(0)
+    ]
+
+    assert len(vector_paths) >= 2
+    checked_points = 0
+    for vector_path in vector_paths:
+        for x_coord, y_coord in _path_points(vector_path.group(0)):
+            checked_points += 1
+            assert clip_x <= x_coord <= clip_x2
+            assert clip_y <= y_coord <= clip_y2
+    assert checked_points > 0

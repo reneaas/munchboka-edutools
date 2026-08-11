@@ -2568,9 +2568,12 @@ class AnimateDirective(SphinxDirective):
                 end_expr = tokens_r[2]
                 style_arc = None
                 color_arc = None
+                arrow_arc = False
                 for extra_tok in tokens_r[3:]:
                     low = extra_tok.lower()
-                    if low in _allowed_arc_styles and style_arc is None:
+                    if low == "arrow":
+                        arrow_arc = True
+                    elif low in _allowed_arc_styles and style_arc is None:
                         style_arc = low
                     elif color_arc is None:
                         color_arc = extra_tok
@@ -2610,6 +2613,25 @@ class AnimateDirective(SphinxDirective):
                     col_use = default_arc_color
 
                 ax.plot(xs, ys, lw=1, color=col_use, linestyle=ls_use)
+                if arrow_arc:
+                    end_disp = ax.transData.transform((xs[-1], ys[-1]))
+                    prev_disp = ax.transData.transform((xs[-2], ys[-2]))
+                    dx_disp = end_disp[0] - prev_disp[0]
+                    dy_disp = end_disp[1] - prev_disp[1]
+                    norm_disp = np.hypot(dx_disp, dy_disp)
+                    if norm_disp > 1e-9:
+                        marker_angle = np.degrees(np.arctan2(dy_disp, dx_disp))
+                        ax.plot(
+                            [xs[-1]],
+                            [ys[-1]],
+                            linestyle="None",
+                            marker=(3, 0, marker_angle - 90.0),
+                            markersize=max(7.0, float(fontsize) * 0.28),
+                            markerfacecolor=col_use,
+                            markeredgecolor=col_use,
+                            markeredgewidth=0,
+                            clip_on=False,
+                        )
             except Exception:
                 pass
 

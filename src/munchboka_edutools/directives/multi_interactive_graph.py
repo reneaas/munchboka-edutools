@@ -56,6 +56,9 @@ from .animate import (
 from .svg_delta import compute_svg_deltas, save_delta_format
 
 
+_MULTI_INTERACTIVE_GRAPH_RENDER_VERSION = 2
+
+
 class MultiInteractiveGraphDirective(SphinxDirective):
     """Sphinx directive for creating multiple synchronized interactive graphs."""
 
@@ -131,6 +134,7 @@ class MultiInteractiveGraphDirective(SphinxDirective):
         # Generate hash for caching
         all_content = "\n".join(["\n".join(block) for block in graph_blocks])
         hash_key = _hash_key(
+            _MULTI_INTERACTIVE_GRAPH_RENDER_VERSION,
             var_spec,
             all_content,
             str(merged_options),

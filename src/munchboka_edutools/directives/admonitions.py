@@ -25,7 +25,7 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util import logging
-from sphinx.util.nodes import make_id
+from sphinx.util.nodes import _make_id, make_id
 import re
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,62 @@ def _slugify(text):
     text = re.sub(r'[\s_]+', '-', text)
     text = re.sub(r'^-+|-+$', '', text)
     return text or 'heading'
+
+
+def _make_unique_section_id(env, document, prefix, title):
+    """Create a stable, document-unique section id for directive headings."""
+    idformat = f"{prefix}-%s" if prefix else (document.settings.id_prefix or "id") + "%s"
+    base_id = None
+
+    if prefix and title:
+        base_id = _make_id(idformat % title)
+        if base_id == prefix:
+            base_id = None
+    elif title:
+        base_id = _make_id(title)
+        if not base_id:
+            base_id = None
+
+    if base_id is None:
+        base_id = make_id(env, document, prefix, title)
+
+    section_id = base_id
+    duplicate_no = 2
+    while section_id in document.ids:
+        section_id = f"{base_id}-{duplicate_no}"
+        duplicate_no += 1
+
+    return section_id
+
+
+def _nonnegative_float(value):
+    """Parse a non-negative numeric directive option."""
+    if isinstance(value, bool):
+        raise ValueError("expected a non-negative number")
+
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("expected a non-negative number") from exc
+
+    if parsed < 0:
+        raise ValueError("expected a non-negative number")
+
+    return parsed
+
+
+def _timer_minutes_to_seconds(value):
+    return int(round(_nonnegative_float(value) * 60))
+
+
+def _solution_delay_seconds(options, env):
+    if "timer" in options:
+        return _timer_minutes_to_seconds(options["timer"])
+
+    if "delay" in options:
+        return int(options["delay"])
+
+    return int(getattr(env.config, "munchboka_solution_delay_seconds", 0))
 
 
 class AnswerDirective(SphinxDirective):
@@ -208,8 +264,9 @@ class Exercise2Directive(SphinxDirective):
 
         title = self.arguments[0]
         section_node = nodes.section()
-        section_id = make_id(self.env, self.state.document, "exercise", title)
+        section_id = _make_unique_section_id(self.env, self.state.document, "exercise", title)
         section_node["ids"].append(section_id)
+        self.state.document.note_implicit_target(section_node, section_node)
         section_node["classes"].append("exercise-section")
         title_node = nodes.title()
         parsed_title, _ = self.state.inline_text(title, self.lineno)
@@ -294,6 +351,7 @@ class SolutionDirective(SphinxDirective):
     option_spec = {
         "dropdown": directives.unchanged,
         "delay": directives.nonnegative_int,
+        "timer": _nonnegative_float,
     }
 
     def run(self):
@@ -302,11 +360,7 @@ class SolutionDirective(SphinxDirective):
         else:
             title = "Løsning"
 
-        delay_seconds = int(
-            self.options.get(
-                "delay", getattr(self.env.config, "munchboka_solution_delay_seconds", 300)
-            )
-        )
+        delay_seconds = _solution_delay_seconds(self.options, self.env)
         solution_id = f"{self.env.docname.replace('/', '-')}-{self.lineno}"
         dropdown_enabled = True
         if self.options.get("dropdown") is not None:
@@ -356,6 +410,7 @@ class Solution2Directive(SphinxDirective):
     option_spec = {
         "open": directives.flag,
         "delay": directives.nonnegative_int,
+        "timer": _nonnegative_float,
     }
 
     def run(self):
@@ -364,13 +419,8 @@ class Solution2Directive(SphinxDirective):
         aria_expanded = "true" if is_open else "false"
         button_label = "Skjul løsningsforslag" if is_open else label
 
-        # Compute delay: per-directive option wins over global config.
-        delay_seconds = int(
-            self.options.get(
-                "delay",
-                getattr(self.env.config, "munchboka_solution_delay_seconds", 300),
-            )
-        )
+        # Compute delay: timer is in minutes; legacy delay remains seconds.
+        delay_seconds = _solution_delay_seconds(self.options, self.env)
 
         # Outer wrapper div.solution-2
         wrapper = nodes.container()
@@ -738,7 +788,7 @@ def setup(app):
     Note: CSS files are registered in __init__.py with the munchboka/ prefix.
     The admonitions.css file contains all styling for these directives.
     """
-    app.add_config_value("munchboka_solution_delay_seconds", 300, "html")
+    app.add_config_value("munchboka_solution_delay_seconds", 0, "html")
     app.add_directive("answer", Answer2Directive)
     app.add_directive("answer-2", Answer2Directive)
     app.add_directive("example", Example2Directive)

@@ -90,6 +90,25 @@ def test_compute_svg_deltas_falls_back_on_owner_group_mismatch() -> None:
     assert "fullSvg" in deltas[1]
 
 
+def test_compute_svg_deltas_falls_back_when_visual_artist_is_added() -> None:
+    # A frame can add a small visual artist, such as an angle-arc arrowhead,
+    # without changing enough ids to trip the global structure threshold. The
+    # browser-side delta applier cannot create missing SVG nodes, so this must
+    # fall back to a full frame.
+    base = _wrap_svg('<g id="axes_1"><g id="line2d_1"><path d="M 0 0 L 1 1"/></g></g>')
+    frame = _wrap_svg(
+        '<g id="axes_1">'
+        '  <g id="line2d_1"><path d="M 0 0 L 1 1"/></g>'
+        '  <g id="line2d_2"><use href="#marker_arrow" x="1" y="1"/></g>'
+        "</g>"
+    )
+
+    _base_svg, deltas = compute_svg_deltas([base, frame])
+
+    assert len(deltas) == 2
+    assert "fullSvg" in deltas[1]
+
+
 def test_compute_svg_deltas_falls_back_on_legend_local_id_churn() -> None:
     # Global id-set mismatch ratio can be small even when the legend is unstable.
     # Ensure legend-local id churn triggers fullSvg.

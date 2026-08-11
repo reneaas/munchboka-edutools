@@ -6,8 +6,10 @@ import plotmath
 from matplotlib.colors import to_hex
 from sphinx.application import Sphinx
 
+import munchboka_edutools.directives.plot3d_2 as plot3d2_module
 from munchboka_edutools.directives._plot_macros import parse_plot_macros
 from munchboka_edutools.directives.plot3d_2 import (
+    _angle_arc_points,
     _curve_arrow_faces,
     _curve_depth_weights,
     _curve_front_back_segments,
@@ -15,8 +17,10 @@ from munchboka_edutools.directives.plot3d_2 import (
     _curve_points,
     _curve_segment_collections,
     _curve_xy_style_index,
+    _grid_values,
     _line_box_segment,
     _line_shaded_segments,
+    _parse_angle_primitive,
     _parse_curve_primitive,
     _parse_line_segment_primitive,
     _parse_line_primitive,
@@ -32,6 +36,7 @@ from munchboka_edutools.directives.plot3d_2 import (
     _parse_text_primitive,
     _parse_vector_primitive,
     _plot3d2_macro_context,
+    _plot3d2_matplotlib_text_context,
     _front_back_poly_facecolors,
     _front_back_poly_faces,
     _plane_surface_grids,
@@ -49,6 +54,11 @@ from munchboka_edutools.directives.plot3d_2 import (
 def test_plot3d2_tick_values_exclude_axis_endpoints_and_origin():
     assert _tick_values(-2, 2, 1) == [-1, 1]
     assert _tick_values(-3, 3, 1) == [-2, -1, 1, 2]
+
+
+def test_plot3d2_grid_values_include_axis_endpoints_and_origin():
+    assert _grid_values(-2, 2, 1) == [-2, -1, 0, 1, 2]
+    assert _grid_values(-3, 3, 2) == [-2, 0, 2]
 
 
 def test_plot3d2_vector_parser_uses_plotmath_blue_by_default():
@@ -286,6 +296,44 @@ def test_plot3d2_right_angle_to_form_terminates_on_short_normal_segment():
     points = _right_angle_points(right_angle)
 
     assert np.allclose(points, [(0.5, 0, 0), (0.5, 0.2, 0), (0, 0.2, 0)])
+
+
+def test_plot3d2_angle_parser_accepts_direction_form():
+    angle = _parse_angle_primitive(
+        "dir1=(1, 0, 0), dir2=(0, 1, 0), radius=0.5, color=red, lw=2"
+    )
+
+    assert angle == {
+        "at": (0.0, 0.0, 0.0),
+        "dir1": (1.0, 0.0, 0.0),
+        "dir2": (0.0, 1.0, 0.0),
+        "radius": 0.5,
+        "color": plotmath.COLORS["red"],
+        "lw": 2.0,
+        "samples": 64,
+    }
+
+
+def test_plot3d2_angle_arc_points_span_dirs_from_anchor():
+    angle = _parse_angle_primitive(
+        "at=(1, 2, 3), dir1=(2, 0, 0), dir2=(0, 3, 0), radius=0.5, samples=9"
+    )
+    points = _angle_arc_points(angle, elev=22, azim=-55)
+
+    assert points is not None
+    assert np.allclose(points[0], [1.5, 2.0, 3.0])
+    assert np.allclose(points[-1], [1.0, 2.5, 3.0])
+
+
+def test_plot3d2_angle_arc_antiparallel_uses_camera_facing_plane():
+    angle = _parse_angle_primitive("dir1=(1, 0, 0), dir2=(-1, 0, 0), radius=1, samples=17")
+    points = _angle_arc_points(angle, elev=90, azim=0)
+
+    assert points is not None
+    assert np.allclose(points[0], [1.0, 0.0, 0.0])
+    assert np.allclose(points[-1], [-1.0, 0.0, 0.0], atol=1e-12)
+    assert np.max(np.abs(points[:, 2])) < 1e-12
+    assert np.max(np.abs(points[:, 1])) > 0.9
 
 
 def test_plot3d2_point_parser_uses_plotmath_blue_by_default():
@@ -592,6 +640,8 @@ def test_plot3d2_pyramid_parser_accepts_explicit_base_form():
         ],
         "apex": (1.0, 1.0, 3.0),
         "color": plotmath.COLORS["purple"],
+        "base_color": plotmath.COLORS["purple"],
+        "side_color": plotmath.COLORS["purple"],
         "edgecolor": "black",
         "alpha": 0.5,
     }
@@ -604,6 +654,8 @@ def test_plot3d2_pyramid_parser_accepts_regular_ngon_form():
 
     assert pyramid["apex"] == (0.0, 0.0, 3.0)
     assert pyramid["color"] == plotmath.COLORS["green"]
+    assert pyramid["base_color"] == plotmath.COLORS["green"]
+    assert pyramid["side_color"] == plotmath.COLORS["green"]
     assert pyramid["alpha"] == 0.45
     assert len(pyramid["base"]) == 4
     assert np.allclose(
@@ -615,6 +667,26 @@ def test_plot3d2_pyramid_parser_accepts_regular_ngon_form():
             (0.0, -2.0, 0.0),
         ],
     )
+
+
+def test_plot3d2_pyramid_parser_accepts_base_and_side_colors():
+    pyramid = _parse_pyramid_primitive(
+        "base=[(0, 0, 0), (1, 0, 0), (0, 1, 0)], apex=(0, 0, 1), base-color=green, side-color=none"
+    )
+
+    assert pyramid["color"] is None
+    assert pyramid["base_color"] == plotmath.COLORS["green"]
+    assert pyramid["side_color"] is None
+
+
+def test_plot3d2_pyramid_color_overrides_base_and_side_colors():
+    pyramid = _parse_pyramid_primitive(
+        "base=[(0, 0, 0), (1, 0, 0), (0, 1, 0)], apex=(0, 0, 1), color=purple, base-color=green, side-color=none"
+    )
+
+    assert pyramid["color"] == plotmath.COLORS["purple"]
+    assert pyramid["base_color"] == plotmath.COLORS["purple"]
+    assert pyramid["side_color"] == plotmath.COLORS["purple"]
 
 
 def test_plot3d2_ngon_parser_accepts_explicit_vertices():
@@ -904,6 +976,63 @@ def test_plot3d2_renderer_draws_centered_axes_labels_and_ticks():
         plt.close(fig)
 
 
+def test_plot3d2_renderer_suppresses_centered_axes_with_axis_off():
+    point = _parse_point_primitive("(1, 2, 3), red")
+    fig, ax = _render_plot3d2(
+        axis=False,
+        points=[point],
+        xlabel="X-axis",
+        ylabel="Y-axis",
+        zlabel="Z-axis",
+    )
+    try:
+        labels = {text.get_text() for text in ax.texts}
+        point_collections = [
+            collection
+            for collection in ax.collections
+            if hasattr(collection, "_offsets3d")
+        ]
+
+        assert labels == set()
+        assert len(ax.lines) == 0
+        assert point_collections
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_xy_grid_without_centered_axes():
+    fig, ax = _render_plot3d2(
+        axis=False,
+        grid=True,
+        xrange=(-1, 1),
+        yrange=(-2, 2),
+        zrange=(-3, 3),
+        xstep=1,
+        ystep=2,
+    )
+    try:
+        grid_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and collection.get_zorder() == 1
+        ]
+
+        assert len(ax.lines) == 0
+        assert grid_collections
+        segments = grid_collections[0]._segments3d
+        assert len(segments) == 6
+
+        points = np.asarray([point for segment in segments for point in segment], dtype=float)
+        assert np.allclose(points[:, 2], 0.0)
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
 def test_plot3d2_renderer_suppresses_axis_labels_with_none():
     fig, ax = _render_plot3d2(
         ticks=False,
@@ -1133,6 +1262,35 @@ def test_plot3d2_renderer_draws_right_angle_marker():
         plt.close(fig)
 
 
+def test_plot3d2_renderer_draws_angle_arc_with_depth_shading():
+    angle = _parse_angle_primitive(
+        "dir1=(1, 0, 0), dir2=(0, 1, 1), radius=0.5, color=purple, lw=2"
+    )
+    fig, ax = _render_plot3d2(angles=[angle], ticks=False)
+    try:
+        angle_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Line3DCollection"
+            and collection.get_zorder() == 35
+            and float(collection.get_linewidths()[0]) == 2.0
+            and len(collection.get_colors()) > 2
+        ]
+
+        assert angle_collections
+        assert len(angle_collections[-1]._segments3d) == angle["samples"] - 1
+        assert len(
+            {
+                tuple(round(float(channel), 4) for channel in color)
+                for color in angle_collections[-1].get_colors()
+            }
+        ) > 1
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
 def test_plot3d2_renderer_layers_vectors_and_points_above_lines():
     line = _parse_line_primitive("point=(0, 0, 0), direction=(1, 1, 1), color=blue")
     vector = _parse_vector_primitive("(0, 0, 0), (1, 1, 1), red")
@@ -1218,6 +1376,31 @@ def test_plot3d2_renderer_draws_text():
         plt.close(fig)
 
 
+def test_plot3d2_matplotlib_text_context_enforces_latex_font_and_restores():
+    import matplotlib
+
+    old_values = {
+        key: matplotlib.rcParams.get(key)
+        for key in ("text.usetex", "font.family", "font.serif")
+    }
+    matplotlib.rcParams["text.usetex"] = False
+    matplotlib.rcParams["font.family"] = "sans-serif"
+    matplotlib.rcParams["font.serif"] = ["DejaVu Serif"]
+
+    try:
+        with _plot3d2_matplotlib_text_context(matplotlib, use_usetex=True):
+            assert matplotlib.rcParams["text.usetex"] is True
+            assert matplotlib.rcParams["font.family"] == ["serif"]
+            assert matplotlib.rcParams["font.serif"][0] == "Computer Modern Roman"
+
+        assert matplotlib.rcParams["text.usetex"] is False
+        assert matplotlib.rcParams["font.family"] == ["sans-serif"]
+        assert matplotlib.rcParams["font.serif"] == ["DejaVu Serif"]
+    finally:
+        for key, value in old_values.items():
+            matplotlib.rcParams[key] = value
+
+
 def test_plot3d2_renderer_draws_plane():
     plane = _parse_plane_primitive("equation=x + y + z = 3, color=green")
     fig, ax = _render_plot3d2(planes=[plane])
@@ -1258,6 +1441,43 @@ def test_plot3d2_renderer_draws_pyramid():
             for facecolor in collection.get_facecolors()
         }
         assert len(alpha_values) > 1
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+
+
+def test_plot3d2_renderer_draws_pyramid_with_transparent_side_faces():
+    pyramid = _parse_pyramid_primitive(
+        "base=[(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)], apex=(1, 1, 3), base-color=green, side-color=none"
+    )
+    fig, ax = _render_plot3d2(pyramids=[pyramid])
+    try:
+        fig.canvas.draw()
+        pyramid_collections = [
+            collection
+            for collection in ax.collections
+            if collection.__class__.__name__ == "Poly3DCollection"
+        ]
+        face_alphas = [
+            round(float(facecolor[-1]), 4)
+            for collection in pyramid_collections
+            for facecolor in collection.get_facecolors()
+        ]
+        visible_facecolors = [
+            facecolor
+            for collection in pyramid_collections
+            for facecolor in collection.get_facecolors()
+            if float(facecolor[-1]) > 0
+        ]
+
+        assert 0.0 in face_alphas
+        assert any(alpha > 0 for alpha in face_alphas)
+        assert any(
+            float(facecolor[1]) > float(facecolor[0])
+            and float(facecolor[1]) > float(facecolor[2])
+            for facecolor in visible_facecolors
+        )
     finally:
         import matplotlib.pyplot as plt
 
@@ -1381,6 +1601,92 @@ def test_plot3d2_svg_export_uses_full_tight_canvas(tmp_path: Path):
     assert 350 <= height <= 365
 
 
+def test_plot3d2_directive_enforces_usetex_font_before_render(tmp_path: Path, monkeypatch):
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    captured: dict[str, object] = {}
+
+    def fake_render_plot3d2(**params):
+        captured["use_usetex"] = params["use_usetex"]
+        captured["text_usetex"] = matplotlib.rcParams["text.usetex"]
+        captured["font_family"] = list(matplotlib.rcParams["font.family"])
+        captured["font_serif"] = list(matplotlib.rcParams["font.serif"])
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        return fig, ax
+
+    def fake_save_plot3d2_svg(fig, path):
+        Path(path).write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">'
+            "<text>ok</text></svg>",
+            encoding="utf8",
+        )
+
+    monkeypatch.setattr(plot3d2_module, "_render_plot3d2", fake_render_plot3d2)
+    monkeypatch.setattr(plot3d2_module, "_save_plot3d2_svg", fake_save_plot3d2_svg)
+
+    old_values = {
+        key: matplotlib.rcParams.get(key)
+        for key in ("text.usetex", "font.family", "font.serif")
+    }
+    matplotlib.rcParams["text.usetex"] = False
+    matplotlib.rcParams["font.family"] = "sans-serif"
+    matplotlib.rcParams["font.serif"] = ["DejaVu Serif"]
+
+    src = tmp_path / "src"
+    build = tmp_path / "build"
+    doctree = tmp_path / "doctree"
+    src.mkdir()
+    build.mkdir()
+    doctree.mkdir()
+
+    try:
+        (src / "conf.py").write_text(
+            """
+project = 'plot3d2-usetex-test'
+extensions = ['munchboka_edutools.directives.plot3d_2']
+html_theme = 'basic'
+plot_default_usetex = False
+""".lstrip(),
+            encoding="utf8",
+        )
+        (src / "index.rst").write_text(
+            """
+Plot3d 2 usetex test
+====================
+
+.. plot3d-2::
+
+   usetex: true
+   text: at=(0, 0, 0), value="$x$"
+""".lstrip(),
+            encoding="utf8",
+        )
+
+        app = Sphinx(
+            srcdir=str(src),
+            confdir=str(src),
+            outdir=str(build),
+            doctreedir=str(doctree),
+            buildername="html",
+            warningiserror=False,
+            freshenv=True,
+        )
+        app.build()
+
+        assert captured["use_usetex"] is True
+        assert captured["text_usetex"] is True
+        assert captured["font_family"] == ["serif"]
+        assert captured["font_serif"][0] == "Computer Modern Roman"
+        assert matplotlib.rcParams["text.usetex"] is False
+        assert matplotlib.rcParams["font.family"] == ["sans-serif"]
+        assert matplotlib.rcParams["font.serif"] == ["DejaVu Serif"]
+    finally:
+        for key, value in old_values.items():
+            matplotlib.rcParams[key] = value
+
+
 def test_plot3d2_directive_renders_inline_svg(tmp_path: Path):
     src = tmp_path / "src"
     build = tmp_path / "build"
@@ -1394,6 +1700,7 @@ def test_plot3d2_directive_renders_inline_svg(tmp_path: Path):
 project = 'plot3d2-test'
 extensions = ['munchboka_edutools']
 html_theme = 'basic'
+plot_default_usetex = False
 """.lstrip(),
         encoding="utf8",
     )
@@ -1408,6 +1715,7 @@ Plot3d 2 test
    xrange: (-2, 2)
    yrange: (-2, 2)
    zrange: (-1, 3)
+   axis: off
    xlabel: X-axis
    ylabel: none
    zlabel: Z-axis
@@ -1426,6 +1734,7 @@ Plot3d 2 test
    normal-segment: point1=(0, 0, 0), direction1=(1, 0, 0), point2=(0, 1, 1), direction2=(0, 1, 0), color=#777777, style=dashed, right-angle-size=0.25
    normal-segment: point=(1, 1, 2), plane=z = 0, color=#777777, style=dotted, right-angle-size=0.2
    right-angle: at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.35, color=red
+   angle: dir1=(1, 0, 0), dir2=(0, 1, 1), radius=0.45, color=#123abc, lw=2
    vector: (0, 0, 0), (1, 1, 2)
    point: (1, 0, 2), red
    plane: equation=z = x + y, xrange=(-1, 1), yrange=(-1, 1), color=orange, alpha=0.3
@@ -1457,9 +1766,9 @@ Plot3d 2 test
     assert '<svg' in html
     assert 'graph-inline-svg' in html
     assert 'aria-label="3D-koordinatsystem"' in html
-    assert "X-axis" in html
     assert "Y-axis" not in html
-    assert "Z-axis" in html
+    assert "X-axis" not in html
+    assert "Z-axis" not in html
     assert to_hex(plotmath.COLORS["blue"]) in html
     assert to_hex(plotmath.COLORS["red"]) in html
     assert to_hex(plotmath.COLORS["orange"]) in html

@@ -297,6 +297,12 @@ def compute_svg_deltas(svg_frames: List[str]) -> Tuple[str, List[Dict[str, Any]]
             parent = parent.getparent()
         return False
 
+    def _has_visual_region(regions) -> bool:
+        return any((r or "").startswith(("axes_", "legend_")) for r in regions)
+
+    def _has_text_owner(owners) -> bool:
+        return any((o or "").startswith("text_") for o in owners)
+
     def _is_xlink_href(attr_name: str) -> bool:
         # lxml uses Clark notation for namespaced attrs: "{ns}local"
         return attr_name.endswith("}href") and attr_name.startswith(
@@ -407,6 +413,29 @@ def compute_svg_deltas(svg_frames: List[str]) -> Tuple[str, List[Dict[str, Any]]
                             break
 
                 if major_region_conflict:
+                    frame_delta = {"frame": frame_idx, "fullSvg": prepared_frames[frame_idx]}
+                    deltas.append(frame_delta)
+                    continue
+
+                # A small number of new/removed visual artist ids can still be
+                # important. For example, an angle-arc arrowhead may not exist
+                # in the first frame but appear later; ordinary id-deltas cannot
+                # create that missing SVG node in the browser. Text glyph churn
+                # is handled separately by replacing top-level text groups, so
+                # do not treat text-owned internals as structural visual changes.
+                added_visual_ids = [
+                    eid
+                    for eid in (cur_ids - base_ids)
+                    if _has_visual_region(cur_regions_by_id.get(eid, set()))
+                    and not _has_text_owner(cur_owners_by_id.get(eid, set()))
+                ]
+                removed_visual_ids = [
+                    eid
+                    for eid in (base_ids - cur_ids)
+                    if (base_region_by_id.get(eid) or "").startswith(("axes_", "legend_"))
+                    and not (base_owner_by_id.get(eid) or "").startswith("text_")
+                ]
+                if added_visual_ids or removed_visual_ids:
                     frame_delta = {"frame": frame_idx, "fullSvg": prepared_frames[frame_idx]}
                     deltas.append(frame_delta)
                     continue

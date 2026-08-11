@@ -34,11 +34,32 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 $$
 :::
 
+## With timer
+
+Use `timer` to delay the solution button. The value is in minutes.
+
+````markdown
+:::{solution}
+---
+timer: 5
+---
+Step 1: Try the problem before opening the solution.
+:::
+````
+
+:::{solution}
+---
+timer: 5
+---
+Step 1: Try the problem before opening the solution.
+:::
+
 ## Options
 
 | Option | Meaning | Default |
 |---|---|---|
 | `dropdown` | Control dropdown behavior. Use `"open"` to start expanded. | collapsed |
+| `timer` | Optional button-lock timer in minutes. | no timer |
 
 ## Source
 

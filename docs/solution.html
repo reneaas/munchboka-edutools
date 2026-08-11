@@ -488,6 +488,7 @@
                 <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#with-custom-title">With custom title</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#with-timer">With timer</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>
@@ -536,6 +537,22 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 \]</div>
 </div>
 </section>
+<section id="with-timer">
+<h2>With timer<a class="headerlink" href="#with-timer" title="Link to this heading">#</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">timer</span></code> to delay the solution button. The value is in minutes.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gu">:::{solution}</span>
+<span class="gu">---</span>
+<span class="gu">timer: 5</span>
+<span class="gu">---</span>
+Step 1: Try the problem before opening the solution.
+:::
+</pre></div>
+</div>
+<div class="admonition solution solution-timed solution-delay-300 solution-ref-docs-solution-50 dropdown">
+<p class="admonition-title">Løsning</p>
+<p>Step 1: Try the problem before opening the solution.</p>
+</div>
+</section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -549,6 +566,10 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dropdown</span></code></p></td>
 <td><p>Control dropdown behavior. Use <code class="docutils literal notranslate"><span class="pre">&quot;open&quot;</span></code> to start expanded.</p></td>
 <td><p>collapsed</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">timer</span></code></p></td>
+<td><p>Optional button-lock timer in minutes.</p></td>
+<td><p>no timer</p></td>
 </tr>
 </tbody>
 </table>
@@ -628,6 +649,7 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#with-custom-title">With custom title</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#with-timer">With timer</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>

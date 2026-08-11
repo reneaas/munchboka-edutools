@@ -489,8 +489,14 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-front-matter-works">How front matter works</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-primitive-reference">Quick primitive reference</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#axes-and-grid">Axes and grid</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expression-support">Expression support</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colors-and-line-styles">Colors and line styles</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors">Vectors</a></li>
@@ -504,6 +510,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angles">Right angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#angles">Angles</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#planes">Planes</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#equation-form">Equation form</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-point-form">Normal-point form</a></li>
@@ -593,6 +600,7 @@ Optional caption text.
 <h2>Supported keys<a class="headerlink" href="#supported-keys" title="Link to this heading">#</a></h2>
 <p>Repeated drawing keys:</p>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">angle</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">curve</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">line</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></p></li>
@@ -617,6 +625,64 @@ Optional caption text.
 <li><p><code class="docutils literal notranslate"><span class="pre">use</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">endmacro</span></code></p></li>
 </ul>
+<section id="quick-primitive-reference">
+<h3>Quick primitive reference<a class="headerlink" href="#quick-primitive-reference" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Primitive</p></th>
+<th class="head"><p>Minimal syntax</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">angle</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">angle:</span> <span class="pre">dir1=(ax,</span> <span class="pre">ay,</span> <span class="pre">az),</span> <span class="pre">dir2=(bx,</span> <span class="pre">by,</span> <span class="pre">bz),</span> <span class="pre">radius=r,</span> <span class="pre">color=color,</span> <span class="pre">lw=2</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curve</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">curve:</span> <span class="pre">x=f(t),</span> <span class="pre">y=g(t),</span> <span class="pre">z=h(t),</span> <span class="pre">t=(tmin,</span> <span class="pre">tmax),</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">line</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">line:</span> <span class="pre">point=(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">direction=(dx,</span> <span class="pre">dy,</span> <span class="pre">dz),</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">line-segment:</span> <span class="pre">from=(x0,</span> <span class="pre">y0,</span> <span class="pre">z0),</span> <span class="pre">to=(x1,</span> <span class="pre">y1,</span> <span class="pre">z1),</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ngon</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ngon:</span> <span class="pre">points=[(x0,</span> <span class="pre">y0,</span> <span class="pre">z0),</span> <span class="pre">(x1,</span> <span class="pre">y1,</span> <span class="pre">z1),</span> <span class="pre">...],</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">normal-segment:</span> <span class="pre">point=(px,</span> <span class="pre">py,</span> <span class="pre">pz),</span> <span class="pre">plane=z</span> <span class="pre">=</span> <span class="pre">x</span> <span class="pre">+</span> <span class="pre">y,</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plane</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">plane:</span> <span class="pre">equation=z</span> <span class="pre">=</span> <span class="pre">x</span> <span class="pre">+</span> <span class="pre">y,</span> <span class="pre">color=orange,</span> <span class="pre">alpha=0.35</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">point</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">point:</span> <span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">color</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prism</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prism:</span> <span class="pre">center=(cx,</span> <span class="pre">cy,</span> <span class="pre">cz),</span> <span class="pre">radius=r,</span> <span class="pre">sides=n,</span> <span class="pre">height=h,</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pyramid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pyramid:</span> <span class="pre">center=(cx,</span> <span class="pre">cy,</span> <span class="pre">cz),</span> <span class="pre">radius=r,</span> <span class="pre">sides=n,</span> <span class="pre">apex=(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">right-angle</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">right-angle:</span> <span class="pre">at=(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">dir1=(dx,</span> <span class="pre">dy,</span> <span class="pre">dz),</span> <span class="pre">dir2=(dx,</span> <span class="pre">dy,</span> <span class="pre">dz),</span> <span class="pre">size=0.35</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sphere</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sphere:</span> <span class="pre">center=(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">radius=r,</span> <span class="pre">color=blue</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">solid-of-revolution:</span> <span class="pre">f(x),</span> <span class="pre">(xmin,</span> <span class="pre">xmax),</span> <span class="pre">color</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">text</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">text:</span> <span class="pre">at=(x,</span> <span class="pre">y,</span> <span class="pre">z),</span> <span class="pre">value=&quot;$P$&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vector</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">vector:</span> <span class="pre">(x0,</span> <span class="pre">y0,</span> <span class="pre">z0),</span> <span class="pre">(x1,</span> <span class="pre">y1,</span> <span class="pre">z1),</span> <span class="pre">color</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </section>
 <section id="global-options">
 <h2>Global options<a class="headerlink" href="#global-options" title="Link to this heading">#</a></h2>
@@ -700,6 +766,14 @@ Optional caption text.
 <td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">$z$</span></code></p></td>
 <td><p>z-axis label; use <code class="docutils literal notranslate"><span class="pre">none</span></code> to hide</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">axis</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Turn centered axes, arrowheads, labels, and ticks on or off</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">grid</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Draw dashed gray grid lines in the xy-plane at <code class="docutils literal notranslate"><span class="pre">z=0</span></code></p></td>
+</tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ticks</span></code></p></td>
 <td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
 <td><p>Turn ticks on or off</p></td>
@@ -725,6 +799,8 @@ width: 100%
 figsize: (6, 4)
 fontsize: 18
 lw: 2
+axis: off
+grid: true
 xrange: (-1, 5)
 yrange: (-1, 4)
 zrange: (-1, 4)
@@ -739,6 +815,22 @@ vector: (0, 0, 0), (3, 2, 2), teal
 </pre></div>
 </div>
 <p>Ticks never include the origin or the two endpoints of an axis. This prevents tick labels from colliding with the origin and the arrowheads.</p>
+<section id="axes-and-grid">
+<h3>Axes and grid<a class="headerlink" href="#axes-and-grid" title="Link to this heading">#</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">axis:</span> <span class="pre">off</span></code> to hide the custom centered axes, arrowheads, labels, and ticks. This does not disable primitives.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">grid:</span> <span class="pre">true</span></code> to draw a gray dashed grid in the xy-plane only, at <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">=</span> <span class="pre">0</span></code>. The grid uses <code class="docutils literal notranslate"><span class="pre">xrange</span></code>, <code class="docutils literal notranslate"><span class="pre">yrange</span></code>, <code class="docutils literal notranslate"><span class="pre">xstep</span></code>, and <code class="docutils literal notranslate"><span class="pre">ystep</span></code>. Unlike tick labels, grid lines include the origin and may include the range endpoints when they land on the step.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+axis: off
+grid: true
+xrange: (-3, 3)
+yrange: (-3, 3)
+zrange: (-1, 4)
+plane: equation=z = 2, xrange=(-2, 2), yrange=(-2, 2), color=orange, alpha=0.25
+point: (1, 1, 2), black
+:::
+</pre></div>
+</div>
+</section>
 </section>
 <section id="expression-support">
 <h2>Expression support<a class="headerlink" href="#expression-support" title="Link to this heading">#</a></h2>
@@ -767,6 +859,7 @@ vector: (0, 0, 0), (2*cos(pi/6), 2*sin(pi/6), sqrt(3)), blue
 <li><p><code class="docutils literal notranslate"><span class="pre">dashdot</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dotted</span></code></p></li>
 </ul>
+<p>Line-like primitives use depth-aware shading where appropriate. <code class="docutils literal notranslate"><span class="pre">vector</span></code> and <code class="docutils literal notranslate"><span class="pre">point</span></code> primitives are layered above <code class="docutils literal notranslate"><span class="pre">line</span></code> and <code class="docutils literal notranslate"><span class="pre">line-segment</span></code> primitives, so marked endpoints remain visible in construction diagrams.</p>
 </section>
 <section id="vectors">
 <h2>Vectors<a class="headerlink" href="#vectors" title="Link to this heading">#</a></h2>
@@ -776,6 +869,23 @@ vector: (0, 0, 0), (2*cos(pi/6), 2*sin(pi/6), sqrt(3)), blue
 </pre></div>
 </div>
 <p>The color is optional and defaults to <code class="docutils literal notranslate"><span class="pre">blue</span></code>.</p>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Vector color, either positional or keyword-style</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Vectors use a custom arrowhead styled to match the 2D <code class="docutils literal notranslate"><span class="pre">plot</span></code> directive.</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
 xrange: (-1, 4)
 yrange: (-1, 4)
@@ -865,6 +975,30 @@ line: through=[(x0, y0, z0), (x1, y1, z1)], color=blue, lw=1.5, style=solid
 line: (x0, y0, z0), (x1, y1, z1), color=blue, lw=1.5, style=solid
 </pre></div>
 </div>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Line color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Line width</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">style</span></code> or <code class="docutils literal notranslate"><span class="pre">linestyle</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">solid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">solid</span></code>, <code class="docutils literal notranslate"><span class="pre">dashed</span></code>, <code class="docutils literal notranslate"><span class="pre">dashdot</span></code>, or <code class="docutils literal notranslate"><span class="pre">dotted</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
 xrange: (-1, 5)
 yrange: (-1, 4)
@@ -883,6 +1017,30 @@ line: through=[(0, 3, 0), (4, 0, 3)], color=red, style=dashed
 line-segment: start=(x0, y0, z0), end=(x1, y1, z1), color=blue, lw=1.5, style=solid
 line-segment: (x0, y0, z0), (x1, y1, z1), color, lw=1.5, style=solid
 </pre></div>
+</div>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Segment color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Segment width</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">style</span></code> or <code class="docutils literal notranslate"><span class="pre">linestyle</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">solid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">solid</span></code>, <code class="docutils literal notranslate"><span class="pre">dashed</span></code>, <code class="docutils literal notranslate"><span class="pre">dashdot</span></code>, or <code class="docutils literal notranslate"><span class="pre">dotted</span></code></p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
 line-segment: (0, 0, 0), (3, 2, 1), blue, lw=2
@@ -922,6 +1080,17 @@ normal-segment: point1=(3, 0, 4), direction1=(2, 0, 0.5), point2=(1, 3, 1), dire
 </pre></div>
 </div>
 <p>By default, the directive draws right-angle markers at both endpoints.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+ticks: off
+xrange: (-1, 7)
+yrange: (-1, 5)
+zrange: (-1, 5)
+line: point=(3, 0, 4), direction=(2, 0, 0.5), color=blue, lw=2
+line: point=(1, 3, 1), direction=(2, 0, -0.5), color=red, lw=2
+normal-segment: p1=(3, 0, 4), v1=(2, 0, 0.5), p2=(1, 3, 1), v2=(2, 0, -0.5), color=gray, style=dashed
+:::
+</pre></div>
+</div>
 </section>
 <section id="normal-segment-from-a-point-to-a-plane">
 <h3>Normal segment from a point to a plane<a class="headerlink" href="#normal-segment-from-a-point-to-a-plane" title="Link to this heading">#</a></h3>
@@ -995,6 +1164,7 @@ text: at=(2, 2, 4), value=&quot;$P$&quot;, ha=left, va=bottom
 </pre></div>
 </div>
 <p>The point-plane form automatically draws a point at the external point and at the foot on the plane. Use <code class="docutils literal notranslate"><span class="pre">points=off</span></code> to suppress those endpoint markers.</p>
+<p>For point-plane normal segments, the right-angle marker is drawn with respect to the normal segment and a visible direction in the plane. The marker is chosen to read clearly from the current camera angle.</p>
 </section>
 </section>
 <section id="right-angles">
@@ -1009,10 +1179,105 @@ text: at=(2, 2, 4), value=&quot;$P$&quot;, ha=left, va=bottom
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">to1</span></code> / <code class="docutils literal notranslate"><span class="pre">to2</span></code> form clamps the marker to the distances from <code class="docutils literal notranslate"><span class="pre">at</span></code> to the two target points. This is useful for short segments.</p>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">at</span></code></p></td>
+<td class="text-right"><p>required</p></td>
+<td><p>Corner point of the marker</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dir1</span></code>, <code class="docutils literal notranslate"><span class="pre">dir2</span></code></p></td>
+<td class="text-right"><p>required for direction form</p></td>
+<td><p>Directions that define the right angle</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">to1</span></code>, <code class="docutils literal notranslate"><span class="pre">to2</span></code></p></td>
+<td class="text-right"><p>required for target form</p></td>
+<td><p>Target points that define and clamp the marker</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">0.35</span></code></p></td>
+<td><p>Marker side length</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Marker color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Marker line width</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
 line-segment: (0, 0, 0), (2, 0, 0), black
 line-segment: (0, 0, 0), (0, 2, 0), black
 right-angle: at=(0, 0, 0), to1=(2, 0, 0), to2=(0, 2, 0), size=0.4, color=red
+:::
+</pre></div>
+</div>
+</section>
+<section id="angles">
+<h2>Angles<a class="headerlink" href="#angles" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">angle</span></code> draws a curved angle marker between two 3D directions. The marker is centered at the origin by default, but <code class="docutils literal notranslate"><span class="pre">at=(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> can move it to another point.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>angle: dir1=(ax, ay, az), dir2=(bx, by, bz), radius=r, color=color, lw=2
+angle: at=(x, y, z), dir1=(ax, ay, az), dir2=(bx, by, bz), radius=r, color=color, lw=2
+</pre></div>
+</div>
+<p>Aliases:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">direction1</span></code> or <code class="docutils literal notranslate"><span class="pre">v1</span></code> for <code class="docutils literal notranslate"><span class="pre">dir1</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">direction2</span></code> or <code class="docutils literal notranslate"><span class="pre">v2</span></code> for <code class="docutils literal notranslate"><span class="pre">dir2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code> for <code class="docutils literal notranslate"><span class="pre">radius</span></code></p></li>
+</ul>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">at</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code></p></td>
+<td><p>Center point of the angle</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dir1</span></code>, <code class="docutils literal notranslate"><span class="pre">dir2</span></code></p></td>
+<td class="text-right"><p>required</p></td>
+<td><p>Directions spanning the angle</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">radius</span></code> or <code class="docutils literal notranslate"><span class="pre">r</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">0.35</span></code></p></td>
+<td><p>Arc radius</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Arc color</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Arc line width</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">samples</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">64</span></code></p></td>
+<td><p>Number of sample points along the arc</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The arc is drawn in the plane spanned by <code class="docutils literal notranslate"><span class="pre">dir1</span></code> and <code class="docutils literal notranslate"><span class="pre">dir2</span></code>, using the smaller angle between the directions. Its line color is shaded with respect to the current <code class="docutils literal notranslate"><span class="pre">elev</span></code> / <code class="docutils literal notranslate"><span class="pre">azim</span></code> camera position, so parts closer to the viewer read more strongly. For opposite directions, where no unique plane exists, <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> chooses a camera-facing semicircle.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
+ticks: off
+line-segment: (0, 0, 0), (2, 0, 0), black
+line-segment: (0, 0, 0), (0, 2, 1), black
+angle: dir1=(1, 0, 0), dir2=(0, 2, 1), radius=0.55, color=purple, lw=2
 :::
 </pre></div>
 </div>
@@ -1063,10 +1328,42 @@ normal-segment: point=(2, 2, 4), plane-normal=(1, 1, 1), plane-point=(0, 0, 1), 
 <li><p><code class="docutils literal notranslate"><span class="pre">trange</span></code> for <code class="docutils literal notranslate"><span class="pre">t</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">arrows-count</span></code> for <code class="docutils literal notranslate"><span class="pre">arrow-count</span></code></p></li>
 </ul>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Curve color</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td class="text-right"><p>global <code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>Curve width</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">samples</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">300</span></code></p></td>
+<td><p>Number of evaluated points, clamped between <code class="docutils literal notranslate"><span class="pre">2</span></code> and <code class="docutils literal notranslate"><span class="pre">5000</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">arrows</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Draw arrowheads along the curve</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">arrow-count</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">3</span></code></p></td>
+<td><p>Number of arrowheads, clamped between <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">20</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p>Rendering notes:</p>
 <ul class="simple">
 <li><p>Curves use local depth shading.</p></li>
-<li><p>Curve style changes by xy-quadrant: solid for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, dashdot for mixed foreground quadrants, dashed for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&lt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>.</p></li>
+<li><p>Curve style changes by xy-quadrant: solid for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, dashdot for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&lt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>, and dashed for <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">&lt;</span> <span class="pre">0,</span> <span class="pre">y</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>.</p></li>
 <li><p>Arrowheads lie on the curve and indicate direction.</p></li>
 </ul>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
@@ -1116,17 +1413,67 @@ ngon: [(0, 0, 0), (2, 0, 0), (2, 1, 1), (0, 1, 1)], color=green, alpha=0.4
 <p><code class="docutils literal notranslate"><span class="pre">pyramid</span></code> draws a pyramid with an n-gon base and an apex.</p>
 <p>Syntax with explicit base:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyramid: base=[(x0, y0, z0), (x1, y1, z1), ...], apex=(x, y, z), color=blue, edgecolor=black, alpha=0.45
+pyramid: base=[(x0, y0, z0), (x1, y1, z1), ...], apex=(x, y, z), base-color=blue, side-color=none, edgecolor=black, alpha=0.45
 </pre></div>
 </div>
 <p>Syntax with regular n-gon base in the xy-plane:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyramid: center=(cx, cy, cz), radius=r, sides=n, apex=(x, y, z), rotation=0, color=blue, edgecolor=black, alpha=0.45
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">base-color</span></code> colors the base face. <code class="docutils literal notranslate"><span class="pre">side-color</span></code> colors the lateral faces. Either can be set to <code class="docutils literal notranslate"><span class="pre">none</span></code> to leave those faces unfilled while preserving edges. <code class="docutils literal notranslate"><span class="pre">body-color</span></code> is accepted as an alias for <code class="docutils literal notranslate"><span class="pre">side-color</span></code>. If <code class="docutils literal notranslate"><span class="pre">color</span></code> is supplied, it overrides both <code class="docutils literal notranslate"><span class="pre">base-color</span></code> and <code class="docutils literal notranslate"><span class="pre">side-color</span></code>.</p>
+<p>Options:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head text-right"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base</span></code></p></td>
+<td class="text-right"><p>required unless using regular base form</p></td>
+<td><p>Explicit base vertices</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">radius</span></code>, <code class="docutils literal notranslate"><span class="pre">sides</span></code></p></td>
+<td class="text-right"><p>required for regular base form</p></td>
+<td><p>Regular n-gon base in the xy-plane</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rotation</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p>Base rotation in radians</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">apex</span></code></p></td>
+<td class="text-right"><p>required</p></td>
+<td><p>Apex coordinate</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td class="text-right"><p>none</p></td>
+<td><p>Fill both base and sides; overrides <code class="docutils literal notranslate"><span class="pre">base-color</span></code> and <code class="docutils literal notranslate"><span class="pre">side-color</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">base-color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Base fill color, or <code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">side-color</span></code> or <code class="docutils literal notranslate"><span class="pre">body-color</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">blue</span></code></p></td>
+<td><p>Lateral face fill color, or <code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">edgecolor</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Edge color</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">0.45</span></code></p></td>
+<td><p>Face opacity</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{plot3d-2}
 xrange: (-2, 2)
 yrange: (-2, 2)
 zrange: (-1, 3)
-pyramid: center=(0, 0, 0), radius=1.4, sides=5, apex=(0, 0, 2.4), color=purple, alpha=0.5
+pyramid: center=(0, 0, 0), radius=1.4, sides=5, apex=(0, 0, 2.4), base-color=purple, side-color=none, alpha=0.5
 :::
 </pre></div>
 </div>
@@ -1234,6 +1581,7 @@ width: 100%
 fontsize: 18
 elev: 20
 azim: -70
+grid: true
 xrange: (-1, 5)
 yrange: (-1, 4)
 zrange: (-1, 5)
@@ -1242,6 +1590,7 @@ plane: equation=z = 1, xrange=(-1, 5), yrange=(-1, 4), color=orange, alpha=0.25
 line: point=(0, 0, 1), direction=(1, 0.4, 0), color=blue, lw=2
 curve: x=1 + sin(t), y=1 + cos(t), z=1 + t/4, t=(0, 4*pi), color=teal, lw=2, arrow-count=4
 normal-segment: point=(3, 2, 4), plane=z = 1, color=gray, style=dashed, right-angle-size=0.35
+angle: at=(0, 0, 1), dir1=(1, 0, 0), dir2=(1, 0.4, 0), radius=0.45, color=purple, lw=2
 vector: (0, 0, 0), (3, 2, 4), purple
 text: at=(3, 2, 4), value=&quot;$P$&quot;, ha=left, va=bottom
 
@@ -1255,11 +1604,13 @@ Et punkt, en normal til planet og en romkurve.
 <ul class="simple">
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">elev</span></code> and <code class="docutils literal notranslate"><span class="pre">azim</span></code> deliberately; the same figure can read very differently from another camera angle.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">ylabel:</span> <span class="pre">none</span></code> or similar when a label collides with the figure.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">grid:</span> <span class="pre">true</span></code> when you want a dashed reference grid in the xy-plane without drawing Matplotlib’s default 3D panes.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">nocache:</span></code> while authoring figures that change often.</p></li>
 <li><p>Prefer <code class="docutils literal notranslate"><span class="pre">line-segment</span></code> for finite geometry and <code class="docutils literal notranslate"><span class="pre">line</span></code> for infinite objects clipped to the plotting box.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">normal-segment</span></code> for perpendicular constructions instead of manually computing foot points.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">points=off</span></code> on point-plane normal segments when automatic endpoint markers create clutter.</p></li>
 <li><p>Increase <code class="docutils literal notranslate"><span class="pre">right-angle-size</span></code> when a perpendicular marker is too subtle.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">base-color=none</span></code> or <code class="docutils literal notranslate"><span class="pre">side-color=none</span></code> on pyramids when only some faces should be filled.</p></li>
 <li><p>Keep <code class="docutils literal notranslate"><span class="pre">samples</span></code> moderate for curves unless the curve really needs high resolution.</p></li>
 </ul>
 </section>
@@ -1340,8 +1691,14 @@ Et punkt, en normal til planet og en romkurve.
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-front-matter-works">How front matter works</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-keys">Supported keys</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-primitive-reference">Quick primitive reference</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global options</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#axes-and-grid">Axes and grid</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expression-support">Expression support</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colors-and-line-styles">Colors and line styles</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors">Vectors</a></li>
@@ -1355,6 +1712,7 @@ Et punkt, en normal til planet og en romkurve.
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angles">Right angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#angles">Angles</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#planes">Planes</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#equation-form">Equation form</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-point-form">Normal-point form</a></li>

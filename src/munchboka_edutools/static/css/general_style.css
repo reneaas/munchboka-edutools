@@ -235,6 +235,34 @@ h5 {
 
 
 
+@media (prefers-color-scheme: light) {
+    .exercise-section {
+        border-color: var(--exercise-color);
+    }
+    .exercise-section > h2,
+    .exercise-section > h3,
+    .exercise-section > h4,
+    .exercise-section > h5 {
+        border-color: var(--exercise-color);
+    }
+    .exercise-body {
+        border-color: var(--exercise-color);
+    }
+}
+
+[data-mode="light"] .exercise-section {
+    border-color: var(--exercise-color);
+}
+
+[data-mode="light"] .exercise-section > h2,
+[data-mode="light"] .exercise-section > h3,
+[data-mode="light"] .exercise-section > h4,
+[data-mode="light"] .exercise-section > h5 {
+    border-color: var(--exercise-color);
+}
+
+
+
 
 
 

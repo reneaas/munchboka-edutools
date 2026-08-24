@@ -9,6 +9,7 @@ import math
 import os
 import re
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -842,20 +843,23 @@ def _plot3d2_matplotlib_text_context(matplotlib: Any, *, use_usetex: bool):
 
     keys = (
         "text.usetex",
+        "text.latex.preamble",
         "mathtext.fontset",
         "font.family",
         "font.serif",
     )
     old_values = {key: matplotlib.rcParams.get(key) for key in keys}
     try:
-        matplotlib.rcParams["text.usetex"] = bool(use_usetex)
+        import matplotlib.pyplot as plt
+
+        plt.rc("text", usetex=bool(use_usetex))
         if use_usetex:
-            matplotlib.rcParams["font.family"] = "serif"
-            matplotlib.rcParams["font.serif"] = [
-                "Computer Modern Roman",
-                "CMU Serif",
-                "DejaVu Serif",
-            ]
+            matplotlib.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
+            plt.rc(
+                "font",
+                family="serif",
+                serif=["Computer Modern Roman", "CMU Serif", "DejaVu Serif"],
+            )
         else:
             matplotlib.rcParams["mathtext.fontset"] = "cm"
         yield
@@ -2680,20 +2684,6 @@ def _render_plot3d2(
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    try:
-        matplotlib.rcParams["text.usetex"] = bool(use_usetex)
-        if use_usetex:
-            matplotlib.rcParams["font.family"] = "serif"
-            matplotlib.rcParams["font.serif"] = [
-                "Computer Modern Roman",
-                "CMU Serif",
-                "DejaVu Serif",
-            ]
-        else:
-            matplotlib.rcParams["mathtext.fontset"] = "cm"
-    except Exception:
-        pass
-
     fig = plt.figure(figsize=figsize, frameon=False)
     ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
     ax.computed_zorder = False
@@ -2837,6 +2827,230 @@ def _save_plot3d2_svg(fig, path: str | os.PathLike[str]) -> None:
         transparent=True,
         bbox_inches="tight",
         pad_inches=0,
+    )
+
+
+def _build_plot3d2_render_data(
+    lines: list[str],
+    options: dict[str, Any] | None = None,
+    *,
+    default_usetex: bool = True,
+) -> tuple[dict[str, Any], str, dict[str, Any], int, list[str], PlotMacroContext]:
+    """Parse ``plot3d-2`` directive content into renderer parameters.
+
+    This helper is used by the interactive 3D directive to render many frames
+    without going through docutils figure construction for each frame.
+    """
+
+    raw_lines = [str(line).rstrip("\n") for line in lines]
+    try:
+        expanded_lines, macro_ctx = parse_plot_macros(raw_lines)
+    except Exception:
+        expanded_lines = raw_lines
+        macro_ctx = PlotMacroContext(sympy_locals={}, numeric_functions={}, raw_bindings=())
+
+    with _plot3d2_macro_context(macro_ctx.sympy_locals):
+        scalars, lists, caption_idx = parse_kv_block(expanded_lines, _MULTI_KEYS)
+        merged = {**scalars, **dict(options or {})}
+
+        def _f(key: str, default: float) -> float:
+            return _eval_float(merged.get(key), default)
+
+        figsize = (6.0, 5.0)
+        figsize_raw = merged.get("figsize")
+        if figsize_raw:
+            parts = [part.strip() for part in str(figsize_raw).strip("()[] ").split(",")]
+            if len(parts) >= 2:
+                figsize = (_eval_float(parts[0], 6.0), _eval_float(parts[1], 5.0))
+
+        curves = [
+            curve
+            for raw_curve in lists.get("curve", [])
+            if (curve := _parse_curve_primitive(raw_curve)) is not None
+        ]
+        angles = [
+            angle
+            for raw_angle in lists.get("angle", [])
+            if (angle := _parse_angle_primitive(raw_angle)) is not None
+        ]
+        lines_parsed = [
+            line
+            for raw_line in lists.get("line", [])
+            if (line := _parse_line_primitive(raw_line)) is not None
+        ]
+        line_segments = [
+            line_segment
+            for raw_line_segment in lists.get("line-segment", [])
+            if (line_segment := _parse_line_segment_primitive(raw_line_segment)) is not None
+        ]
+        ngons = [
+            ngon
+            for raw_ngon in lists.get("ngon", [])
+            if (ngon := _parse_ngon_primitive(raw_ngon)) is not None
+        ]
+        normal_segments = [
+            normal_segment
+            for raw_normal_segment in lists.get("normal-segment", [])
+            if (normal_segment := _parse_normal_segment_primitive(raw_normal_segment)) is not None
+        ]
+        points = [
+            point
+            for raw_point in lists.get("point", [])
+            if (point := _parse_point_primitive(raw_point)) is not None
+        ]
+        planes = [
+            plane
+            for raw_plane in lists.get("plane", [])
+            if (plane := _parse_plane_primitive(raw_plane)) is not None
+        ]
+        prisms = [
+            prism
+            for raw_prism in lists.get("prism", [])
+            if (prism := _parse_prism_primitive(raw_prism)) is not None
+        ]
+        pyramids = [
+            pyramid
+            for raw_pyramid in lists.get("pyramid", [])
+            if (pyramid := _parse_pyramid_primitive(raw_pyramid)) is not None
+        ]
+        right_angles = [
+            right_angle
+            for raw_right_angle in lists.get("right-angle", [])
+            if (right_angle := _parse_right_angle_primitive(raw_right_angle)) is not None
+        ]
+        spheres = [
+            sphere
+            for raw_sphere in lists.get("sphere", [])
+            if (sphere := _parse_sphere_primitive(raw_sphere)) is not None
+        ]
+        texts = [
+            text_item
+            for raw_text in lists.get("text", [])
+            if (text_item := _parse_text_primitive(raw_text)) is not None
+        ]
+        vectors = [
+            vector
+            for raw_vector in lists.get("vector", [])
+            if (vector := _parse_vector_primitive(raw_vector)) is not None
+        ]
+        solids_of_revolution = [
+            solid
+            for raw_solid in lists.get("solid-of-revolution", [])
+            if (solid := _parse_solid_of_revolution_primitive(raw_solid)) is not None
+        ]
+
+        params = {
+            "xrange": _parse_range(merged.get("xrange"), 5.0),
+            "yrange": _parse_range(merged.get("yrange"), 5.0),
+            "zrange": _parse_range(merged.get("zrange"), 5.0),
+            "xlabel": str(merged.get("xlabel", "$x$")),
+            "ylabel": str(merged.get("ylabel", "$y$")),
+            "zlabel": str(merged.get("zlabel", "$z$")),
+            "axis": bool(parse_bool(merged.get("axis"), default=True)),
+            "grid": bool(parse_bool(merged.get("grid"), default=False)),
+            "ticks": bool(parse_bool(merged.get("ticks"), default=True)),
+            "xstep": _f("xstep", 1.0),
+            "ystep": _f("ystep", 1.0),
+            "zstep": _f("zstep", 1.0),
+            "elev": _f("elev", 22.0),
+            "azim": _f("azim", -55.0),
+            "zoom": _f("zoom", 1.28),
+            "fontsize": _f("fontsize", 12.0),
+            "lw": _f("lw", 1.5),
+            "figsize": figsize,
+            "use_usetex": bool(
+                parse_bool(
+                    merged.get("usetex"),
+                    default=default_usetex,
+                )
+            ),
+            "angles": angles,
+            "curves": curves,
+            "line_segments": line_segments,
+            "lines": lines_parsed,
+            "ngons": ngons,
+            "normal_segments": normal_segments,
+            "points": points,
+            "planes": planes,
+            "prisms": prisms,
+            "pyramids": pyramids,
+            "right_angles": right_angles,
+            "spheres": spheres,
+            "texts": texts,
+            "vectors": vectors,
+            "solids_of_revolution": solids_of_revolution,
+        }
+
+        hash_material = {**params, "_macro_bindings": macro_ctx.raw_bindings}
+        content_hash = hashlib.sha1(
+            repr(sorted(hash_material.items())).encode("utf-8")
+        ).hexdigest()[:16]
+
+    return params, content_hash, merged, caption_idx, expanded_lines, macro_ctx
+
+
+def _render_plot3d2_svg_from_lines(
+    lines: list[str],
+    options: dict[str, Any] | None = None,
+    *,
+    default_usetex: bool = True,
+    alt: str = "3D-koordinatsystem",
+    width: str | None = None,
+    rewrite_ids: bool = False,
+) -> str:
+    """Render ``plot3d-2`` content directly to an inline SVG string."""
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    params, content_hash, merged, _caption_idx, _expanded_lines, macro_ctx = (
+        _build_plot3d2_render_data(
+            lines,
+            options,
+            default_usetex=default_usetex,
+        )
+    )
+    if width is not None:
+        svg_width = width
+    elif merged.get("width"):
+        svg_width = str(merged.get("width"))
+    else:
+        svg_width = None
+
+    old_svg_fonttype = matplotlib.rcParams.get("svg.fonttype")
+    fig = None
+    with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp_svg:
+        svg_path = tmp_svg.name
+    try:
+        matplotlib.rcParams["svg.fonttype"] = "none"
+        with _plot3d2_matplotlib_text_context(
+            matplotlib,
+            use_usetex=bool(params["use_usetex"]),
+        ), _plot3d2_macro_context(macro_ctx.sympy_locals):
+            fig, _ax = _render_plot3d2(**params)
+            _save_plot3d2_svg(fig, svg_path)
+        raw_svg = Path(svg_path).read_text(encoding="utf-8")
+    finally:
+        if fig is not None:
+            plt.close(fig)
+        try:
+            matplotlib.rcParams["svg.fonttype"] = old_svg_fonttype
+        except Exception:
+            pass
+        try:
+            os.unlink(svg_path)
+        except FileNotFoundError:
+            pass
+
+    return prepare_inline_svg(
+        raw_svg,
+        content_hash=content_hash,
+        alt=alt,
+        width=svg_width,
+        id_prefix_base="p3d2",
+        rewrite_ids=rewrite_ids,
     )
 
 

@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -8,6 +9,12 @@ from sphinx.application import Sphinx
 
 import munchboka_edutools.directives.plot3d_2 as plot3d2_module
 from munchboka_edutools.directives._plot_macros import parse_plot_macros
+from munchboka_edutools.directives.animate import _substitute_variable
+from munchboka_edutools.directives.interactive_plot3d import (
+    _plot3d_content_uses_interactive_camera,
+    _substitute_plot3d_variable,
+    _substitute_plot3d_variables,
+)
 from munchboka_edutools.directives.plot3d_2 import (
     _angle_arc_points,
     _curve_arrow_faces,
@@ -41,6 +48,7 @@ from munchboka_edutools.directives.plot3d_2 import (
     _front_back_poly_faces,
     _plane_surface_grids,
     _render_plot3d2,
+    _render_plot3d2_svg_from_lines,
     _normal_segment_points,
     _right_angle_points,
     _save_plot3d2_svg,
@@ -49,6 +57,7 @@ from munchboka_edutools.directives.plot3d_2 import (
     _tick_values,
     _vector_arrow_geometry,
 )
+from munchboka_edutools.directives.svg_delta import compute_svg_deltas
 
 
 def test_plot3d2_tick_values_exclude_axis_endpoints_and_origin():
@@ -1381,24 +1390,161 @@ def test_plot3d2_matplotlib_text_context_enforces_latex_font_and_restores():
 
     old_values = {
         key: matplotlib.rcParams.get(key)
-        for key in ("text.usetex", "font.family", "font.serif")
+        for key in ("text.usetex", "text.latex.preamble", "font.family", "font.serif")
     }
     matplotlib.rcParams["text.usetex"] = False
+    matplotlib.rcParams["text.latex.preamble"] = ""
     matplotlib.rcParams["font.family"] = "sans-serif"
     matplotlib.rcParams["font.serif"] = ["DejaVu Serif"]
 
     try:
         with _plot3d2_matplotlib_text_context(matplotlib, use_usetex=True):
             assert matplotlib.rcParams["text.usetex"] is True
+            assert matplotlib.rcParams["text.latex.preamble"] == r"\usepackage{amsmath}"
             assert matplotlib.rcParams["font.family"] == ["serif"]
             assert matplotlib.rcParams["font.serif"][0] == "Computer Modern Roman"
 
         assert matplotlib.rcParams["text.usetex"] is False
+        assert matplotlib.rcParams["text.latex.preamble"] == ""
         assert matplotlib.rcParams["font.family"] == ["sans-serif"]
         assert matplotlib.rcParams["font.serif"] == ["DejaVu Serif"]
     finally:
         for key, value in old_values.items():
             matplotlib.rcParams[key] = value
+
+
+def test_interactive_plot3d_vector_arrowhead_moves_in_deltas():
+    content = """usetex: false
+axis: off
+xrange: (-1, 3)
+yrange: (-1, 2)
+zrange: (-1, 2)
+vector: (0, 0, 0), (a, 1, 1), blue
+"""
+    frames = [
+        _render_plot3d2_svg_from_lines(
+            _substitute_variable(content, "a", value).splitlines(),
+            {"usetex": "false"},
+            default_usetex=False,
+            width="",
+            rewrite_ids=False,
+        )
+        for value in (0, 1, 2)
+    ]
+
+    _base_svg, deltas = compute_svg_deltas(frames)
+
+    assert any(
+        elem_id.startswith("mb_stable_Poly3DCollection")
+        and isinstance(changes, dict)
+        and "d" in changes
+        for frame_delta in deltas[1:]
+        for elem_id, changes in frame_delta.get("changes", {}).items()
+    )
+
+
+def test_interactive_plot3d_camera_variable_preserves_matching_scalar_key():
+    content = "azim: azim\nelev: elev\nzoom: zoom"
+
+    assert _substitute_plot3d_variable(content, "azim", -20) == (
+        "azim: -20\nelev: elev\nzoom: zoom"
+    )
+    assert _substitute_plot3d_variables(
+        content,
+        {"azim": -20, "elev": 45, "zoom": 1.4},
+    ) == "azim: -20\nelev: 45\nzoom: 1.4"
+
+
+def test_interactive_plot3d_camera_rotation_changes_svg_deltas():
+    content = """usetex: false
+axis: on
+xrange: (-1, 3)
+yrange: (-1, 2)
+zrange: (-1, 2)
+azim: azim
+vector: (0, 0, 0), (2, 1, 1), blue
+point: (2, 1, 1), red
+"""
+    frames = [
+        _render_plot3d2_svg_from_lines(
+            _substitute_plot3d_variable(content, "azim", value).splitlines(),
+            {"usetex": "false"},
+            default_usetex=False,
+            width="",
+            rewrite_ids=False,
+        )
+        for value in (-70, -20, 30)
+    ]
+
+    _base_svg, deltas = compute_svg_deltas(frames)
+
+    assert any(
+        frame_delta.get("changes") or frame_delta.get("fullSvg")
+        for frame_delta in deltas[1:]
+    )
+
+
+def test_interactive_plot3d_detects_camera_driven_content():
+    assert _plot3d_content_uses_interactive_camera(["azim: theta"], {"theta"})
+    assert _plot3d_content_uses_interactive_camera(["elev: e + 10"], {"e"})
+    assert _plot3d_content_uses_interactive_camera(["zoom: z"], {"z"})
+    assert not _plot3d_content_uses_interactive_camera(["vector: (0, 0, 0), (a, 1, 1)"], {"a"})
+
+
+def test_interactive_plot3d_camera_build_uses_full_svg_deltas(tmp_path: Path):
+    src = tmp_path / "src"
+    build = tmp_path / "build"
+    doctree = tmp_path / "doctree"
+    src.mkdir()
+    build.mkdir()
+    doctree.mkdir()
+
+    (src / "conf.py").write_text(
+        """
+project = 'interactive-plot3d-camera-test'
+extensions = ['munchboka_edutools']
+html_theme = 'basic'
+plot_default_usetex = False
+""".lstrip(),
+        encoding="utf8",
+    )
+    (src / "index.rst").write_text(
+        """
+Interactive plot3d camera test
+==============================
+
+.. interactive-plot3d::
+
+   interactive-var: azim, -70, 30, 3
+   usetex: false
+   axis: on
+   xrange: (-1, 3)
+   yrange: (-1, 2)
+   zrange: (-1, 2)
+   azim: azim
+   vector: (0, 0, 0), (2, 1, 1), blue
+   point: (2, 1, 1), red
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    app = Sphinx(
+        srcdir=str(src),
+        confdir=str(src),
+        outdir=str(build),
+        doctreedir=str(doctree),
+        buildername="html",
+        warningiserror=False,
+        freshenv=True,
+    )
+    app.build()
+
+    asset_dirs = list((build / "_static" / "interactive").glob("interactive_plot3d_*"))
+    assert asset_dirs
+    deltas = json.loads((asset_dirs[0] / "deltas.json").read_text(encoding="utf8"))
+
+    assert "fullSvg" not in deltas[0]
+    assert all("fullSvg" in frame_delta for frame_delta in deltas[1:])
 
 
 def test_plot3d2_renderer_draws_plane():
@@ -1776,3 +1922,68 @@ Plot3d 2 test
     assert "#13579b" in html
     assert "A, B" in html
     assert "En enkel 3D-figur." in html
+
+
+def test_interactive_plot3d_directive_generates_slider_assets(tmp_path: Path):
+    src = tmp_path / "src"
+    build = tmp_path / "build"
+    doctree = tmp_path / "doctree"
+    src.mkdir()
+    build.mkdir()
+    doctree.mkdir()
+
+    (src / "conf.py").write_text(
+        """
+project = 'interactive-plot3d-test'
+extensions = ['munchboka_edutools']
+html_theme = 'basic'
+plot_default_usetex = False
+""".lstrip(),
+        encoding="utf8",
+    )
+    (src / "index.rst").write_text(
+        """
+Interactive plot3d test
+=======================
+
+.. interactive-plot3d::
+   :width: 60%
+
+   interactive-var: a, 0, 1, 3
+   usetex: false
+   axis: off
+   xrange: (-1, 2)
+   yrange: (-1, 1)
+   zrange: (-1, 1)
+   point: (a, 0, 0), red
+   vector: (0, 0, 0), (a, 1, 0), blue
+
+   Interaktiv 3D-figur.
+""".lstrip(),
+        encoding="utf8",
+    )
+
+    app = Sphinx(
+        srcdir=str(src),
+        confdir=str(src),
+        outdir=str(build),
+        doctreedir=str(doctree),
+        buildername="html",
+        warningiserror=False,
+        freshenv=True,
+    )
+    app.build()
+
+    html = (build / "index.html").read_text(encoding="utf8")
+
+    assert "interactive-graph-wrapper" in html
+    assert "interactive-plot3d" in html
+    assert 'type="range"' in html
+    assert "base.svg" in html
+    assert "deltas.json" in html
+    assert "Interaktiv 3D-figur." in html
+
+    asset_dirs = list((build / "_static" / "interactive").glob("interactive_plot3d_*"))
+    assert asset_dirs
+    assert (asset_dirs[0] / "base.svg").exists()
+    assert (asset_dirs[0] / "deltas.json").exists()

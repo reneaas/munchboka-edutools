@@ -1616,7 +1616,7 @@ class InteractiveGraphDirective(SphinxDirective):
 def setup(app: Sphinx) -> Dict[str, Any]:
     """Setup the interactive-graph directive."""
     app.add_directive("interactive-graph", InteractiveGraphDirective)
-
+    app.add_directive("interactive-plot", InteractiveGraphDirective)
     return {
         "version": "0.1.0",
         "parallel_read_safe": True,

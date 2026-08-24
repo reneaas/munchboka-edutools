@@ -1,0 +1,128 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" version="1.1" class="graph-inline-svg" role="img" aria-label="3D-koordinatsystem">
+ 
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 360  L 360 360  L 360 0  L 0 0  L 0 360  z " style="fill: none" id="mb_auto_path_0"/>
+  </g>
+  <g id="axes_1">
+   <g id="Line3DCollection_1">
+    <path d="M -1 205.977613  L 121.536289 140.421476  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_1"/>
+    <path d="M 48.142909 232.852966  L 188.219799 157.912718  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_2"/>
+    <path d="M 114.82642 250.344208  L 254.90331 175.40396  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_3"/>
+    <path d="M 181.50993 267.83545  L 321.58682 192.895202  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_4"/>
+    <path d="M 248.193441 285.326693  L 361 224.975899  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_5"/>
+    <path d="M -1 219.962665  L 248.193441 285.326693  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_6"/>
+    <path d="M 28.151695 190.381641  L 294.885738 260.34661  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_7"/>
+    <path d="M 74.843992 165.401558  L 341.578034 235.366527  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_8"/>
+    <path d="M 121.536289 140.421476  L 361 203.233372  " clip-path="url(#pa970a90074)" style="fill: none; stroke-dasharray: 2.4975,1.08; stroke-dashoffset: 0; stroke: #9a9a9a; stroke-opacity: 0.75; stroke-width: 0.675" id="mb_auto_path_9"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 28.151695 190.381641  L 294.885738 260.34661  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5; stroke-linecap: square" id="mb_auto_path_10"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 48.142909 232.852966  L 188.219799 157.912718  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5; stroke-linecap: square" id="mb_auto_path_11"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 94.835206 283.350781  L 94.835206 56.917088  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5; stroke-linecap: square" id="mb_auto_path_12"/>
+   </g>
+   <g id="Line3DCollection_2">
+    <path d="M 294.885738 260.34661  L 273.547014 254.749412  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_13"/>
+    <path d="M 294.885738 260.34661  L 285.610507 260.726752  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_14"/>
+    <path d="M 294.885738 260.34661  L 285.610507 255.100638  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_15"/>
+   </g>
+   <g id="Line3DCollection_3">
+    <path d="M 188.219799 157.912718  L 177.013648 163.907938  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_16"/>
+    <path d="M 188.219799 157.912718  L 183.34886 162.628432  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_17"/>
+    <path d="M 188.219799 157.912718  L 183.34886 158.408847  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_18"/>
+   </g>
+   <g id="Line3DCollection_4">
+    <path d="M 94.835206 56.917088  L 94.835206 75.031783  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_19"/>
+    <path d="M 94.835206 56.917088  L 92.971238 64.302018  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_20"/>
+    <path d="M 94.835206 56.917088  L 96.699174 65.279864  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #222222; stroke-width: 1.5" id="mb_auto_path_21"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 156.849487 227.862134  L 166.187946 222.866117  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #555555; stroke-width: 0.8; stroke-linecap: square" id="mb_auto_path_22"/>
+   </g>
+   <g id="line2d_5">
+    <path d="M 223.532997 245.353376  L 232.871457 240.357359  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #555555; stroke-width: 0.8; stroke-linecap: square" id="mb_auto_path_23"/>
+   </g>
+   <g id="line2d_6">
+    <path d="M 134.859152 181.143676  L 148.195854 184.641925  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #555555; stroke-width: 0.8; stroke-linecap: square" id="mb_auto_path_24"/>
+   </g>
+   <g id="line2d_7">
+    <path d="M 90.165976 134.892994  L 99.504436 129.896977  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #555555; stroke-width: 0.8; stroke-linecap: square" id="mb_auto_path_25"/>
+   </g>
+   <g id="text_1">
+    <!-- $x$ -->
+    <g style="fill: #222222" transform="translate(284.121739 273.361628)" id="mb_auto_g_0">
+     <text id="mb_auto_text_0">
+      <tspan x="0" y="-0.703125" style="font-size: 12px; font-family: 'cmmi10'; fill: #222222" id="mb_auto_tspan_0">x</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_2">
+    <!-- $y$ -->
+    <g style="fill: #222222" transform="translate(199.425951 151.917498)" id="mb_auto_g_1">
+     <text id="mb_auto_text_1">
+      <tspan x="0" y="-0.703125" style="font-size: 12px; font-family: 'cmmi10'; fill: #222222" id="mb_auto_tspan_1">y</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_3">
+    <!-- $z$ -->
+    <g style="fill: #222222" transform="translate(82.260121 52.602373)" id="mb_auto_g_2">
+     <text id="mb_auto_text_2">
+      <tspan x="0" y="-0.703125" style="font-size: 12px; font-family: 'cmmi10'; fill: #222222" id="mb_auto_tspan_2">z</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 7.8px; font-family: 'DejaVu Sans', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', sans-serif; text-anchor: start; fill: #555555" x="149.845642" y="231.609146" transform="rotate(-0 149.845642 231.609146)" id="mb_auto_text_3">1</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 7.8px; font-family: 'DejaVu Sans', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', sans-serif; text-anchor: start; fill: #555555" x="216.529153" y="249.100388" transform="rotate(-0 216.529153 249.100388)" id="mb_auto_text_4">2</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 7.8px; font-family: 'DejaVu Sans', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', sans-serif; text-anchor: start; fill: #555555" x="124.856625" y="178.51999" transform="rotate(-0 124.856625 178.51999)" id="mb_auto_text_5">1</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 7.8px; font-family: 'DejaVu Sans', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', sans-serif; text-anchor: start; fill: #555555" x="83.162132" y="138.640006" transform="rotate(-0 83.162132 138.640006)" id="mb_auto_text_6">1</text>
+   </g>
+   <g id="text_8">
+    <!-- $P$ -->
+    <g transform="translate(148.965083 102.429479)" id="mb_auto_g_3">
+     <text id="mb_auto_text_7">
+      <tspan x="0" y="-0.796875" style="font-size: 12px; font-family: 'cmmi10'" id="mb_auto_tspan_3">P</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="Line3DCollection_5">
+    <path d="M 94.835206 207.872883  L 136.244872 118.780426  " clip-path="url(#pa970a90074)" style="fill: none; stroke: #0072b2; stroke-width: 1.5" id="mb_auto_path_26"/>
+   </g>
+   <g id="Poly3DCollection_1">
+    <defs>
+     <path id="meaf92ec413" d="M 141.527503 -252.585097  L 131.284087 -243.525319  L 141.205657 -238.91383  z " style="stroke: #0072b2; stroke-width: 0.6"/>
+    </defs>
+    <g clip-path="url(#pa970a90074)" id="mb_auto_g_4">
+     <use xlink:href="#meaf92ec413" x="0" y="360" style="fill: #0072b2; fill-opacity: 0.98; stroke: #0072b2; stroke-width: 0.6" id="mb_auto_use_0"/>
+    </g>
+   </g>
+   <g id="Path3DCollection_1">
+    <defs>
+     <path id="m9071c0a76b" d="M 0 3.24037  C 0.859356 3.24037 1.683631 2.898944 2.291288 2.291288  C 2.898944 1.683631 3.24037 0.859356 3.24037 0  C 3.24037 -0.859356 2.898944 -1.683631 2.291288 -2.291288  C 1.683631 -2.898944 0.859356 -3.24037 0 -3.24037  C -0.859356 -3.24037 -1.683631 -2.898944 -2.291288 -2.291288  C -2.898944 -1.683631 -3.24037 -0.859356 -3.24037 0  C -3.24037 0.859356 -2.898944 1.683631 -2.291288 2.291288  C -1.683631 2.898944 -0.859356 3.24037 0 3.24037  z " style="stroke: #dc5e8b"/>
+    </defs>
+    <g clip-path="url(#pa970a90074)" id="mb_auto_g_5">
+     <use xlink:href="#m9071c0a76b" x="141.527503" y="107.414903" style="fill: #dc5e8b; stroke: #dc5e8b" id="mb_auto_use_1"/>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pa970a90074">
+   <rect x="0" y="0" width="360" height="360" id="mb_auto_rect_0"/>
+  </clipPath>
+ </defs>
+</svg>

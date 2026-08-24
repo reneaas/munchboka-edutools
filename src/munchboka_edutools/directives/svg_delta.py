@@ -67,14 +67,44 @@ def _prepare_svg_for_deltas(svg: str) -> str:
         return cleaned
 
     counters: Dict[str, int] = {}
+    stable_id_map: Dict[str, str] = {}
+
+    def _owner_collection_id(elem) -> str | None:
+        parent = elem
+        while parent is not None:
+            parent_id = parent.get("id")
+            if parent_id and parent_id.startswith(("Poly3DCollection_",)):
+                return parent_id
+            parent = parent.getparent()
+        return None
 
     for elem in root.iter():
         if not isinstance(elem.tag, str):
             continue
-        if elem.get("id"):
+        local = LET.QName(elem).localname
+        elem_id = elem.get("id")
+        owner_collection_id = _owner_collection_id(elem)
+
+        # Matplotlib uses volatile `m...` ids both for reusable markers and for
+        # Poly3DCollection polygon paths. Marker ids are deliberately ignored by
+        # the delta engine, but 3D polygon paths carry changing geometry (e.g.
+        # vector arrowheads), so make those ids deterministic.
+        if (
+            elem_id
+            and owner_collection_id
+            and re.match(r"^(?:p|m)[0-9a-fA-F]{6,}$", elem_id)
+        ):
+            key = f"{owner_collection_id}:{local}"
+            idx = counters.get(key, 0)
+            counters[key] = idx + 1
+            new_id = f"mb_stable_{owner_collection_id}_{local}_{idx}"
+            elem.set("id", new_id)
+            stable_id_map[elem_id] = new_id
             continue
 
-        local = LET.QName(elem).localname
+        if elem_id:
+            continue
+
         # Skip top-level/structural nodes that rarely need ids.
         if local in ("svg", "defs", "style", "metadata", "title", "desc"):
             continue
@@ -84,6 +114,19 @@ def _prepare_svg_for_deltas(svg: str) -> str:
         # Use a dedicated prefix to avoid colliding with Matplotlib ids like
         # `path_26`, `patch_10`, etc.
         elem.set("id", f"mb_auto_{local}_{idx}")
+
+    if stable_id_map:
+        href_attrs = (
+            "href",
+            "{http://www.w3.org/1999/xlink}href",
+        )
+        for elem in root.iter():
+            for attr in href_attrs:
+                value = elem.get(attr)
+                if isinstance(value, str) and value.startswith("#"):
+                    new_id = stable_id_map.get(value[1:])
+                    if new_id:
+                        elem.set(attr, f"#{new_id}")
 
     return LET.tostring(root, encoding="unicode")
 

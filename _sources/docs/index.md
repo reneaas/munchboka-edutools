@@ -2,7 +2,7 @@
 
 This section documents every Sphinx directive registered by `munchboka-edutools`.
 
-Total registered directive names: **52**
+Total registered directive names: **53**
 
 ## All Directives
 
@@ -28,6 +28,7 @@ Total registered directive names: **52**
 - [`horner`](horner.md) (directive)
 - [`interactive-code`](interactive-code.md) (directive)
 - [`interactive-graph`](interactive-graph.md) (directive)
+- [`interactive-plot3d`](interactive-plot3d.md) (directive)
 - [`jeopardy`](jeopardy.md) (directive)
 - [`jeopardy-2`](jeopardy-2.md) (directive)
 - [`jeopardy-answer`](jeopardy-answer.md) (directive)

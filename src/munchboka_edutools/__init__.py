@@ -165,6 +165,7 @@ def _copy_static(app):
         # 6. jQuery, jQuery UI, and GeoGebra (priority 800-900)
         # 7. CodeMirror (last - priority 900)
         _register("js/utils.js", priority=450)
+        _register("js/sidebar-toggle.js", priority=451)
         _register("js/casThemeManager.js", priority=480)  # Before jQuery UI for theme handling
 
         # Add KaTeX before pair-puzzle scripts (which depend on it)

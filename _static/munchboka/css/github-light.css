@@ -66,6 +66,15 @@ body[data-theme='light'] .hljs-title,
   color: #0550ae;
 }
 
+/* Override the CDN github.min.css #e36229 which is too light on cheap screens */
+html.light-mode .hljs-built_in,
+body.light-mode .hljs-built_in,
+html[data-theme='light'] .hljs-built_in,
+body[data-theme='light'] .hljs-built_in,
+[data-mode='light'] .hljs-built_in {
+  color: #953800;
+}
+
 /* Fallback for generic code tokens used by sphinx/highlight.js */
 html.light-mode .nb-output pre,
 body.light-mode .nb-output pre,

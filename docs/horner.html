@@ -16,27 +16,24 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/general_style.css?v=11bbc4b6" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/admonitions.css?v=9237f12a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/popup.css?v=2d27c3a4" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/escape-room.css?v=bfeb5342" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/interactive_code.css?v=23cd07d5" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
@@ -55,41 +52,42 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=57d653fb" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=241d39f0" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=b3cda4db" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=9eb2d604" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=f903e660" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=44933e1a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=951b6e4f" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=722631f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=bc8164d8" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
     <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=d1549766" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=1b585024" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=c5b7ed32" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=acd93126" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/timedQuiz.css?v=89e27729" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/cas_popup.css?v=bae4ad7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=f75ab0f7" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=2454bc3f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/cas_popup.css?v=bb968b84" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-light.css?v=0cccc4aa" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark.css?v=e9bcc25f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/github-dark-high-contrast.css?v=4c0c1b0f" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=30eed71c" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=f77426ac" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=8c5c5c21" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=fd6d533f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=0a0f323a" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=a1529215" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=f9e433e9" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/print_pdf.css?v=448841f9" />
     <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
   
-  <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/munchboka/fonts/opendyslexic/opendylexic-toggle.js?v=1652b728"></script>
     <script src="../_static/munchboka/js/utils.js?v=b59157b9"></script>
     <script src="../_static/munchboka/js/casThemeManager.js?v=88874cc7"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
@@ -97,15 +95,15 @@
     <script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
-    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script src="../_static/munchboka/js/solution_timer.js?v=e7176ead"></script>
-    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=fec3e31f"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/munchboka/js/solution_timer.js?v=192f5d3d"></script>
+    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/flashcards.js?v=293ceac2"></script>
-    <script src="../_static/munchboka/js/interactiveCode/interactiveCodeSetup.js?v=733f5585"></script>
+    <script src="../_static/munchboka/js/interactiveCode/interactiveCodeSetup.js?v=ce240afa"></script>
     <script src="../_static/munchboka/js/interactiveCode/codeEditor.js?v=d7a9df79"></script>
     <script src="../_static/munchboka/js/interactiveCode/pythonRunner.js?v=e9f0c2d2"></script>
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=024a7849"></script>
-    <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=0d62d95e"></script>
+    <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=ecc68a76"></script>
     <script src="../_static/munchboka/js/jeopardy.js?v=375a3583"></script>
     <script src="../_static/munchboka/js/quiz.js?v=f8bcd7a1"></script>
     <script>let toggleHintShow = 'Click to show';</script>
@@ -123,13 +121,17 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'docs/horner';</script>
-    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
-    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=fec3e31f"></script>
+    <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
     <script src="../_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
+    <script src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
+    <script src="../_static/munchboka/js/part.js?v=ca40db03"></script>
+    <script src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
+    <script src="../_static/munchboka/js/proof.js?v=2793954e"></script>
+    <script src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
@@ -145,30 +147,34 @@
     <link rel="prev" title="hints directive" href="hints.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
-  
-    
-    <script src="../_static/searchtools.js"></script>
-    <script src="../_static/language_data.js"></script>
-    <script src="../searchindex.js"></script>
-  
   </head>
-  <body data-default-mode="">
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
-
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
   
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
   
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
   
-  
-  <dialog id="pst-search-dialog">
-    
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../search.html"
       method="get">
@@ -176,6 +182,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -183,59 +190,15 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
 
   
-    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
-<div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
-    <span class="fa-solid fa-bars"></span>
-  </button>
-  
-  
-  <div class="col-lg-9 navbar-header-items">
-    
-    
-    <div class="navbar-header-items__end">
-      
-        <div class="navbar-item navbar-persistent--container">
-          
-
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button>
-        </div>
-      
-      
-    </div>
-    
-  </div>
-  
-  
-    <div class="navbar-persistent--mobile">
-
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button>
-    </div>
-  
-
-  
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
-      <span class="fa-solid fa-outdent"></span>
-    </button>
-  
-</div>
-
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
     </header>
   
 
@@ -244,8 +207,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -275,11 +237,15 @@
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
@@ -348,14 +314,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -438,7 +399,7 @@
 
 
 <button onclick="toggleFullScreen()"
-  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  class="btn btn-sm btn-fullscreen-button"
   title="Fullscreen mode"
   data-bs-placement="bottom" data-bs-toggle="tooltip"
 >
@@ -452,17 +413,25 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
-<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
 </div></div>
@@ -484,7 +453,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="pst-show_toc_level nav section-nav flex-column">
+                <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-reveal">Step-by-step reveal</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
@@ -516,90 +485,90 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 142.802 50.809" class="horner-inline-svg" role="img" aria-label="Horner's scheme for (x^3 + 2x^2 - 3x - 6) at x=1">
 <defs>
 <g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-0">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-0">
 <path d="M 2.9375 -6.375 C 2.9375 -6.625 2.9375 -6.640625 2.703125 -6.640625 C 2.078125 -6 1.203125 -6 0.890625 -6 L 0.890625 -5.6875 C 1.09375 -5.6875 1.671875 -5.6875 2.1875 -5.953125 L 2.1875 -0.78125 C 2.1875 -0.421875 2.15625 -0.3125 1.265625 -0.3125 L 0.953125 -0.3125 L 0.953125 0 C 1.296875 -0.03125 2.15625 -0.03125 2.5625 -0.03125 C 2.953125 -0.03125 3.828125 -0.03125 4.171875 0 L 4.171875 -0.3125 L 3.859375 -0.3125 C 2.953125 -0.3125 2.9375 -0.421875 2.9375 -0.78125 Z M 2.9375 -6.375 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-1">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-1">
 <path d="M 1.265625 -0.765625 L 2.328125 -1.796875 C 3.875 -3.171875 4.46875 -3.703125 4.46875 -4.703125 C 4.46875 -5.84375 3.578125 -6.640625 2.359375 -6.640625 C 1.234375 -6.640625 0.5 -5.71875 0.5 -4.828125 C 0.5 -4.28125 1 -4.28125 1.03125 -4.28125 C 1.203125 -4.28125 1.546875 -4.390625 1.546875 -4.8125 C 1.546875 -5.0625 1.359375 -5.328125 1.015625 -5.328125 C 0.9375 -5.328125 0.921875 -5.328125 0.890625 -5.3125 C 1.109375 -5.96875 1.65625 -6.328125 2.234375 -6.328125 C 3.140625 -6.328125 3.5625 -5.515625 3.5625 -4.703125 C 3.5625 -3.90625 3.078125 -3.125 2.515625 -2.5 L 0.609375 -0.375 C 0.5 -0.265625 0.5 -0.234375 0.5 0 L 4.203125 0 L 4.46875 -1.734375 L 4.234375 -1.734375 C 4.171875 -1.4375 4.109375 -1 4 -0.84375 C 3.9375 -0.765625 3.28125 -0.765625 3.0625 -0.765625 Z M 1.265625 -0.765625 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-2">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-2">
 <path d="M 2.890625 -3.515625 C 3.703125 -3.78125 4.28125 -4.46875 4.28125 -5.265625 C 4.28125 -6.078125 3.40625 -6.640625 2.453125 -6.640625 C 1.453125 -6.640625 0.6875 -6.046875 0.6875 -5.28125 C 0.6875 -4.953125 0.90625 -4.765625 1.203125 -4.765625 C 1.5 -4.765625 1.703125 -4.984375 1.703125 -5.28125 C 1.703125 -5.765625 1.234375 -5.765625 1.09375 -5.765625 C 1.390625 -6.265625 2.046875 -6.390625 2.40625 -6.390625 C 2.828125 -6.390625 3.375 -6.171875 3.375 -5.28125 C 3.375 -5.15625 3.34375 -4.578125 3.09375 -4.140625 C 2.796875 -3.65625 2.453125 -3.625 2.203125 -3.625 C 2.125 -3.609375 1.890625 -3.59375 1.8125 -3.59375 C 1.734375 -3.578125 1.671875 -3.5625 1.671875 -3.46875 C 1.671875 -3.359375 1.734375 -3.359375 1.90625 -3.359375 L 2.34375 -3.359375 C 3.15625 -3.359375 3.53125 -2.6875 3.53125 -1.703125 C 3.53125 -0.34375 2.84375 -0.0625 2.40625 -0.0625 C 1.96875 -0.0625 1.21875 -0.234375 0.875 -0.8125 C 1.21875 -0.765625 1.53125 -0.984375 1.53125 -1.359375 C 1.53125 -1.71875 1.265625 -1.921875 0.984375 -1.921875 C 0.734375 -1.921875 0.421875 -1.78125 0.421875 -1.34375 C 0.421875 -0.4375 1.34375 0.21875 2.4375 0.21875 C 3.65625 0.21875 4.5625 -0.6875 4.5625 -1.703125 C 4.5625 -2.515625 3.921875 -3.296875 2.890625 -3.515625 Z M 2.890625 -3.515625 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-3">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-3">
 <path d="M 1.3125 -3.265625 L 1.3125 -3.515625 C 1.3125 -6.03125 2.546875 -6.390625 3.0625 -6.390625 C 3.296875 -6.390625 3.71875 -6.328125 3.9375 -5.984375 C 3.78125 -5.984375 3.390625 -5.984375 3.390625 -5.546875 C 3.390625 -5.234375 3.625 -5.078125 3.84375 -5.078125 C 4 -5.078125 4.3125 -5.171875 4.3125 -5.5625 C 4.3125 -6.15625 3.875 -6.640625 3.046875 -6.640625 C 1.765625 -6.640625 0.421875 -5.359375 0.421875 -3.15625 C 0.421875 -0.484375 1.578125 0.21875 2.5 0.21875 C 3.609375 0.21875 4.5625 -0.71875 4.5625 -2.03125 C 4.5625 -3.296875 3.671875 -4.25 2.5625 -4.25 C 1.890625 -4.25 1.515625 -3.75 1.3125 -3.265625 Z M 2.5 -0.0625 C 1.875 -0.0625 1.578125 -0.65625 1.515625 -0.8125 C 1.328125 -1.28125 1.328125 -2.078125 1.328125 -2.25 C 1.328125 -3.03125 1.65625 -4.03125 2.546875 -4.03125 C 2.71875 -4.03125 3.171875 -4.03125 3.484375 -3.40625 C 3.65625 -3.046875 3.65625 -2.53125 3.65625 -2.046875 C 3.65625 -1.5625 3.65625 -1.0625 3.484375 -0.703125 C 3.1875 -0.109375 2.734375 -0.0625 2.5 -0.0625 Z M 2.5 -0.0625 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-4">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-4">
 <path d="M 6.84375 -3.265625 C 7 -3.265625 7.1875 -3.265625 7.1875 -3.453125 C 7.1875 -3.65625 7 -3.65625 6.859375 -3.65625 L 0.890625 -3.65625 C 0.75 -3.65625 0.5625 -3.65625 0.5625 -3.453125 C 0.5625 -3.265625 0.75 -3.265625 0.890625 -3.265625 Z M 6.859375 -1.328125 C 7 -1.328125 7.1875 -1.328125 7.1875 -1.53125 C 7.1875 -1.71875 7 -1.71875 6.84375 -1.71875 L 0.890625 -1.71875 C 0.75 -1.71875 0.5625 -1.71875 0.5625 -1.53125 C 0.5625 -1.328125 0.75 -1.328125 0.890625 -1.328125 Z M 6.859375 -1.328125 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-0-5">
+<g id="hnr_317f2b269825_e4fbbe_glyph-0-5">
 <path d="M 4.578125 -3.1875 C 4.578125 -3.984375 4.53125 -4.78125 4.1875 -5.515625 C 3.734375 -6.484375 2.90625 -6.640625 2.5 -6.640625 C 1.890625 -6.640625 1.171875 -6.375 0.75 -5.453125 C 0.4375 -4.765625 0.390625 -3.984375 0.390625 -3.1875 C 0.390625 -2.4375 0.421875 -1.546875 0.84375 -0.78125 C 1.265625 0.015625 2 0.21875 2.484375 0.21875 C 3.015625 0.21875 3.78125 0.015625 4.21875 -0.9375 C 4.53125 -1.625 4.578125 -2.40625 4.578125 -3.1875 Z M 2.484375 0 C 2.09375 0 1.5 -0.25 1.328125 -1.203125 C 1.21875 -1.796875 1.21875 -2.71875 1.21875 -3.3125 C 1.21875 -3.953125 1.21875 -4.609375 1.296875 -5.140625 C 1.484375 -6.328125 2.234375 -6.421875 2.484375 -6.421875 C 2.8125 -6.421875 3.46875 -6.234375 3.65625 -5.25 C 3.765625 -4.6875 3.765625 -3.9375 3.765625 -3.3125 C 3.765625 -2.5625 3.765625 -1.890625 3.65625 -1.25 C 3.5 -0.296875 2.9375 0 2.484375 0 Z M 2.484375 0 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-1-0">
+<g id="hnr_317f2b269825_e4fbbe_glyph-1-0">
 <path d="M 6.5625 -2.296875 C 6.734375 -2.296875 6.921875 -2.296875 6.921875 -2.5 C 6.921875 -2.6875 6.734375 -2.6875 6.5625 -2.6875 L 1.171875 -2.6875 C 1 -2.6875 0.828125 -2.6875 0.828125 -2.5 C 0.828125 -2.296875 1 -2.296875 1.171875 -2.296875 Z M 6.5625 -2.296875 "/>
 </g>
-<g id="hnr_317f2b269825_707ea1_glyph-2-0">
+<g id="hnr_317f2b269825_e4fbbe_glyph-2-0">
 <path d="M 3.328125 -3.015625 C 3.390625 -3.265625 3.625 -4.1875 4.3125 -4.1875 C 4.359375 -4.1875 4.609375 -4.1875 4.8125 -4.0625 C 4.53125 -4 4.34375 -3.765625 4.34375 -3.515625 C 4.34375 -3.359375 4.453125 -3.171875 4.71875 -3.171875 C 4.9375 -3.171875 5.25 -3.34375 5.25 -3.75 C 5.25 -4.265625 4.671875 -4.40625 4.328125 -4.40625 C 3.75 -4.40625 3.40625 -3.875 3.28125 -3.65625 C 3.03125 -4.3125 2.5 -4.40625 2.203125 -4.40625 C 1.171875 -4.40625 0.59375 -3.125 0.59375 -2.875 C 0.59375 -2.765625 0.703125 -2.765625 0.71875 -2.765625 C 0.796875 -2.765625 0.828125 -2.796875 0.84375 -2.875 C 1.1875 -3.9375 1.84375 -4.1875 2.1875 -4.1875 C 2.375 -4.1875 2.71875 -4.09375 2.71875 -3.515625 C 2.71875 -3.203125 2.546875 -2.546875 2.1875 -1.140625 C 2.03125 -0.53125 1.671875 -0.109375 1.234375 -0.109375 C 1.171875 -0.109375 0.953125 -0.109375 0.734375 -0.234375 C 0.984375 -0.296875 1.203125 -0.5 1.203125 -0.78125 C 1.203125 -1.046875 0.984375 -1.125 0.84375 -1.125 C 0.53125 -1.125 0.296875 -0.875 0.296875 -0.546875 C 0.296875 -0.09375 0.78125 0.109375 1.21875 0.109375 C 1.890625 0.109375 2.25 -0.59375 2.265625 -0.640625 C 2.390625 -0.28125 2.75 0.109375 3.34375 0.109375 C 4.375 0.109375 4.9375 -1.171875 4.9375 -1.421875 C 4.9375 -1.53125 4.859375 -1.53125 4.828125 -1.53125 C 4.734375 -1.53125 4.71875 -1.484375 4.6875 -1.421875 C 4.359375 -0.34375 3.6875 -0.109375 3.375 -0.109375 C 2.984375 -0.109375 2.828125 -0.421875 2.828125 -0.765625 C 2.828125 -0.984375 2.875 -1.203125 2.984375 -1.640625 Z M 3.328125 -3.015625 "/>
 </g>
 </g>
-<clipPath id="hnr_317f2b269825_707ea1_clip-0">
+<clipPath id="hnr_317f2b269825_e4fbbe_clip-0">
 <path clip-rule="nonzero" d="M 33 33 L 142.800781 33 L 142.800781 35 L 33 35 Z M 33 33 "/>
 </clipPath>
 </defs>
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00009375 -0.0015 L 0.00009375 16.936 " transform="matrix(1, 0, 0, -1, 34.121, 16.936)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-0" x="51.478" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-0" x="51.478" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-1" x="78.596197" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-1" x="78.596197" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-1-0" x="95.751794" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-1-0" x="95.751794" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-2" x="105.722364" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-2" x="105.722364" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-1-0" x="122.877962" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-1-0" x="122.877962" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-3" x="132.838569" y="10.859"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-3" x="132.838569" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-2-0" x="4.981" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-2-0" x="4.981" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-4" x="13.444229" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-4" x="13.444229" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-0" x="23.962742" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-0" x="23.962742" y="27.795"/>
 </g>
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00009375 0.00090625 L 0.00009375 16.9345 " transform="matrix(1, 0, 0, -1, 34.121, 33.872)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-0" x="78.598" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-0" x="78.598" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-2" x="105.716197" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-2" x="105.716197" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-5" x="132.834394" y="27.795"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-5" x="132.834394" y="27.795"/>
 </g>
-<g clip-path="url(#hnr_317f2b269825_707ea1_clip-0)">
+<g clip-path="url(#hnr_317f2b269825_e4fbbe_clip-0)">
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000875 0.0016875 L 108.879781 0.0016875 " transform="matrix(1, 0, 0, -1, 33.921, 34.072)"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-0" x="51.478" y="44.732"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-0" x="51.478" y="44.732"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-2" x="78.596197" y="44.732"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-2" x="78.596197" y="44.732"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-5" x="105.714394" y="44.732"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-5" x="105.714394" y="44.732"/>
 </g>
 <g fill="rgb(100%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-1-0" x="122.879954" y="44.732"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-1-0" x="122.879954" y="44.732"/>
 </g>
 <g fill="rgb(100%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_317f2b269825_707ea1_glyph-0-3" x="132.840562" y="44.732"/>
+<use href="#hnr_317f2b269825_e4fbbe_glyph-0-3" x="132.840562" y="44.732"/>
 </g>
 </svg>
 </div></figure>
@@ -619,90 +588,90 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 142.802 50.809" class="horner-inline-svg" role="img" aria-label="Horner's scheme for (x^3 + 2x^2 - 3x - 6) at x=1 – stage 2">
 <defs>
 <g>
-<g id="hnr_91c235812595_4b6066_glyph-0-0">
+<g id="hnr_91c235812595_8f82b3_glyph-0-0">
 <path d="M 2.9375 -6.375 C 2.9375 -6.625 2.9375 -6.640625 2.703125 -6.640625 C 2.078125 -6 1.203125 -6 0.890625 -6 L 0.890625 -5.6875 C 1.09375 -5.6875 1.671875 -5.6875 2.1875 -5.953125 L 2.1875 -0.78125 C 2.1875 -0.421875 2.15625 -0.3125 1.265625 -0.3125 L 0.953125 -0.3125 L 0.953125 0 C 1.296875 -0.03125 2.15625 -0.03125 2.5625 -0.03125 C 2.953125 -0.03125 3.828125 -0.03125 4.171875 0 L 4.171875 -0.3125 L 3.859375 -0.3125 C 2.953125 -0.3125 2.9375 -0.421875 2.9375 -0.78125 Z M 2.9375 -6.375 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-0-1">
+<g id="hnr_91c235812595_8f82b3_glyph-0-1">
 <path d="M 1.265625 -0.765625 L 2.328125 -1.796875 C 3.875 -3.171875 4.46875 -3.703125 4.46875 -4.703125 C 4.46875 -5.84375 3.578125 -6.640625 2.359375 -6.640625 C 1.234375 -6.640625 0.5 -5.71875 0.5 -4.828125 C 0.5 -4.28125 1 -4.28125 1.03125 -4.28125 C 1.203125 -4.28125 1.546875 -4.390625 1.546875 -4.8125 C 1.546875 -5.0625 1.359375 -5.328125 1.015625 -5.328125 C 0.9375 -5.328125 0.921875 -5.328125 0.890625 -5.3125 C 1.109375 -5.96875 1.65625 -6.328125 2.234375 -6.328125 C 3.140625 -6.328125 3.5625 -5.515625 3.5625 -4.703125 C 3.5625 -3.90625 3.078125 -3.125 2.515625 -2.5 L 0.609375 -0.375 C 0.5 -0.265625 0.5 -0.234375 0.5 0 L 4.203125 0 L 4.46875 -1.734375 L 4.234375 -1.734375 C 4.171875 -1.4375 4.109375 -1 4 -0.84375 C 3.9375 -0.765625 3.28125 -0.765625 3.0625 -0.765625 Z M 1.265625 -0.765625 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-0-2">
+<g id="hnr_91c235812595_8f82b3_glyph-0-2">
 <path d="M 2.890625 -3.515625 C 3.703125 -3.78125 4.28125 -4.46875 4.28125 -5.265625 C 4.28125 -6.078125 3.40625 -6.640625 2.453125 -6.640625 C 1.453125 -6.640625 0.6875 -6.046875 0.6875 -5.28125 C 0.6875 -4.953125 0.90625 -4.765625 1.203125 -4.765625 C 1.5 -4.765625 1.703125 -4.984375 1.703125 -5.28125 C 1.703125 -5.765625 1.234375 -5.765625 1.09375 -5.765625 C 1.390625 -6.265625 2.046875 -6.390625 2.40625 -6.390625 C 2.828125 -6.390625 3.375 -6.171875 3.375 -5.28125 C 3.375 -5.15625 3.34375 -4.578125 3.09375 -4.140625 C 2.796875 -3.65625 2.453125 -3.625 2.203125 -3.625 C 2.125 -3.609375 1.890625 -3.59375 1.8125 -3.59375 C 1.734375 -3.578125 1.671875 -3.5625 1.671875 -3.46875 C 1.671875 -3.359375 1.734375 -3.359375 1.90625 -3.359375 L 2.34375 -3.359375 C 3.15625 -3.359375 3.53125 -2.6875 3.53125 -1.703125 C 3.53125 -0.34375 2.84375 -0.0625 2.40625 -0.0625 C 1.96875 -0.0625 1.21875 -0.234375 0.875 -0.8125 C 1.21875 -0.765625 1.53125 -0.984375 1.53125 -1.359375 C 1.53125 -1.71875 1.265625 -1.921875 0.984375 -1.921875 C 0.734375 -1.921875 0.421875 -1.78125 0.421875 -1.34375 C 0.421875 -0.4375 1.34375 0.21875 2.4375 0.21875 C 3.65625 0.21875 4.5625 -0.6875 4.5625 -1.703125 C 4.5625 -2.515625 3.921875 -3.296875 2.890625 -3.515625 Z M 2.890625 -3.515625 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-0-3">
+<g id="hnr_91c235812595_8f82b3_glyph-0-3">
 <path d="M 1.3125 -3.265625 L 1.3125 -3.515625 C 1.3125 -6.03125 2.546875 -6.390625 3.0625 -6.390625 C 3.296875 -6.390625 3.71875 -6.328125 3.9375 -5.984375 C 3.78125 -5.984375 3.390625 -5.984375 3.390625 -5.546875 C 3.390625 -5.234375 3.625 -5.078125 3.84375 -5.078125 C 4 -5.078125 4.3125 -5.171875 4.3125 -5.5625 C 4.3125 -6.15625 3.875 -6.640625 3.046875 -6.640625 C 1.765625 -6.640625 0.421875 -5.359375 0.421875 -3.15625 C 0.421875 -0.484375 1.578125 0.21875 2.5 0.21875 C 3.609375 0.21875 4.5625 -0.71875 4.5625 -2.03125 C 4.5625 -3.296875 3.671875 -4.25 2.5625 -4.25 C 1.890625 -4.25 1.515625 -3.75 1.3125 -3.265625 Z M 2.5 -0.0625 C 1.875 -0.0625 1.578125 -0.65625 1.515625 -0.8125 C 1.328125 -1.28125 1.328125 -2.078125 1.328125 -2.25 C 1.328125 -3.03125 1.65625 -4.03125 2.546875 -4.03125 C 2.71875 -4.03125 3.171875 -4.03125 3.484375 -3.40625 C 3.65625 -3.046875 3.65625 -2.53125 3.65625 -2.046875 C 3.65625 -1.5625 3.65625 -1.0625 3.484375 -0.703125 C 3.1875 -0.109375 2.734375 -0.0625 2.5 -0.0625 Z M 2.5 -0.0625 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-0-4">
+<g id="hnr_91c235812595_8f82b3_glyph-0-4">
 <path d="M 6.84375 -3.265625 C 7 -3.265625 7.1875 -3.265625 7.1875 -3.453125 C 7.1875 -3.65625 7 -3.65625 6.859375 -3.65625 L 0.890625 -3.65625 C 0.75 -3.65625 0.5625 -3.65625 0.5625 -3.453125 C 0.5625 -3.265625 0.75 -3.265625 0.890625 -3.265625 Z M 6.859375 -1.328125 C 7 -1.328125 7.1875 -1.328125 7.1875 -1.53125 C 7.1875 -1.71875 7 -1.71875 6.84375 -1.71875 L 0.890625 -1.71875 C 0.75 -1.71875 0.5625 -1.71875 0.5625 -1.53125 C 0.5625 -1.328125 0.75 -1.328125 0.890625 -1.328125 Z M 6.859375 -1.328125 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-0-5">
+<g id="hnr_91c235812595_8f82b3_glyph-0-5">
 <path d="M 4.578125 -3.1875 C 4.578125 -3.984375 4.53125 -4.78125 4.1875 -5.515625 C 3.734375 -6.484375 2.90625 -6.640625 2.5 -6.640625 C 1.890625 -6.640625 1.171875 -6.375 0.75 -5.453125 C 0.4375 -4.765625 0.390625 -3.984375 0.390625 -3.1875 C 0.390625 -2.4375 0.421875 -1.546875 0.84375 -0.78125 C 1.265625 0.015625 2 0.21875 2.484375 0.21875 C 3.015625 0.21875 3.78125 0.015625 4.21875 -0.9375 C 4.53125 -1.625 4.578125 -2.40625 4.578125 -3.1875 Z M 2.484375 0 C 2.09375 0 1.5 -0.25 1.328125 -1.203125 C 1.21875 -1.796875 1.21875 -2.71875 1.21875 -3.3125 C 1.21875 -3.953125 1.21875 -4.609375 1.296875 -5.140625 C 1.484375 -6.328125 2.234375 -6.421875 2.484375 -6.421875 C 2.8125 -6.421875 3.46875 -6.234375 3.65625 -5.25 C 3.765625 -4.6875 3.765625 -3.9375 3.765625 -3.3125 C 3.765625 -2.5625 3.765625 -1.890625 3.65625 -1.25 C 3.5 -0.296875 2.9375 0 2.484375 0 Z M 2.484375 0 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-1-0">
+<g id="hnr_91c235812595_8f82b3_glyph-1-0">
 <path d="M 6.5625 -2.296875 C 6.734375 -2.296875 6.921875 -2.296875 6.921875 -2.5 C 6.921875 -2.6875 6.734375 -2.6875 6.5625 -2.6875 L 1.171875 -2.6875 C 1 -2.6875 0.828125 -2.6875 0.828125 -2.5 C 0.828125 -2.296875 1 -2.296875 1.171875 -2.296875 Z M 6.5625 -2.296875 "/>
 </g>
-<g id="hnr_91c235812595_4b6066_glyph-2-0">
+<g id="hnr_91c235812595_8f82b3_glyph-2-0">
 <path d="M 3.328125 -3.015625 C 3.390625 -3.265625 3.625 -4.1875 4.3125 -4.1875 C 4.359375 -4.1875 4.609375 -4.1875 4.8125 -4.0625 C 4.53125 -4 4.34375 -3.765625 4.34375 -3.515625 C 4.34375 -3.359375 4.453125 -3.171875 4.71875 -3.171875 C 4.9375 -3.171875 5.25 -3.34375 5.25 -3.75 C 5.25 -4.265625 4.671875 -4.40625 4.328125 -4.40625 C 3.75 -4.40625 3.40625 -3.875 3.28125 -3.65625 C 3.03125 -4.3125 2.5 -4.40625 2.203125 -4.40625 C 1.171875 -4.40625 0.59375 -3.125 0.59375 -2.875 C 0.59375 -2.765625 0.703125 -2.765625 0.71875 -2.765625 C 0.796875 -2.765625 0.828125 -2.796875 0.84375 -2.875 C 1.1875 -3.9375 1.84375 -4.1875 2.1875 -4.1875 C 2.375 -4.1875 2.71875 -4.09375 2.71875 -3.515625 C 2.71875 -3.203125 2.546875 -2.546875 2.1875 -1.140625 C 2.03125 -0.53125 1.671875 -0.109375 1.234375 -0.109375 C 1.171875 -0.109375 0.953125 -0.109375 0.734375 -0.234375 C 0.984375 -0.296875 1.203125 -0.5 1.203125 -0.78125 C 1.203125 -1.046875 0.984375 -1.125 0.84375 -1.125 C 0.53125 -1.125 0.296875 -0.875 0.296875 -0.546875 C 0.296875 -0.09375 0.78125 0.109375 1.21875 0.109375 C 1.890625 0.109375 2.25 -0.59375 2.265625 -0.640625 C 2.390625 -0.28125 2.75 0.109375 3.34375 0.109375 C 4.375 0.109375 4.9375 -1.171875 4.9375 -1.421875 C 4.9375 -1.53125 4.859375 -1.53125 4.828125 -1.53125 C 4.734375 -1.53125 4.71875 -1.484375 4.6875 -1.421875 C 4.359375 -0.34375 3.6875 -0.109375 3.375 -0.109375 C 2.984375 -0.109375 2.828125 -0.421875 2.828125 -0.765625 C 2.828125 -0.984375 2.875 -1.203125 2.984375 -1.640625 Z M 3.328125 -3.015625 "/>
 </g>
 </g>
-<clipPath id="hnr_91c235812595_4b6066_clip-0">
+<clipPath id="hnr_91c235812595_8f82b3_clip-0">
 <path clip-rule="nonzero" d="M 33 33 L 142.800781 33 L 142.800781 35 L 33 35 Z M 33 33 "/>
 </clipPath>
 </defs>
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00009375 -0.0015 L 0.00009375 16.936 " transform="matrix(1, 0, 0, -1, 34.121, 16.936)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-0" x="51.478" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-0" x="51.478" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-1" x="78.596197" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-1" x="78.596197" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-1-0" x="95.751794" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-1-0" x="95.751794" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-2" x="105.722364" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-2" x="105.722364" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-1-0" x="122.877962" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-1-0" x="122.877962" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-3" x="132.838569" y="10.859"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-3" x="132.838569" y="10.859"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-2-0" x="4.981" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-2-0" x="4.981" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-4" x="13.444229" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-4" x="13.444229" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-0" x="23.962742" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-0" x="23.962742" y="27.795"/>
 </g>
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.00009375 0.00090625 L 0.00009375 16.9345 " transform="matrix(1, 0, 0, -1, 34.121, 33.872)"/>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-0" x="78.598" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-0" x="78.598" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-2" x="105.716197" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-2" x="105.716197" y="27.795"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-5" x="132.834394" y="27.795"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-5" x="132.834394" y="27.795"/>
 </g>
-<g clip-path="url(#hnr_91c235812595_4b6066_clip-0)">
+<g clip-path="url(#hnr_91c235812595_8f82b3_clip-0)">
 <path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.000875 0.0016875 L 108.879781 0.0016875 " transform="matrix(1, 0, 0, -1, 33.921, 34.072)"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-0" x="51.478" y="44.732"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-0" x="51.478" y="44.732"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-2" x="78.596197" y="44.732"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-2" x="78.596197" y="44.732"/>
 </g>
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-5" x="105.714394" y="44.732"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-5" x="105.714394" y="44.732"/>
 </g>
 <g fill="rgb(100%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-1-0" x="122.879954" y="44.732"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-1-0" x="122.879954" y="44.732"/>
 </g>
 <g fill="rgb(100%, 0%, 0%)" fill-opacity="1">
-<use href="#hnr_91c235812595_4b6066_glyph-0-3" x="132.840562" y="44.732"/>
+<use href="#hnr_91c235812595_8f82b3_glyph-0-3" x="132.840562" y="44.732"/>
 </g>
 </svg>
 </div></figure>
@@ -822,17 +791,15 @@
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
-  <div class="sidebar-secondary-item"><div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> Contents
   </div>
-  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="pst-show_toc_level nav section-nav flex-column">
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-reveal">Step-by-step reveal</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
@@ -885,8 +852,8 @@ By René Ask
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

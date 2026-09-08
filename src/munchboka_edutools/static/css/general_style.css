@@ -5,6 +5,18 @@
   display: none !important;
 }
 
+/* Workaround: on some WebKit/iOS builds, toggling the primary/secondary sidebar
+   via the checkbox-hack (:checked ~ .bd-container .bd-sidebar-primary) changes
+   `margin-left`/`visibility` but the browser fails to repaint the fixed-position
+   sidebar, so the button appears unresponsive on mobile. Forcing a compositing
+   layer makes the state change repaint reliably. */
+.bd-sidebar-primary,
+.bd-sidebar-secondary {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: margin-left, margin-right, visibility;
+}
+
 
 .quiz-main-container {
   margin: 1rem 0;

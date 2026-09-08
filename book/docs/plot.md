@@ -1,5 +1,28 @@
 # `plot` directive
 
+
+:::{plot}
+width: 100%
+xlabel: $t/\mathrm{s}$
+ylabel: $s/\mathrm{m}$
+xmin: 0
+xmax: 11
+ymin: -5
+ymax: 8
+:::
+
+:::{plot}
+width: 100%
+xlabel: $t/\mathrm{s}$
+ylabel: $v/(\mathrm{m/s})$
+xmin: 0
+xmax: 11
+ymin: -4
+ymax: 4
+:::
+
+
+
 The `plot` directive creates mathematical figures directly in MyST / Jupyter Book using a compact key-value syntax. It is designed for textbook-style figures and supports functions, points, labels, polygons, vectors, parametric curves, and a macro system for building repeated structures.
 
 ## Basic usage

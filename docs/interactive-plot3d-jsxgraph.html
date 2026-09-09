@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>parsons-puzzle directive &#8212; munchboka-edutools</title>
+    <title>Live 3D figures with JSXGraph (preview) &#8212; munchboka-edutools</title>
   
   
   
@@ -120,7 +120,7 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/parsons-puzzle';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/interactive-plot3d-jsxgraph';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
@@ -140,11 +140,11 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <link rel="canonical" href="https://dev.munchboka.no/docs/parsons-puzzle.html" />
+    <link rel="canonical" href="https://dev.munchboka.no/docs/interactive-plot3d-jsxgraph.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="parsonspuzzle directive" href="parsonspuzzle.html" />
-    <link rel="prev" title="pairpuzzle directive" href="pairpuzzle.html" />
+    <link rel="next" title="jeopardy directive" href="jeopardy.html" />
+    <link rel="prev" title="interactive-plot3d directive" href="interactive-plot3d.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -273,7 +273,7 @@
 <li class="toctree-l1"><a class="reference internal" href="interactive-code.html"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-plot3d.html"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interactive-plot3d-jsxgraph.html">Live 3D figures with JSXGraph (preview)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Live 3D figures with JSXGraph (preview)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy.html"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
@@ -284,7 +284,7 @@
 <li class="toctree-l1"><a class="reference internal" href="multiplot.html"><code class="docutils literal notranslate"><span class="pre">multiplot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pair-puzzle.html"><code class="docutils literal notranslate"><span class="pre">pair-puzzle</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pairpuzzle.html"><code class="docutils literal notranslate"><span class="pre">pairpuzzle</span></code> directive</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">parsons-puzzle</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parsons-puzzle.html"><code class="docutils literal notranslate"><span class="pre">parsons-puzzle</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parsonspuzzle.html"><code class="docutils literal notranslate"><span class="pre">parsonspuzzle</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html"><code class="docutils literal notranslate"><span class="pre">plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot3d-2.html"><code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> directive</a></li>
@@ -361,7 +361,7 @@
       
       
       
-      <li><a href="../_sources/docs/parsons-puzzle.md" target="_blank"
+      <li><a href="../_sources/docs/interactive-plot3d-jsxgraph.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -445,7 +445,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>parsons-puzzle directive</h1>
+    <h1>Live 3D figures with JSXGraph (preview)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -455,11 +455,10 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chunking-with-chunk">Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implemented-in-this-preview">Implemented in this preview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-parity-work">Remaining parity work</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#live-example">Live example</a></li>
 </ul>
             </nav>
         </div>
@@ -471,106 +470,116 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="parsons-puzzle-directive">
-<h1><code class="docutils literal notranslate"><span class="pre">parsons-puzzle</span></code> directive<a class="headerlink" href="#parsons-puzzle-directive" title="Link to this heading">#</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">parsons-puzzle</span></code> directive creates a Parsons puzzle where learners reorder shuffled code lines into the correct sequence.</p>
-<section id="basic-usage">
-<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>```{parsons-puzzle}
-:lang: python
+  <section class="tex2jax_ignore mathjax_ignore" id="live-3d-figures-with-jsxgraph-preview">
+<h1>Live 3D figures with JSXGraph (preview)<a class="headerlink" href="#live-3d-figures-with-jsxgraph-preview" title="Link to this heading">#</a></h1>
+<p>Select <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">jsxgraph</span></code> inside <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> to render an interactive
+3D scene in the browser. Sliders are optional: a figure without sliders can still
+be rotated and zoomed. The default backend remains <code class="docutils literal notranslate"><span class="pre">frames</span></code> during this preview.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: jsxgraph
+width: 100%
+height: 460px
+interactive-var: a, 0, 3, 61
+interactive-var-start: 1.5
+xrange: (-2, 4)
+yrange: (-2, 4)
+zrange: (-1, 4)
+elev: 22
+azim: -55
+grid: true
+ticks: true
+xstep: 1
+ystep: 1
+zstep: 1
+plane: equation=z = 0, color=orange, alpha=0.25
+sphere: center=(-1, -1, 1), radius=0.6, color=teal
+vector: (0, 0, 0), (a, 1, 2), blue
+point: (a, 1, 2), red
+line: point=(0, 0, 0), direction=(1, -1, 1), style=dashed
+right-angle: at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.4
+angle: dir1=(1, 0, 0), dir2=(0, 1, 1), radius=0.7
+text: at=(a, 1, 2), value=&quot;$P$&quot;, offset=(0.1, 0.1, 0.1)
 
-def fib(n):
-    if n &lt;= 1:
-        return n
-    return fib(n-1) + fib(n-2)
-```
-</pre></div>
-</div>
-
-        <div id="container-parsons-puzzle-puzzle-c2a7becb" class="puzzle-container"></div>
-        <div id="container-kode-puzzle-c2a7becb" style="display: none"></div>
-
-        <script type="text/javascript">
-            document.addEventListener("DOMContentLoaded", () => {
-                const code = "def fib(n):\n    if n <= 1:\n        return n\n    return fib(n-1) + fib(n-2)";
-
-                const puzzleContainerId = 'container-parsons-puzzle-puzzle-c2a7becb';
-                const editorId = 'container-kode-puzzle-c2a7becb';
-                const options = {
-                    lang: "python",
-                    chunkMarker: "# chunk",
-                    indentationMode: "student",
-                    indentSize: null,
-                };
-
-                const switchToCodeEditor = makeCallbackFunction(puzzleContainerId, editorId);
-                const puzzle = new ParsonsPuzzle(
-                    puzzleContainerId,
-                    code,
-                    switchToCodeEditor,
-                    options,
-                );
-            });    
-        </script>
-        </section>
-<section id="chunking-with-chunk">
-<h2>Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code><a class="headerlink" href="#chunking-with-chunk" title="Link to this heading">#</a></h2>
-<p>By default each line is a separate draggable block. To create larger blocks, use a marker comment to group lines:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{parsons-puzzle}
-:::{code-block} python
-s = 0
-<span class="gh"># chunk</span>
-for i in range(5):
-    s += i
-<span class="gh"># chunk</span>
-print(s)
-:::
+Roter koordinatsystemet og flytt punktet med skyveknappen.
 :::
 </pre></div>
 </div>
-<p>Marker lines are <strong>not</strong> included in the final solved code.</p>
-<p>You can customize the marker:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{parsons-puzzle}
-:chunk-marker: # chunk
-
-:::{code-block} python
-...
-:::
-:::
-</pre></div>
-</div>
-</section>
-<section id="options">
-<h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Option</p></th>
-<th class="head"><p>Meaning</p></th>
-<th class="head"><p>Default</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lang</span></code></p></td>
-<td><p>Programming language for syntax highlighting</p></td>
-<td><p>—</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chunk-marker</span></code></p></td>
-<td><p>Custom marker string for chunking</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="notes">
-<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
+<p>Drag within the figure to rotate it. The buttons provide keyboard-operable
+rotation, tilt, zoom, and reset controls. Moving a geometry slider preserves the
+current camera. Sliders used explicitly in <code class="docutils literal notranslate"><span class="pre">elev</span></code>, <code class="docutils literal notranslate"><span class="pre">azim</span></code>, or <code class="docutils literal notranslate"><span class="pre">zoom</span></code> update that
+camera setting; reset returns to the camera specified by the current values.</p>
+<section id="implemented-in-this-preview">
+<h2>Implemented in this preview<a class="headerlink" href="#implemented-in-this-preview" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Aliases: <code class="docutils literal notranslate"><span class="pre">parsonspuzzle</span></code></p></li>
+<li><p>Centered axes, arrowheads, labels, and an optional xy grid at <code class="docutils literal notranslate"><span class="pre">z=0</span></code>.</p></li>
+<li><p>Axis ranges and tick spacing (<code class="docutils literal notranslate"><span class="pre">xrange</span></code>, <code class="docutils literal notranslate"><span class="pre">yrange</span></code>, <code class="docutils literal notranslate"><span class="pre">zrange</span></code>, <code class="docutils literal notranslate"><span class="pre">xstep</span></code>, <code class="docutils literal notranslate"><span class="pre">ystep</span></code>,
+<code class="docutils literal notranslate"><span class="pre">zstep</span></code>). Each range currently requires a fixed increasing pair. Tick spacing
+must be positive, with at most 200 intervals per axis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">axis:</span> <span class="pre">off</span></code> hides axes, ticks, and axis labels. <code class="docutils literal notranslate"><span class="pre">ticks:</span> <span class="pre">off</span></code> hides tick marks
+and their numbers. <code class="docutils literal notranslate"><span class="pre">xticks</span></code>, <code class="docutils literal notranslate"><span class="pre">yticks</span></code>, and <code class="docutils literal notranslate"><span class="pre">zticks</span></code> override tick visibility
+separately. Origin and endpoint ticks are omitted. <code class="docutils literal notranslate"><span class="pre">xlabel:</span> <span class="pre">none</span></code> and its
+y/z equivalents hide individual axis labels.</p></li>
+<li><p>Points, vectors, infinite lines clipped to the viewing box, and line segments.</p></li>
+<li><p>Planes from a linear equation, including vertical planes, or from a normal,
+point, and span. Equation planes are clipped against their specified ranges.</p></li>
+<li><p>Spheres, right-angle markers, and angle arcs in their actual 3D planes.</p></li>
+<li><p>Text with offsets and slider interpolation, for example <code class="docutils literal notranslate"><span class="pre">$a</span> <span class="pre">=</span> <span class="pre">{a:.1f}$</span></code>.</p></li>
+<li><p>Parametric curves (without arrowheads) and filled <code class="docutils literal notranslate"><span class="pre">ngon</span></code> faces.</p></li>
+<li><p>Arithmetic, <code class="docutils literal notranslate"><span class="pre">pi</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, trigonometric and hyperbolic
+functions, and <code class="docutils literal notranslate"><span class="pre">Abs</span></code>; powers use <code class="docutils literal notranslate"><span class="pre">**</span></code>. Expressions use a validated arithmetic
+tree, not browser <code class="docutils literal notranslate"><span class="pre">eval</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">let</span></code> and <code class="docutils literal notranslate"><span class="pre">def</span></code> declarations, including expressions depending on sliders.
+Declare dependencies before the bindings/functions that use them.</p></li>
+<li><p>Captions, anchors, alignment, responsive sizing, and an initial-state PNG
+fallback for JavaScript failure, disabled JavaScript, printing, and LaTeX output.</p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">interactive-var:</span> <span class="pre">a,</span> <span class="pre">min,</span> <span class="pre">max,</span> <span class="pre">frames</span></code> retains the existing discrete value count.
+The browser evaluates those values live; it does not download pre-rendered frames.
+Multiple sliders do not multiply build work. Their initial values use the existing
+nearest-step convention, with the middle step selected by default.</p>
+<p>JSXGraph 1.13.3 and its MIT license are bundled with the Python package. The
+renderer itself requires no CDN or Python in the browser. Math labels use the
+page’s MathJax when available; otherwise labels display as plain text.</p>
 </section>
-<section id="source">
-<h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
-<p><a class="reference external" href="https://github.com/reneaas/munchboka-edutools/blob/main/src/munchboka_edutools/directives/parsons.py"><code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/parsons.py</span></code></a></p>
+<section id="remaining-parity-work">
+<h2>Remaining parity work<a class="headerlink" href="#remaining-parity-work" title="Link to this heading">#</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code> for <code class="docutils literal notranslate"><span class="pre">normal-segment</span></code>, prisms, pyramids, solids of revolution,
+<code class="docutils literal notranslate"><span class="pre">repeat</span></code>, <code class="docutils literal notranslate"><span class="pre">macro</span></code>, <code class="docutils literal notranslate"><span class="pre">use</span></code>, and <code class="docutils literal notranslate"><span class="pre">endmacro</span></code>. These produce build errors under the
+JSXGraph preview instead of silently disappearing. Draggable points and references
+between named objects are not implemented yet.</p>
+<p>Curves currently use a single line style, have no direction arrows, and are sampled
+at at most 2000 points. Sphere guide circles, camera-facing semicircles for opposite
+angle directions, detailed depth shading, hidden-edge styling, and complete
+surface occlusion parity remain future work. The static fallback uses <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>’s
+styling and can differ from the live scene, including per-axis tick overrides.
+It always represents the initial slider values, including when printing after
+interacting. <code class="docutils literal notranslate"><span class="pre">usetex</span></code> is disabled for this fallback.</p>
+<p>The preview hides geometry that becomes undefined at a slider value, and shows a
+status message. A right-angle marker disappears when its directions cease to be
+perpendicular. Opposite angle directions use a deterministic perpendicular plane.
+Ranges, tick spacing, and the global font size must currently be fixed numbers
+or constant expressions. Width and height accept positive CSS dimensions;
+<code class="docutils literal notranslate"><span class="pre">height:</span> <span class="pre">auto</span></code> is not supported in the preview.</p>
+<p>Frame-only options (<code class="docutils literal notranslate"><span class="pre">interactive-workers</span></code>, <code class="docutils literal notranslate"><span class="pre">interactive-max-frames</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>)
+produce migration warnings and are ignored. <code class="docutils literal notranslate"><span class="pre">nocache</span></code> regenerates only the initial
+fallback image. <code class="docutils literal notranslate"><span class="pre">figsize</span></code> controls the fallback; use <code class="docutils literal notranslate"><span class="pre">height</span></code> for the live board.</p>
+</section>
+<section id="development-checks">
+<h2>Development checks<a class="headerlink" href="#development-checks" title="Link to this heading">#</a></h2>
+<p>Run the Python/Sphinx regression tests and the JavaScript geometry tests:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_scene3d.py<span class="w"> </span>tests/test_plot3d2_directive.py
+node<span class="w"> </span>--test<span class="w"> </span>tests/test_scene3d_runtime.cjs
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tests/scene3d_browser.cjs</span></code> exercises a Sphinx demo produced by
+<code class="docutils literal notranslate"><span class="pre">tests/test_scene3d.py</span></code>’s <code class="docutils literal notranslate"><span class="pre">build_demo</span></code> helper. With Playwright available to Node,
+pass the generated HTML directory to the script. Set <code class="docutils literal notranslate"><span class="pre">MUNCH_CHROMIUM</span></code> if using an
+existing Chromium installation. The browser check blocks external requests and
+verifies geometry, slider updates, camera preservation, mouse rotation, mobile
+resizing, multiple figures, printing, and the no-JavaScript fallback.</p>
+</section>
+<section id="live-example">
+<h2>Live example<a class="headerlink" href="#live-example" title="Link to this heading">#</a></h2>
 </section>
 </section>
 
@@ -605,20 +614,20 @@ print(s)
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="pairpuzzle.html"
+       href="interactive-plot3d.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">pairpuzzle</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</p>
       </div>
     </a>
     <a class="right-next"
-       href="parsonspuzzle.html"
+       href="jeopardy.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">parsonspuzzle</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -638,11 +647,10 @@ print(s)
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chunking-with-chunk">Chunking with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">chunk</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implemented-in-this-preview">Implemented in this preview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-parity-work">Remaining parity work</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#live-example">Live example</a></li>
 </ul>
   </nav></div>
 

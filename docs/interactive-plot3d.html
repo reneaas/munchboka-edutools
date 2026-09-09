@@ -143,7 +143,7 @@
     <link rel="canonical" href="https://dev.munchboka.no/docs/interactive-plot3d.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="jeopardy directive" href="jeopardy.html" />
+    <link rel="next" title="Live 3D figures with JSXGraph (preview)" href="interactive-plot3d-jsxgraph.html" />
     <link rel="prev" title="interactive-graph directive" href="interactive-graph.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -273,6 +273,7 @@
 <li class="toctree-l1"><a class="reference internal" href="interactive-code.html"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive-plot3d-jsxgraph.html">Live 3D figures with JSXGraph (preview)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy.html"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
@@ -481,6 +482,9 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="interactive-plot3d-directive">
 <h1><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive<a class="headerlink" href="#interactive-plot3d-directive" title="Link to this heading">#</a></h1>
+<p>For live browser rotation and geometry, use the opt-in
+<a class="reference internal" href="interactive-plot3d-jsxgraph.html"><span class="std std-doc">JSXGraph backend</span></a> with <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">jsxgraph</span></code>.
+The frame backend described below remains the default during the preview.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from <code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> and the drawing syntax from <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>.</p>
 <p>Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then swaps SVG deltas as the slider moves, so the final page does not need Python or Matplotlib at runtime.</p>
 <section id="basic-usage">
@@ -766,11 +770,11 @@ point: (1, 1, 2), red
       </div>
     </a>
     <a class="right-next"
-       href="jeopardy.html"
+       href="interactive-plot3d-jsxgraph.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</p>
+        <p class="prev-next-title">Live 3D figures with JSXGraph (preview)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

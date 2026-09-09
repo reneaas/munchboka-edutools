@@ -159,6 +159,10 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
     final_argument_whitespace = True
 
     option_spec = {
+        "backend": lambda value: directives.choice(value, ["frames", "jsxgraph"]),
+        "xticks": directives.unchanged,
+        "yticks": directives.unchanged,
+        "zticks": directives.unchanged,
         "interactive-var": directives.unchanged,
         "interactive-var-start": directives.unchanged,
         "interactive-max-frames": directives.nonnegative_int,
@@ -176,6 +180,16 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
         where possible, but routes frame rendering through ``plot3d-2`` instead
         of the 2D ``plot`` directive.
         """
+
+        scalars, _, _ = parse_kv_block(list(self.content), _MULTI_KEYS)
+        backend = str(self.options.get("backend", scalars.get("backend", "frames")))
+        if backend == "jsxgraph":
+            from ._interactive_scene3d import run_scene
+
+            return run_scene(self)
+        if backend != "frames":
+            return [self.state_machine.reporter.error(
+                f"Unknown interactive-plot3d backend: {backend}", line=self.lineno)]
 
         app = self.env.app
         env = self.env
@@ -610,6 +624,9 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
+    from ._interactive_scene3d import register_scene
+
+    register_scene(app)
     app.add_directive("interactive-plot3d", InteractivePlot3dDirective)
     return {
         "version": "0.1.0",

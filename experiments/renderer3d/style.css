@@ -1,0 +1,12 @@
+:root{font-family:system-ui,sans-serif;color:#172d39;background:#f3f5f5}
+*{box-sizing:border-box}body{margin:0}header,main,footer{max-width:1280px;margin:auto;padding:24px}
+header{padding-top:40px}h1{font-size:clamp(26px,4vw,42px);margin:8px 0 16px}p{line-height:1.6;max-width:85ch}
+.eyebrow{color:#427567;font-weight:650;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+section{background:white;padding:20px;margin-bottom:28px;border:1px solid #d8e0df;border-radius:12px}
+h2{margin-top:0;font-size:22px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.panel{min-width:0}.panel h3{font-size:15px;margin:14px 0 8px}.viewport{position:relative;height:340px;width:100%;border:1px solid #d2dbd9;border-radius:6px;overflow:hidden;background:white;touch-action:none}
+.viewport canvas{display:block;width:100%;height:100%}.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.math-label{position:absolute;white-space:nowrap;font-size:13px;transform:translate(-50%,-50%);background:#ffffffa6;border-radius:2px;padding:1px 3px}
+.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:16px}label{display:flex;gap:8px;align-items:center;font-size:14px}input{max-width:180px}output{min-width:35px;font-variant-numeric:tabular-nums}button{padding:6px 12px;border:1px solid #b6c7c2;border-radius:5px;background:#edf4f1;color:#183d32;cursor:pointer}
+.metrics{font-size:12px;color:#54676d;font-variant-numeric:tabular-nums;margin:8px 0}.question{font-size:14px;color:#43565d}footer{font-size:13px}
+@media(max-width:720px){header,main,footer{padding:16px}.pair{grid-template-columns:1fr}section{padding:12px}.viewport{height:300px}.controls{gap:8px}input{max-width:130px}}

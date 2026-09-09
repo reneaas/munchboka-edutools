@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D renderer comparison</title>
+<link rel="stylesheet" href="../../src/munchboka_edutools/static/vendor/jsxgraph/jsxgraph.css">
+<link rel="stylesheet" href="vendor/katex/dist/katex.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="../../src/munchboka_edutools/static/vendor/jsxgraph/jsxgraphcore.js"></script>
+<script src="../../src/munchboka_edutools/static/js/interactive3d/scene.js"></script>
+<script src="vendor/katex/dist/katex.min.js"></script>
+<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js"}}</script>
+</head><body>
+<header><p class="eyebrow">Munchboka · renderer experiment</p><h1>The same mathematics, two renderers</h1>
+<p>JSXGraph 1.13.3 and Three.js 0.180.0. Shared scene data, orthographic views, fixed-size strokes, and KaTeX labels. This experiment does not change the directive.</p>
+<p>Drag either figure to rotate both views. Camera controls also work with a keyboard. The hidden-edge pass is implemented in Three.js only; JSXGraph uses its native depth ordering.</p>
+<p id="health" role="status">Loading local assets…</p></header>
+<main id="cases"></main>
+<footer>Transparent surface sorting, exact SVG export, constrained dragging, and touch-device hardware performance require separate decisions. Measurements here are local observations, not a general benchmark.</footer>
+<script type="module" src="compare.js"></script>
+</body></html>

@@ -25,6 +25,7 @@ chapters:
   - file: docs/interactive-code.md
   - file: docs/interactive-graph.md
   - file: docs/interactive-plot3d.md
+  - file: docs/interactive-plot3d-jsxgraph.md
   - file: docs/jeopardy.md
   - file: docs/jeopardy-2.md
   - file: docs/jeopardy-answer.md

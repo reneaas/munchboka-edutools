@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>interactive-plot3d directive &#8212; munchboka-edutools</title>
+    <title>Interactive 3D figures with Three.js &#8212; munchboka-edutools</title>
   
   
   
@@ -120,7 +120,7 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/interactive-plot3d';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/interactive-plot3d-threejs';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
@@ -140,11 +140,11 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <link rel="canonical" href="https://dev.munchboka.no/docs/interactive-plot3d.html" />
+    <link rel="canonical" href="https://dev.munchboka.no/docs/interactive-plot3d-threejs.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Interactive 3D figures with Three.js" href="interactive-plot3d-threejs.html" />
-    <link rel="prev" title="interactive-graph directive" href="interactive-graph.html" />
+    <link rel="next" title="jeopardy directive" href="jeopardy.html" />
+    <link rel="prev" title="interactive-plot3d directive" href="interactive-plot3d.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -272,8 +272,8 @@
 <li class="toctree-l1"><a class="reference internal" href="horner.html"><code class="docutils literal notranslate"><span class="pre">horner</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-code.html"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interactive-plot3d-threejs.html">Interactive 3D figures with Three.js</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive-plot3d.html"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Interactive 3D figures with Three.js</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy.html"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
@@ -361,7 +361,7 @@
       
       
       
-      <li><a href="../_sources/docs/interactive-plot3d.md" target="_blank"
+      <li><a href="../_sources/docs/interactive-plot3d-threejs.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -445,7 +445,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>interactive-plot3d directive</h1>
+    <h1>Interactive 3D figures with Three.js</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -455,20 +455,24 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-variable">Interactive variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#live-example-gallery">Live example gallery</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors-points-and-custom-ticks">1. Vectors, points, and custom ticks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-perpendicular-from-a-point-to-a-plane">2. A perpendicular from a point to a plane</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#an-angle-that-changes-with-a-vector">3. An angle that changes with a vector</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-prism-and-a-pyramid-with-shared-height">4. A prism and a pyramid with shared height</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-helix-on-a-cylinder">5. A helix on a cylinder</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reusable-constructions-with-macros-and-repeats">6. Reusable constructions with macros and repeats</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-plane-intersecting-a-sphere">7. A plane intersecting a sphere</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#aligning-a-figure-inside-a-container">8. Aligning a figure inside a container</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-A-note-with-a-right-aligned-figure">A note with a right-aligned figure</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-drawing-keys">Supported drawing keys</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-point-on-a-helix">Moving point on a helix</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plane-with-changing-height">Plane with changing height</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotate-around-the-vertical-axis">Rotate around the vertical axis</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-time-notes">Build-time notes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-authoring-features">Supported authoring features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rendering-and-migration-limits">Rendering and migration limits</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-implementation-plan">Remaining implementation plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>
 </ul>
             </nav>
         </div>
@@ -480,253 +484,356 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="interactive-plot3d-directive">
-<h1><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive<a class="headerlink" href="#interactive-plot3d-directive" title="Link to this heading">#</a></h1>
-<p>For live browser rotation and geometry, use the opt-in
-<a class="reference internal" href="interactive-plot3d-threejs.html"><span class="std std-doc">Three.js backend</span></a> with <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">threejs</span></code>.
-The frame backend described below remains the default during the preview.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from <code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> and the drawing syntax from <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>.</p>
-<p>Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then swaps SVG deltas as the slider moves, so the final page does not need Python or Matplotlib at runtime.</p>
-<section id="basic-usage">
-<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
+  <section class="tex2jax_ignore mathjax_ignore" id="interactive-3d-figures-with-three-js">
+<h1>Interactive 3D figures with Three.js<a class="headerlink" href="#interactive-3d-figures-with-three-js" title="Link to this heading">#</a></h1>
+<p>Use <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">threejs</span></code> inside <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> for live 3D math graphs.
+Sliders are optional; all figures support rotation and zoom. The existing
+<code class="docutils literal notranslate"><span class="pre">frames</span></code> backend remains the default during migration. The earlier <code class="docutils literal notranslate"><span class="pre">jsxgraph</span></code>
+backend name is a deprecated alias for <code class="docutils literal notranslate"><span class="pre">threejs</span></code> and emits a build warning.</p>
+<section id="live-example-gallery">
+<h2>Live example gallery<a class="headerlink" href="#live-example-gallery" title="Link to this heading">#</a></h2>
+<p>Each figure below is followed by the complete Markdown used to create it.
+Drag a figure to rotate it, and use its sliders or view buttons to explore.</p>
+<section id="vectors-points-and-custom-ticks">
+<h3>1. Vectors, points, and custom ticks<a class="headerlink" href="#vectors-points-and-custom-ticks" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">a</span></code> to change the vector and point. This example combines a coordinate grid, custom tick spacing, a line, a plane, a sphere, and angle markers.</p>
+<p><strong>Markdown source</strong></p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-width: 70%
-interactive-var: a, 0, 2, 5
-interactive-var: rot, -90, 90, 10
-interactive-var: elev, -90, 90, 10 
-interactive-var-start: a=1, rot=-60, elev=20
-xrange: (-1, 3)
-yrange: (-1, 2)
-zrange: (-1, 2)
-axis: on
+backend: threejs
+width: 100%
+height: 460px
+interactive-var: a, 0, 3, 61
+interactive-var-start: 1.5
+xrange: (-2, 4)
+yrange: (-2, 4)
+zrange: (-1, 4)
+elev: 22
+azim: -55
 grid: true
-vector: (0, 0, 0), (a, 1, 1), blue
-point: (a, 1, 1), red
-text: at=(a, 1, 1), value=&quot;$P$&quot;, offset=(0.1, 0.1, 0.1)
+ticks: true
+xstep: 1
+ystep: 1
+zstep: 1
+plane: equation=z = 0, color=orange, alpha=0.25
+sphere: center=(-1, -1, 1), radius=0.6, color=teal
+vector: (0, 0, 0), (a, 1, 2), blue
+point: (a, 1, 2), red
+line: point=(0, 0, 0), direction=(1, -1, 1), style=dashed
+right-angle: at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.4
+angle: dir1=(1, 0, 0), dir2=(0, 1, 1), radius=0.7
+text: at=(a, 1, 2), value=&quot;$P$&quot;, offset=(0.1, 0.1, 0.1)
 
-Et punkt og en vektor som styres av skyveknappen.
+Roter koordinatsystemet og flytt punktet med skyveknappen.
 :::
 </pre></div>
 </div>
 </section>
-<section id="syntax-overview">
-<h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
-<p>Use the same key-value block format as <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>:</p>
+<section id="a-perpendicular-from-a-point-to-a-plane">
+<h3>2. A perpendicular from a point to a plane<a class="headerlink" href="#a-perpendicular-from-a-point-to-a-plane" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">h</span></code> to change the height of the point. The foot and right-angle marker are constructed automatically; the plane stays fixed.</p>
+<p><strong>Markdown source</strong></p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: name, min, max, frames
-interactive-var-start: value
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: h, 1, 4, 31
+interactive-var-start: 3
+xrange: (-2, 4)
+yrange: (-2, 4)
+zrange: (-1, 5)
+ticks: off
+plane: equation=z=0, color=orange, alpha=0.25
+point: (1,1,h), red
+normal-segment: point=(1,1,h), plane=z=0, color=blue, right-angle-size=0.4
+text: at=(1,1,h), offset=(0.3,0.3,0.2), value=&quot;$P=(1,1,{h:.1f})$&quot;, fontsize=15
+text: at=(1,1,0), offset=(0.3,0.3,-0.2), value=&quot;$H$&quot;, fontsize=15
 
-plot3d-2-key: value
-plot3d-2-key: value
-
-Optional caption text.
+The segment PH is perpendicular to the plane z=0.
 :::
 </pre></div>
 </div>
-<section id="interactive-variable">
-<h3>Interactive variable<a class="headerlink" href="#interactive-variable" title="Link to this heading">#</a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">interactive-var</span></code> key defines a slider:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>interactive-var: name, min, max, frames
-</pre></div>
-</div>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Part</p></th>
-<th class="head"><p>Meaning</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
-<td><p>Variable name used in expressions, for example <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">theta</span></code>, or <code class="docutils literal notranslate"><span class="pre">N</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">min</span></code></p></td>
-<td><p>Minimum slider value</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max</span></code></p></td>
-<td><p>Maximum slider value</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">frames</span></code></p></td>
-<td><p>Number of pre-rendered frames; must be at least <code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>By default, the initial value is the middle frame. Use <code class="docutils literal notranslate"><span class="pre">interactive-var-start</span></code> to choose the initial slider position:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>interactive-var-start: 1.5
-</pre></div>
-</div>
-<p>For multiple variables, repeat <code class="docutils literal notranslate"><span class="pre">interactive-var</span></code>:</p>
+</section>
+<section id="an-angle-that-changes-with-a-vector">
+<h3>3. An angle that changes with a vector<a class="headerlink" href="#an-angle-that-changes-with-a-vector" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">a</span></code> to change the angle in the xy-plane. The square marker is deliberately shown only when the two directions are perpendicular (<code class="docutils literal notranslate"><span class="pre">a=0</span></code>).</p>
+<p><strong>Markdown source</strong></p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: a, 0, 2, 5
-interactive-var: b, -1, 1, 5
-interactive-var-start: a=1, b=0
-point: (a, b, a*b), red
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: a, -2, 2, 41
+interactive-var-start: 0
+xrange: (-3, 4)
+yrange: (-2, 4)
+zrange: (-2, 3)
+ticks: off
+elev: 50
+azim: -65
+vector: (0,0,0), (3,0,0), blue
+vector: (0,0,0), (a,3,0), red
+angle: at=(0,0,0), dir1=(1,0,0), dir2=(a,3,0), radius=1, color=teal
+right-angle: at=(0,0,0), dir1=(1,0,0), dir2=(a,3,0), size=0.35
+text: at=(3,0,0), offset=(0,0,0.3), value=&quot;$u$&quot;, fontsize=16
+text: at=(a,3,0), offset=(0,0,0.3), value=&quot;$v=({a:.1f},3,0)$&quot;, fontsize=16
+
+The arc follows the angle between u and v.
 :::
 </pre></div>
 </div>
-<p>The total number of generated frames is the product of all slider frame counts.</p>
 </section>
-</section>
-<section id="supported-drawing-keys">
-<h2>Supported drawing keys<a class="headerlink" href="#supported-drawing-keys" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> supports the same drawing and macro keys as <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">angle</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">curve</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">line</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ngon</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">point</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">plane</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">prism</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pyramid</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">right-angle</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sphere</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">vector</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">let</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">def</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">repeat</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">macro</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">use</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">endmacro</span></code></p></li>
-</ul>
-<p>Most numeric fields can use the interactive variable directly:</p>
+<section id="a-prism-and-a-pyramid-with-shared-height">
+<h3>4. A prism and a pyramid with shared height<a class="headerlink" href="#a-prism-and-a-pyramid-with-shared-height" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">h</span></code> to change both solids. Axes and ticks are hidden to focus on the shapes. Dashed hidden edges are visible through the opaque prism.</p>
+<p><strong>Markdown source</strong></p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: r, 0.5, 2, 7
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: h, 0.5, 3, 26
+interactive-var-start: 2
+xrange: (-3, 4)
+yrange: (-3, 3)
+zrange: (-1, 4)
+axis: off
+hidden-edges: dashed
+prism: center=(-1.5,0,0), radius=1, sides=5, height=h, color=teal, alpha=1
+pyramid: base=[(0.5,-1,0),(2.5,-1,0),(2.5,1,0),(0.5,1,0)], apex=(1.5,0,h), color=blue, alpha=0.55
+text: at=(-1.5,0,h), offset=(0,0,0.4), value=&quot;Prism&quot;, fontsize=16
+text: at=(1.5,0,h), offset=(0,0,0.4), value=&quot;Pyramid&quot;, fontsize=16
+
+Two solids controlled by the same height parameter.
+:::
+</pre></div>
+</div>
+</section>
+<section id="a-helix-on-a-cylinder">
+<h3>5. A helix on a cylinder<a class="headerlink" href="#a-helix-on-a-cylinder" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">r</span></code> to change the radius of both the curve and the surface. The curve runs around the x axis, matching the convention for solids of revolution.</p>
+<p><strong>Markdown source</strong></p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: r, 0.4, 1.4, 21
+interactive-var-start: 0.8
+xrange: (-1, 5)
+yrange: (-2, 2)
+zrange: (-2, 2)
+ticks: off
+elev: 25
+azim: -65
+solid-of-revolution: r, (0,4), teal, samples=24, radial-samples=40, alpha=0.2
+curve: x=t/pi, y=r*cos(t), z=r*sin(t), t=(0,4*pi), samples=400, color=red, lw=2.5, arrows=true, arrow-count=4
+point: (4,r,0), red
+text: at=(2,0,1.7), value=&quot;$r={r:.1f}$&quot;, fontsize=16
+
+A parametric helix and a surface of revolution share a live radius.
+:::
+</pre></div>
+</div>
+</section>
+<section id="reusable-constructions-with-macros-and-repeats">
+<h3>6. Reusable constructions with macros and repeats<a class="headerlink" href="#reusable-constructions-with-macros-and-repeats" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">a</span></code> to change the heights of three pillars. A macro defines one pillar and its label; <code class="docutils literal notranslate"><span class="pre">use</span></code> places three copies, and <code class="docutils literal notranslate"><span class="pre">repeat</span></code> places the reference points.</p>
+<p><strong>Markdown source</strong></p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: a, 0.5, 2, 16
+interactive-var-start: 1
+xrange: (-1, 5)
+yrange: (-2, 2)
+zrange: (-1, 5)
+ticks: off
+let: height = a**2
+macro: pillar(pos, h)
+prism: center=(pos,0,0), radius=0.4, sides=4, height=h, color=teal, alpha=0.8
+text: at=(pos,0,h), offset=(0,0,0.3), value=&quot;Pillar pos&quot;, fontsize=14
+endmacro
+use: pillar(1, height)
+use: pillar(2, 2*height/3)
+use: pillar(3, height/3)
+repeat: i=1..3; point: (i,-1,0), red
+
+Reusable geometry and repeated points update without pre-rendered frames.
+:::
+</pre></div>
+</div>
+</section>
+<section id="a-plane-intersecting-a-sphere">
+<h3>7. A plane intersecting a sphere<a class="headerlink" href="#a-plane-intersecting-a-sphere" title="Link to this heading">#</a></h3>
+<p>Move <code class="docutils literal notranslate"><span class="pre">h</span></code> to slide the plane through the sphere. With <code class="docutils literal notranslate"><span class="pre">auto-intersections:</span> <span class="pre">true</span></code>, the dashed circle where the two surfaces meet is detected and drawn automatically — no need to specify its center, radius, or plane.</p>
+<p><strong>Markdown source</strong></p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: threejs
+width: 100%
+height: 440px
+interactive-var: h, -1.5, 1.5, 31
+interactive-var-start: 0.5
 xrange: (-3, 3)
 yrange: (-3, 3)
-zrange: (-1, 3)
-sphere: center=(0, 0, 1), radius=r, color=skyblue, alpha=0.45
-text: at=(0, 0, 1 + r), value=&quot;$r = {r:.1f}$&quot;
+zrange: (-3, 3)
+axis: off
+auto-intersections: true
+sphere: center=(0,0,0), radius=2, color=teal, alpha=0.5
+plane: equation=z = h, color=orange, alpha=0.3
+
+The circle disappears once the plane slides past the sphere entirely.
 :::
 </pre></div>
 </div>
-<p>Camera options can also be interactive. This is the standard way to make a rotatable pre-rendered 3D figure:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: azim, -80, 40, 25
-interactive-var-start: -40
-elev: 25
-azim: azim
-xrange: (-2, 2)
-yrange: (-2, 2)
-zrange: (-1, 3)
-vector: (0, 0, 0), (1, 1, 2), blue
-point: (1, 1, 2), red
-:::
-</pre></div>
+<p>Drag to rotate, scroll or pinch to zoom, or use the keyboard-accessible view
+buttons. Geometry sliders preserve the camera. A slider used in <code class="docutils literal notranslate"><span class="pre">elev</span></code>, <code class="docutils literal notranslate"><span class="pre">azim</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">zoom</span></code> updates that setting. Reset uses the camera expressions at the current
+slider values. Coordinates are right-handed with z pointing up. Camera angles
+are in degrees; regular polygon <code class="docutils literal notranslate"><span class="pre">rotation</span></code> and trigonometric expressions use radians.</p>
+</section>
+<section id="aligning-a-figure-inside-a-container">
+<h3>8. Aligning a figure inside a container<a class="headerlink" href="#aligning-a-figure-inside-a-container" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">width</span></code> and <code class="docutils literal notranslate"><span class="pre">align</span></code> are read the same way as <code class="docutils literal notranslate"><span class="pre">plot</span></code>/<code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>: the wrapping
+figure itself gets the requested width (as <code class="docutils literal notranslate"><span class="pre">style=&quot;width:</span> <span class="pre">...&quot;</span></code>), so an
+<code class="docutils literal notranslate"><span class="pre">align:</span> <span class="pre">right</span></code>/<code class="docutils literal notranslate"><span class="pre">align:</span> <span class="pre">left</span></code> figure floats at that size — capped to 100% of
+whatever parent it is placed in (an admonition, a grid cell, …) — instead of
+filling the whole row.</p>
+<section class="summary-section" id="summary-A-note-with-a-right-aligned-figure">
+<h4>A note with a right-aligned figure<a class="headerlink" href="#summary-A-note-with-a-right-aligned-figure" title="Link to this heading">#</a></h4>
+<div class="summary-body docutils container">
+<p>The figure stays inside the box to its right, sized to 45% of the box’s own
+width — not 45% of the full page — and text wraps around it just like it does
+for a <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> figure with the same <code class="docutils literal notranslate"><span class="pre">width</span></code>/<code class="docutils literal notranslate"><span class="pre">align</span></code> options.</p>
 </div>
 </section>
-<section id="options">
-<h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
-<p>The directive accepts the global <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> options plus these interactive options:</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Option</p></th>
-<th class="head"><p>Meaning</p></th>
-<th class="head"><p>Default</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-var</span></code></p></td>
-<td><p>Slider variable: <code class="docutils literal notranslate"><span class="pre">name,</span> <span class="pre">min,</span> <span class="pre">max,</span> <span class="pre">frames</span></code></p></td>
-<td><p>required</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-var-start</span></code></p></td>
-<td><p>Initial slider value, or <code class="docutils literal notranslate"><span class="pre">a=...,</span> <span class="pre">b=...</span></code> for multiple variables</p></td>
-<td><p>middle frame</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-max-frames</span></code></p></td>
-<td><p>Safety limit for multi-variable frame generation</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">10000</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-workers</span></code></p></td>
-<td><p>Number of worker processes, <code class="docutils literal notranslate"><span class="pre">0</span></code>, or <code class="docutils literal notranslate"><span class="pre">auto</span></code></p></td>
-<td><p>auto</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code></p></td>
-<td><p>Enable parallel rendering for single-variable figures</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">height</span></code></p></td>
-<td><p>CSS height for the rendered SVG</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">auto</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
-<td><p>Force regeneration of frame assets</p></td>
-<td><p>off</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Common <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> options include <code class="docutils literal notranslate"><span class="pre">width</span></code>, <code class="docutils literal notranslate"><span class="pre">align</span></code>, <code class="docutils literal notranslate"><span class="pre">alt</span></code>, <code class="docutils literal notranslate"><span class="pre">figsize</span></code>, <code class="docutils literal notranslate"><span class="pre">xrange</span></code>, <code class="docutils literal notranslate"><span class="pre">yrange</span></code>, <code class="docutils literal notranslate"><span class="pre">zrange</span></code>, <code class="docutils literal notranslate"><span class="pre">elev</span></code>, <code class="docutils literal notranslate"><span class="pre">azim</span></code>, <code class="docutils literal notranslate"><span class="pre">zoom</span></code>, <code class="docutils literal notranslate"><span class="pre">axis</span></code>, <code class="docutils literal notranslate"><span class="pre">grid</span></code>, <code class="docutils literal notranslate"><span class="pre">ticks</span></code>, <code class="docutils literal notranslate"><span class="pre">fontsize</span></code>, <code class="docutils literal notranslate"><span class="pre">lw</span></code>, and <code class="docutils literal notranslate"><span class="pre">usetex</span></code>.</p>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
-<section id="moving-point-on-a-helix">
-<h3>Moving point on a helix<a class="headerlink" href="#moving-point-on-a-helix" title="Link to this heading">#</a></h3>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-width: 65%
-interactive-var: t0, 0, 2*pi, 25
-xrange: (-1.5, 1.5)
-yrange: (-1.5, 1.5)
-zrange: (0, 7)
-axis: on
-curve: x=cos(t), y=sin(t), z=t, trange=(0, 2*pi), color=#2468ac, samples=96
-point: (cos(t0), sin(t0), t0), red
-vector: (0, 0, 0), (cos(t0), sin(t0), t0), blue
-text: at=(cos(t0), sin(t0), t0), value=&quot;$t = {t0:.2f}$&quot;, offset=(0.1, 0.1, 0.1)
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>::::{summary} A note with a right-aligned figure
+:::{interactive-plot3d}
+backend: threejs
+width: 45%
+align: right
+height: 320px
+axis: off
+sphere: center=(0,0,0), radius=2, color=teal, alpha=0.5
+plane: equation=z = 0.5, color=orange, alpha=0.3
+circle: center=(0,0,0), radius=2, plane=z=0.5
 :::
-</pre></div>
-</div>
-</section>
-<section id="plane-with-changing-height">
-<h3>Plane with changing height<a class="headerlink" href="#plane-with-changing-height" title="Link to this heading">#</a></h3>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: h, -1, 2, 7
-xrange: (-2, 2)
-yrange: (-2, 2)
-zrange: (-2, 3)
-axis: on
-plane: equation=z = h, color=orange, alpha=0.35
-point: (0, 0, h), red
-text: at=(0, 0, h), value=&quot;$z = {h:.1f}$&quot;, offset=(0.15, 0.15, 0.15)
-:::
-</pre></div>
-</div>
-</section>
-<section id="rotate-around-the-vertical-axis">
-<h3>Rotate around the vertical axis<a class="headerlink" href="#rotate-around-the-vertical-axis" title="Link to this heading">#</a></h3>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-interactive-var: azim, -80, 40, 25
-interactive-var-start: -40
-width: 65%
-elev: 25
-azim: azim
-xrange: (-2, 2)
-yrange: (-2, 2)
-zrange: (-1, 3)
-axis: on
-plane: equation=z = x + y, color=orange, alpha=0.3
-vector: (0, 0, 0), (1, 1, 2), blue
-point: (1, 1, 2), red
-:::
+
+The figure stays inside the box to its right, sized to 45% of the box&#39;s own
+width — not 45% of the full page — and text wraps around it just like it does
+for a <span class="sb">`plot3d-2`</span> figure with the same <span class="sb">`width`</span>/<span class="sb">`align`</span> options.
+::::
 </pre></div>
 </div>
 </section>
 </section>
-<section id="build-time-notes">
-<h2>Build-time notes<a class="headerlink" href="#build-time-notes" title="Link to this heading">#</a></h2>
+<section id="supported-authoring-features">
+<h2>Supported authoring features<a class="headerlink" href="#supported-authoring-features" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Every frame is rendered at build time, so large frame counts can slow down builds.</p></li>
-<li><p>Camera-driven sliders that affect <code class="docutils literal notranslate"><span class="pre">azim</span></code>, <code class="docutils literal notranslate"><span class="pre">elev</span></code>, or <code class="docutils literal notranslate"><span class="pre">zoom</span></code> store full SVG frames instead of compact structural deltas. This is larger, but it avoids brittle diffs when the entire 3D projection changes.</p></li>
-<li><p>Use <code class="docutils literal notranslate"><span class="pre">interactive-max-frames</span></code> as a guard for multi-variable examples.</p></li>
-<li><p>Add <code class="docutils literal notranslate"><span class="pre">nocache</span></code> while developing if you need to force frame regeneration.</p></li>
-<li><p>Set <code class="docutils literal notranslate"><span class="pre">usetex:</span> <span class="pre">false</span></code> in examples that should build without a local LaTeX installation.</p></li>
+<li><p>Axes with arrowheads, labels, fixed ranges and custom tick spacing; an optional
+xy grid at z=0. Use <code class="docutils literal notranslate"><span class="pre">axis:</span> <span class="pre">off</span></code>, <code class="docutils literal notranslate"><span class="pre">ticks:</span> <span class="pre">off</span></code>, or individual <code class="docutils literal notranslate"><span class="pre">xticks</span></code>, <code class="docutils literal notranslate"><span class="pre">yticks</span></code>,
+<code class="docutils literal notranslate"><span class="pre">zticks</span></code>. <code class="docutils literal notranslate"><span class="pre">xlabel:</span> <span class="pre">none</span></code> (and y/z equivalents) hides an axis label.</p></li>
+<li><p>Points, vectors, line segments, infinite lines clipped to the viewing box,
+planes from linear equations or normal/point/span, and spheres.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">circle:</span></code> primitive for a plane-sphere intersection circle, drawn dashed by
+default so it reads clearly against either surface. Set <code class="docutils literal notranslate"><span class="pre">auto-intersections:</span> <span class="pre">true</span></code>
+on the scene to detect and draw these circles automatically for every
+plane/sphere pair, without writing a <code class="docutils literal notranslate"><span class="pre">circle:</span></code> line at all (off by default,
+since existing scenes may combine a plane and sphere without meaning to mark
+an intersection).</p></li>
+<li><p>Angle arcs in their 3D plane, right-angle markers, and normal segments between
+a point and a plane or between two lines.</p></li>
+<li><p>Filled polygons, prisms, pyramids, parametric curves with direction arrows,
+and surfaces of revolution about the x axis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">let</span></code>, <code class="docutils literal notranslate"><span class="pre">def</span></code>, <code class="docutils literal notranslate"><span class="pre">repeat</span></code>, and reusable <code class="docutils literal notranslate"><span class="pre">macro</span></code>/<code class="docutils literal notranslate"><span class="pre">use</span></code> blocks. Expressions remain
+live when sliders change. Declare binding dependencies before using them.</p></li>
+<li><p>Text with offsets, alignment, mixed prose and <code class="docutils literal notranslate"><span class="pre">$math$</span></code>, and slider interpolation
+such as <code class="docutils literal notranslate"><span class="pre">$a</span> <span class="pre">=</span> <span class="pre">{a:.1f}$</span></code>. Bundled KaTeX renders labels without a CDN.</p></li>
+<li><p>Captions, anchors, alignment, responsive dimensions, and initial-state PNG
+fallbacks for printing, LaTeX, disabled JavaScript, or unavailable WebGL.</p></li>
+<li><p>Dragging rotates and scrolling/pinching zooms, so the on-screen Reset/Rotate/
+Tilt/Zoom button row is hidden by default. Set <code class="docutils literal notranslate"><span class="pre">buttons:</span> <span class="pre">true</span></code> to show it.
+Sliders from <code class="docutils literal notranslate"><span class="pre">interactive-var</span></code> are unaffected and always show.</p></li>
 </ul>
-<p>The implementation lives in <a class="reference internal" href="#/Users/reneaas/codes/vgs_books/munchboka-edutools/src/munchboka_edutools/directives/interactive_plot3d.py"><span class="xref myst">src/munchboka_edutools/directives/interactive_plot3d.py</span></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">interactive-var:</span> <span class="pre">a,</span> <span class="pre">min,</span> <span class="pre">max,</span> <span class="pre">frames</span></code> keeps the existing discrete value count.
+Values are evaluated in the browser; multiple sliders do not multiply build work.
+Initial values use the nearest step, defaulting to the middle step.</p>
+<p>Additional geometry examples (put these in a directive’s settings block):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point=(1,1,a), plane=z=0, color=red
+normal-segment: point1=(0,0,0), direction1=(1,0,0), point2=(0,2,3), direction2=(0,1,0)
+circle: center=(0,0,0), radius=2, plane=z=a, color=black
+circle: center=(0,0,0), radius=2, normal=(0,0,1), point=(0,0,a), color=black
+prism: center=(0,0,0), radius=1, sides=5, height=a, color=teal
+pyramid: base=[(0,0,0),(2,0,0),(0,2,0)], apex=(0,0,a), side-color=blue
+solid-of-revolution: sqrt(x+a), (0,2), blue, samples=40, radial-samples=32
+curve: x=cos(t), y=sin(t), z=t/4, t=(0,2*pi), arrows=true, arrow-count=3
+repeat: i=1..3; point: (i,0,a), red
+macro: pillar(h)
+prism: center=(0,0,0), radius=0.4, sides=4, height=h
+endmacro
+use: pillar(a)
+</pre></div>
+</div>
+<p>Prisms accept <code class="docutils literal notranslate"><span class="pre">vector=(dx,dy,dz)</span></code> instead of <code class="docutils literal notranslate"><span class="pre">height</span></code>. Regular bases require
+<code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">radius</span></code>, and <code class="docutils literal notranslate"><span class="pre">sides</span></code>; explicit bases use <code class="docutils literal notranslate"><span class="pre">base=[(...),</span> <span class="pre">...]</span></code>.
+Pyramids accept <code class="docutils literal notranslate"><span class="pre">base-color=none</span></code> or <code class="docutils literal notranslate"><span class="pre">side-color=none</span></code> to omit those faces.
+Normal segments support <code class="docutils literal notranslate"><span class="pre">right-angles=false</span></code> and <code class="docutils literal notranslate"><span class="pre">points=false</span></code> to hide markers.
+Use <code class="docutils literal notranslate"><span class="pre">hidden-edges:</span> <span class="pre">dashed</span></code> globally or <code class="docutils literal notranslate"><span class="pre">hidden-edges=dashed</span></code> on a primitive
+for a dashed pass behind opaque surfaces. It is off by default.</p>
+</section>
+<section id="rendering-and-migration-limits">
+<h2>Rendering and migration limits<a class="headerlink" href="#rendering-and-migration-limits" title="Link to this heading">#</a></h2>
+<p>Three.js 0.180.0 and KaTeX 0.16.22 are bundled with MIT licenses. ES modules
+use relative imports and need a page served over HTTP(S); opening HTML directly
+with <code class="docutils literal notranslate"><span class="pre">file://</span></code> may show only the static fallback. Figures share one WebGL context
+and render on demand. Unchanged geometry is retained when a slider moves;
+removing figures releases their controls and graphics resources.</p>
+<p>This is a functional live backend, with visual parity work still outstanding:
+intersecting transparent surfaces can sort imperfectly (use an explicit <code class="docutils literal notranslate"><span class="pre">circle:</span></code>
+to mark a plane-sphere intersection unambiguously); legacy depth shading and
+camera-facing opposite-angle semicircles are not yet matched. Labels stay
+within the board, but crowded labels may overlap. Points
+are drawn as screen-sized markers and are not draggable. Object references and
+constraints between named points are not yet supported. Mobile gestures have
+Chromium emulation coverage; physical-device verification remains to be done.</p>
+<p>The fallback uses <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> styling and always shows initial slider values,
+including when printing after interaction. Per-axis tick overrides and optional
+hidden-edge styling can differ from the live scene. <code class="docutils literal notranslate"><span class="pre">usetex</span></code> is disabled for the
+fallback. Undefined objects are omitted with a status message; right-angle
+markers disappear if their directions cease to be perpendicular.</p>
+<p>Axis ranges, tick spacing, and global font size must be constant. Each axis is
+limited to 200 tick intervals. Curves have at most 2000 samples; regular bases
+have 3–200 sides; repeats have integer inclusive bounds and the expanded scene
+is limited to 1000 primitives. Surface sampling is limited to 160 by 96.
+Arithmetic supports <code class="docutils literal notranslate"><span class="pre">pi</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, trigonometric/hyperbolic
+functions, and <code class="docutils literal notranslate"><span class="pre">Abs</span></code>, with <code class="docutils literal notranslate"><span class="pre">**</span></code> for powers. A validated arithmetic tree is used
+instead of JavaScript <code class="docutils literal notranslate"><span class="pre">eval</span></code>; the broader legacy SymPy language is not supported.</p>
+<p>Frame-only options (<code class="docutils literal notranslate"><span class="pre">interactive-workers</span></code>, <code class="docutils literal notranslate"><span class="pre">interactive-max-frames</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>)
+warn and are ignored. <code class="docutils literal notranslate"><span class="pre">nocache</span></code> refreshes the initial fallback. <code class="docutils literal notranslate"><span class="pre">figsize</span></code> controls
+the fallback; use positive CSS <code class="docutils literal notranslate"><span class="pre">height</span></code>/<code class="docutils literal notranslate"><span class="pre">width</span></code> dimensions for the live board.
+<code class="docutils literal notranslate"><span class="pre">height:</span> <span class="pre">auto</span></code> is not supported. Use <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code> when an existing figure
+needs a legacy feature not yet supported here.</p>
+</section>
+<section id="remaining-implementation-plan">
+<h2>Remaining implementation plan<a class="headerlink" href="#remaining-implementation-plan" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Validate representative textbook figures and physical touch devices; refine
+label placement, transparent surfaces, and sphere/angle styling.</p></li>
+<li><p>Audit remaining <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code> options and shared static/live scene semantics.</p></li>
+<li><p>Switch the default from <code class="docutils literal notranslate"><span class="pre">frames</span></code> once that compatibility audit passes, with
+migration notes and explicit <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code> retained for older figures.</p></li>
+<li><p>Add draggable points and dependent constructions as a separate extension.</p></li>
+</ol>
+</section>
+<section id="development-checks">
+<h2>Development checks<a class="headerlink" href="#development-checks" title="Link to this heading">#</a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_scene3d.py<span class="w"> </span>tests/test_plot3d2_directive.py
+node<span class="w"> </span>--test<span class="w"> </span>tests/test_scene3d_runtime.cjs
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tests/scene3d_browser.cjs</span> <span class="pre">/path/to/demo/html</span></code> starts a local server and checks
+bundled assets, sliders, camera preservation, mouse/touch rotation, math labels,
+responsive sizing, multiple figures, context recovery, disposal, printing, and
+no-JavaScript/no-WebGL fallbacks. Generate its fixture using <code class="docutils literal notranslate"><span class="pre">build_demo</span></code> in
+<code class="docutils literal notranslate"><span class="pre">tests/test_scene3d.py</span></code>; Playwright is required, and <code class="docutils literal notranslate"><span class="pre">MUNCH_CHROMIUM</span></code> can select
+an existing Chromium executable.</p>
 </section>
 </section>
 
@@ -761,20 +868,20 @@ point: (1, 1, 2), red
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="interactive-graph.html"
+       href="interactive-plot3d.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</p>
       </div>
     </a>
     <a class="right-next"
-       href="interactive-plot3d-threejs.html"
+       href="jeopardy.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Interactive 3D figures with Three.js</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">jeopardy</span></code> directive</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -794,20 +901,24 @@ point: (1, 1, 2), red
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-variable">Interactive variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#live-example-gallery">Live example gallery</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vectors-points-and-custom-ticks">1. Vectors, points, and custom ticks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-perpendicular-from-a-point-to-a-plane">2. A perpendicular from a point to a plane</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#an-angle-that-changes-with-a-vector">3. An angle that changes with a vector</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-prism-and-a-pyramid-with-shared-height">4. A prism and a pyramid with shared height</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-helix-on-a-cylinder">5. A helix on a cylinder</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reusable-constructions-with-macros-and-repeats">6. Reusable constructions with macros and repeats</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-plane-intersecting-a-sphere">7. A plane intersecting a sphere</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#aligning-a-figure-inside-a-container">8. Aligning a figure inside a container</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-A-note-with-a-right-aligned-figure">A note with a right-aligned figure</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-drawing-keys">Supported drawing keys</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-point-on-a-helix">Moving point on a helix</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plane-with-changing-height">Plane with changing height</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotate-around-the-vertical-axis">Rotate around the vertical axis</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-time-notes">Build-time notes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-authoring-features">Supported authoring features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rendering-and-migration-limits">Rendering and migration limits</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-implementation-plan">Remaining implementation plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>
 </ul>
   </nav></div>
 

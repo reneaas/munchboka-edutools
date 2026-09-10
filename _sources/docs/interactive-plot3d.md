@@ -1,7 +1,7 @@
 # `interactive-plot3d` directive
 
 For live browser rotation and geometry, use the opt-in
-[JSXGraph backend](interactive-plot3d-jsxgraph.md) with `backend: jsxgraph`.
+[Three.js backend](interactive-plot3d-threejs.md) with `backend: threejs`.
 The frame backend described below remains the default during the preview.
 
 The `interactive-plot3d` directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from `interactive-graph` and the drawing syntax from `plot3d-2`.

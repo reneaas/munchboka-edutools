@@ -334,7 +334,7 @@ def parse_primitive(kind, source, ex, defaults, depth=0):
             kw.get("alpha", "0.45" if kind in {"ngon", "pyramid", "prism"} else "0.35")
         ),
         "style": kw.get("style", kw.get("linestyle", "dashed" if kind == "circle" else "solid")),
-        "hiddenEdges": kw.get("hidden-edges", defaults.get("hidden-edges", "off")),
+        "hiddenEdges": kw.get("hidden-edges", defaults.get("hidden-edges", "dashed")),
     }
     if item["hiddenEdges"] not in {"off", "dashed"}:
         raise ValueError("hidden-edges must be off or dashed")

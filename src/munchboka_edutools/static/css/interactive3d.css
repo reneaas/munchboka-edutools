@@ -5,6 +5,11 @@
    at 100% so an explicit px/percent width never overflows a narrower parent
    container (grid column, admonition, sidebar, ...). */
 figure.interactive-figure:has(> .munch-3d) { max-width: 100%; box-sizing: border-box; }
+/* figures.css sets margin-left/right: 0 !important on align-left/right figures, which
+   hugs surrounding text right up against the panel. Give the (higher-specificity)
+   interactive-figure some breathing room instead. */
+figure.interactive-figure.align-right:has(> .munch-3d) { margin-left: 1.5em !important; }
+figure.interactive-figure.align-left:has(> .munch-3d) { margin-right: 1.5em !important; }
 .munch-3d-board { width: 100%; height: 460px; max-height: 75vh; border: 1px solid var(--pst-color-border, #aaa); border-radius: 6px; background: #ffffff; color: inherit; touch-action: none; }
 /* Same trick used for static matplotlib figures (see general_style.css): render the light
    palette always, then invert+hue-rotate the whole board in dark mode so the canvas,

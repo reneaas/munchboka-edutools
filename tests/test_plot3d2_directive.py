@@ -1514,6 +1514,7 @@ Interactive plot3d camera test
 ==============================
 
 .. interactive-plot3d::
+   :backend: frames
 
    interactive-var: azim, -70, 30, 3
    usetex: false
@@ -1948,6 +1949,7 @@ Interactive plot3d test
 
 .. interactive-plot3d::
    :width: 60%
+   :backend: frames
 
    interactive-var: a, 0, 1, 3
    usetex: false

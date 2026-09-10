@@ -1,9 +1,11 @@
 # Interactive 3D figures with Three.js
 
-Use `backend: threejs` inside `interactive-plot3d` for live 3D math graphs.
-Sliders are optional; all figures support rotation and zoom. The existing
-`frames` backend remains the default during migration. The earlier `jsxgraph`
-backend name is a deprecated alias for `threejs` and emits a build warning.
+`backend: threejs` is the default for `interactive-plot3d` and gives live 3D
+math graphs. Sliders are optional; all figures support rotation and zoom. The
+legacy `frames` backend is still available via an explicit `backend: frames`
+for existing figures (see [the interactive-plot3d
+directive](interactive-plot3d.md)). The earlier `jsxgraph` backend name is a
+deprecated alias for `threejs` and emits a build warning.
 
 ## Live example gallery
 

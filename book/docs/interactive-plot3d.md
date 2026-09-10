@@ -1,8 +1,8 @@
 # `interactive-plot3d` directive
 
-For live browser rotation and geometry, use the opt-in
-[Three.js backend](interactive-plot3d-threejs.md) with `backend: threejs`.
-The frame backend described below remains the default during the preview.
+[`backend: threejs`](interactive-plot3d-threejs.md) is the default and gives
+live browser rotation, zoom, and geometry. This page documents the legacy
+`frames` backend, kept for existing figures via an explicit `backend: frames`.
 
 The `interactive-plot3d` directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from `interactive-graph` and the drawing syntax from `plot3d-2`.
 
@@ -12,6 +12,7 @@ Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then s
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 width: 70%
 interactive-var: a, 0, 2, 5
 interactive-var: rot, -90, 90, 10
@@ -31,6 +32,7 @@ Et punkt og en vektor som styres av skyveknappen.
 ````
 
 :::{interactive-plot3d}
+backend: frames
 nocache:
 width: 70%
 interactive-var: a, 0, 2, 5
@@ -57,6 +59,7 @@ Use the same key-value block format as `plot3d-2`:
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: name, min, max, frames
 interactive-var-start: value
 
@@ -92,6 +95,7 @@ For multiple variables, repeat `interactive-var`:
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: a, 0, 2, 5
 interactive-var: b, -1, 1, 5
 interactive-var-start: a=1, b=0
@@ -131,6 +135,7 @@ Most numeric fields can use the interactive variable directly:
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: r, 0.5, 2, 7
 xrange: (-3, 3)
 yrange: (-3, 3)
@@ -144,6 +149,7 @@ Camera options can also be interactive. This is the standard way to make a rotat
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: azim, -80, 40, 25
 interactive-var-start: -40
 elev: 25
@@ -178,6 +184,7 @@ Common `plot3d-2` options include `width`, `align`, `alt`, `figsize`, `xrange`, 
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 width: 65%
 interactive-var: t0, 0, 2*pi, 25
 xrange: (-1.5, 1.5)
@@ -195,6 +202,7 @@ text: at=(cos(t0), sin(t0), t0), value="$t = {t0:.2f}$", offset=(0.1, 0.1, 0.1)
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: h, -1, 2, 7
 xrange: (-2, 2)
 yrange: (-2, 2)
@@ -210,6 +218,7 @@ text: at=(0, 0, h), value="$z = {h:.1f}$", offset=(0.15, 0.15, 0.15)
 
 ````markdown
 :::{interactive-plot3d}
+backend: frames
 interactive-var: azim, -80, 40, 25
 interactive-var-start: -40
 width: 65%

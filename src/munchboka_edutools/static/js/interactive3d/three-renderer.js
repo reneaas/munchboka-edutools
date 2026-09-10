@@ -24,6 +24,15 @@ function disposeGroup(group) {
     group.traverse(object=>{object.geometry?.dispose();object.material?.dispose();});
     group.clear();
 }
+// A filled-circle alpha mask so point sprites read as round dots (PointsMaterial is square by default).
+let dotSprite=null;
+function dotTexture() {
+    if(dotSprite)return dotSprite;
+    const size=64,canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+    const context=canvas.getContext('2d');
+    context.beginPath();context.arc(size/2,size/2,size/2-1,0,Math.PI*2);context.fillStyle='#fff';context.fill();
+    dotSprite=new T.CanvasTexture(canvas);return dotSprite;
+}
 export class ThreePanel {
     constructor(box,ranges,onFailure,onSuccess) {
         acquire();this.box=box;this.onFailure=onFailure;this.onSuccess=onSuccess;this.entries=[];
@@ -108,7 +117,7 @@ export class ThreePanel {
             occluder=this.face(group,[item.points.slice(0,-1)],item);this.stroke(group,item.points,{...item,color:item.edgecolor||item.color});
         } else if(item.type==='point') {
             const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(item.points.flat(),3));
-            group.add(new T.Points(geometry,new T.PointsMaterial({color:item.color,size:6,sizeAttenuation:false})));
+            group.add(new T.Points(geometry,new T.PointsMaterial({color:item.color,size:8,sizeAttenuation:false,map:dotTexture(),alphaTest:.5})));
         } else if(item.type==='sphere') {
             const geometry=new T.SphereGeometry(item.radius,48,24);
             const mesh=new T.Mesh(geometry,new T.MeshLambertMaterial({color:item.color,transparent:item.alpha<1,opacity:item.alpha,depthWrite:item.alpha>=1}));

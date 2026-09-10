@@ -40,8 +40,10 @@ All packaged directives are auto-registered. Static assets (including print-frie
 
 ### Interactive 3D math graphs
 
-Select `backend: threejs` in `interactive-plot3d` for live rotation, zoom, and
-sliders, with local renderer assets and a static print fallback. See the
+`backend: threejs` is the default for `interactive-plot3d`, giving live
+rotation, zoom, and sliders with local renderer assets and a static print
+fallback. The legacy `frames` backend is still available via an explicit
+`backend: frames`. See the
 [Three.js guide](docs/interactive-plot3d-threejs.md) for examples and migration limits.
 
 ### Print-Friendly PDFs

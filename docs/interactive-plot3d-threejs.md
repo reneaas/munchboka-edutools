@@ -1,9 +1,39 @@
 # Interactive 3D figures with Three.js
 
+:::{interactive-plot3d}
+backend: threejs
+width: 100%
+height: 440px
+align: center
+elev: 20
+azim: -70
+xrange: (-1, 5)
+yrange: (-1, 5)
+zrange: (-1, 5)
+ticks: off
+nocache:
+fontsize: 24
+plane: normal=(0, 0, 1), point=(3, 2, 1), span=(4,4), color=blue, alpha=0.2
+normal-segment: plane-normal=(0, 0, 1), plane-point=(3, 2, 1), point=(3, 3, 4), color=black, linestyle=dashed
+vector: (0, 0, 0), (3, 3, 4), red
+vector: (0, 0, 0), (2, 1, 1), red
+point: (2, 1, 1), black
+text: at=(2, 1, 1), value="$A$", ha=left, va=top
+vector: (2, 1, 1), (3, 3, 4), blue
+text: at=(3, 3, 4), value="$P$", ha=left, va=bottom
+let: nx = 0
+let: ny = 0
+let: nz = 1
+vector: (3, 3, 1), (3, 3 , 1 + 1), red
+text: at=(3 + 0.5 * 0 - 0.1, 3 + 0.5 * 0, 1 + 0.5 * 1), value="$\vec{n}$", ha=right, va=center
+text: at=(3.1, 3, 2.5), value="$L$", ha=left, va=bottom
+:::
+
 Use `backend: threejs` inside `interactive-plot3d` for live 3D math graphs.
-Sliders are optional; all figures support rotation and zoom. The existing
-`frames` backend remains the default during migration. The earlier `jsxgraph`
-backend name is a deprecated alias for `threejs` and emits a build warning.
+Sliders are optional; all figures support rotation and zoom. `threejs` is now
+the default backend; the legacy `frames` backend is still available via an
+explicit `backend: frames`. The earlier `jsxgraph` backend name is a
+deprecated alias for `threejs` and emits a build warning.
 
 ## Live example gallery
 
@@ -459,3 +489,7 @@ responsive sizing, multiple figures, context recovery, disposal, printing, and
 no-JavaScript/no-WebGL fallbacks. Generate its fixture using `build_demo` in
 `tests/test_scene3d.py`; Playwright is required, and `MUNCH_CHROMIUM` can select
 an existing Chromium executable.
+
+
+
+

@@ -183,7 +183,7 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
         """
 
         scalars, _, _ = parse_kv_block(list(self.content), _MULTI_KEYS)
-        backend = str(self.options.get("backend", scalars.get("backend", "frames")))
+        backend = str(self.options.get("backend", scalars.get("backend", "threejs")))
         if backend in {"threejs", "jsxgraph"}:
             from ._interactive_scene3d import run_scene
 

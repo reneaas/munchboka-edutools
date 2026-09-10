@@ -191,7 +191,8 @@
                     const r=Math.min(e(item.markerSize),norm(sub(a,b))/3);
                     if(!(r>0))return;
                     const u=scale(tangents[i],r),w=scale(unit(sub(i===0?b:a,p)),r);
-                    push({type:'right-angle',points:[add(p,u),add(add(p,u),w),add(p,w)],color:item.markerColor});
+                    // Always solid: a right-angle marker shouldn't inherit the segment's own linestyle.
+                    push({type:'right-angle',points:[add(p,u),add(add(p,u),w),add(p,w)],color:item.markerColor,style:'solid'});
                 });
             } else if(item.type==='solid-of-revolution') {
                 const [lo,hi]=v(item.range),rings=[];

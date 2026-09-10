@@ -482,14 +482,15 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="interactive-plot3d-directive">
 <h1><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive<a class="headerlink" href="#interactive-plot3d-directive" title="Link to this heading">#</a></h1>
-<p>For live browser rotation and geometry, use the opt-in
-<a class="reference internal" href="interactive-plot3d-threejs.html"><span class="std std-doc">Three.js backend</span></a> with <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">threejs</span></code>.
-The frame backend described below remains the default during the preview.</p>
+<p><a class="reference internal" href="interactive-plot3d-threejs.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">threejs</span></code></span></a> is the default and gives
+live browser rotation, zoom, and geometry. This page documents the legacy
+<code class="docutils literal notranslate"><span class="pre">frames</span></code> backend, kept for existing figures via an explicit <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from <code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> and the drawing syntax from <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>.</p>
 <p>Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then swaps SVG deltas as the slider moves, so the final page does not need Python or Matplotlib at runtime.</p>
 <section id="basic-usage">
 <h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 width: 70%
 interactive-var: a, 0, 2, 5
 interactive-var: rot, -90, 90, 10
@@ -513,6 +514,7 @@ Et punkt og en vektor som styres av skyveknappen.
 <h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
 <p>Use the same key-value block format as <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: name, min, max, frames
 interactive-var-start: value
 
@@ -557,6 +559,7 @@ Optional caption text.
 </div>
 <p>For multiple variables, repeat <code class="docutils literal notranslate"><span class="pre">interactive-var</span></code>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: a, 0, 2, 5
 interactive-var: b, -1, 1, 5
 interactive-var-start: a=1, b=0
@@ -595,6 +598,7 @@ point: (a, b, a*b), red
 </ul>
 <p>Most numeric fields can use the interactive variable directly:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: r, 0.5, 2, 7
 xrange: (-3, 3)
 yrange: (-3, 3)
@@ -606,6 +610,7 @@ text: at=(0, 0, 1 + r), value=&quot;$r = {r:.1f}$&quot;
 </div>
 <p>Camera options can also be interactive. This is the standard way to make a rotatable pre-rendered 3D figure:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: azim, -80, 40, 25
 interactive-var-start: -40
 elev: 25
@@ -668,6 +673,7 @@ point: (1, 1, 2), red
 <section id="moving-point-on-a-helix">
 <h3>Moving point on a helix<a class="headerlink" href="#moving-point-on-a-helix" title="Link to this heading">#</a></h3>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 width: 65%
 interactive-var: t0, 0, 2*pi, 25
 xrange: (-1.5, 1.5)
@@ -685,6 +691,7 @@ text: at=(cos(t0), sin(t0), t0), value=&quot;$t = {t0:.2f}$&quot;, offset=(0.1, 
 <section id="plane-with-changing-height">
 <h3>Plane with changing height<a class="headerlink" href="#plane-with-changing-height" title="Link to this heading">#</a></h3>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: h, -1, 2, 7
 xrange: (-2, 2)
 yrange: (-2, 2)
@@ -700,6 +707,7 @@ text: at=(0, 0, h), value=&quot;$z = {h:.1f}$&quot;, offset=(0.15, 0.15, 0.15)
 <section id="rotate-around-the-vertical-axis">
 <h3>Rotate around the vertical axis<a class="headerlink" href="#rotate-around-the-vertical-axis" title="Link to this heading">#</a></h3>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
+backend: frames
 interactive-var: azim, -80, 40, 25
 interactive-var-start: -40
 width: 65%

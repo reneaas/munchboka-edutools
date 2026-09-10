@@ -38,6 +38,12 @@ sphinx:
 
 All packaged directives are auto-registered. Static assets (including print-friendly CSS and JS) are placed under `_static/munchboka/` during the build.
 
+### Interactive 3D math graphs
+
+Select `backend: threejs` in `interactive-plot3d` for live rotation, zoom, and
+sliders, with local renderer assets and a static print fallback. See the
+[Three.js guide](docs/interactive-plot3d-threejs.md) for examples and migration limits.
+
 ### Print-Friendly PDFs
 
 Simply press **Ctrl+P** (or Cmd+P) in your browser when viewing any page to create a clean PDF with:

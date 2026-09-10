@@ -41,11 +41,17 @@ PRIMITIVES = {
     "vector",
     "plane",
     "sphere",
+    "circle",
     "angle",
     "right-angle",
     "text",
     "curve",
     "ngon",
+    "normal-segment",
+    "prism",
+    "pyramid",
+    "solid-of-revolution",
+    "repeat",
 }
 MULTI_KEYS = PRIMITIVES | {"interactive-var", "let", "def"}
 SCALARS = {
@@ -72,6 +78,9 @@ SCALARS = {
     "interactive-max-frames",
     "interactive-workers",
     "parallel",
+    "hidden-edges",
+    "auto-intersections",
+    "buttons",
 } | {a + suffix for a in "xyz" for suffix in ("range", "step", "label", "ticks")}
 
 
@@ -201,7 +210,28 @@ def plane_coefficients(source, expressions):
     return [expressions.compile(str(poly.coeff_monomial(m))) for m in (x, y, z, 1)]
 
 
-def parse_primitive(kind, source, ex, defaults):
+def parse_primitive(kind, source, ex, defaults, depth=0):
+    if depth > 8:
+        raise ValueError("Repeats may nest at most eight levels")
+    if kind == "repeat":
+        match = re.fullmatch(
+            r"([A-Za-z]\w*)\s*=\s*(.+?)\.\.(.+?);\s*([\w-]+):\s*(.+)", source.strip()
+        )
+        if not match:
+            raise ValueError("Expected repeat: i=lo..hi; primitive: arguments")
+        name, lo, hi, child_kind, body = match.groups()
+        if child_kind not in PRIMITIVES:
+            raise ValueError("repeat must contain a drawing primitive")
+        child_ex = Expressions(ex.variables | {name})
+        child_ex.bindings, child_ex.functions = dict(ex.bindings), dict(ex.functions)
+        child_ex.bindings.pop(name, None)
+        return dict(
+            type="repeat",
+            variable=name,
+            lower=ex.compile(lo),
+            upper=ex.compile(hi),
+            child=parse_primitive(child_kind, body, child_ex, defaults, depth + 1),
+        )
     parts = _split_top_level_commas(source)
     kw, pos = {}, []
     for part in parts:
@@ -210,12 +240,13 @@ def parse_primitive(kind, source, ex, defaults):
             kw[k.strip()] = v.strip()
         else:
             pos.append(part)
-    allowed = {"color", "lw", "style", "linestyle", "alpha"} | {
+    allowed = {"color", "lw", "style", "linestyle", "alpha", "hidden-edges"} | {
         "point": {"at"},
         "line": {"point", "direction", "through", "from", "to", "start", "end"},
         "line-segment": {"from", "to", "start", "end"},
         "vector": {"from", "to", "start", "end"},
         "sphere": {"center", "radius"},
+        "circle": {"center", "radius", "plane", "equation", "normal", "point"},
         "plane": {"equation", "normal", "point", "span", "xrange", "yrange", "zrange"},
         "angle": {
             "at",
@@ -232,14 +263,64 @@ def parse_primitive(kind, source, ex, defaults):
         },
         "right-angle": {"at", "dir1", "dir2", "to1", "to2", "size"},
         "text": {"at", "offset", "value", "label", "fontsize", "ha", "va"},
-        "curve": {"x", "y", "z", "t", "trange", "samples", "arrows"},
-        "ngon": {"points", "vertices"},
+        "curve": {"x", "y", "z", "t", "trange", "samples", "arrows", "arrow-count", "arrows-count"},
+        "ngon": {"points", "vertices", "edgecolor"},
+        "normal-segment": {
+            "point",
+            "p",
+            "plane",
+            "equation",
+            "plane-normal",
+            "normal",
+            "plane-point",
+            "plane_point",
+            "on-plane",
+            "on_plane",
+            "point1",
+            "p1",
+            "point2",
+            "p2",
+            "direction1",
+            "dir1",
+            "v1",
+            "direction2",
+            "dir2",
+            "v2",
+            "right-angles",
+            "right-angle-color",
+            "right-angle-size",
+            "size",
+            "points",
+            "endpoint-points",
+            "endpoint-color",
+            "point-color",
+        },
+        "prism": {"base", "center", "radius", "sides", "rotation", "vector", "height", "edgecolor"},
+        "pyramid": {
+            "base",
+            "center",
+            "radius",
+            "sides",
+            "rotation",
+            "apex",
+            "edgecolor",
+            "base-color",
+            "side-color",
+            "body-color",
+        },
+        "solid-of-revolution": {"samples", "radial-samples"},
     }[kind]
     if set(kw) - allowed:
         raise ValueError(f"Unsupported options: {', '.join(sorted(set(kw) - allowed))}")
     from matplotlib.colors import to_hex
 
-    color_index = {"point": 1, "vector": 2, "line-segment": 2, "ngon": 1}.get(kind)
+    color_index = {
+        "point": 1,
+        "vector": 2,
+        "line-segment": 2,
+        "ngon": 1,
+        "solid-of-revolution": 2,
+    }.get(kind)
     color = kw.get(
         "color", pos[color_index] if color_index is not None and len(pos) > color_index else None
     )
@@ -249,9 +330,14 @@ def parse_primitive(kind, source, ex, defaults):
             _resolve_color(color, "black" if kind in {"angle", "right-angle", "text"} else "blue")
         ),
         "lw": ex.compile(kw.get("lw", defaults.get("lw", "1.5"))),
-        "alpha": ex.compile(kw.get("alpha", "0.35")),
-        "style": kw.get("style", kw.get("linestyle", "solid")),
+        "alpha": ex.compile(
+            kw.get("alpha", "0.45" if kind in {"ngon", "pyramid", "prism"} else "0.35")
+        ),
+        "style": kw.get("style", kw.get("linestyle", "dashed" if kind == "circle" else "solid")),
+        "hiddenEdges": kw.get("hidden-edges", defaults.get("hidden-edges", "off")),
     }
+    if item["hiddenEdges"] not in {"off", "dashed"}:
+        raise ValueError("hidden-edges must be off or dashed")
     if item["style"] not in {"solid", "dashed", "dashdot", "dotted"}:
         raise ValueError(f"Invalid line style: {item['style']}")
 
@@ -273,6 +359,12 @@ def parse_primitive(kind, source, ex, defaults):
             item["end"] = vec("to", kw.get("end", pos[1] if len(pos) > 1 else None))
     elif kind == "sphere":
         item.update(center=vec("center"), radius=ex.compile(kw.get("radius", "1")))
+    elif kind == "circle":
+        item.update(center=vec("center"), radius=ex.compile(kw.get("radius", "1")))
+        if "plane" in kw or "equation" in kw:
+            item["coefficients"] = plane_coefficients(kw.get("plane", kw.get("equation")), ex)
+        else:
+            item.update(normal=vec("normal"), planePoint=vec("point"))
     elif kind == "plane":
         if "equation" in kw:
             item["coefficients"] = plane_coefficients(kw["equation"], ex)
@@ -312,23 +404,94 @@ def parse_primitive(kind, source, ex, defaults):
         item["coordinates"] = [curve_ex.compile(kw[a]) for a in "xyz"]
         item["range"] = ex.vector(kw.get("t", kw.get("trange", "(0,1)")), 2)
         item["samples"] = min(2000, max(2, int(kw.get("samples", "300"))))
-        if parse_bool(kw.get("arrows", "false")):
-            raise ValueError("Curve arrowheads are not implemented in the JSXGraph preview")
+        item["arrows"] = bool(parse_bool(kw.get("arrows", "true")))
+        item["arrowCount"] = max(
+            0, min(20, int(kw.get("arrow-count", kw.get("arrows-count", "3"))))
+        )
     elif kind == "ngon":
         raw = kw.get("points", kw.get("vertices", pos[0] if pos else ""))
         item["points"] = [ex.vector(p) for p in _split_top_level_commas(raw.strip("[]"))]
         if len(item["points"]) < 3:
             raise ValueError("ngon needs at least three vertices")
+        item["edgecolor"] = to_hex(_resolve_color(kw.get("edgecolor"), "black"))
+    elif kind in {"prism", "pyramid"}:
+        if "base" in kw:
+            item["base"] = [ex.vector(p) for p in _split_top_level_commas(kw["base"].strip("[]"))]
+            if len(item["base"]) < 3:
+                raise ValueError("The base needs at least three vertices")
+        else:
+            item.update(
+                center=vec("center"),
+                radius=ex.compile(kw["radius"]),
+                sides=ex.compile(kw["sides"]),
+                rotation=ex.compile(kw.get("rotation", "0")),
+            )
+        item["edgecolor"] = to_hex(_resolve_color(kw.get("edgecolor"), "black"))
+        if kind == "prism":
+            item["extrusion"] = (
+                vec("vector") if "vector" in kw else [0.0, 0.0, ex.compile(kw["height"])]
+            )
+        else:
+            item["apex"] = vec("apex")
+            for name in ("base", "side"):
+                raw = kw.get(
+                    "color",
+                    kw.get(name + "-color", kw.get("body-color") if name == "side" else None),
+                )
+                item[name + "Color"] = (
+                    None if str(raw).lower() == "none" else to_hex(_resolve_color(raw, "blue"))
+                )
+    elif kind == "solid-of-revolution":
+        if len(pos) < 2:
+            raise ValueError("Expected f(x), (xmin, xmax), color")
+        function_ex = Expressions(ex.variables | {"x"})
+        function_ex.bindings, function_ex.functions = ex.bindings, ex.functions
+        item.update(
+            expression=function_ex.compile(pos[0]),
+            range=ex.vector(pos[1], 2),
+            samples=max(2, min(160, int(kw.get("samples", "40")))),
+            radialSamples=max(8, min(96, int(kw.get("radial-samples", "32")))),
+        )
+    elif kind == "normal-segment":
+        for i in (1, 2):
+            if f"point{i}" in kw or f"p{i}" in kw:
+                item[f"point{i}"] = vec(f"point{i}", kw.get(f"p{i}"))
+                item[f"direction{i}"] = vec(f"direction{i}", kw.get(f"dir{i}", kw.get(f"v{i}")))
+        if "point1" in item:
+            if "point2" not in item:
+                raise ValueError("Both lines are required")
+        else:
+            item["point"] = vec("point", kw.get("p"))
+            if "plane" in kw or "equation" in kw:
+                item["coefficients"] = plane_coefficients(kw.get("plane", kw.get("equation")), ex)
+            else:
+                item["normal"] = vec("plane-normal", kw.get("normal"))
+                item["planePoint"] = vec(
+                    "plane-point", kw.get("plane_point", kw.get("on-plane", kw.get("on_plane")))
+                )
+        item.update(
+            rightAngles=bool(parse_bool(kw.get("right-angles", "true"))),
+            endpointPoints=bool(parse_bool(kw.get("points", kw.get("endpoint-points", "true")))),
+            markerSize=ex.compile(kw.get("right-angle-size", kw.get("size", "0.35"))),
+            markerColor=to_hex(_resolve_color(kw.get("right-angle-color"), "black")),
+            endpointColor=to_hex(
+                _resolve_color(kw.get("endpoint-color", kw.get("point-color")), "black")
+            ),
+        )
     return item
 
 
 def build_scene(lines, options=None):
+    from ._scene3d_macros import expand_macros
+
+    original_length = len(lines)
+    lines, locations = expand_macros(lines)
     scalars, lists, caption_idx = parse_kv_block(lines, MULTI_KEYS)
     settings = {**scalars, **(options or {})}
     unknown = set(settings) - SCALARS - {"interactive-var"}
     if unknown:
         raise ValueError(
-            f"Not supported by the JSXGraph preview: {', '.join(sorted(unknown))}. Use backend: frames for full plot3d-2 support."
+            f"Not supported by the live renderer: {', '.join(sorted(unknown))}. Use backend: frames for legacy features."
         )
     ex = Expressions()
     sliders = []
@@ -404,6 +567,8 @@ def build_scene(lines, options=None):
         steps=steps,
         axis=parse_bool(settings.get("axis", "true")),
         grid=parse_bool(settings.get("grid", "false")),
+        autoIntersections=parse_bool(settings.get("auto-intersections", "false")),
+        buttons=parse_bool(settings.get("buttons", "false")),
         ticks=[parse_bool(settings.get(a + "ticks", settings.get("ticks", "true"))) for a in "xyz"],
         labels=[str(settings.get(a + "label", f"${a}$")) for a in "xyz"],
         camera={
@@ -421,4 +586,7 @@ def build_scene(lines, options=None):
                 raise ValueError(f"{kind}: {exc}") from exc
     if len(scene["primitives"]) > 1000:
         raise ValueError("A scene may contain at most 1000 primitives")
-    return scene, settings, caption_idx
+    original_caption_idx = (
+        locations[caption_idx] if caption_idx < len(locations) else original_length
+    )
+    return scene, settings, original_caption_idx

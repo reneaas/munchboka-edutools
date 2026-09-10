@@ -1,0 +1,14 @@
+[
+  {
+    "renderer": "JSXGraph",
+    "rotated": false,
+    "before": -78.34805867644346,
+    "after": -78.34805867644346
+  },
+  {
+    "renderer": "Three.js",
+    "rotated": true,
+    "before": -78.34805867644346,
+    "after": -20.361481482283676
+  }
+]

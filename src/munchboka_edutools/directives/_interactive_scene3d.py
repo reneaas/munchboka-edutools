@@ -38,11 +38,12 @@ def visit_html(translator, node):
     )
     identifier = html.escape(node["board_id"], quote=True)
     alt = html.escape(node["alt"], quote=True)
-    margin = {"left": "0 auto 0 0", "right": "0 0 0 auto", "center": "0 auto"}[node["align"]]
+    # The wrapping <figure> now carries the real width (see run_scene), so this
+    # div just fills whatever box the figure/align-* float allocated to it.
     translator.body.append(
-        f'<div class="munch-3d interactive-plot3d no-click" style="width:{node["width"]};margin:{margin}">'
+        '<div class="munch-3d interactive-plot3d no-click" style="width:100%">'
         f'<script type="application/json">{data}</script>'
-        f'<div class="munch-3d-board jxgbox" id="{identifier}" role="img" aria-label="{alt}" '
+        f'<div class="munch-3d-board" id="{identifier}" role="img" aria-label="{alt}" '
         f'style="height:{node["height"]}"></div>'
         '<div class="munch-3d-controls"></div>'
         '<p class="munch-3d-status" role="status">Static preview. Enable JavaScript for an interactive view.</p>'
@@ -74,7 +75,7 @@ def run_scene(directive):
         for option in ("parallel", "interactive-workers", "interactive-max-frames"):
             if option in settings:
                 logging.getLogger(__name__).warning(
-                    "%s is ignored by backend: jsxgraph (no frames are generated)",
+                    "%s is ignored by backend: threejs (no frames are generated)",
                     option,
                     location=(directive.env.docname, directive.lineno),
                 )
@@ -127,6 +128,12 @@ def run_scene(directive):
         document_dir = Path(directive.env.doc2path(directive.env.docname)).parent
         scene_node += nodes.image(uri=os.path.relpath(path, document_dir), alt=alt, width="100%")
         figure = nodes.figure("", scene_node, align=align)
+        # Give the figure itself a definite width (like plot/plot3d-2's inline
+        # SVGs get via their intrinsic size) so align-left/right floats shrink
+        # to this size instead of the browser's undefined shrink-to-fit
+        # behavior for a 100%-wide block child, and so the figure respects the
+        # bounds of whatever parent container it is placed in.
+        figure["width"] = width
         classes = settings.get("class", [])
         figure["classes"] += ["interactive-figure", "no-click"] + (
             classes.split() if isinstance(classes, str) else classes
@@ -145,7 +152,7 @@ def run_scene(directive):
     except (ValueError, KeyError, TypeError, ArithmeticError) as exc:
         return [
             directive.state_machine.reporter.error(
-                f"interactive-plot3d (jsxgraph): {exc}", line=directive.lineno
+                f"interactive-plot3d (threejs): {exc}", line=directive.lineno
             )
         ]
 
@@ -165,8 +172,8 @@ def register_scene(app):
 def add_page_assets(app, pagename, templatename, context, doctree):
     if doctree is None or not any(doctree.findall(Scene3DNode)):
         return
-    app.add_js_file("munchboka/vendor/jsxgraph/jsxgraphcore.js", priority=400)
+    app.add_js_file("munchboka/vendor/katex/dist/katex.min.js", priority=400)
     app.add_js_file("munchboka/js/interactive3d/scene.js", priority=410)
-    app.add_js_file("munchboka/js/interactive3d/runtime.js", priority=420)
-    app.add_css_file("munchboka/vendor/jsxgraph/jsxgraph.css")
+    app.add_js_file("munchboka/js/interactive3d/three-runtime.js", priority=420, type="module")
+    app.add_css_file("munchboka/vendor/katex/dist/katex.min.css")
     app.add_css_file("munchboka/css/interactive3d.css")

@@ -20,7 +20,7 @@ export class JSXPanel {
     }
     update(items) {
         const start=performance.now();this.setting=true;this.board.suspendUpdate();
-        for(const el of this.elements)this.board.removeObject(el);this.elements=[];
+        for(const el of this.elements)this.view.removeObject(el);this.elements=[];
         const make=(type,parents,attrs={})=>{const el=this.view.create(type,parents,{fixed:true,highlight:false,name:'',withLabel:false,...attrs});this.elements.push(el);return el;};
         const line=(p,color,width,arrow=false,dashed=false)=>make('line3d',p,{strokeColor:color,strokeWidth:width,lastArrow:arrow?{type:2,size:5}:false,dash:dashed?2:0,straightFirst:false,straightLast:false});
         const face=(p,color,alpha)=>make('polygon3d',p,{fillColor:color,fillOpacity:alpha,borders:{strokeWidth:0.2,strokeColor:color},vertices:{visible:false,withLabel:false,name:''}});
@@ -28,7 +28,7 @@ export class JSXPanel {
             if(p.type==='text')continue;
             if(p.type==='mesh') {for(const f of p.faces)face(f,p.color,p.alpha);for(const edge of p.edges)line(edge,'#385463',p.lw);}
             else if(['plane','ngon'].includes(p.type))face(p.points.slice(0,-1),p.color,p.alpha);
-            else if(p.type==='sphere')make('sphere3d',[p.points[0],p.radius],{fillColor:p.color,strokeColor:p.color,fillOpacity:p.alpha,center:{visible:false,name:''}});
+            else if(p.type==='sphere')make('sphere3d',[p.points[0],p.radius],{fillColor:p.color,gradient:'none',strokeColor:p.color,fillOpacity:p.alpha,center:{visible:false,name:''}});
             else if(p.type==='point')make('point3d',p.points[0],{size:3,fillColor:p.color,strokeColor:p.color});
             else if(['line','line-segment','vector'].includes(p.type))line(p.points,p.color,p.lw,p.type==='vector',p.style && p.style!=='solid');
             else make('curve3d',[0,1,2].map(a=>p.points.map(v=>v[a])),{strokeColor:p.color,strokeWidth:p.lw});
@@ -48,9 +48,14 @@ export class JSXPanel {
     render() {
         const start=performance.now(),w=this.ui.viewport.clientWidth,h=this.ui.viewport.clientHeight;
         if(!w||!h)return;
-        this.setting=true;this.board.resizeContainer(w,h,true);
-        this.board.setBoundingBox([-3.3*w/h/this.zoom,3.3/this.zoom,3.3*w/h/this.zoom,-3.3/this.zoom],false);
-        this.board.update();placeLabels(this.labelList,p=>this.project(p));this.setting=false;
+        this.setting=true;
+        const sizing=`${w},${h},${this.zoom}`;
+        if(this.sizing!==sizing) {
+            this.board.resizeContainer(w,h,true);
+            this.board.setBoundingBox([-3.3*w/h/this.zoom,3.3/this.zoom,3.3*w/h/this.zoom,-3.3/this.zoom],false);
+            this.sizing=sizing;
+        }
+        placeLabels(this.labelList,p=>this.project(p));this.setting=false;
         this.times.push(performance.now()-start);
         this.ui.metrics.textContent=`${this.elements.length} scene objects · last update ${this.times.at(-1).toFixed(1)} ms · SVG`;
     }

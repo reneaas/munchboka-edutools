@@ -159,7 +159,8 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "backend": lambda value: directives.choice(value, ["frames", "jsxgraph"]),
+        "backend": lambda value: directives.choice(value, ["frames", "threejs", "jsxgraph"]),
+        "hidden-edges": directives.unchanged,
         "xticks": directives.unchanged,
         "yticks": directives.unchanged,
         "zticks": directives.unchanged,
@@ -183,13 +184,24 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
 
         scalars, _, _ = parse_kv_block(list(self.content), _MULTI_KEYS)
         backend = str(self.options.get("backend", scalars.get("backend", "frames")))
-        if backend == "jsxgraph":
+        if backend in {"threejs", "jsxgraph"}:
             from ._interactive_scene3d import run_scene
+
+            if backend == "jsxgraph":
+                from sphinx.util import logging
+
+                logging.getLogger(__name__).warning(
+                    "backend: jsxgraph has been replaced by threejs; update this directive to backend: threejs",
+                    location=(self.env.docname, self.lineno),
+                )
 
             return run_scene(self)
         if backend != "frames":
-            return [self.state_machine.reporter.error(
-                f"Unknown interactive-plot3d backend: {backend}", line=self.lineno)]
+            return [
+                self.state_machine.reporter.error(
+                    f"Unknown interactive-plot3d backend: {backend}", line=self.lineno
+                )
+            ]
 
         app = self.env.app
         env = self.env
@@ -497,9 +509,7 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
                 base_svg, deltas = compute_svg_deltas(svg_frames)
                 save_delta_format(base_svg, deltas, output_dir)
         except Exception as exc:
-            logger.warning(
-                f"{desc}: delta generation failed, using frame-based fallback: {exc}"
-            )
+            logger.warning(f"{desc}: delta generation failed, using frame-based fallback: {exc}")
             for index, svg in enumerate(svg_frames):
                 with open(
                     os.path.join(output_dir, f"frame_{index:04d}.svg"),
@@ -545,8 +555,7 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
             tasks = []
             for idx_tuple in frame_indices:
                 variables = {
-                    var_names[i]: var_values_list[i][idx_tuple[i]]
-                    for i in range(len(var_names))
+                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
                 }
                 frame_content = _substitute_plot3d_variables(
                     "\n".join(plot_content_lines),
@@ -586,8 +595,7 @@ class InteractivePlot3dDirective(InteractiveGraphDirective):
                 desc=desc,
             ):
                 variables = {
-                    var_names[i]: var_values_list[i][idx_tuple[i]]
-                    for i in range(len(var_names))
+                    var_names[i]: var_values_list[i][idx_tuple[i]] for i in range(len(var_names))
                 }
                 frame_content = _substitute_plot3d_variables(
                     "\n".join(plot_content_lines),

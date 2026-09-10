@@ -89,6 +89,9 @@ export class ThreePanel {
         const start=performance.now(),w=this.ui.viewport.clientWidth,h=this.ui.viewport.clientHeight;
         if(!w||!h) return;
         this.camera.left=-3.3*w/h;this.camera.right=3.3*w/h;this.camera.updateProjectionMatrix();
+        const cssScale=this.ui.viewport.getBoundingClientRect().width/this.ui.viewport.offsetWidth;
+        const ratio=Math.min(devicePixelRatio*cssScale,3);
+        if(renderer.getPixelRatio()!==ratio)renderer.setPixelRatio(ratio);
         renderer.setSize(w,h,false);
         for(const m of this.materials)m.resolution.set(w,h);
         renderer.render(this.scene,this.camera);

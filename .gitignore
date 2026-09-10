@@ -162,3 +162,8 @@ cython_debug/
 #.idea/
 
 *_build
+# Bundled browser distributions are source assets.
+!src/munchboka_edutools/static/vendor/three/build/
+!src/munchboka_edutools/static/vendor/three/build/**
+!src/munchboka_edutools/static/vendor/katex/dist/
+!src/munchboka_edutools/static/vendor/katex/dist/**

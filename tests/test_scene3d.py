@@ -58,7 +58,7 @@ def test_embedded_scene_cannot_terminate_json_script():
 def test_scene_sliders_bindings_plane_and_captions():
     scene, _, caption = build_scene(
         [
-            "backend: jsxgraph",
+            "backend: threejs",
             "interactive-var: a, 0, 2, 5",
             "interactive-var: b, -1, 1, 3",
             "interactive-var-start: a=1.4, b=-1",
@@ -86,11 +86,11 @@ def test_scene_sliders_bindings_plane_and_captions():
 @pytest.mark.parametrize(
     "line",
     [
-        "normal-segment: point=(0,0,1), plane=z=0",
+        "normal-segment: point=(0,0,1), plane=z=x**2",
         "xstep: 0",
         "xrange: (1,1)",
         "plane: equation=z=x**2",
-        "repeat: i=1..5; point: (i,0,0)",
+        "repeat: i=1..5; unknown: (i,0,0)",
         "interactive-var: a, 1, 1, 3",
     ],
 )
@@ -104,7 +104,7 @@ DEMO = """Live 3D
 
 .. interactive-plot3d::
 
-   backend: jsxgraph
+   backend: threejs
    name: live-vector
    interactive-var: a, 0, 2, 5
    interactive-var-start: 1
@@ -125,11 +125,33 @@ DEMO = """Live 3D
 
 .. interactive-plot3d::
 
-   backend: jsxgraph
+   backend: threejs
    ticks: off
    point: (1, 2, 3), red
 
    Rotation without sliders.
+
+.. interactive-plot3d::
+
+   backend: threejs
+   interactive-var: n, 3, 5, 3
+   interactive-var-start: 3
+   xrange: (-3, 4)
+   yrange: (-3, 4)
+   zrange: (-1, 5)
+   ticks: off
+   hidden-edges: dashed
+   prism: center=(-1,-1,0), radius=0.7, sides=n, height=2, alpha=1, color=teal
+   pyramid: base=[(1,0,0),(3,0,0),(3,2,0),(2,1,0),(1,2,0)], apex=(2,1,3), color=blue
+   normal-segment: point=(0,0,3), plane=z=0
+   solid-of-revolution: 0.3+0.1*x, (0,3), orange, samples=20, radial-samples=16
+   curve: x=cos(t), y=sin(t), z=t/3, t=(0,2*pi), arrows=true
+   macro: marks(h)
+   repeat: i=1..h; point: (i,3,1), red
+   endmacro
+   use: marks(n)
+
+   Live solids and constructions.
 
 .. toctree::
    :hidden:
@@ -165,15 +187,18 @@ def test_sphinx_live_output_and_static_fallback(tmp_path):
     app, warnings = build_demo(tmp_path)
     assert "ERROR" not in warnings
     page = (Path(app.outdir) / "index.html").read_text()
-    assert page.count('class="munch-3d interactive-plot3d') == 2
+    assert page.count('class="munch-3d interactive-plot3d') == 3
     assert 'id="live-vector"' in page
     assert "A live vector and a plane." in page
     assert "munch-3d-fallback" in page
     assert "deltas.json" not in page
-    assert page.count("vendor/jsxgraph/jsxgraphcore.js") == 1
-    assert "jsxgraphcore.js" not in (Path(app.outdir) / "plain.html").read_text()
-    assert len(list((Path(app.outdir) / "_images").glob("*.png"))) == 2
-    assert (Path(app.outdir) / "_static/munchboka/vendor/jsxgraph/jsxgraphcore.js").exists()
+    assert page.count("js/interactive3d/three-runtime.js") == 1
+    assert 'type="module"' in page
+    assert "jsxgraphcore.js" not in page
+    assert (Path(app.outdir) / "_static/munchboka/vendor/katex/dist/katex.min.js").exists()
+    assert "three-runtime.js" not in (Path(app.outdir) / "plain.html").read_text()
+    assert len(list((Path(app.outdir) / "_images").glob("*.png"))) == 3
+    assert (Path(app.outdir) / "_static/munchboka/vendor/three/build/three.module.js").exists()
 
 
 def test_non_html_builder_uses_initial_image(tmp_path):
@@ -191,7 +216,7 @@ def test_documented_myst_example_builds(tmp_path):
         "project='myst-scene3d'\nextensions=['munchboka_edutools','myst_parser']\n"
         "myst_enable_extensions=['colon_fence']\nhtml_theme='basic'\n"
     )
-    documentation = (Path(__file__).parents[1] / "docs/interactive-plot3d-jsxgraph.md").read_text()
+    documentation = (Path(__file__).parents[1] / "docs/interactive-plot3d-threejs.md").read_text()
     example = documentation.split("````markdown\n", 1)[1].split("\n````", 1)[0]
     (source / "index.md").write_text("# Live figure\n\n" + example)
     warnings = io.StringIO()
@@ -208,3 +233,44 @@ def test_documented_myst_example_builds(tmp_path):
     app.build()
     assert "ERROR" not in warnings.getvalue()
     assert 'class="munch-3d interactive-plot3d' in (tmp_path / "html/index.html").read_text()
+
+
+def test_macro_invocations_keep_local_bindings_and_caption_location():
+    lines = [
+        "interactive-var: a, 1, 3, 3",
+        "macro: mark(h)",
+        "let: q = h**2",
+        "def: f(u) = q+u",
+        "point: (f(1),0,0)",
+        "endmacro",
+        "use: mark(a)",
+        "use: mark(3)",
+        "",
+        "A caption.",
+    ]
+    scene, _, caption = build_scene(lines)
+    assert caption == 9
+    assert [evaluate(p["coords"][0], {"a": 2}) for p in scene["primitives"]] == [5, 10]
+
+
+def test_recursive_macro_is_bounded():
+    with pytest.raises(ValueError, match="limit"):
+        build_scene(["macro: recurse()", "use: recurse()", "endmacro", "use: recurse()"])
+
+
+def test_extended_geometry_compiles_to_serializable_scene():
+    scene, _, _ = build_scene(
+        [
+            "interactive-var: a, 1, 3, 3",
+            "normal-segment: point=(a,1,3), plane=z=0",
+            "prism: center=(0,0,0), radius=1, sides=4, height=a",
+            "pyramid: base=[(0,0,0),(1,0,0),(0,1,0)], apex=(0,0,a)",
+            "solid-of-revolution: sqrt(x+a), (0,2), blue",
+            "repeat: i=1..a; point: (i,0,0)",
+            "curve: x=cos(t), y=sin(t), z=t, t=(0,2*pi), arrows=true",
+            "hidden-edges: dashed",
+        ]
+    )
+    assert len(scene["primitives"]) == 6
+    assert next(p for p in scene["primitives"] if p["type"] == "prism")["hiddenEdges"] == "dashed"
+    json.dumps(scene, allow_nan=False)

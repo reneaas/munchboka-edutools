@@ -11,11 +11,18 @@ for(const entry of data) {
     const controls=document.createElement('div');controls.className='controls';
     section.append(heading,question,pair,controls);document.querySelector('main').append(section);
     const vars=Object.fromEntries(entry.scene.sliders.map(s=>[s.name,s.min+(s.max-s.min)*s.initial/(s.count-1)]));
-    let state={azim:-55,elev:25,zoom:1},pending=false;
+    let state={azim:-55,elev:25,zoom:1},pending=false,disposed=false;
     const panels=[],cameraInputs=[];
     function render() {
-        if(pending)return;pending=true;
-        requestAnimationFrame(()=>{pending=false;for(const p of panels){p.setCamera(state);p.render();}});
+        if(pending||disposed)return;pending=true;
+        requestAnimationFrame(()=>{
+            pending=false;if(disposed)return;
+            for(const p of panels){
+                const start=performance.now();p.setCamera(state);p.render();
+                p.lastUpdateMs=performance.now()-start;
+                p.ui.metrics.textContent=p.ui.metrics.textContent.replace(/last update [\d.]+ ms/,`last update ${p.lastUpdateMs.toFixed(1)} ms`);
+            }
+        });
     }
     function camera(next) {state={...next};for(const c of cameraInputs){c.input.value=state[c.key];c.output.textContent=state[c.key].toFixed(0);}render();}
     panels.push(new JSXPanel(mountPanel(pair,'JSXGraph · native polygons'),camera));
@@ -35,7 +42,7 @@ for(const entry of data) {
     }
     const observer=new ResizeObserver(render);for(const p of panels)observer.observe(p.ui.viewport);
     geometry();
-    comparisons.push({id:entry.id,panels,vars,camera,geometry,get state(){return state;},dispose(){observer.disconnect();panels.forEach(p=>p.dispose());}});
+    comparisons.push({id:entry.id,panels,vars,camera,geometry,get state(){return state;},dispose(){disposed=true;observer.disconnect();panels.forEach(p=>p.dispose());}});
 }
 window.comparison={cases:comparisons,gpu};
 await document.fonts.ready;

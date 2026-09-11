@@ -36,12 +36,16 @@ function dotTexture() {
 export class ThreePanel {
     constructor(box,ranges,onFailure,onSuccess) {
         acquire();this.box=box;this.onFailure=onFailure;this.onSuccess=onSuccess;this.entries=[];
-        this.scene=new T.Scene();this.scene.add(new T.AmbientLight(0xffffff,2));
+        // Low ambient + a strong key light gives spheres a visible light/dark gradient (so they
+        // read as balls, not flat filled circles); a dim fill light from the opposite side keeps
+        // the far/"back" hemisphere from going fully black.
+        this.scene=new T.Scene();this.scene.add(new T.AmbientLight(0xffffff,.55));
         // Depth-only stand-ins for translucent surfaces, rendered in their own pass (see render())
         // so hidden-edge lines can detect occlusion behind them without translucent surfaces
         // themselves acting as hard occluders for normal alpha blending.
         this.occluders=new T.Scene();
-        const light=new T.DirectionalLight(0xffffff,1.5);light.position.set(3,-4,8);this.scene.add(light);
+        const light=new T.DirectionalLight(0xffffff,2.2);light.position.set(3,-4,8);this.scene.add(light);
+        const fill=new T.DirectionalLight(0xffffff,.35);fill.position.set(-4,3,-2);this.scene.add(fill);
         this.center=new T.Vector3(...ranges.map(([lo,hi])=>(lo+hi)/2));
         this.span=Math.max(...ranges.map(([lo,hi])=>hi-lo));
         this.camera=new T.OrthographicCamera(-1,1,1,-1,this.span*.001,this.span*100);

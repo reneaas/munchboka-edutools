@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>answer directive &#8212; munchboka-edutools</title>
+    <title>popup-code directive &#8212; munchboka-edutools</title>
   
   
   
@@ -120,9 +120,7 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/answer';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/popup-code';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
@@ -142,11 +140,11 @@
     <script src="../_static/munchboka/js/geogebra-setup.js?v=8e77fc11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <link rel="canonical" href="https://dev.munchboka.no/docs/answer.html" />
+    <link rel="canonical" href="https://dev.munchboka.no/docs/popup-code.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="cas-popup directive" href="cas-popup.html" />
-    <link rel="prev" title="animate directive" href="animate.html" />
+    <link rel="next" title="interactive-graph directive" href="interactive-graph.html" />
+    <link rel="prev" title="interactive-code directive" href="interactive-code.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -253,7 +251,7 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Directive Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="animate.html"><code class="docutils literal notranslate"><span class="pre">animate</span></code> directive</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="answer.html"><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cas-popup.html"><code class="docutils literal notranslate"><span class="pre">cas-popup</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="clear.html"><code class="docutils literal notranslate"><span class="pre">clear</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="circuit.html"><code class="docutils literal notranslate"><span class="pre">circuit</span></code> directive</a></li>
@@ -273,7 +271,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hints.html"><code class="docutils literal notranslate"><span class="pre">hints</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="horner.html"><code class="docutils literal notranslate"><span class="pre">horner</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-code.html"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="popup-code.html"><code class="docutils literal notranslate"><span class="pre">popup-code</span></code> directive</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">popup-code</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-plot3d.html"><code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interactive-plot3d-threejs.html">Interactive 3D figures with Three.js</a></li>
@@ -364,7 +362,7 @@
       
       
       
-      <li><a href="../_sources/docs/answer.md" target="_blank"
+      <li><a href="../_sources/docs/popup-code.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -448,7 +446,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>answer directive</h1>
+    <h1>popup-code directive</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -459,10 +457,8 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-title">Custom title</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expanded-by-default">Expanded by default</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#size-labels-and-sidebar-placement">Size, labels, and sidebar placement</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>
             </nav>
         </div>
@@ -474,54 +470,38 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="answer-directive">
-<h1><code class="docutils literal notranslate"><span class="pre">answer</span></code> directive<a class="headerlink" href="#answer-directive" title="Link to this heading">#</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">answer</span></code> directive creates a styled admonition for displaying answers to problems. By default it is collapsed (dropdown) so students can reveal the answer when ready.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="popup-code-directive">
+<h1><code class="docutils literal notranslate"><span class="pre">popup-code</span></code> directive<a class="headerlink" href="#popup-code-directive" title="Link to this heading">#</a></h1>
+<p>Open an <code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> Python editor in a draggable, resizable window.
+Students can keep reading the page while the window is open, close it with
+the close button or Escape, and reopen it without losing code or output.
+Drag the title bar to move the window (mouse, touch, or pen).</p>
 <section id="basic-usage">
 <h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{answer}
-$x = 3$
-:::
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>```{popup-code}
+for i in range(3):
+    print(i)
+```
 </pre></div>
 </div>
-<p>which yields:</p>
-<div class="answer-2 docutils container">
-<button class="answer-2-toggle" aria-expanded="false" data-label="Vis fasit">Vis fasit</button><div class="answer-2-content docutils container">
-<p><span class="math notranslate nohighlight">\(x = 3\)</span></p>
-</div>
-</div>
+<p>An empty body opens a blank editor. Run, reset, cancel, and Python output
+work just as in <code class="docutils literal notranslate"><span class="pre">interactive-code</span></code>.</p>
 </section>
-<section id="custom-title">
-<h2>Custom title<a class="headerlink" href="#custom-title" title="Link to this heading">#</a></h2>
-<p>You can provide a custom title as the directive argument:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{answer} Solution to Exercise 1
-$f&#39;(x) = 2x - 3$, so $f&#39;(x) = 0$ gives $x = \frac{3}{2}$.
-:::
+<section id="size-labels-and-sidebar-placement">
+<h2>Size, labels, and sidebar placement<a class="headerlink" href="#size-labels-and-sidebar-placement" title="Link to this heading">#</a></h2>
+<p>Like <code class="docutils literal notranslate"><span class="pre">cas-popup</span></code>, the arguments are width, height, quoted button text,
+and quoted window title. Dimensions include the title bar and are limited
+to the available viewport.</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>```{popup-code} 750 600 &quot;Prøv koden&quot; &quot;Python&quot;
+:name: loop-practice
+:layout: sidebar
+
+for n in range(1, 6):
+    print(n**2)
+```
 </pre></div>
 </div>
-<p>which yields:</p>
-<div class="answer-2 docutils container">
-<button class="answer-2-toggle" aria-expanded="false" data-label="Solution to Exercise 1">Solution to Exercise 1</button><div class="answer-2-content docutils container">
-<p><span class="math notranslate nohighlight">\(f'(x) = 2x - 3\)</span>, so <span class="math notranslate nohighlight">\(f'(x) = 0\)</span> gives <span class="math notranslate nohighlight">\(x = \frac{3}{2}\)</span>.</p>
-</div>
-</div>
-</section>
-<section id="expanded-by-default">
-<h2>Expanded by default<a class="headerlink" href="#expanded-by-default" title="Link to this heading">#</a></h2>
-<p>Set <code class="docutils literal notranslate"><span class="pre">dropdown:</span> <span class="pre">0</span></code> to show the answer expanded instead of collapsed:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{answer} Quick check
-:dropdown: 0
-The answer is 42.
-:::
-</pre></div>
-</div>
-<p>which yields:</p>
-<div class="answer-2 docutils container">
-<button class="answer-2-toggle" aria-expanded="false" data-label="Quick check">Quick check</button><div class="answer-2-content docutils container">
-<p>:dropdown: 0
-The answer is 42.</p>
-</div>
-</div>
+<p>Alternatively, use options:</p>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
@@ -529,19 +509,51 @@ The answer is 42.</p>
 <thead>
 <tr class="row-odd"><th class="head"><p>Option</p></th>
 <th class="head"><p>Meaning</p></th>
+<th class="head"><p>Default</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dropdown</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code> (default) to collapse, <code class="docutils literal notranslate"><span class="pre">0</span></code> to expand</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<td><p>Initial window width in pixels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">500</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">height</span></code></p></td>
+<td><p>Initial window height in pixels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">550</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">button-text</span></code></p></td>
+<td><p>Launcher label</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Åpne</span> <span class="pre">kodevindu</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">title</span></code></p></td>
+<td><p>Window title</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Kodevindu</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">layout</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inline</span></code> or <code class="docutils literal notranslate"><span class="pre">sidebar</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inline</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Unique, stable editor name within this page</p></td>
+<td><p>Generated</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lang</span></code></p></td>
+<td><p>Language; currently only <code class="docutils literal notranslate"><span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">predict</span></code></p></td>
+<td><p>Ask students to predict output first, as in <code class="docutils literal notranslate"><span class="pre">interactive-code</span></code></p></td>
+<td><p>Off</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-</section>
-<section id="source">
-<h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
-<p>The implementation lives in <code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/admonitions.py</span></code>.</p>
+<p>Options override positional arguments. Use distinct <code class="docutils literal notranslate"><span class="pre">name</span></code> values on the
+same page to preserve saved code across rebuilds. The existing editor saves
+code in the browser’s local storage; output and window placement are retained
+only while the page remains loaded.</p>
+<p>The directive is registered by <code class="docutils literal notranslate"><span class="pre">munchboka_edutools</span></code>. It can also be enabled
+individually as <code class="docutils literal notranslate"><span class="pre">munchboka_edutools.directives.popup_code</span></code>.</p>
 </section>
 </section>
 
@@ -576,20 +588,20 @@ The answer is 42.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="animate.html"
+       href="interactive-code.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">animate</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">interactive-code</span></code> directive</p>
       </div>
     </a>
     <a class="right-next"
-       href="cas-popup.html"
+       href="interactive-graph.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">cas-popup</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> directive</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -610,10 +622,8 @@ The answer is 42.</p>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-title">Custom title</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expanded-by-default">Expanded by default</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#size-labels-and-sidebar-placement">Size, labels, and sidebar placement</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
 </ul>
   </nav></div>
 

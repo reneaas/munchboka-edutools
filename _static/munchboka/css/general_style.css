@@ -36,6 +36,15 @@ img.transparent-logo {
   filter: none !important;
 }
 
+/* The theme's own `logo:` config (sidebar brand image, book _config.yml) renders
+   as img.logo__image.only-light/.only-dark — only the "only-dark" variant is
+   exempted from the rule above, so a transparent-PNG/webp logo still gets a
+   white box behind it in light mode. Enforce transparency on both variants. */
+.logo__image {
+  background: transparent !important;
+  filter: none !important;
+}
+
 /* --- Figure and graph styles --- */
 
 /* Prevent any anchor marked no-click from being clickable (used by inline SVG figures) */
@@ -299,8 +308,8 @@ h5 {
 
 
 :root {
-  --summary-color-light: rgba(0, 128, 128, 0.7);
-  --summary-color-dark: teal;
+  --summary-color-light: rgba(0, 120, 180, 0.7);
+  --summary-color-dark: rgba(0, 120, 160, 1);
 }
 
 

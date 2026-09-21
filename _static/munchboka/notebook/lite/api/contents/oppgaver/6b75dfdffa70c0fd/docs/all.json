@@ -2,11 +2,11 @@
   "content": [
     {
       "content": null,
-      "created": "2026-09-21T17:10:30.711160Z",
+      "created": "2026-09-21T19:39:21.664742Z",
       "format": null,
       "hash": null,
       "hash_algorithm": null,
-      "last_modified": "2026-09-21T17:10:27.791830Z",
+      "last_modified": "2026-09-21T19:39:18.748125Z",
       "mimetype": null,
       "name": "notebook_test.ipynb",
       "path": "oppgaver/6b75dfdffa70c0fd/docs/notebook_test.ipynb",
@@ -15,11 +15,11 @@
       "writable": true
     }
   ],
-  "created": "2026-09-21T17:10:30.711160Z",
+  "created": "2026-09-21T19:39:21.664742Z",
   "format": "json",
   "hash": null,
   "hash_algorithm": null,
-  "last_modified": "2026-09-21T17:10:30.711160Z",
+  "last_modified": "2026-09-21T19:39:21.664742Z",
   "mimetype": null,
   "name": "docs",
   "path": "oppgaver/6b75dfdffa70c0fd/docs",

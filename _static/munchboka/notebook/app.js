@@ -140,12 +140,25 @@ action('welcome-resume', async () => {
 });
 action('download', download);
 action('original', original);
-action('open-new-tab', () => {
-  // Same URL an embedding page would otherwise have linked to; pops out this
-  // exact notebook (or blank notebook) into a full standalone tab.
-  if (!window.open(location.href, '_blank', 'noopener')) {
+action('open-new-tab', async () => {
+  // window.open must happen synchronously in the click handler, before any
+  // await, or browsers block it as a popup — so open a blank tab first, then
+  // save the live document and redirect that tab once the URL is ready.
+  const popup = window.open('', '_blank');
+  if (!popup) {
     throw new Error('Nettleseren blokkerte den nye fanen. Tillat popup-vinduer for denne siden.');
   }
+  const panel = application?.shell.currentWidget;
+  let href = location.href;
+  if (panel?.context?.model?.cells) {
+    await panel.context.save();
+    const url = new URL(location.href);
+    url.searchParams.delete('notebook');
+    url.searchParams.delete('new');
+    url.searchParams.set('path', panel.context.path);
+    href = url.toString();
+  }
+  popup.location.href = href;
 });
 action('run', () => { notebookPanel(); return application.commands.execute('notebook:run-cell-and-select-next'); });
 action('run-all', () => { notebookPanel(); return application.commands.execute('notebook:run-all-cells'); });
@@ -200,11 +213,18 @@ try {
   status('Velg en oppgave, eller åpne en .ipynb-fil fra datamaskinen.');
   const params = new URLSearchParams(location.search);
   const requested = params.get('notebook');
+  const requestedPath = params.get('path');
   if (requested) {
     exercise = catalog.notebooks.find(item => item.id === requested);
     if (!exercise) throw new Error('Oppgaven finnes ikke på denne nettsiden');
     $('original').hidden = false;
     await openPath(exercise.path);
+  } else if (requestedPath) {
+    // Popped out from another tab's "Åpne i ny fane": reopen that exact,
+    // already-saved file instead of minting an unrelated new notebook.
+    exercise = catalog.notebooks.find(item => item.path === requestedPath);
+    if (exercise) $('original').hidden = false;
+    await openPath(requestedPath);
   } else if (params.has('new')) {
     // Embedded via {notebook} with no .ipynb argument: skip the welcome screen entirely.
     await newNotebook();

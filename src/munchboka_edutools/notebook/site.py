@@ -138,6 +138,9 @@ def build_site(output, contents=None, title="Munchboka · Notebook"):
                 # restored notebook detaches. Student worksheets are small;
                 # rendering all cells also keeps navigation predictable.
                 "@jupyterlab/notebook-extension:tracker": {"windowingMode": "none"},
+                # Follow the OS light/dark preference, matching the shell
+                # around it (style.css), instead of always-light JupyterLab.
+                "@jupyterlab/apputils-extension:themes": {"adaptive-theme": True},
             },
         )
         command = [

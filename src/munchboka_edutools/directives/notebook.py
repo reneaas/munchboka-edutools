@@ -92,17 +92,20 @@ def visit_html(self, node):
     wrapper_class = "munchboka-notebook"
     if node["fullscreen"]:
         wrapper_class += " munchboka-notebook-fullscreen"
-    self.body.append(
-        f'<div class="{wrapper_class}"><p class="munchboka-notebook-link">'
-        f'<a href="{url}" target="_blank" rel="noopener">{label}</a></p>'
-    )
+    self.body.append(f'<div class="{wrapper_class}">')
+    if not node["embed"]:
+        # Embedded notebooks carry their own "Åpne i ny fane" toolbar button.
+        self.body.append(
+            f'<p class="munchboka-notebook-link">'
+            f'<a href="{url}" target="_blank" rel="noopener">{label}</a></p>'
+        )
     if node["embed"]:
-        style = "width:100%;border:1px solid #d2ded7;border-radius:8px"
+        style = "width:100%"
         if node["height"]:
             height = node["height"]
             if height.isdigit():
                 height += "px"
-            style = f"width:100%;height:{escape(height)};" + style.split(';', 1)[1]
+            style += f";height:{escape(height)}"
         self.body.append(
             f'<iframe class="munchboka-notebook-frame" title="{title}" '
             f'src="{url}" loading="lazy" style="{style}" '

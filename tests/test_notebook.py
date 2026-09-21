@@ -158,7 +158,9 @@ def test_sphinx_nested_paths_and_dependencies(tmp_path, monkeypatch, builder):
     assert (html.parent / url.path).resolve().is_file()
     assert parse_qs(url.query) == {"notebook": ["kapittel/øvelse.ipynb"]}
     assert frame["title"] == 'Test "notebook"'
-    assert soup.select_one(".munchboka-notebook a").text == "Åpne <oppgaven>"
+    # Embedded notebooks rely on the iframe's own "Åpne i ny fane" button, not
+    # a page-level link (button-text is only used in the non-embed link mode).
+    assert soup.select_one(".munchboka-notebook-link") is None
     assert (out / "_static/munchboka/css/notebook.css").is_file()
     # Removing the directive must remove it from the incremental build inventory.
     (chapter / "side.rst").write_text("Oppgave\n=======\n\nIngen notebook.\n")
@@ -194,6 +196,36 @@ def test_fullscreen_implies_embed_and_skips_inline_height(tmp_path, monkeypatch)
     frame = soup.select_one(".munchboka-notebook-frame")
     assert frame is not None  # :fullscreen: implies :embed:
     assert "height" not in (frame.get("style") or "")  # sized by CSS (vh), not inline
+    # No page-level link either — the iframe's own toolbar has "Åpne i ny fane".
+    assert soup.select_one(".munchboka-notebook-link") is None
+
+
+def test_default_link_mode_has_no_iframe(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    shutil.copyfile(site.EXAMPLES / "01_python.ipynb", src / "øvelse.ipynb")
+    (src / "conf.py").write_text(
+        "extensions=['munchboka_edutools.directives.notebook']\nmaster_doc='index'\n"
+        "project='Notebook test'\n",
+        encoding="utf-8",
+    )
+    (src / "index.rst").write_text(
+        "Notebook\n========\n\n.. notebook:: øvelse.ipynb\n   :button-text: Åpne oppgaven\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        directive, "build_site", lambda output, contents, title: output.mkdir(parents=True, exist_ok=True)
+    )
+    out = tmp_path / "out"
+    app = Sphinx(
+        str(src), str(src), str(out), str(tmp_path / "cache"), "html",
+        status=io.StringIO(), warning=io.StringIO(), freshenv=True,
+    )
+    app.build(force_all=True)
+    soup = BeautifulSoup((out / "index.html").read_text(), "html.parser")
+    assert soup.select_one(".munchboka-notebook-frame") is None
+    link = soup.select_one(".munchboka-notebook-link a")
+    assert link.text == "Åpne oppgaven"
 
 
 def test_directive_without_argument_embeds_blank_notebook(tmp_path, monkeypatch):

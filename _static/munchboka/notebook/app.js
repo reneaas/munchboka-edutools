@@ -140,6 +140,13 @@ action('welcome-resume', async () => {
 });
 action('download', download);
 action('original', original);
+action('open-new-tab', () => {
+  // Same URL an embedding page would otherwise have linked to; pops out this
+  // exact notebook (or blank notebook) into a full standalone tab.
+  if (!window.open(location.href, '_blank', 'noopener')) {
+    throw new Error('Nettleseren blokkerte den nye fanen. Tillat popup-vinduer for denne siden.');
+  }
+});
 action('run', () => { notebookPanel(); return application.commands.execute('notebook:run-cell-and-select-next'); });
 action('run-all', () => { notebookPanel(); return application.commands.execute('notebook:run-all-cells'); });
 action('restart', async () => {

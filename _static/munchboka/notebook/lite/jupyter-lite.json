@@ -408,6 +408,9 @@
       }
     },
     "settingsOverrides": {
+      "@jupyterlab/apputils-extension:themes": {
+        "adaptive-theme": true
+      },
       "@jupyterlab/docmanager-extension:plugin": {
         "autosaveInterval": 10
       },

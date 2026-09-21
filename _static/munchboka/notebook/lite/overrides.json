@@ -7,5 +7,8 @@
   },
   "@jupyterlab/notebook-extension:tracker": {
     "windowingMode": "none"
+  },
+  "@jupyterlab/apputils-extension:themes": {
+    "adaptive-theme": true
   }
 }

@@ -100,12 +100,12 @@ def visit_html(self, node):
             f'<a href="{url}" target="_blank" rel="noopener">{label}</a></p>'
         )
     if node["embed"]:
-        style = "width:100%"
+        style = "width:100%;border:1px solid #d2ded7;border-radius:8px"
         if node["height"]:
             height = node["height"]
             if height.isdigit():
                 height += "px"
-            style += f";height:{escape(height)}"
+            style = f"width:100%;height:{escape(height)};" + style.split(';', 1)[1]
         self.body.append(
             f'<iframe class="munchboka-notebook-frame" title="{title}" '
             f'src="{url}" loading="lazy" style="{style}" '

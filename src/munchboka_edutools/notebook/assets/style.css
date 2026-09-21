@@ -8,12 +8,14 @@
   --help: #fff9e9; --error-text: #9c2828; --error-bg: #fff0ee;
 }
 :root[data-theme="dark"] {
+  /* Material dark surfaces: neutral #121212 base, lighter elevated surfaces.
+     https://codelabs.developers.google.com/codelabs/design-material-darktheme */
   color-scheme: dark;
-  --text: #e0eee8; --page: #151e1c; --surface: #202c28;
-  --border: #41554b; --control-border: #657e70; --hover: #30463b;
-  --focus: #ffcf80; --accent: #93d7ba; --accent-hover: #b5e6cd;
-  --on-accent: #122e23; --muted: #b5c9be; --toolbar: #1b2722;
-  --help: #342e1e; --error-text: #ffb4ac; --error-bg: #3c2526;
+  --text: #e0e0e0; --page: #121212; --surface: #1e1e1e;
+  --border: #424242; --control-border: #757575; --hover: #303030;
+  --focus: #8ab4f8; --accent: #8ab4f8; --accent-hover: #aecbfa;
+  --on-accent: #202124; --muted: #bdbdbd; --toolbar: #242424;
+  --help: #242424; --error-text: #f2b8b5; --error-bg: #2c2022;
 }
 :root { font-family: system-ui, sans-serif; color: var(--text); background: var(--page); font-size: 16px; }
 * { box-sizing: border-box; }

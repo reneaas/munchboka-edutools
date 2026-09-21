@@ -126,6 +126,9 @@ av nettsiden flytter ikke automatisk nettleserdataene.
 
 ## Lys og mørk modus
 
+Mørk modus bruker nøytrale grå flater med `#121212` som bakgrunn, lysere hevede
+flater og en dempet blå aksent, basert på Googles Material-veiledning for mørke temaer.
+
 Den innebygde notebooken følger bokas aktive tema (`data-theme` eller `data-mode`
 på HTML-/body-elementet, inkludert automatisk systemvalg). Både appens knapper,
 hjelpetekst og editorens celler, menyer og resultatområde skifter tema dynamisk.

@@ -46,6 +46,22 @@ fallback. The legacy `frames` backend is still available via an explicit
 `backend: frames`. See the
 [Three.js guide](docs/interactive-plot3d-threejs.md) for examples and migration limits.
 
+### Norwegian notebooks with Pyodide
+
+Build a standalone JupyterLite site, or use the `{notebook}` directive to open
+`.ipynb` exercises from a book. Students run Python in their browser and download
+their work as standard Jupyter notebooks.
+
+```bash
+pip install "munchboka-edutools[notebook]"
+muncho notebook build --output _build/notebook
+python -m http.server 8000 --directory _build/notebook
+```
+
+The default site includes three Norwegian examples. See the
+[notebook guide](docs/notebook.md) for Sphinx integration, custom exercises,
+browser storage, and package limitations.
+
 ### Print-Friendly PDFs
 
 Simply press **Ctrl+P** (or Cmd+P) in your browser when viewing any page to create a clean PDF with:

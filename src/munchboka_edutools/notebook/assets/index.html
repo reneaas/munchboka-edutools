@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Munchboka · Notebook</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html">Munchboka <span>Notebook</span></a>
+    <button id="help-toggle" aria-expanded="false" aria-controls="help">Slik bruker du notebooken</button>
+  </header>
+  <aside id="help" hidden>
+    <p>En notebook består av tekst og kodeceller. Velg en kodecelle og trykk
+      <kbd>Shift</kbd> + <kbd>Enter</kbd> for å kjøre den. Variabler huskes mellom cellene.</p>
+    <p>Arbeidet lagres automatisk i denne nettleseren. Bruk <strong>Last ned notebook</strong>
+      for å lagre en .ipynb-fil på datamaskinen eller levere oppgaven. Nettleserdata kan bli slettet.</p>
+    <p>Python lastes ned ved første kjøring; dette kan ta litt tid. Hvis et program ikke stopper,
+      bruk <strong>Start Python på nytt</strong>. Da slettes variablene, men cellene beholdes.</p>
+  </aside>
+  <main>
+    <section id="welcome">
+      <p class="eyebrow">PYTHON I NETTLESEREN</p>
+      <h1>Prøv, utforsk og finn ut.</h1>
+      <p>Åpne en oppgave eller fortsett med en notebook fra datamaskinen din.
+        Du trenger ikke å installere Python.</p>
+      <div class="actions">
+        <button class="primary" id="welcome-upload">Åpne fil</button>
+        <button id="welcome-new">Ny notebook</button>
+        <button id="welcome-resume">Fortsett i nettleseren</button>
+      </div>
+      <h2>Oppgaver</h2>
+      <div id="exercises" class="cards"></div>
+      <p class="note">Koden kjøres på din egen enhet. Husk å laste ned arbeidet når du er ferdig.</p>
+    </section>
+    <section id="workspace" hidden aria-label="Notebook">
+      <nav class="toolbar" aria-label="Notebook-verktøy">
+        <button id="upload">Åpne fil</button>
+        <button id="new">Ny notebook</button>
+        <button class="primary" id="download">Last ned notebook</button>
+        <button id="run">Kjør celle</button>
+        <button id="run-all">Kjør alle</button>
+        <button id="restart">Start Python på nytt</button>
+        <button id="original" hidden>Åpne originaloppgaven</button>
+      </nav>
+      <iframe id="editor" title="Notebook med Python" allow="clipboard-read; clipboard-write"></iframe>
+    </section>
+    <p id="status" role="status" aria-live="polite">Laster oppgaver …</p>
+  </main>
+  <input id="file" type="file" accept=".ipynb,application/x-ipynb+json" hidden>
+  <noscript>Du må aktivere JavaScript for å bruke notebooken.</noscript>
+</body>
+</html>

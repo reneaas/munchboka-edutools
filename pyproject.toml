@@ -45,6 +45,11 @@ Homepage = "https://github.com/reneaas/munchboka-edutools"
 Issues = "https://github.com/reneaas/munchboka-edutools/issues"
 
 [project.optional-dependencies]
+notebook = [
+  "jupyterlite-core[translation]==0.8.3",
+  "jupyterlite-pyodide-kernel==0.8.6",
+  "nbformat>=5.9,<6",
+]
 dev = [
   "pytest",
   "jupyter-book",

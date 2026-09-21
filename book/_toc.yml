@@ -23,6 +23,8 @@ chapters:
   - file: docs/hints.md
   - file: docs/horner.md
   - file: docs/interactive-code.md
+  - file: docs/notebook_full.md
+  - file: docs/notebook.md
   - file: docs/popup-code.md
   - file: docs/interactive-graph.md
   - file: docs/interactive-plot3d.md

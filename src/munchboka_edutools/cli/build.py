@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any
 from bs4 import BeautifulSoup
 
 from ..config.profiles import ProfileManager, BuildProfile
+from .notebook import notebook
 from ..processors import Processor, TypographyProcessor, PageBreakProcessor, MathRenderingProcessor
 
 
@@ -324,6 +325,8 @@ def profiles():
         click.echo(f"    Processors: {', '.join(p.name for p in profile.processors if p.enabled)}")
         click.echo()
 
+
+cli.add_command(notebook)
 
 if __name__ == "__main__":
     cli()

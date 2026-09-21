@@ -68,7 +68,9 @@ class NotebookDirective(SphinxDirective):
             "",
             notebook=notebook,
             title=self.options.get("title", "Notebook med Python"),
-            label=self.options.get("button-text", "Åpne notebook" if notebook else "Åpne blank notebook"),
+            label=self.options.get(
+                "button-text", "Åpne notebook" if notebook else "Åpne blank notebook"
+            ),
             height=height,
             embed=fullscreen or "embed" in self.options,
             fullscreen=fullscreen,
@@ -100,12 +102,12 @@ def visit_html(self, node):
             f'<a href="{url}" target="_blank" rel="noopener">{label}</a></p>'
         )
     if node["embed"]:
-        style = "width:100%;border:1px solid #d2ded7;border-radius:8px"
+        style = "width:100%"
         if node["height"]:
             height = node["height"]
             if height.isdigit():
                 height += "px"
-            style = f"width:100%;height:{escape(height)};" + style.split(';', 1)[1]
+            style += f";height:{escape(height)}"
         self.body.append(
             f'<iframe class="munchboka-notebook-frame" title="{title}" '
             f'src="{url}" loading="lazy" style="{style}" '

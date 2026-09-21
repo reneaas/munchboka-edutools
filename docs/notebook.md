@@ -124,6 +124,21 @@ får de nye stier, slik at tidligere elevarbeid blir liggende. Gamle versjoner
 kan finnes i editorens filoversikt. Lagringen følger nettsidens adresse; flytting
 av nettsiden flytter ikke automatisk nettleserdataene.
 
+## Lys og mørk modus
+
+Den innebygde notebooken følger bokas aktive tema (`data-theme` eller `data-mode`
+på HTML-/body-elementet, inkludert automatisk systemvalg). Både appens knapper,
+hjelpetekst og editorens celler, menyer og resultatområde skifter tema dynamisk.
+Temaendringer laster ikke siden på nytt og starter ikke Python på nytt.
+
+Som selvstendig nettside følger notebooken operativsystemets fargevalg, også når
+det endres mens siden er åpen. En ny fane åpnet fra verktøylinjen kan følge
+opprinnelsesfanens tema så lenge nettleseren gir tilgang til den. Ved innbygging
+fra et annet domene brukes systemets fargevalg.
+
+Ferdig genererte bilder (for eksempel PNG-grafer fra Matplotlib) beholder fargene
+de ble laget med; grafiske resultater inverteres ikke.
+
 ## Språk, pakker og begrensninger
 
 Startside, verktøylinje og sentrale redigeringskommandoer er på Bokmål.
@@ -153,6 +168,7 @@ pytest -q tests/test_notebook.py
 muncho notebook build --output /tmp/munch-notebook-test
 # Med Playwright installert og Chromium tilgjengelig:
 node tests/notebook_browser.cjs /tmp/munch-notebook-test
+node tests/notebook_theme_browser.cjs /tmp/munch-notebook-test
 ```
 
 Nettlesertesten krever tilgang til Pyodide-CDN og tester ekte Python-kjøring,

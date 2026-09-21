@@ -125,7 +125,12 @@ def build_site(output, contents=None, title="Munchboka · Notebook"):
                     "appName": title,
                     "exposeAppInBrowser": True,
                     "defaultKernelName": "python",
-                    "disabledExtensions": ["@jupyterlab/apputils-extension:announcements"],
+                    "disabledExtensions": [
+                        "@jupyterlab/apputils-extension:announcements",
+                        # The shell supplies loading feedback. Jupyter's splash
+                        # removal timer races when themes change in quick succession.
+                        "@jupyterlab/apputils-extension:splash",
+                    ],
                 },
             },
         )
@@ -160,7 +165,7 @@ def build_site(output, contents=None, title="Munchboka · Notebook"):
         result = subprocess.run(command, cwd=project, capture_output=True, text=True, check=False)
         if result.returncode:
             raise RuntimeError("JupyterLite-byggingen feilet:\n" + result.stdout + result.stderr)
-        for name in ("index.html", "app.js", "style.css"):
+        for name in ("index.html", "app.js", "theme.js", "style.css"):
             shutil.copyfile(ASSETS / name, staged / name)
         catalog = []
         for path, data in notebooks.items():

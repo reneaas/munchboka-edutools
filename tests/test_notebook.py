@@ -71,6 +71,7 @@ def test_real_build_and_incremental_cache(content, tmp_path, monkeypatch):
     )
     assert (output / "lite/api/translations/nb_NO.json").is_file()
     assert (output / "lite/lab/index.html").is_file()
+    assert (output / "theme.js").is_file()
     before = (output / site.MARKER).read_bytes()
 
     def fail(*args, **kwargs):
@@ -182,12 +183,20 @@ def test_fullscreen_implies_embed_and_skips_inline_height(tmp_path, monkeypatch)
         encoding="utf-8",
     )
     monkeypatch.setattr(
-        directive, "build_site", lambda output, contents, title: output.mkdir(parents=True, exist_ok=True)
+        directive,
+        "build_site",
+        lambda output, contents, title: output.mkdir(parents=True, exist_ok=True),
     )
     out = tmp_path / "out"
     app = Sphinx(
-        str(src), str(src), str(out), str(tmp_path / "cache"), "html",
-        status=io.StringIO(), warning=io.StringIO(), freshenv=True,
+        str(src),
+        str(src),
+        str(out),
+        str(tmp_path / "cache"),
+        "html",
+        status=io.StringIO(),
+        warning=io.StringIO(),
+        freshenv=True,
     )
     app.build(force_all=True)
     soup = BeautifulSoup((out / "index.html").read_text(), "html.parser")
@@ -214,12 +223,20 @@ def test_default_link_mode_has_no_iframe(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     monkeypatch.setattr(
-        directive, "build_site", lambda output, contents, title: output.mkdir(parents=True, exist_ok=True)
+        directive,
+        "build_site",
+        lambda output, contents, title: output.mkdir(parents=True, exist_ok=True),
     )
     out = tmp_path / "out"
     app = Sphinx(
-        str(src), str(src), str(out), str(tmp_path / "cache"), "html",
-        status=io.StringIO(), warning=io.StringIO(), freshenv=True,
+        str(src),
+        str(src),
+        str(out),
+        str(tmp_path / "cache"),
+        "html",
+        status=io.StringIO(),
+        warning=io.StringIO(),
+        freshenv=True,
     )
     app.build(force_all=True)
     soup = BeautifulSoup((out / "index.html").read_text(), "html.parser")
@@ -249,8 +266,14 @@ def test_directive_without_argument_embeds_blank_notebook(tmp_path, monkeypatch)
     )
     out = tmp_path / "out"
     app = Sphinx(
-        str(src), str(src), str(out), str(tmp_path / "cache"), "html",
-        status=io.StringIO(), warning=io.StringIO(), freshenv=True,
+        str(src),
+        str(src),
+        str(out),
+        str(tmp_path / "cache"),
+        "html",
+        status=io.StringIO(),
+        warning=io.StringIO(),
+        freshenv=True,
     )
     app.build(force_all=True)
     # The site is still built even though no .ipynb was supplied.
@@ -282,3 +305,38 @@ def test_parallel_inventory_merge_and_purge():
     directive.merge(None, env, ["new"], other)
     directive.purge(None, env, "old")
     assert env.munchboka_notebooks == {"new": ["b.ipynb"]}
+
+
+@pytest.mark.parametrize("embed", ["", "true"])
+def test_myst_yaml_embed(tmp_path, monkeypatch, embed):
+    pytest.importorskip("myst_parser")
+    (tmp_path / "conf.py").write_text(
+        "extensions=['myst_parser','munchboka_edutools.directives.notebook']\n"
+        "master_doc='index'\nmyst_enable_extensions=['colon_fence']\n"
+    )
+    shutil.copyfile(site.EXAMPLES / "01_python.ipynb", tmp_path / "notebook_test.ipynb")
+    (tmp_path / "index.md").write_text(
+        "# Notebook\n\n:::{notebook} notebook_test.ipynb\n---\n"
+        f"embed: {embed}\nheight: 800px\n---\n:::\n"
+    )
+    monkeypatch.setattr(directive, "build_site", lambda *args: None)
+    warnings = io.StringIO()
+    app = Sphinx(
+        str(tmp_path),
+        str(tmp_path),
+        str(tmp_path / "out"),
+        str(tmp_path / "cache"),
+        "html",
+        status=io.StringIO(),
+        warning=warnings,
+        freshenv=True,
+    )
+    app.build()
+    assert app.statuscode == 0, warnings.getvalue()
+    assert "ERROR" not in warnings.getvalue()
+    frame = BeautifulSoup((tmp_path / "out/index.html").read_text(), "html.parser").select_one(
+        ".munchboka-notebook-frame"
+    )
+    assert frame is not None
+    assert "height:800px" in frame["style"]
+    assert "border" not in frame["style"]  # Use the host's theme variables in CSS.

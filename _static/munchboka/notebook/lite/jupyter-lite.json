@@ -7,7 +7,8 @@
     "contentsAllJsonFile": "all.json",
     "defaultKernelName": "python",
     "disabledExtensions": [
-      "@jupyterlab/apputils-extension:announcements"
+      "@jupyterlab/apputils-extension:announcements",
+      "@jupyterlab/apputils-extension:splash"
     ],
     "exposeAppInBrowser": true,
     "faviconUrl": "./lab/favicon.ico",

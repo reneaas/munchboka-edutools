@@ -42,6 +42,7 @@ async function editor() {
     await app.started;
     await app.restored;
     await app.serviceManager.ready;
+    await window.munchbokaTheme.attach(app);
     application = app;
     app.shell.currentChanged.connect(() => {
       const panel = app.shell.currentWidget;

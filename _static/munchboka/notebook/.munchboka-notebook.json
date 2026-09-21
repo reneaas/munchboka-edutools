@@ -1,5 +1,5 @@
 {
-  "fingerprint": "ab18d10cbcfe2aa080fa861682ac17e3d0c5990198016a9ed1397f7b7238196b",
+  "fingerprint": "78df8cb4ce81c7643cbd7ee650280d683623bd2af166ffa51dea7a6a731785f1",
   "versions": {
     "jupyterlite-core": "0.8.3",
     "jupyterlite-pyodide-kernel": "0.8.6",

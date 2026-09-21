@@ -191,11 +191,15 @@ try {
     $('exercises').append(link);
   }
   status('Velg en oppgave, eller åpne en .ipynb-fil fra datamaskinen.');
-  const requested = new URLSearchParams(location.search).get('notebook');
+  const params = new URLSearchParams(location.search);
+  const requested = params.get('notebook');
   if (requested) {
     exercise = catalog.notebooks.find(item => item.id === requested);
     if (!exercise) throw new Error('Oppgaven finnes ikke på denne nettsiden');
     $('original').hidden = false;
     await openPath(exercise.path);
+  } else if (params.has('new')) {
+    // Embedded via {notebook} with no .ipynb argument: skip the welcome screen entirely.
+    await newNotebook();
   }
 } catch (error) { report(error); }

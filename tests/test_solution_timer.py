@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from sphinx.application import Sphinx
+from sphinx.util.docutils import docutils_namespace
 
 
 def _make_source(src: Path) -> None:
@@ -13,6 +14,11 @@ extensions = [
 ]
 
 html_theme = 'basic'
+
+# Harmless artifact of building multiple Sphinx() apps in one process (Sphinx
+# core re-registers its own nodes/directives/roles each time); irrelevant to
+# what this test actually checks.
+suppress_warnings = ['app']
 """.lstrip(),
         encoding="utf8",
     )
@@ -58,16 +64,20 @@ def test_solution_timer_build(tmp_path):
     doctree.mkdir()
     _make_source(src)
 
-    app = Sphinx(
-        srcdir=str(src),
-        confdir=str(src),
-        outdir=str(build),
-        doctreedir=str(doctree),
-        buildername="html",
-        warningiserror=True,
-        freshenv=True,
-    )
-    app.build()
+    # Isolate docutils' global node registry: other Sphinx()-creating tests in
+    # this process may have already registered nodes, which warningiserror
+    # would otherwise turn into a spurious failure here.
+    with docutils_namespace():
+        app = Sphinx(
+            srcdir=str(src),
+            confdir=str(src),
+            outdir=str(build),
+            doctreedir=str(doctree),
+            buildername="html",
+            warningiserror=True,
+            freshenv=True,
+        )
+        app.build()
 
     html = (build / "index.html").read_text(encoding="utf8")
 

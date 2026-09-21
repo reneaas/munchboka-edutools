@@ -62,6 +62,17 @@ bokas kildemappe. Alle filer må ligge innenfor kildemappen. `files` kan innehol
 flere filstier, én per linje; mappestrukturen bevares i notebook-miljøet. En fil
 ved siden av notebooken åpnes dermed i Python med sitt relative navn.
 
+Direktivets argument er valgfritt. Uten et argument vises en blank notebook
+(én tom kodecelle) — nyttig for fri utforskning uten å måtte lage en
+`.ipynb`-fil på forhånd:
+
+````markdown
+```{notebook}
+:title: Skriv egen Python-kode
+:fullscreen:
+```
+````
+
 ### En egen side i `_toc.yml` som er notebooken
 
 Å legge en `.ipynb`-fil direkte i `_toc.yml` bruker Jupyter Book/MyST-NB sin

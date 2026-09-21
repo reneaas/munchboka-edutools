@@ -23,7 +23,8 @@ class NotebookNode(nodes.General, nodes.Element):
 
 
 class NotebookDirective(SphinxDirective):
-    required_arguments = 1
+    required_arguments = 0
+    optional_arguments = 1
     final_argument_whitespace = True
     has_content = False
     option_spec: ClassVar[dict] = {
@@ -46,10 +47,11 @@ class NotebookDirective(SphinxDirective):
             self.env.note_dependency(str(path))
             return path.relative_to(root).as_posix()
 
-        notebook = resolve(self.arguments[0])
-        if not notebook.lower().endswith(".ipynb"):
+        # No argument: embed a blank notebook, without authoring a .ipynb file.
+        notebook = resolve(self.arguments[0]) if self.arguments else None
+        if notebook and not notebook.lower().endswith(".ipynb"):
             raise self.error("Notebook-direktivet krever en .ipynb-fil.")
-        files = [notebook]
+        files = [notebook] if notebook else []
         for value in self.options.get("files", "").splitlines():
             if value.strip():
                 files.append(resolve(value.strip()))
@@ -66,13 +68,15 @@ class NotebookDirective(SphinxDirective):
             "",
             notebook=notebook,
             title=self.options.get("title", "Notebook med Python"),
-            label=self.options.get("button-text", "Åpne notebook"),
+            label=self.options.get("button-text", "Åpne notebook" if notebook else "Åpne blank notebook"),
             height=height,
             embed=fullscreen or "embed" in self.options,
             fullscreen=fullscreen,
         )
         self.set_source_info(node)
         records = getattr(self.env, "munchboka_notebooks", {})
+        # Registering the docname (even with an empty file list) tells
+        # build_notebooks() this page needs the site built, blank notebook or not.
         records.setdefault(self.env.docname, []).extend(files)
         self.env.munchboka_notebooks = records
         return [node]
@@ -80,9 +84,8 @@ class NotebookDirective(SphinxDirective):
 
 def visit_html(self, node):
     target = self.builder.get_target_uri(self.builder.current_docname)
-    href = (
-        relative_uri(target, SITE + "/index.html") + "?" + urlencode({"notebook": node["notebook"]})
-    )
+    query = {"notebook": node["notebook"]} if node["notebook"] else {"new": "1"}
+    href = relative_uri(target, SITE + "/index.html") + "?" + urlencode(query)
     url = escape(href, quote=True)
     title = escape(node["title"], quote=True)
     label = escape(node["label"])
@@ -110,12 +113,13 @@ def visit_html(self, node):
 
 
 def visit_text(self, node):
-    self.add_text(f'{node["title"]} — {node["label"]}: {node["notebook"]}')
+    self.add_text(f'{node["title"]} — {node["label"]}: {node["notebook"] or "(blank notebook)"}')
     raise nodes.SkipNode
 
 
 def visit_latex(self, node):
-    self.body.append(self.encode(f'{node["title"]}: {node["notebook"]} (nettutgaven)'))
+    target = node["notebook"] or "blank notebook"
+    self.body.append(self.encode(f'{node["title"]}: {target} (nettutgaven)'))
     raise nodes.SkipNode
 
 
@@ -139,16 +143,12 @@ def build_notebooks(app, exception):
     if exception or app.builder.format != "html":
         return
     records = getattr(app.env, "munchboka_notebooks", {})
-    paths = sorted(
-        {
-            path
-            for docname, files in records.items()
-            if docname in app.env.found_docs
-            for path in files
-        }
-    )
-    if not paths:
+    # A page can use the directive with no .ipynb (blank notebook); the site
+    # must still be built even when the combined file set ends up empty.
+    active = {docname for docname in records if docname in app.env.found_docs}
+    if not active:
         return
+    paths = sorted({path for docname in active for path in records[docname]})
     try:
         with tempfile.TemporaryDirectory(prefix="munch-notebooks-") as temporary:
             contents = Path(temporary)

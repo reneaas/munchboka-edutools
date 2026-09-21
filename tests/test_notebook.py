@@ -196,6 +196,38 @@ def test_fullscreen_implies_embed_and_skips_inline_height(tmp_path, monkeypatch)
     assert "height" not in (frame.get("style") or "")  # sized by CSS (vh), not inline
 
 
+def test_directive_without_argument_embeds_blank_notebook(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "conf.py").write_text(
+        "extensions=['munchboka_edutools.directives.notebook']\nmaster_doc='index'\n"
+        "project='Notebook test'\n",
+        encoding="utf-8",
+    )
+    (src / "index.rst").write_text(
+        "Notebook\n========\n\n.. notebook::\n   :fullscreen:\n",
+        encoding="utf-8",
+    )
+    calls = []
+    monkeypatch.setattr(
+        directive,
+        "build_site",
+        lambda output, contents, title: calls.append(list(contents.rglob("*")))
+        or output.mkdir(parents=True, exist_ok=True),
+    )
+    out = tmp_path / "out"
+    app = Sphinx(
+        str(src), str(src), str(out), str(tmp_path / "cache"), "html",
+        status=io.StringIO(), warning=io.StringIO(), freshenv=True,
+    )
+    app.build(force_all=True)
+    # The site is still built even though no .ipynb was supplied.
+    assert calls == [[]]
+    soup = BeautifulSoup((out / "index.html").read_text(), "html.parser")
+    frame = soup.select_one(".munchboka-notebook-frame")
+    assert parse_qs(urlsplit(frame["src"]).query) == {"new": ["1"]}
+
+
 def test_cli_build_dispatch_and_errors(monkeypatch, tmp_path):
     from munchboka_edutools.cli import notebook as commands
     from munchboka_edutools.cli.build import cli

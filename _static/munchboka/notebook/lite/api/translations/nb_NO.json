@@ -1,0 +1,582 @@
+{
+  "data": {
+    "jupyterlab": {
+      "File": [
+        "Fil"
+      ],
+      "Edit": [
+        "Rediger"
+      ],
+      "View": [
+        "Vis"
+      ],
+      "Run": [
+        "Kjør"
+      ],
+      "Kernel": [
+        "Python"
+      ],
+      "Tabs": [
+        "Faner"
+      ],
+      "Settings": [
+        "Innstillinger"
+      ],
+      "Help": [
+        "Hjelp"
+      ],
+      "menu\u0004File": [
+        "Fil"
+      ],
+      "menu\u0004Edit": [
+        "Rediger"
+      ],
+      "menu\u0004View": [
+        "Vis"
+      ],
+      "menu\u0004Run": [
+        "Kjør"
+      ],
+      "menu\u0004Kernel": [
+        "Python"
+      ],
+      "menu\u0004Tabs": [
+        "Faner"
+      ],
+      "menu\u0004Settings": [
+        "Innstillinger"
+      ],
+      "menu\u0004Help": [
+        "Hjelp"
+      ],
+      "New": [
+        "Ny"
+      ],
+      "New Launcher": [
+        "Ny startside"
+      ],
+      "Launcher": [
+        "Startside"
+      ],
+      "Notebook": [
+        "Notebook"
+      ],
+      "New Notebook": [
+        "Ny notebook"
+      ],
+      "Open": [
+        "Åpne"
+      ],
+      "Open…": [
+        "Åpne …"
+      ],
+      "Open from Path…": [
+        "Åpne fra filsti …"
+      ],
+      "Open With": [
+        "Åpne med"
+      ],
+      "Save": [
+        "Lagre i nettleseren"
+      ],
+      "Save Notebook": [
+        "Lagre notebook i nettleseren"
+      ],
+      "Save and create checkpoint": [
+        "Lagre og opprett kontrollpunkt"
+      ],
+      "Save and Create Checkpoint": [
+        "Lagre og opprett kontrollpunkt"
+      ],
+      "Save All": [
+        "Lagre alle"
+      ],
+      "Save As…": [
+        "Lagre som …"
+      ],
+      "Save Notebook As…": [
+        "Lagre notebook som …"
+      ],
+      "Download": [
+        "Last ned"
+      ],
+      "Download Notebook": [
+        "Last ned notebook"
+      ],
+      "Export Notebook As…": [
+        "Eksporter notebook som …"
+      ],
+      "Rename": [
+        "Gi nytt navn"
+      ],
+      "Rename…": [
+        "Gi nytt navn …"
+      ],
+      "Rename Notebook…": [
+        "Gi notebooken nytt navn …"
+      ],
+      "Close": [
+        "Lukk"
+      ],
+      "Close All Tabs": [
+        "Lukk alle faner"
+      ],
+      "Close and Shut Down Notebook": [
+        "Lukk notebook og stopp Python"
+      ],
+      "Shut Down": [
+        "Stopp"
+      ],
+      "Shut Down All Kernels…": [
+        "Stopp alle Python-økter …"
+      ],
+      "Revert Notebook to Checkpoint…": [
+        "Gjenopprett notebook fra kontrollpunkt …"
+      ],
+      "Undo": [
+        "Angre"
+      ],
+      "Redo": [
+        "Gjør om"
+      ],
+      "Undo Cell Operation": [
+        "Angre celleendring"
+      ],
+      "Redo Cell Operation": [
+        "Gjør om celleendring"
+      ],
+      "Cut": [
+        "Klipp ut"
+      ],
+      "Copy": [
+        "Kopier"
+      ],
+      "Paste": [
+        "Lim inn"
+      ],
+      "Delete": [
+        "Slett"
+      ],
+      "Select All": [
+        "Velg alle"
+      ],
+      "Find…": [
+        "Finn …"
+      ],
+      "Find and Replace…": [
+        "Finn og erstatt …"
+      ],
+      "Find Next": [
+        "Finn neste"
+      ],
+      "Find Previous": [
+        "Finn forrige"
+      ],
+      "Cut Cells": [
+        "Klipp ut celler"
+      ],
+      "Copy Cells": [
+        "Kopier celler"
+      ],
+      "Paste Cells Below": [
+        "Lim inn celler under"
+      ],
+      "Paste Cells Above": [
+        "Lim inn celler over"
+      ],
+      "Delete Cells": [
+        "Slett celler"
+      ],
+      "Select All Cells": [
+        "Velg alle celler"
+      ],
+      "Insert Cell Above": [
+        "Sett inn celle over"
+      ],
+      "Insert Cell Below": [
+        "Sett inn celle under"
+      ],
+      "Insert a cell below": [
+        "Sett inn en celle under"
+      ],
+      "Move Cells Up": [
+        "Flytt celler opp"
+      ],
+      "Move Cells Down": [
+        "Flytt celler ned"
+      ],
+      "Split Cell": [
+        "Del celle"
+      ],
+      "Merge Selected Cells": [
+        "Slå sammen valgte celler"
+      ],
+      "Merge Cell Above": [
+        "Slå sammen med cellen over"
+      ],
+      "Merge Cell Below": [
+        "Slå sammen med cellen under"
+      ],
+      "Code": [
+        "Kode"
+      ],
+      "Markdown": [
+        "Tekst (Markdown)"
+      ],
+      "Raw": [
+        "Råtekst"
+      ],
+      "Cell Type": [
+        "Celletype"
+      ],
+      "Change Cell Type": [
+        "Endre celletype"
+      ],
+      "Change to Code Cell": [
+        "Endre til kodecelle"
+      ],
+      "Change to Markdown Cell": [
+        "Endre til tekstcelle"
+      ],
+      "Change to Raw Cell": [
+        "Endre til råtekstcelle"
+      ],
+      "Run Selected Cells": [
+        "Kjør valgte celler"
+      ],
+      "Run Selected Cell": [
+        "Kjør valgt celle"
+      ],
+      "Run Selected Cells and Advance": [
+        "Kjør valgte celler og gå videre"
+      ],
+      "Run Cell and Select Next": [
+        "Kjør celle og velg neste"
+      ],
+      "Run Cells": [
+        "Kjør celler"
+      ],
+      "Run this cell": [
+        "Kjør denne cellen"
+      ],
+      "Run All Cells": [
+        "Kjør alle celler"
+      ],
+      "Run All Above Selected Cell": [
+        "Kjør alle celler over den valgte"
+      ],
+      "Run Selected Cell and All Below": [
+        "Kjør valgt celle og alle under"
+      ],
+      "Run Selected Cells and Insert Below": [
+        "Kjør valgte celler og sett inn under"
+      ],
+      "Restart Kernel…": [
+        "Start Python på nytt …"
+      ],
+      "Restart Kernel": [
+        "Start Python på nytt"
+      ],
+      "Restart": [
+        "Start på nytt"
+      ],
+      "Restart Kernel and Run All Cells…": [
+        "Start Python på nytt og kjør alle celler …"
+      ],
+      "Restart Kernel and Run All Cells": [
+        "Start Python på nytt og kjør alle celler"
+      ],
+      "Restart Kernel and Clear Outputs of All Cells…": [
+        "Start Python på nytt og tøm alle resultater …"
+      ],
+      "Interrupt Kernel": [
+        "Avbryt kjøring"
+      ],
+      "Interrupt the kernel": [
+        "Avbryt kjøringen"
+      ],
+      "Restart the kernel": [
+        "Start Python på nytt"
+      ],
+      "Restart the kernel and run all cells": [
+        "Start Python på nytt og kjør alle celler"
+      ],
+      "Shut Down Kernel": [
+        "Stopp Python"
+      ],
+      "Shut Down Kernel…": [
+        "Stopp Python …"
+      ],
+      "Change Kernel…": [
+        "Velg Python-kjerne …"
+      ],
+      "Select Kernel": [
+        "Velg Python-kjerne"
+      ],
+      "Select Kernel…": [
+        "Velg Python-kjerne …"
+      ],
+      "Select": [
+        "Velg"
+      ],
+      "No Kernel": [
+        "Ingen Python-kjerne"
+      ],
+      "Clear Outputs of Selected Cells": [
+        "Tøm resultater i valgte celler"
+      ],
+      "Clear Outputs of All Cells": [
+        "Tøm alle resultater"
+      ],
+      "Clear All Outputs": [
+        "Tøm alle resultater"
+      ],
+      "Clear Cell Output": [
+        "Tøm celleresultat"
+      ],
+      "Show Cell Output": [
+        "Vis celleresultat"
+      ],
+      "Hide Cell Output": [
+        "Skjul celleresultat"
+      ],
+      "Show All Cell Outputs": [
+        "Vis alle celleresultater"
+      ],
+      "Hide All Cell Outputs": [
+        "Skjul alle celleresultater"
+      ],
+      "Show Line Numbers": [
+        "Vis linjenumre"
+      ],
+      "Show All Line Numbers": [
+        "Vis alle linjenumre"
+      ],
+      "Show Left Sidebar": [
+        "Vis venstre sidepanel"
+      ],
+      "Show Right Sidebar": [
+        "Vis høyre sidepanel"
+      ],
+      "Show Status Bar": [
+        "Vis statuslinje"
+      ],
+      "Simple Interface": [
+        "Enkelt grensesnitt"
+      ],
+      "File Browser": [
+        "Filer"
+      ],
+      "Files": [
+        "Filer"
+      ],
+      "Upload Files": [
+        "Last opp filer"
+      ],
+      "Upload": [
+        "Last opp"
+      ],
+      "New Folder": [
+        "Ny mappe"
+      ],
+      "Refresh File List": [
+        "Oppdater fillisten"
+      ],
+      "Name": [
+        "Navn"
+      ],
+      "Last Modified": [
+        "Sist endret"
+      ],
+      "File Size": [
+        "Filstørrelse"
+      ],
+      "Running Terminals and Kernels": [
+        "Aktive Python-økter"
+      ],
+      "Running": [
+        "Aktiv"
+      ],
+      "Table of Contents": [
+        "Innholdsfortegnelse"
+      ],
+      "Property Inspector": [
+        "Egenskaper"
+      ],
+      "Command Palette": [
+        "Kommandoer"
+      ],
+      "Commands": [
+        "Kommandoer"
+      ],
+      "Search": [
+        "Søk"
+      ],
+      "Search…": [
+        "Søk …"
+      ],
+      "Language": [
+        "Språk"
+      ],
+      "Theme": [
+        "Tema"
+      ],
+      "Keyboard Shortcuts": [
+        "Hurtigtaster"
+      ],
+      "Settings Editor": [
+        "Innstillinger"
+      ],
+      "Advanced Settings Editor": [
+        "Avanserte innstillinger"
+      ],
+      "Auto Close Brackets": [
+        "Lukk parenteser automatisk"
+      ],
+      "Show Contextual Help": [
+        "Vis hjelp"
+      ],
+      "Trust Notebook": [
+        "Stol på notebooken"
+      ],
+      "Trusted": [
+        "Klarert"
+      ],
+      "Not Trusted": [
+        "Ikke klarert"
+      ],
+      "Notebook is trusted": [
+        "Notebooken er klarert"
+      ],
+      "Notebook is not trusted": [
+        "Notebooken er ikke klarert"
+      ],
+      "Cancel": [
+        "Avbryt"
+      ],
+      "OK": [
+        "OK"
+      ],
+      "Yes": [
+        "Ja"
+      ],
+      "No": [
+        "Nei"
+      ],
+      "Dismiss": [
+        "Lukk"
+      ],
+      "Error": [
+        "Feil"
+      ],
+      "Warning": [
+        "Advarsel"
+      ],
+      "Loading…": [
+        "Laster …"
+      ],
+      "Idle": [
+        "Klar"
+      ],
+      "Busy": [
+        "Kjører"
+      ],
+      "Starting": [
+        "Starter"
+      ],
+      "Connecting": [
+        "Kobler til"
+      ],
+      "Disconnected": [
+        "Frakoblet"
+      ],
+      "Saving": [
+        "Lagrer"
+      ],
+      "Saving completed": [
+        "Lagret i nettleseren"
+      ],
+      "Saving failed": [
+        "Lagring mislyktes"
+      ],
+      "Mode: Command": [
+        "Modus: kommando"
+      ],
+      "Mode: Edit": [
+        "Modus: redigering"
+      ],
+      "Python 3 (ipykernel)": [
+        "Python (Pyodide)"
+      ],
+      "Skip to main panel": [
+        "Hopp til hovedinnholdet"
+      ],
+      "Click to add a cell.": [
+        "Klikk for å legge til en celle."
+      ],
+      "Mode: %1": [
+        "Modus: %1"
+      ],
+      "Command": [
+        "kommando"
+      ],
+      "Cell %1/%2": [
+        "Celle %1/%2"
+      ],
+      "Ln %1, Col %2": [
+        "Linje %1, kolonne %2"
+      ],
+      "Go to line number…": [
+        "Gå til linje …"
+      ],
+      "Code Cell Content": [
+        "Innhold i kodecelle"
+      ],
+      "Code Cell Content with Output": [
+        "Kodecelle med resultat"
+      ],
+      "Markdown Cell Content": [
+        "Innhold i tekstcelle"
+      ],
+      "Raw Cell Content": [
+        "Innhold i råtekstcelle"
+      ],
+      "Cells": [
+        "Celler"
+      ],
+      "main area content": [
+        "Hovedinnhold"
+      ],
+      "main area toolbar": [
+        "Verktøylinje"
+      ],
+      "Type Markdown and LaTeX: $ α^2 $": [
+        "Skriv tekst med Markdown og LaTeX: $ α^2 $"
+      ],
+      "The notebook is empty. Click the + button on the toolbar to add a new cell.": [
+        "Notebooken er tom. Klikk på + i verktøylinjen for å legge til en celle."
+      ],
+      "Show more outputs": [
+        "Vis flere resultater"
+      ],
+      "Console": [
+        "Konsoll"
+      ],
+      "Other": [
+        "Annet"
+      ],
+      "Kernel %1": [
+        "Python: %1"
+      ],
+      "Switch kernel": [
+        "Velg Python-kjerne"
+      ],
+      "": {
+        "domain": "jupyterlab",
+        "language": "nb-NO",
+        "plural_forms": "nplurals=2; plural=(n != 1);"
+      }
+    }
+  },
+  "message": ""
+}

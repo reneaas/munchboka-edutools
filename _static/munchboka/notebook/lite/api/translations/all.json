@@ -1,0 +1,13 @@
+{
+  "data": {
+    "en": {
+      "displayName": "English",
+      "nativeName": "English"
+    },
+    "nb_NO": {
+      "displayName": "Norwegian Bokmål",
+      "nativeName": "Norsk bokmål"
+    }
+  },
+  "message": ""
+}

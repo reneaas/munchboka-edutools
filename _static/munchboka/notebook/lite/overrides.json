@@ -1,0 +1,11 @@
+{
+  "@jupyterlab/translation-extension:plugin": {
+    "locale": "nb_NO"
+  },
+  "@jupyterlab/docmanager-extension:plugin": {
+    "autosaveInterval": 10
+  },
+  "@jupyterlab/notebook-extension:tracker": {
+    "windowingMode": "none"
+  }
+}

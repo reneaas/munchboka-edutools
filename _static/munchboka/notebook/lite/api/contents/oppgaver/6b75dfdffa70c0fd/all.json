@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "content": null,
+      "created": "2026-09-21T17:10:30.711160Z",
+      "format": null,
+      "hash": null,
+      "hash_algorithm": null,
+      "last_modified": "2026-09-21T17:10:30.711160Z",
+      "mimetype": null,
+      "name": "docs",
+      "path": "oppgaver/6b75dfdffa70c0fd/docs",
+      "size": null,
+      "type": "directory",
+      "writable": true
+    }
+  ],
+  "created": "2026-09-21T17:10:30.709702Z",
+  "format": "json",
+  "hash": null,
+  "hash_algorithm": null,
+  "last_modified": "2026-09-21T17:10:30.709702Z",
+  "mimetype": null,
+  "name": "6b75dfdffa70c0fd",
+  "path": "oppgaver/6b75dfdffa70c0fd",
+  "size": null,
+  "type": "directory",
+  "writable": true
+}

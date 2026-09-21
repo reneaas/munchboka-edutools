@@ -21,6 +21,16 @@ Legg en `.ipynb`-fil ved siden av kapitlet og bruk:
 Legg til `:embed:` og `:height: 720px` for å vise editoren i selve siden.
 Bruk `:files:` med én filsti per linje for tilhørende CSV-filer og andre data.
 
+Dropp filargumentet helt for å bare vise en blank notebook (én tom kodecelle),
+uten å måtte lage en `.ipynb`-fil først:
+
+````markdown
+```{notebook}
+:title: Skriv egen Python-kode
+:fullscreen:
+```
+````
+
 ## En egen side som *er* notebooken
 
 Å legge en `.ipynb`-fil direkte i `_toc.yml` fungerer ikke som forventet: Jupyter

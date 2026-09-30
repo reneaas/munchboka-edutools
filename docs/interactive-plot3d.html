@@ -52,7 +52,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=dfcc20d4" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/general_style.css?v=ea5285ea" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/calculator_popup.css?v=9c5cafe2" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=9eb2d604" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
@@ -286,6 +286,7 @@
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-question.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-question</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="masonry.html">Masonry cards</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">multi-interactive-graph</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-plot.html"><code class="docutils literal notranslate"><span class="pre">multi-plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-plot2.html"><code class="docutils literal notranslate"><span class="pre">multi-plot2</span></code> directive</a></li>
@@ -463,7 +464,6 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-variable">Interactive variable</a></li>
 </ul>
@@ -495,29 +495,6 @@ live browser rotation, zoom, and geometry. This page documents the legacy
 <code class="docutils literal notranslate"><span class="pre">frames</span></code> backend, kept for existing figures via an explicit <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">interactive-plot3d</span></code> directive creates an interactive 3D figure with one or more sliders. It uses the slider syntax from <code class="docutils literal notranslate"><span class="pre">interactive-graph</span></code> and the drawing syntax from <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>.</p>
 <p>Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then swaps SVG deltas as the slider moves, so the final page does not need Python or Matplotlib at runtime.</p>
-<section id="basic-usage">
-<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>:::{interactive-plot3d}
-backend: frames
-width: 70%
-interactive-var: a, 0, 2, 5
-interactive-var: rot, -90, 90, 10
-interactive-var: elev, -90, 90, 10 
-interactive-var-start: a=1, rot=-60, elev=20
-xrange: (-1, 3)
-yrange: (-1, 2)
-zrange: (-1, 2)
-axis: on
-grid: true
-vector: (0, 0, 0), (a, 1, 1), blue
-point: (a, 1, 1), red
-text: at=(a, 1, 1), value=&quot;$P$&quot;, offset=(0.1, 0.1, 0.1)
-
-Et punkt og en vektor som styres av skyveknappen.
-:::
-</pre></div>
-</div>
-</section>
 <section id="syntax-overview">
 <h2>Syntax overview<a class="headerlink" href="#syntax-overview" title="Link to this heading">#</a></h2>
 <p>Use the same key-value block format as <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>:</p>
@@ -810,7 +787,6 @@ point: (1, 1, 2), red
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-overview">Syntax overview</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-variable">Interactive variable</a></li>
 </ul>

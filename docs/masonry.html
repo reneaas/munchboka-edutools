@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>room directive &#8212; munchboka-edutools</title>
+    <title>Masonry cards &#8212; munchboka-edutools</title>
   
   
   
@@ -124,7 +124,7 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/room';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/masonry';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
     <script src="../_static/munchboka/js/pairPuzzle/game.js?v=cb8b0d45"></script>
@@ -145,11 +145,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="../_static/munchboka/js/popup_code.js?v=da823f0c"></script>
-    <link rel="canonical" href="https://dev.munchboka.no/docs/room.html" />
+    <link rel="canonical" href="https://dev.munchboka.no/docs/masonry.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sign-chart directive" href="sign-chart.html" />
-    <link rel="prev" title="quiz-question directive" href="quiz-question.html" />
+    <link rel="next" title="multi-interactive-graph directive" href="multi-interactive-graph.html" />
+    <link rel="prev" title="jeopardy-question directive" href="jeopardy-question.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -286,7 +286,7 @@
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-2.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-answer.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jeopardy-question.html"><code class="docutils literal notranslate"><span class="pre">jeopardy-question</span></code> directive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="masonry.html">Masonry cards</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Masonry cards</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-interactive-graph.html"><code class="docutils literal notranslate"><span class="pre">multi-interactive-graph</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-plot.html"><code class="docutils literal notranslate"><span class="pre">multi-plot</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-plot2.html"><code class="docutils literal notranslate"><span class="pre">multi-plot2</span></code> directive</a></li>
@@ -303,7 +303,7 @@
 <li class="toctree-l1"><a class="reference internal" href="quiz-2.html"><code class="docutils literal notranslate"><span class="pre">quiz-2</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quiz-answer.html"><code class="docutils literal notranslate"><span class="pre">quiz-answer</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quiz-question.html"><code class="docutils literal notranslate"><span class="pre">quiz-question</span></code> directive</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">room</span></code> directive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="room.html"><code class="docutils literal notranslate"><span class="pre">room</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sign-chart.html"><code class="docutils literal notranslate"><span class="pre">sign-chart</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="signchart.html"><code class="docutils literal notranslate"><span class="pre">signchart</span></code> directive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="signchart-2.html"><code class="docutils literal notranslate"><span class="pre">signchart-2</span></code> directive</a></li>
@@ -370,7 +370,7 @@
       
       
       
-      <li><a href="../_sources/docs/room.md" target="_blank"
+      <li><a href="../_sources/docs/masonry.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -454,7 +454,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>room directive</h1>
+    <h1>Masonry cards</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -464,11 +464,9 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#myst-syntax">MyST syntax</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 </ul>
             </nav>
         </div>
@@ -480,57 +478,105 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="room-directive">
-<h1><code class="docutils literal notranslate"><span class="pre">room</span></code> directive<a class="headerlink" href="#room-directive" title="Link to this heading">#</a></h1>
-<p>Defines one room inside <code class="docutils literal notranslate"><span class="pre">escape-room-2</span></code>.</p>
-<section id="signature">
-<h2>Signature<a class="headerlink" href="#signature" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>Required arguments: <code class="docutils literal notranslate"><span class="pre">0</span></code></p></li>
-<li><p>Optional arguments: <code class="docutils literal notranslate"><span class="pre">0</span></code></p></li>
-<li><p>Body content: <code class="docutils literal notranslate"><span class="pre">yes</span></code></p></li>
-</ul>
+  <section class="tex2jax_ignore mathjax_ignore" id="masonry-cards">
+<h1>Masonry cards<a class="headerlink" href="#masonry-cards" title="Link to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">masonry</span></code> arranges cards in independent columns. Each card keeps its natural
+height, so another card can fit below a short card beside a taller one.
+No Sphinx Design dependency is required.</p>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+</section>
+<section id="myst-syntax">
+<h2>MyST syntax<a class="headerlink" href="#myst-syntax" title="Link to this heading">#</a></h2>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>::::{masonry}
+:columns: 1 2 3
+:gap: 1rem
+:placement: shortest
+
+:::{masonry-card} Short explanation
+A short paragraph.
+:::
+
+:::{masonry-card} Worked example
+Longer content, including equations, figures or nested directives.
+:::
+
+:::{masonry-card} Exercise
+Another card can fit below the shorter explanation.
+:::
+
+::::
+</pre></div>
+</div>
+<p>Enable MyST’s <code class="docutils literal notranslate"><span class="pre">colon_fence</span></code> extension to use colon fences. Backtick fences also
+work. With reStructuredText, use normal directive nesting:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">masonry</span><span class="p">::</span>
+   <span class="nc">:columns:</span> 1 2 3
+   <span class="nc">:gap:</span> 1rem
+
+<span class="p">   ..</span> <span class="ow">masonry-card</span><span class="p">::</span> Short explanation
+
+      A short paragraph.
+
+<span class="p">   ..</span> <span class="ow">masonry-card</span><span class="p">::</span> Worked example
+
+      Longer content.
+</pre></div>
+</div>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Option</p></th>
-<th class="head"><p>Type</p></th>
+<tr class="row-odd"><th class="head"><p>Directive</p></th>
+<th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">code</span></code></p></td>
-<td><p>string (required)</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">masonry</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">columns</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">2</span> <span class="pre">3</span></code></p></td>
+<td><p>One fixed count, or three counts for container widths below 600px, from 600px to below 900px, and at least 900px. Each count must be 1–12.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">title</span></code></p></td>
-<td><p>string</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">masonry</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gap</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1rem</span></code></p></td>
+<td><p>Nonnegative spacing in <code class="docutils literal notranslate"><span class="pre">px</span></code>, <code class="docutils literal notranslate"><span class="pre">rem</span></code> or <code class="docutils literal notranslate"><span class="pre">em</span></code>, or <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">masonry</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">placement</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">shortest</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">shortest</span></code> fills the shortest column next; ties follow reading direction. <code class="docutils literal notranslate"><span class="pre">alternating</span></code> assigns successive cards to successive columns, independently stacking each column.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Both</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Additional CSS classes.</p></td>
+</tr>
+<tr class="row-even"><td><p>Both</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>—</p></td>
+<td><p>A reference target.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-</section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gu">::::{room}</span>
-<span class="gu">---</span>
-code: 42
-<span class="gu">title: Warm-up</span>
-<span class="gu">---</span>
-What is $20+22$?
-::::
-</pre></div>
-</div>
-</section>
-<section id="notes">
-<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>Must be nested inside <code class="docutils literal notranslate"><span class="pre">escape-room-2</span></code>.</p></li>
-</ul>
-</section>
-<section id="source">
-<h2>Source<a class="headerlink" href="#source" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">src/munchboka_edutools/directives/escape_room2.py</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">masonry-card</span></code> takes an optional title argument and ordinary document content.
+Only <code class="docutils literal notranslate"><span class="pre">masonry-card</span></code> directives can be direct children of <code class="docutils literal notranslate"><span class="pre">masonry</span></code>; put paragraphs,
+figures, equations and nested directives inside a card. Cards occupy one column.
+A card can also be used on its own.</p>
+<p>The layout responds to its container width, including inside admonitions, and
+updates when images load, mathematics renders or expandable content changes
+height. With the default columns, narrow containers show one column. A fixed
+count (for example <code class="docutils literal notranslate"><span class="pre">:columns:</span> <span class="pre">3</span></code>) applies even to narrow containers.</p>
+<p>HTML and keyboard order always follow source order; visual placement varies with
+card heights. Keep explicit numbering for sequential exercises. Without JavaScript
+(or ResizeObserver support), cards form a vertical stack. Printing and non-HTML
+builders use ordinary source-order flow.</p>
+<p>The directives are automatically available through <code class="docutils literal notranslate"><span class="pre">munchboka_edutools</span></code>. They can
+also be loaded independently as <code class="docutils literal notranslate"><span class="pre">munchboka_edutools.directives.masonry</span></code>.</p>
 </section>
 </section>
 
@@ -565,20 +611,20 @@ What is $20+22$?
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="quiz-question.html"
+       href="jeopardy-question.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">quiz-question</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">jeopardy-question</span></code> directive</p>
       </div>
     </a>
     <a class="right-next"
-       href="sign-chart.html"
+       href="multi-interactive-graph.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">sign-chart</span></code> directive</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">multi-interactive-graph</span></code> directive</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -598,11 +644,9 @@ What is $20+22$?
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signature">Signature</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source">Source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#myst-syntax">MyST syntax</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#options">Options</a></li>
 </ul>
   </nav></div>
 

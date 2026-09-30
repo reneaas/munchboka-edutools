@@ -33,6 +33,7 @@ chapters:
   - file: docs/jeopardy-2.md
   - file: docs/jeopardy-answer.md
   - file: docs/jeopardy-question.md
+  - file: docs/masonry.md
   - file: docs/multi-interactive-graph.md
   - file: docs/multi-plot.md
   - file: docs/multi-plot2.md

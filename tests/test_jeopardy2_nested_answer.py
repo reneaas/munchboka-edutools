@@ -111,11 +111,11 @@ points: 200
     reg_tile = categories["Regneregler"]["tiles"][0]
     assert reg_tile["value"] == 100
     assert "Bestem lengden" in reg_tile["question"]
-    assert "<h3>Fasit</h3>" in reg_tile["answer"]
+    assert '<div class="jeopardy-answer-label">Fasit</div>' in reg_tile["answer"]
     assert "\\sqrt{5}" in reg_tile["answer"]
 
     geo_tile = categories["Geometri"]["tiles"][0]
     assert geo_tile["value"] == 200
     assert "rett vinkel" in geo_tile["question"]
-    assert "<h3>Fasit</h3>" in geo_tile["answer"]
+    assert '<div class="jeopardy-answer-label">Fasit</div>' in geo_tile["answer"]
     assert "90" in geo_tile["answer"]

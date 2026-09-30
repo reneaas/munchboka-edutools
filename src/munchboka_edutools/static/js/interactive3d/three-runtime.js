@@ -1,5 +1,18 @@
 import {ThreePanel,gpu} from './three-renderer.js';
 const G=window.MunchScene3D,instances=new Map();
+function renderVariableLabel(element,name) {
+    // Match interactive-plot's Greek names and preserve LaTeX subscripts.
+    const greek=new Set('alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega varphi vartheta'.split(' '));
+    const latex=greek.has(name)?'\\'+name:name;
+    element.textContent=name;
+    if(window.katex) {
+        try {
+            element.innerHTML=window.katex.renderToString(latex,{throwOnError:false,displayMode:false});
+        } catch(error) {
+            // Keep the plain-text label if math rendering is unavailable.
+        }
+    }
+}
 // Heroicons outline set (MIT), matching the pill buttons used by answer-2/solution-2/interactive-code.
 const ICON=(path)=>`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="${path}"/></svg>`;
 const ICONS={
@@ -32,8 +45,8 @@ function initialize(host) {
         host.munch3d={panel,vars,gpu};instances.set(host,panel);panel.setCamera(camera());update();
         for(const slider of scene.sliders) {
             const wrap=document.createElement('label'),title=document.createElement('span'),input=document.createElement('input'),output=document.createElement('output');
-            title.textContent=slider.name;input.type='range';input.min='0';input.max=String(slider.count-1);input.step='1';input.value=String(slider.initial);input.setAttribute('aria-label',slider.name);
-            const show=()=>{output.textContent=String(Number(vars[slider.name].toPrecision(6)));input.setAttribute('aria-valuetext',output.textContent);};
+            renderVariableLabel(title,slider.name);input.type='range';input.min='0';input.max=String(slider.count-1);input.step='1';input.value=String(slider.initial);input.setAttribute('aria-label',slider.name);
+            const show=()=>{output.textContent=vars[slider.name].toFixed(2);input.setAttribute('aria-valuetext',output.textContent);};
             input.addEventListener('input',()=>{
                 vars[slider.name]=slider.min+(slider.max-slider.min)*(+input.value)/(slider.count-1);show();
                 try {

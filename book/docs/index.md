@@ -2,7 +2,7 @@
 
 This section documents every Sphinx directive registered by `munchboka-edutools`.
 
-Total registered directive names: **53**
+Total registered directive names: **55**
 
 ## All Directives
 
@@ -33,6 +33,8 @@ Total registered directive names: **53**
 - [`jeopardy-2`](jeopardy-2.md) (directive)
 - [`jeopardy-answer`](jeopardy-answer.md) (directive)
 - [`jeopardy-question`](jeopardy-question.md) (directive)
+- [`masonry`](masonry.md) (directive)
+- [`masonry-card`](masonry.md) (directive)
 - [`multi-interactive-graph`](multi-interactive-graph.md) (directive)
 - [`multi-plot`](multi-plot.md) (directive)
 - [`multi-plot2`](multi-plot2.md) (directive)

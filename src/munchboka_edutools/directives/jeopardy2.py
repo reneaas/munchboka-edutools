@@ -494,8 +494,8 @@ class JeopardyAnswerDirective(SphinxDirective):
         # Render content to HTML
         answer_html = self._render_to_html(content_lines)
 
-        # Add "Fasit" heading to the answer
-        answer_html = f"<h3>Fasit</h3>\n{answer_html}"
+        # Use a compact label that does not inherit site-wide heading styles.
+        answer_html = f'<div class="jeopardy-answer-label">Fasit</div>\n{answer_html}'
 
         # Store answer in environment
         answers_key = f"jeopardy2_answers_{board_id}"

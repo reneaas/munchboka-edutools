@@ -8,50 +8,6 @@ The `interactive-plot3d` directive creates an interactive 3D figure with one or 
 
 Frames are pre-rendered during the Sphinx/Jupyter Book build. The browser then swaps SVG deltas as the slider moves, so the final page does not need Python or Matplotlib at runtime.
 
-## Basic usage
-
-````markdown
-:::{interactive-plot3d}
-backend: frames
-width: 70%
-interactive-var: a, 0, 2, 5
-interactive-var: rot, -90, 90, 10
-interactive-var: elev, -90, 90, 10 
-interactive-var-start: a=1, rot=-60, elev=20
-xrange: (-1, 3)
-yrange: (-1, 2)
-zrange: (-1, 2)
-axis: on
-grid: true
-vector: (0, 0, 0), (a, 1, 1), blue
-point: (a, 1, 1), red
-text: at=(a, 1, 1), value="$P$", offset=(0.1, 0.1, 0.1)
-
-Et punkt og en vektor som styres av skyveknappen.
-:::
-````
-
-:::{interactive-plot3d}
-backend: frames
-nocache:
-width: 70%
-interactive-var: a, 0, 2, 5
-interactive-var: elev, -90, 90, 10
-interactive-var: azim, -90, 90, 10 
-interactive-var-start: a=1, elev=-60, azim=20
-xrange: (-1, 3)
-yrange: (-1, 2)
-zrange: (-1, 2)
-axis: on
-grid: true
-vector: (0, 0, 0), (a, 1, 1), blue
-point: (a, 1, 1), red
-text: at=(a, 1, 1), value="$P$", offset=(0.1, 0.1, 0.1)
-elev: elev
-azim: azim
-
-Et punkt og en vektor som styres av skyveknappen.
-:::
 
 ## Syntax overview
 

@@ -57,7 +57,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=9eb2d604" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=44933e1a" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=951b6e4f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=575e2325" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/masonry.css?v=db25927a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/notebook.css?v=00170ee0" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup_code.css?v=b88b7ace" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=bc8164d8" />
@@ -109,6 +110,7 @@
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=024a7849"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=ecc68a76"></script>
     <script src="../_static/munchboka/js/jeopardy.js?v=375a3583"></script>
+    <script defer="defer" src="../_static/munchboka/js/masonry.js?v=96ec6874"></script>
     <script src="../_static/munchboka/js/quiz.js?v=f8bcd7a1"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -500,7 +502,7 @@ Q: What is $3\times 3$?
 </div>
 
         <!-- Container for the quiz -->
-        <div id="quiz-container-4c50627185704906a7269d0bd08d841c" class="quiz-main-container"></div>
+        <div id="quiz-container-a967227e832e47d2b434d2b424120954" class="quiz-main-container"></div>
         <!-- Include KaTeX for LaTeX rendering -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
         <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
@@ -512,7 +514,7 @@ Q: What is $3\times 3$?
                 const questionsData = [{"content": "What is $2+2$?", "answers": [{"content": "4", "isCorrect": true}, {"content": "3", "isCorrect": false}, {"content": "5", "isCorrect": false}]}, {"content": "What is $3\\times 3$?", "answers": [{"content": "9", "isCorrect": true}, {"content": "6", "isCorrect": false}, {"content": "12", "isCorrect": false}]}];
 
                 // Initialize the multiple-choice quiz
-                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-4c50627185704906a7269d0bd08d841c', questionsData);
+                const quiz = new SequentialMultipleChoiceQuiz('quiz-container-a967227e832e47d2b434d2b424120954', questionsData);
             });
         </script>
         </section>

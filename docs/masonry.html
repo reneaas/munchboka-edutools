@@ -57,7 +57,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=9eb2d604" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=44933e1a" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=951b6e4f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=575e2325" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/masonry.css?v=db25927a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/notebook.css?v=00170ee0" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup_code.css?v=b88b7ace" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=bc8164d8" />
@@ -109,6 +110,7 @@
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=024a7849"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=ecc68a76"></script>
     <script src="../_static/munchboka/js/jeopardy.js?v=375a3583"></script>
+    <script defer="defer" src="../_static/munchboka/js/masonry.js?v=96ec6874"></script>
     <script src="../_static/munchboka/js/quiz.js?v=f8bcd7a1"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -124,6 +126,8 @@
     <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'docs/masonry';</script>
     <script src="../_static/munchboka/js/pairPuzzle/draggableItem.js?v=ce9ef7bd"></script>
     <script src="../_static/munchboka/js/pairPuzzle/dropZone.js?v=56907477"></script>
@@ -485,6 +489,41 @@ height, so another card can fit below a short card beside a taller one.
 No Sphinx Design dependency is required.</p>
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<div class="mb-masonry" data-columns="1 2 3" data-placement="shortest" style="--mb-masonry-gap: 1rem">
+<div class="mb-masonry-card docutils container">
+<p class="mb-masonry-title rubric">Short explanation</p>
+<div class="mb-masonry-body docutils container">
+<p>A short paragraph.</p>
+</div>
+</div>
+<div class="mb-masonry-card docutils container">
+<p class="mb-masonry-title rubric">Worked example</p>
+<div class="mb-masonry-body docutils container">
+<p>This card contains more content and keeps its natural height.</p>
+<p>For a quadratic function,</p>
+<div class="math notranslate nohighlight">
+\[f(x) = ax^2 + bx + c,\]</div>
+<p>the axis of symmetry is <span class="math notranslate nohighlight">\(x = -b/(2a)\)</span>.</p>
+<ol class="arabic simple">
+<li><p>Identify the coefficients.</p></li>
+<li><p>Find the axis of symmetry.</p></li>
+<li><p>Evaluate the function there.</p></li>
+</ol>
+</div>
+</div>
+<div class="mb-masonry-card docutils container">
+<p class="mb-masonry-title rubric">Exercise</p>
+<div class="mb-masonry-body docutils container">
+<p>Find the minimum of <span class="math notranslate nohighlight">\(f(x) = x^2 - 4x + 3\)</span>.</p>
+</div>
+</div>
+<div class="mb-masonry-card docutils container">
+<p class="mb-masonry-title rubric">Hint</p>
+<div class="mb-masonry-body docutils container">
+<p>Complete the square.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="myst-syntax">
 <h2>MyST syntax<a class="headerlink" href="#myst-syntax" title="Link to this heading">#</a></h2>

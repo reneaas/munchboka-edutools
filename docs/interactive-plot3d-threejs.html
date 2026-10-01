@@ -57,7 +57,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/escape-room.css?v=9eb2d604" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/flashcards.css?v=816457f1" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/interactive_code.css?v=44933e1a" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=951b6e4f" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/jeopardy.css?v=575e2325" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/masonry.css?v=db25927a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/notebook.css?v=00170ee0" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup_code.css?v=b88b7ace" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/quiz.css?v=bc8164d8" />
@@ -95,7 +96,7 @@
     <script src="../_static/munchboka/vendor/katex/dist/katex.min.js?v=5cc8ed51"></script>
     <script src="../_static/munchboka/fonts/opendyslexic/opendylexic-toggle.js?v=1652b728"></script>
     <script src="../_static/munchboka/js/interactive3d/scene.js?v=a2338fa5"></script>
-    <script type="module" src="../_static/munchboka/js/interactive3d/three-runtime.js?v=755ae609"></script>
+    <script type="module" src="../_static/munchboka/js/interactive3d/three-runtime.js?v=5deaea76"></script>
     <script src="../_static/munchboka/js/utils.js?v=b59157b9"></script>
     <script src="../_static/munchboka/js/casThemeManager.js?v=88874cc7"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
@@ -114,6 +115,7 @@
     <script src="../_static/munchboka/js/interactiveCode/workerManager.js?v=024a7849"></script>
     <script src="../_static/munchboka/js/interactiveCode/turtleCode.js?v=ecc68a76"></script>
     <script src="../_static/munchboka/js/jeopardy.js?v=375a3583"></script>
+    <script defer="defer" src="../_static/munchboka/js/masonry.js?v=96ec6874"></script>
     <script src="../_static/munchboka/js/quiz.js?v=f8bcd7a1"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
@@ -484,6 +486,30 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-authoring-features">Supported authoring features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#primitive-reference">Primitive reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scene-level-settings">Scene-level settings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#shared-per-primitive-style-options">Shared per-primitive style options</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point"><code class="docutils literal notranslate"><span class="pre">point</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vector"><code class="docutils literal notranslate"><span class="pre">vector</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#line-segment"><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#line"><code class="docutils literal notranslate"><span class="pre">line</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plane"><code class="docutils literal notranslate"><span class="pre">plane</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sphere"><code class="docutils literal notranslate"><span class="pre">sphere</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#circle"><code class="docutils literal notranslate"><span class="pre">circle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#angle"><code class="docutils literal notranslate"><span class="pre">angle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angle"><code class="docutils literal notranslate"><span class="pre">right-angle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment"><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#text"><code class="docutils literal notranslate"><span class="pre">text</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#curve"><code class="docutils literal notranslate"><span class="pre">curve</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ngon-filled-polygon"><code class="docutils literal notranslate"><span class="pre">ngon</span></code> (filled polygon)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prism"><code class="docutils literal notranslate"><span class="pre">prism</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyramid"><code class="docutils literal notranslate"><span class="pre">pyramid</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solid-of-revolution"><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repeat"><code class="docutils literal notranslate"><span class="pre">repeat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macro-use"><code class="docutils literal notranslate"><span class="pre">macro</span></code> / <code class="docutils literal notranslate"><span class="pre">use</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#let-def"><code class="docutils literal notranslate"><span class="pre">let</span></code> / <code class="docutils literal notranslate"><span class="pre">def</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rendering-and-migration-limits">Rendering and migration limits</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-implementation-plan">Remaining implementation plan</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>
@@ -821,28 +847,429 @@ Sliders from <code class="docutils literal notranslate"><span class="pre">intera
 <p><code class="docutils literal notranslate"><span class="pre">interactive-var:</span> <span class="pre">a,</span> <span class="pre">min,</span> <span class="pre">max,</span> <span class="pre">frames</span></code> keeps the existing discrete value count.
 Values are evaluated in the browser; multiple sliders do not multiply build work.
 Initial values use the nearest step, defaulting to the middle step.</p>
-<p>Additional geometry examples (put these in a directive’s settings block):</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point=(1,1,a), plane=z=0, color=red
-normal-segment: point1=(0,0,0), direction1=(1,0,0), point2=(0,2,3), direction2=(0,1,0)
-circle: center=(0,0,0), radius=2, plane=z=a, color=black
-circle: center=(0,0,0), radius=2, normal=(0,0,1), point=(0,0,a), color=black
-prism: center=(0,0,0), radius=1, sides=5, height=a, color=teal
-pyramid: base=[(0,0,0),(2,0,0),(0,2,0)], apex=(0,0,a), side-color=blue
-solid-of-revolution: sqrt(x+a), (0,2), blue, samples=40, radial-samples=32
-curve: x=cos(t), y=sin(t), z=t/4, t=(0,2*pi), arrows=true, arrow-count=3
-repeat: i=1..3; point: (i,0,a), red
-macro: pillar(h)
-prism: center=(0,0,0), radius=0.4, sides=4, height=h
-endmacro
-use: pillar(a)
+</section>
+<section id="primitive-reference">
+<h2>Primitive reference<a class="headerlink" href="#primitive-reference" title="Link to this heading">#</a></h2>
+<p>Every primitive is written as a <code class="docutils literal notranslate"><span class="pre">kind:</span> <span class="pre">arguments</span></code> line inside the directive’s
+content block, one line per item (<code class="docutils literal notranslate"><span class="pre">repeat:</span></code> expands to many). Arguments are a
+comma-separated mix of positional values and <code class="docutils literal notranslate"><span class="pre">key=value</span></code> pairs; a top-level
+comma inside <code class="docutils literal notranslate"><span class="pre">(...)</span></code>/<code class="docutils literal notranslate"><span class="pre">[...]</span></code> does not split the argument. Point/vector
+coordinates are always <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> (or an expression per coordinate), and any
+numeric field may reference <code class="docutils literal notranslate"><span class="pre">interactive-var</span></code> sliders, <code class="docutils literal notranslate"><span class="pre">let</span></code>/<code class="docutils literal notranslate"><span class="pre">def</span></code> bindings,
+and the constants <code class="docutils literal notranslate"><span class="pre">pi</span></code>/<code class="docutils literal notranslate"><span class="pre">E</span></code>.</p>
+<section id="scene-level-settings">
+<h3>Scene-level settings<a class="headerlink" href="#scene-level-settings" title="Link to this heading">#</a></h3>
+<p>One <code class="docutils literal notranslate"><span class="pre">key:</span> <span class="pre">value</span></code> per line, before any primitive lines. Nothing listed here is
+required; every key has a default.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code>, <code class="docutils literal notranslate"><span class="pre">height</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">100%</span></code>, directive-specific</p></td>
+<td><p>CSS size of the figure/board. <code class="docutils literal notranslate"><span class="pre">height:</span> <span class="pre">auto</span></code> is not supported.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">align</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>, or <code class="docutils literal notranslate"><span class="pre">right</span></code>; floats the figure like an image, capped to the parent’s width.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">alt</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Passed through to the generated figure/image node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">caption</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Trailing non-<code class="docutils literal notranslate"><span class="pre">key:</span> <span class="pre">value</span></code> lines after the settings block become the caption.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">axis</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Show the x/y/z axis arrows and labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">grid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Show a dotted xy-plane grid at <code class="docutils literal notranslate"><span class="pre">z=0</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ticks</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Global tick toggle; <code class="docutils literal notranslate"><span class="pre">xticks</span></code>/<code class="docutils literal notranslate"><span class="pre">yticks</span></code>/<code class="docutils literal notranslate"><span class="pre">zticks</span></code> override per axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xrange</span></code>/<code class="docutils literal notranslate"><span class="pre">yrange</span></code>/<code class="docutils literal notranslate"><span class="pre">zrange</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(-5,</span> <span class="pre">5)</span></code></p></td>
+<td><p>Axis extent; also the default plane-equation clip box.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xstep</span></code>/<code class="docutils literal notranslate"><span class="pre">ystep</span></code>/<code class="docutils literal notranslate"><span class="pre">zstep</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>Tick spacing; at most 200 intervals per axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xlabel</span></code>/<code class="docutils literal notranslate"><span class="pre">ylabel</span></code>/<code class="docutils literal notranslate"><span class="pre">zlabel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$x$</span></code>/<code class="docutils literal notranslate"><span class="pre">$y$</span></code>/<code class="docutils literal notranslate"><span class="pre">$z$</span></code></p></td>
+<td><p>Axis label text (LaTeX); <code class="docutils literal notranslate"><span class="pre">none</span></code> hides it.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">elev</span></code>, <code class="docutils literal notranslate"><span class="pre">azim</span></code>, <code class="docutils literal notranslate"><span class="pre">zoom</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">22</span></code>, <code class="docutils literal notranslate"><span class="pre">-55</span></code>, <code class="docutils literal notranslate"><span class="pre">1.28</span></code></p></td>
+<td><p>Initial camera (degrees, degrees, scale factor); may reference sliders.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">12</span></code></p></td>
+<td><p>Default px font size for axis ticks/labels and any <code class="docutils literal notranslate"><span class="pre">text:</span></code> without its own <code class="docutils literal notranslate"><span class="pre">fontsize</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.5</span></code></p></td>
+<td><p>Default line width for every primitive unless it sets its own <code class="docutils literal notranslate"><span class="pre">lw</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hidden-edges</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dashed</span></code></p></td>
+<td><p>Scene-wide default for the hidden-line dash pass (<code class="docutils literal notranslate"><span class="pre">off</span></code> or <code class="docutils literal notranslate"><span class="pre">dashed</span></code>); overridable per primitive.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">auto-intersections</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Auto-draw a gray dashed intersection circle for every top-level <code class="docutils literal notranslate"><span class="pre">plane</span></code>/<code class="docutils literal notranslate"><span class="pre">sphere</span></code> pair that actually intersects.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">buttons</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Show the Reset view/Rotate/Tilt/Zoom button row below the board.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nocache</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Present (any value) forces the initial-state PNG fallback to regenerate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-var</span></code></p></td>
+<td><p>—</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">name,</span> <span class="pre">min,</span> <span class="pre">max,</span> <span class="pre">steps</span></code> — repeatable, one slider per line.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">interactive-var-start</span></code></p></td>
+<td><p>middle step</p></td>
+<td><p>Initial slider value(s): a bare value for a single slider, or <code class="docutils literal notranslate"><span class="pre">name=value,</span> <span class="pre">name=value</span></code> for several. Snapped to the nearest step.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">usetex</span></code>, <code class="docutils literal notranslate"><span class="pre">figsize</span></code>, <code class="docutils literal notranslate"><span class="pre">interactive-max-frames</span></code>, <code class="docutils literal notranslate"><span class="pre">interactive-workers</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Only meaningful for <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">frames</span></code>; ignored (with a warning) here.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="shared-per-primitive-style-options">
+<h3>Shared per-primitive style options<a class="headerlink" href="#shared-per-primitive-style-options" title="Link to this heading">#</a></h3>
+<p>Available on nearly every primitive (noted per item below where it differs):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">blue</span></code> (<code class="docutils literal notranslate"><span class="pre">black</span></code> for <code class="docutils literal notranslate"><span class="pre">angle</span></code>, <code class="docutils literal notranslate"><span class="pre">right-angle</span></code>, <code class="docutils literal notranslate"><span class="pre">text</span></code>)</p></td>
+<td><p>Any Matplotlib color name or hex code. Some primitives also accept it positionally (see below).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">lw</span></code></p></td>
+<td><p>the scene’s <code class="docutils literal notranslate"><span class="pre">lw</span></code> (<code class="docutils literal notranslate"><span class="pre">1.5</span></code>)</p></td>
+<td><p>Line width in board units.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">style</span></code> / <code class="docutils literal notranslate"><span class="pre">linestyle</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">solid</span></code> (<code class="docutils literal notranslate"><span class="pre">dashed</span></code> for <code class="docutils literal notranslate"><span class="pre">circle</span></code>)</p></td>
+<td><p>One of <code class="docutils literal notranslate"><span class="pre">solid</span></code>, <code class="docutils literal notranslate"><span class="pre">dashed</span></code>, <code class="docutils literal notranslate"><span class="pre">dashdot</span></code>, <code class="docutils literal notranslate"><span class="pre">dotted</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.35</span></code> (<code class="docutils literal notranslate"><span class="pre">0.45</span></code> for <code class="docutils literal notranslate"><span class="pre">ngon</span></code>, <code class="docutils literal notranslate"><span class="pre">prism</span></code>, <code class="docutils literal notranslate"><span class="pre">pyramid</span></code>)</p></td>
+<td><p>Opacity, clamped to <code class="docutils literal notranslate"><span class="pre">0–1</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hidden-edges</span></code></p></td>
+<td><p>the scene’s <code class="docutils literal notranslate"><span class="pre">hidden-edges</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">off</span></code> or <code class="docutils literal notranslate"><span class="pre">dashed</span></code>; dashes the part of a line/edge occluded by an opaque or translucent surface.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>If a primitive becomes invalid for the current slider values (zero-length
+direction, a <code class="docutils literal notranslate"><span class="pre">right-angle</span></code> whose directions stop being perpendicular, a
+<code class="docutils literal notranslate"><span class="pre">circle</span></code> whose plane no longer meets its sphere, a point outside the viewing
+box, …), only that primitive is skipped — the rest of the scene keeps
+rendering, and the status line reports how many objects are currently
+undefined.</p>
+</section>
+<section id="point">
+<h3><code class="docutils literal notranslate"><span class="pre">point</span></code><a class="headerlink" href="#point" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>point: at=(x, y, z), color=black
+point: (2, 1, 1), black
 </pre></div>
 </div>
-<p>Prisms accept <code class="docutils literal notranslate"><span class="pre">vector=(dx,dy,dz)</span></code> instead of <code class="docutils literal notranslate"><span class="pre">height</span></code>. Regular bases require
-<code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">radius</span></code>, and <code class="docutils literal notranslate"><span class="pre">sides</span></code>; explicit bases use <code class="docutils literal notranslate"><span class="pre">base=[(...),</span> <span class="pre">...]</span></code>.
-Pyramids accept <code class="docutils literal notranslate"><span class="pre">base-color=none</span></code> or <code class="docutils literal notranslate"><span class="pre">side-color=none</span></code> to omit those faces.
-Normal segments support <code class="docutils literal notranslate"><span class="pre">right-angles=false</span></code> and <code class="docutils literal notranslate"><span class="pre">points=false</span></code> to hide markers.
-Use <code class="docutils literal notranslate"><span class="pre">hidden-edges:</span> <span class="pre">dashed</span></code> globally or <code class="docutils literal notranslate"><span class="pre">hidden-edges=dashed</span></code> on a primitive
-for a dashed pass behind opaque surfaces. It is off by default.</p>
+<ul class="simple">
+<li><p>Required: <code class="docutils literal notranslate"><span class="pre">at</span></code> (or the first positional value).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color</span></code> may be the second positional value.</p></li>
+</ul>
+</section>
+<section id="vector">
+<h3><code class="docutils literal notranslate"><span class="pre">vector</span></code><a class="headerlink" href="#vector" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>vector: from=(0, 0, 0), to=(3, 3, 4), color=red
+vector: (0, 0, 0), (2, 1, 1), red
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Keys: <code class="docutils literal notranslate"><span class="pre">from</span></code>/<code class="docutils literal notranslate"><span class="pre">to</span></code> (aliases <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>), or the first two positional values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color</span></code> may be the third positional value.</p></li>
+<li><p>Drawn as a line with an arrowhead at <code class="docutils literal notranslate"><span class="pre">to</span></code>.</p></li>
+</ul>
+</section>
+<section id="line-segment">
+<h3><code class="docutils literal notranslate"><span class="pre">line-segment</span></code><a class="headerlink" href="#line-segment" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>line-segment: from=(0, 0, 0), to=(2, 2, 0), color=black
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Same arguments as <code class="docutils literal notranslate"><span class="pre">vector</span></code> (including the positional-color shorthand), but
+drawn as a plain segment with no arrowhead.</p></li>
+</ul>
+</section>
+<section id="line">
+<h3><code class="docutils literal notranslate"><span class="pre">line</span></code><a class="headerlink" href="#line" title="Link to this heading">#</a></h3>
+<p>Infinite line, clipped to the viewing box. Two forms:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>line: point=(0, 0, 0), direction=(1, -1, 1), style=dashed
+line: from=(0, 0, 0), to=(1, 1, 1)
+line: through=[(0, 0, 0), (1, 1, 1)]
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">point=</span></code>/<code class="docutils literal notranslate"><span class="pre">direction=</span></code> draws the line through <code class="docutils literal notranslate"><span class="pre">point</span></code> along <code class="docutils literal notranslate"><span class="pre">direction</span></code>.</p></li>
+<li><p>Otherwise the line passes through <code class="docutils literal notranslate"><span class="pre">from</span></code>/<code class="docutils literal notranslate"><span class="pre">to</span></code> (aliases <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>, or the
+first two positional values, or a single <code class="docutils literal notranslate"><span class="pre">through=[p0,</span> <span class="pre">p1]</span></code> list).</p></li>
+</ul>
+</section>
+<section id="plane">
+<h3><code class="docutils literal notranslate"><span class="pre">plane</span></code><a class="headerlink" href="#plane" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>plane: equation=z = 0, color=orange, alpha=0.25
+plane: normal=(0, 0, 1), point=(3, 2, 1), span=(4, 4), color=blue, alpha=0.2
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">equation=</span></code> is a linear equation string in <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, <code class="docutils literal notranslate"><span class="pre">z</span></code> (reduced via SymPy);
+the plane is clipped to <code class="docutils literal notranslate"><span class="pre">xrange</span></code>/<code class="docutils literal notranslate"><span class="pre">yrange</span></code>/<code class="docutils literal notranslate"><span class="pre">zrange</span></code> (scene defaults unless
+given per-item).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normal=</span></code>/<code class="docutils literal notranslate"><span class="pre">point=</span></code> draws a fixed-size quad through <code class="docutils literal notranslate"><span class="pre">point</span></code>, perpendicular to
+<code class="docutils literal notranslate"><span class="pre">normal</span></code>; <code class="docutils literal notranslate"><span class="pre">span=(sx,</span> <span class="pre">sy)</span></code> sets its width/height (a single number applies to
+both), default <code class="docutils literal notranslate"><span class="pre">(4,</span> <span class="pre">4)</span></code>.</p></li>
+</ul>
+</section>
+<section id="sphere">
+<h3><code class="docutils literal notranslate"><span class="pre">sphere</span></code><a class="headerlink" href="#sphere" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sphere: center=(-1, -1, 1), radius=0.6, color=teal
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Required: <code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">radius</span></code>. <code class="docutils literal notranslate"><span class="pre">resolution=</span></code> (a <code class="docutils literal notranslate"><span class="pre">plot3d-2</span></code>/fallback-only mesh
+option) is not supported here.</p></li>
+</ul>
+</section>
+<section id="circle">
+<h3><code class="docutils literal notranslate"><span class="pre">circle</span></code><a class="headerlink" href="#circle" title="Link to this heading">#</a></h3>
+<p>Plane–sphere intersection circle.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>circle: center=(0, 0, 0), radius=2, plane=z=h, color=black
+circle: center=(0, 0, 0), radius=2, normal=(0, 0, 1), point=(0, 0, 1), color=black
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Required: <code class="docutils literal notranslate"><span class="pre">center</span></code>, <code class="docutils literal notranslate"><span class="pre">radius</span></code>, and a plane given via <code class="docutils literal notranslate"><span class="pre">plane=</span></code>/<code class="docutils literal notranslate"><span class="pre">equation=</span></code> (a
+linear equation string) or <code class="docutils literal notranslate"><span class="pre">normal=</span></code>/<code class="docutils literal notranslate"><span class="pre">point=</span></code>.</p></li>
+<li><p>Defaults to <code class="docutils literal notranslate"><span class="pre">style:</span> <span class="pre">dashed</span></code>. Raises an error if the plane doesn’t meet the
+sphere.</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">auto-intersections:</span> <span class="pre">true</span></code> at the scene level instead of writing these
+by hand: every top-level <code class="docutils literal notranslate"><span class="pre">plane</span></code>/<code class="docutils literal notranslate"><span class="pre">sphere</span></code> pair that actually intersects gets
+an automatic gray (<code class="docutils literal notranslate"><span class="pre">#555555</span></code>) dashed circle, with <code class="docutils literal notranslate"><span class="pre">hidden-edges:</span> <span class="pre">off</span></code>. Only
+top-level primitives are considered (not ones produced by <code class="docutils literal notranslate"><span class="pre">repeat</span></code>).</p></li>
+</ul>
+</section>
+<section id="angle">
+<h3><code class="docutils literal notranslate"><span class="pre">angle</span></code><a class="headerlink" href="#angle" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>angle: dir1=(1, 0, 0), dir2=(0, 1, 1), radius=0.7
+angle: at=(0, 0, 0), to1=(1, 0, 0), to2=(0, 1, 0), color=teal
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">at</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dir1</span></code>/<code class="docutils literal notranslate"><span class="pre">dir2</span></code> (aliases <code class="docutils literal notranslate"><span class="pre">direction1</span></code>/<code class="docutils literal notranslate"><span class="pre">direction2</span></code>, <code class="docutils literal notranslate"><span class="pre">v1</span></code>/<code class="docutils literal notranslate"><span class="pre">v2</span></code>) give directions
+from <code class="docutils literal notranslate"><span class="pre">at</span></code>; <code class="docutils literal notranslate"><span class="pre">to1</span></code>/<code class="docutils literal notranslate"><span class="pre">to2</span></code> give absolute points instead.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">radius</span></code> (alias <code class="docutils literal notranslate"><span class="pre">r</span></code>) sets the arc radius, default <code class="docutils literal notranslate"><span class="pre">0.35</span></code>.</p></li>
+<li><p>Draws the arc in the plane spanned by the two directions.</p></li>
+</ul>
+</section>
+<section id="right-angle">
+<h3><code class="docutils literal notranslate"><span class="pre">right-angle</span></code><a class="headerlink" href="#right-angle" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>right-angle: at=(0, 0, 0), dir1=(1, 0, 0), dir2=(0, 1, 0), size=0.4
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">at</span></code> is required (no default). Same <code class="docutils literal notranslate"><span class="pre">dir1</span></code>/<code class="docutils literal notranslate"><span class="pre">dir2</span></code>/<code class="docutils literal notranslate"><span class="pre">to1</span></code>/<code class="docutils literal notranslate"><span class="pre">to2</span></code> aliases as
+<code class="docutils literal notranslate"><span class="pre">angle</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">size</span></code> (not <code class="docutils literal notranslate"><span class="pre">radius</span></code>) sets the marker’s edge length, default <code class="docutils literal notranslate"><span class="pre">0.35</span></code>.</p></li>
+<li><p>Only drawn while the two directions stay perpendicular; otherwise this item
+is skipped (see the note above about per-item errors).</p></li>
+</ul>
+</section>
+<section id="normal-segment">
+<h3><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code><a class="headerlink" href="#normal-segment" title="Link to this heading">#</a></h3>
+<p>Two independent modes, auto-detected from the keys given:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>normal-segment: point=(1, 1, h), plane=z=0, color=blue, right-angle-size=0.4
+normal-segment: point=(1, 1, a), plane-normal=(0, 0, 1), plane-point=(0, 0, 0)
+normal-segment: point1=(0, 0, 0), direction1=(1, 0, 0), point2=(0, 2, 3), direction2=(0, 1, 0)
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Point-to-plane: <code class="docutils literal notranslate"><span class="pre">point=</span></code>/<code class="docutils literal notranslate"><span class="pre">p=</span></code> plus a plane via <code class="docutils literal notranslate"><span class="pre">plane=</span></code>/<code class="docutils literal notranslate"><span class="pre">equation=</span></code> or
+<code class="docutils literal notranslate"><span class="pre">plane-normal=</span></code>/<code class="docutils literal notranslate"><span class="pre">normal=</span></code> + <code class="docutils literal notranslate"><span class="pre">plane-point=</span></code>/<code class="docutils literal notranslate"><span class="pre">plane_point=</span></code>/<code class="docutils literal notranslate"><span class="pre">on-plane=</span></code>.
+Draws the perpendicular segment from the point to its foot on the plane.</p></li>
+<li><p>Line-to-line: <code class="docutils literal notranslate"><span class="pre">point1=</span></code>/<code class="docutils literal notranslate"><span class="pre">p1=</span></code> + <code class="docutils literal notranslate"><span class="pre">direction1=</span></code>/<code class="docutils literal notranslate"><span class="pre">dir1=</span></code>/<code class="docutils literal notranslate"><span class="pre">v1=</span></code> and <code class="docutils literal notranslate"><span class="pre">point2=</span></code>/
+<code class="docutils literal notranslate"><span class="pre">p2=</span></code> + <code class="docutils literal notranslate"><span class="pre">direction2=</span></code>/<code class="docutils literal notranslate"><span class="pre">dir2=</span></code>/<code class="docutils literal notranslate"><span class="pre">v2=</span></code>. Draws the common perpendicular
+(shortest connecting) segment between the two lines.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">right-angles</span></code> (default <code class="docutils literal notranslate"><span class="pre">true</span></code>): draw right-angle marker(s) at the foot/feet.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">points</span></code> (alias <code class="docutils literal notranslate"><span class="pre">endpoint-points</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>): draw point markers at
+both ends.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">right-angle-size</span></code> (alias <code class="docutils literal notranslate"><span class="pre">size</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.35</span></code>), <code class="docutils literal notranslate"><span class="pre">right-angle-color</span></code>
+(default <code class="docutils literal notranslate"><span class="pre">black</span></code>), <code class="docutils literal notranslate"><span class="pre">endpoint-color</span></code> (alias <code class="docutils literal notranslate"><span class="pre">point-color</span></code>, default <code class="docutils literal notranslate"><span class="pre">black</span></code>).</p></li>
+<li><p>The auto-generated right-angle markers are always solid, regardless of the
+segment’s own <code class="docutils literal notranslate"><span class="pre">style</span></code>/<code class="docutils literal notranslate"><span class="pre">linestyle</span></code>.</p></li>
+</ul>
+</section>
+<section id="text">
+<h3><code class="docutils literal notranslate"><span class="pre">text</span></code><a class="headerlink" href="#text" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>text: at=(2, 1, 1), value=&quot;$A$&quot;, ha=left, va=top
+text: at=(a, 1, 2), offset=(0.1, 0.1, 0.1), value=&quot;$P=({a:.1f},1,2)$&quot;, fontsize=15
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Required: <code class="docutils literal notranslate"><span class="pre">at</span></code>, <code class="docutils literal notranslate"><span class="pre">value</span></code> (alias <code class="docutils literal notranslate"><span class="pre">label</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">offset=(dx,</span> <span class="pre">dy,</span> <span class="pre">dz)</span></code> nudges the label off the anchor point, default
+<code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ha</span></code>: <code class="docutils literal notranslate"><span class="pre">left</span></code>/<code class="docutils literal notranslate"><span class="pre">center</span></code>/<code class="docutils literal notranslate"><span class="pre">right</span></code>; <code class="docutils literal notranslate"><span class="pre">va</span></code>: <code class="docutils literal notranslate"><span class="pre">top</span></code>/<code class="docutils literal notranslate"><span class="pre">center</span></code>/<code class="docutils literal notranslate"><span class="pre">bottom</span></code>; both default to
+<code class="docutils literal notranslate"><span class="pre">center</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fontsize</span></code> defaults to the scene’s <code class="docutils literal notranslate"><span class="pre">fontsize</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code> may mix prose with <code class="docutils literal notranslate"><span class="pre">$...$</span></code> KaTeX math and <code class="docutils literal notranslate"><span class="pre">{name}</span></code>/<code class="docutils literal notranslate"><span class="pre">{name:.Nf}</span></code>
+interpolation of the current slider/binding value (e.g. <code class="docutils literal notranslate"><span class="pre">{a:.1f}</span></code>).</p></li>
+</ul>
+</section>
+<section id="curve">
+<h3><code class="docutils literal notranslate"><span class="pre">curve</span></code><a class="headerlink" href="#curve" title="Link to this heading">#</a></h3>
+<p>Parametric curve in a parameter <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>curve: x=t/pi, y=r*cos(t), z=r*sin(t), t=(0, 4*pi), samples=400, color=red, lw=2.5, arrows=true, arrow-count=4
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Required: <code class="docutils literal notranslate"><span class="pre">x=</span></code>, <code class="docutils literal notranslate"><span class="pre">y=</span></code>, <code class="docutils literal notranslate"><span class="pre">z=</span></code> expressions in <code class="docutils literal notranslate"><span class="pre">t</span></code> (and any scene variables).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">t=</span></code> (alias <code class="docutils literal notranslate"><span class="pre">trange=</span></code>) parameter range, default <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">1)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">samples</span></code>: 2–2000, default <code class="docutils literal notranslate"><span class="pre">300</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arrows</span></code>: <code class="docutils literal notranslate"><span class="pre">true</span></code>/<code class="docutils literal notranslate"><span class="pre">false</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>; <code class="docutils literal notranslate"><span class="pre">arrow-count</span></code> (alias
+<code class="docutils literal notranslate"><span class="pre">arrows-count</span></code>): 0–20, default <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p></li>
+<li><p>A non-finite sample breaks the path instead of joining straight across the
+singularity.</p></li>
+</ul>
+</section>
+<section id="ngon-filled-polygon">
+<h3><code class="docutils literal notranslate"><span class="pre">ngon</span></code> (filled polygon)<a class="headerlink" href="#ngon-filled-polygon" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ngon: points=[(0, 0, 0), (2, 0, 0), (0, 2, 0)], color=blue, edgecolor=black
+ngon: [(0, 0, 0), (2, 0, 0), (0, 2, 0)], blue
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">points=</span></code> (alias <code class="docutils literal notranslate"><span class="pre">vertices=</span></code>, or the first positional value) needs at least
+three vertices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color</span></code> may be the second positional value; <code class="docutils literal notranslate"><span class="pre">edgecolor</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">black</span></code>.</p></li>
+</ul>
+</section>
+<section id="prism">
+<h3><code class="docutils literal notranslate"><span class="pre">prism</span></code><a class="headerlink" href="#prism" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>prism: center=(-1.5, 0, 0), radius=1, sides=5, height=h, color=teal, alpha=1
+prism: base=[(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)], vector=(0, 0, a), edgecolor=black
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Regular base: <code class="docutils literal notranslate"><span class="pre">center=</span></code>, <code class="docutils literal notranslate"><span class="pre">radius=</span></code>, <code class="docutils literal notranslate"><span class="pre">sides=</span></code> (3–200), optional <code class="docutils literal notranslate"><span class="pre">rotation=</span></code>
+(radians, default <code class="docutils literal notranslate"><span class="pre">0</span></code>).</p></li>
+<li><p>Explicit base: <code class="docutils literal notranslate"><span class="pre">base=[(...),</span> <span class="pre">...]</span></code>, at least three vertices.</p></li>
+<li><p>Extrusion: <code class="docutils literal notranslate"><span class="pre">height=</span></code> (straight up along z) or <code class="docutils literal notranslate"><span class="pre">vector=(dx,</span> <span class="pre">dy,</span> <span class="pre">dz)</span></code> (any
+direction) — mutually exclusive.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">edgecolor</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">black</span></code>.</p></li>
+</ul>
+</section>
+<section id="pyramid">
+<h3><code class="docutils literal notranslate"><span class="pre">pyramid</span></code><a class="headerlink" href="#pyramid" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyramid: base=[(0.5, -1, 0), (2.5, -1, 0), (2.5, 1, 0), (0.5, 1, 0)], apex=(1.5, 0, h), color=blue, alpha=0.55
+pyramid: center=(0, 0, 0), radius=1, sides=4, apex=(0, 0, a), base-color=none, side-color=blue
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Base given the same way as <code class="docutils literal notranslate"><span class="pre">prism</span></code> (<code class="docutils literal notranslate"><span class="pre">center</span></code>/<code class="docutils literal notranslate"><span class="pre">radius</span></code>/<code class="docutils literal notranslate"><span class="pre">sides</span></code>/<code class="docutils literal notranslate"><span class="pre">rotation</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">base=[...]</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apex=</span></code> is required.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color=</span></code> tints both faces; <code class="docutils literal notranslate"><span class="pre">base-color=</span></code>/<code class="docutils literal notranslate"><span class="pre">side-color=</span></code> (alias <code class="docutils literal notranslate"><span class="pre">body-color=</span></code>
+for <code class="docutils literal notranslate"><span class="pre">side-color</span></code>) set them independently; either accepts <code class="docutils literal notranslate"><span class="pre">none</span></code> to omit
+that face entirely. <code class="docutils literal notranslate"><span class="pre">edgecolor</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">black</span></code>.</p></li>
+</ul>
+</section>
+<section id="solid-of-revolution">
+<h3><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code><a class="headerlink" href="#solid-of-revolution" title="Link to this heading">#</a></h3>
+<p>Surface swept by revolving <code class="docutils literal notranslate"><span class="pre">|f(x)|</span></code> around the x axis.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>solid-of-revolution: r, (0, 4), teal, samples=24, radial-samples=40, alpha=0.2
+solid-of-revolution: sqrt(x + a), (0, 2), blue, samples=40, radial-samples=32
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Positional: expression in <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">(xmin,</span> <span class="pre">xmax)</span></code> range, color.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">samples</span></code> (axial rings): 2–160, default <code class="docutils literal notranslate"><span class="pre">40</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">radial-samples</span></code> (segments around the axis): 8–96, default <code class="docutils literal notranslate"><span class="pre">32</span></code>.</p></li>
+</ul>
+</section>
+<section id="repeat">
+<h3><code class="docutils literal notranslate"><span class="pre">repeat</span></code><a class="headerlink" href="#repeat" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>repeat: i=1..3; point: (i, -1, 0), red
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">repeat:</span> <span class="pre">name=lo..hi;</span> <span class="pre">kind:</span> <span class="pre">arguments</span></code> — <code class="docutils literal notranslate"><span class="pre">lo</span></code>/<code class="docutils literal notranslate"><span class="pre">hi</span></code> must evaluate to integers
+at most 999 apart (inclusive, either direction); <code class="docutils literal notranslate"><span class="pre">name</span></code> is usable inside the
+child primitive’s own expressions.</p></li>
+<li><p>Nests up to 8 levels deep; the fully expanded scene is capped at 1000
+primitives.</p></li>
+</ul>
+</section>
+<section id="macro-use">
+<h3><code class="docutils literal notranslate"><span class="pre">macro</span></code> / <code class="docutils literal notranslate"><span class="pre">use</span></code><a class="headerlink" href="#macro-use" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>macro: pillar(pos, h)
+prism: center=(pos, 0, 0), radius=0.4, sides=4, height=h, color=teal, alpha=0.8
+text: at=(pos, 0, h), offset=(0, 0, 0.3), value=&quot;Pillar pos&quot;, fontsize=14
+endmacro
+use: pillar(1, height)
+use: pillar(2, 2*height/3)
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">macro:</span> <span class="pre">name(param,</span> <span class="pre">...)</span></code> … body lines (any primitives, <code class="docutils literal notranslate"><span class="pre">let</span></code>, <code class="docutils literal notranslate"><span class="pre">def</span></code>) …
+<code class="docutils literal notranslate"><span class="pre">endmacro</span></code>. <code class="docutils literal notranslate"><span class="pre">use:</span> <span class="pre">name(arg,</span> <span class="pre">...)</span></code> textually expands the body, substituting
+parameters; each <code class="docutils literal notranslate"><span class="pre">use</span></code> gets its own private copy of any <code class="docutils literal notranslate"><span class="pre">let</span></code>/<code class="docutils literal notranslate"><span class="pre">def</span></code> names
+declared inside the macro, so repeated uses don’t collide.</p></li>
+</ul>
+</section>
+<section id="let-def">
+<h3><code class="docutils literal notranslate"><span class="pre">let</span></code> / <code class="docutils literal notranslate"><span class="pre">def</span></code><a class="headerlink" href="#let-def" title="Link to this heading">#</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>let: height = a**2
+def: f(u) = height + sin(u)
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">let:</span> <span class="pre">name</span> <span class="pre">=</span> <span class="pre">expr</span></code> declares a scalar binding; later <code class="docutils literal notranslate"><span class="pre">let</span></code>/<code class="docutils literal notranslate"><span class="pre">def</span></code>/primitive
+expressions may reference it. Declare bindings before using them.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">def:</span> <span class="pre">name(params)</span> <span class="pre">=</span> <span class="pre">expr</span></code> declares a reusable function callable like any
+built-in (e.g. <code class="docutils literal notranslate"><span class="pre">f(pi/2)</span></code>) from later expressions.</p></li>
+<li><p>Both stay live: they re-evaluate whenever a slider changes.</p></li>
+</ul>
+<p>Arithmetic supports <code class="docutils literal notranslate"><span class="pre">pi</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, the trigonometric and
+hyperbolic functions, and <code class="docutils literal notranslate"><span class="pre">Abs</span></code>, with <code class="docutils literal notranslate"><span class="pre">**</span></code> for powers, through a validated
+expression tree (no JavaScript <code class="docutils literal notranslate"><span class="pre">eval</span></code>).</p>
+</section>
 </section>
 <section id="rendering-and-migration-limits">
 <h2>Rendering and migration limits<a class="headerlink" href="#rendering-and-migration-limits" title="Link to this heading">#</a></h2>
@@ -982,6 +1409,30 @@ an existing Chromium executable.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-authoring-features">Supported authoring features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#primitive-reference">Primitive reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scene-level-settings">Scene-level settings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#shared-per-primitive-style-options">Shared per-primitive style options</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point"><code class="docutils literal notranslate"><span class="pre">point</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vector"><code class="docutils literal notranslate"><span class="pre">vector</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#line-segment"><code class="docutils literal notranslate"><span class="pre">line-segment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#line"><code class="docutils literal notranslate"><span class="pre">line</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plane"><code class="docutils literal notranslate"><span class="pre">plane</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sphere"><code class="docutils literal notranslate"><span class="pre">sphere</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#circle"><code class="docutils literal notranslate"><span class="pre">circle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#angle"><code class="docutils literal notranslate"><span class="pre">angle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#right-angle"><code class="docutils literal notranslate"><span class="pre">right-angle</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-segment"><code class="docutils literal notranslate"><span class="pre">normal-segment</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#text"><code class="docutils literal notranslate"><span class="pre">text</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#curve"><code class="docutils literal notranslate"><span class="pre">curve</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ngon-filled-polygon"><code class="docutils literal notranslate"><span class="pre">ngon</span></code> (filled polygon)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prism"><code class="docutils literal notranslate"><span class="pre">prism</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyramid"><code class="docutils literal notranslate"><span class="pre">pyramid</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solid-of-revolution"><code class="docutils literal notranslate"><span class="pre">solid-of-revolution</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repeat"><code class="docutils literal notranslate"><span class="pre">repeat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macro-use"><code class="docutils literal notranslate"><span class="pre">macro</span></code> / <code class="docutils literal notranslate"><span class="pre">use</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#let-def"><code class="docutils literal notranslate"><span class="pre">let</span></code> / <code class="docutils literal notranslate"><span class="pre">def</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rendering-and-migration-limits">Rendering and migration limits</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remaining-implementation-plan">Remaining implementation plan</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-checks">Development checks</a></li>

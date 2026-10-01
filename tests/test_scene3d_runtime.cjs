@@ -77,3 +77,12 @@ test('singular curves break paths and live text interpolation remains literal',(
     const text=drawing('text',{at:[0,0,0],offset:[0,0,0],fontsize:12,text:'<b>$a={a:.1f}$</b>'});
     assert.equal(resolve([text],{a:1.23}).items[0].text,'<b>$a=1.2$</b>');
 });
+test('solveDragValue recovers the parameter nearest a projected target',()=>{
+    const flat=point=>[point[0],point[1]];
+    const coords=[['var','t'],['var','t'],['**',['var','t'],2]];
+    const value=G.solveDragValue(coords,'t',{},-2,2,flat([1.3,1.3]),flat);
+    assert.ok(Math.abs(value-1.3)<1e-3);
+    // Holding another slider fixed still narrows to the right branch of a curved path.
+    const other=G.solveDragValue([['var','t'],['var','b'],['**',['var','t'],2]],'t',{b:5},-3,3,flat([-1.7,5]),flat);
+    assert.ok(Math.abs(other+1.7)<1e-3);
+});

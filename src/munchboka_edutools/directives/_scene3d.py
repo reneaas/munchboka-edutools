@@ -241,7 +241,7 @@ def parse_primitive(kind, source, ex, defaults, depth=0):
         else:
             pos.append(part)
     allowed = {"color", "lw", "style", "linestyle", "alpha", "hidden-edges"} | {
-        "point": {"at"},
+        "point": {"at", "drag"},
         "line": {"point", "direction", "through", "from", "to", "start", "end"},
         "line-segment": {"from", "to", "start", "end"},
         "vector": {"from", "to", "start", "end"},
@@ -349,6 +349,11 @@ def parse_primitive(kind, source, ex, defaults, depth=0):
 
     if kind == "point":
         item["coords"] = vec("at", pos[0] if pos else None)
+        if "drag" in kw:
+            name = kw["drag"]
+            if name not in ex.variables:
+                raise ValueError(f"drag must reference a declared interactive-var: {name}")
+            item["drag"] = name
     elif kind in {"vector", "line-segment", "line"}:
         if kind == "line" and "direction" in kw:
             item.update(start=vec("point"), direction=vec("direction"))
@@ -481,6 +486,17 @@ def parse_primitive(kind, source, ex, defaults, depth=0):
     return item
 
 
+def _drag_variable_names(items):
+    """Recursively collect every `drag=` target, including inside `repeat`."""
+    names = set()
+    for entry in items:
+        if entry.get("type") == "repeat":
+            names |= _drag_variable_names([entry["child"]])
+        elif entry.get("drag"):
+            names.add(entry["drag"])
+    return names
+
+
 def build_scene(lines, options=None):
     from ._scene3d_macros import expand_macros
 
@@ -502,9 +518,17 @@ def build_scene(lines, options=None):
     )
     for spec in specs:
         parts = _split_top_level_commas(spec)
-        if len(parts) != 4:
+        if len(parts) < 4:
             raise ValueError("interactive-var requires name, min, max, frames")
-        name, lo, hi, count = parts
+        name, lo, hi, count, *rest = parts
+        show_slider = None
+        for part in rest:
+            if "=" not in part:
+                raise ValueError(f"Unsupported interactive-var option: {part}")
+            option, value = (side.strip() for side in part.split("=", 1))
+            if option != "slider":
+                raise ValueError(f"Unsupported interactive-var option: {option}")
+            show_slider = parse_bool(value)
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) or name in ex.variables | set(
             CONSTANTS
         ) | set(FUNCTIONS) | {"x", "y", "z", "constructor", "prototype"}:
@@ -521,7 +545,16 @@ def build_scene(lines, options=None):
         if requested:
             target = evaluate(Expressions().compile(requested))
             initial = min(range(count), key=lambda i: abs(low + i * step - target))
-        sliders.append(dict(name=name, min=low, max=high, count=count, initial=initial))
+        sliders.append(
+            dict(
+                name=name,
+                min=low,
+                max=high,
+                count=count,
+                initial=initial,
+                showSlider=show_slider,
+            )
+        )
         ex.variables.add(name)
     # Preserve declaration order for let/def, including dependencies between bindings.
     for line in lines[:caption_idx]:
@@ -586,6 +619,14 @@ def build_scene(lines, options=None):
                 raise ValueError(f"{kind}: {exc}") from exc
     if len(scene["primitives"]) > 1000:
         raise ValueError("A scene may contain at most 1000 primitives")
+    # A dragged variable's slider is hidden by default (the point itself is the control);
+    # `interactive-var: ..., slider=true` opts back in, e.g. to also show the numeric value.
+    drag_variables = _drag_variable_names(scene["primitives"])
+    for slider in scene["sliders"]:
+        show_slider = slider.pop("showSlider")
+        slider["visible"] = (
+            show_slider if show_slider is not None else slider["name"] not in drag_variables
+        )
     original_caption_idx = (
         locations[caption_idx] if caption_idx < len(locations) else original_length
     )

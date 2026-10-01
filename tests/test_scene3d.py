@@ -92,11 +92,50 @@ def test_scene_sliders_bindings_plane_and_captions():
         "plane: equation=z=x**2",
         "repeat: i=1..5; unknown: (i,0,0)",
         "interactive-var: a, 1, 1, 3",
+        "point: at=(0,0,0), drag=t",
+        "interactive-var: a, 0, 2, 5, foo=bar",
     ],
 )
 def test_unsupported_or_invalid_scene_is_reported(line):
     with pytest.raises((ValueError, KeyError)):
         build_scene([line])
+
+
+def test_drag_variable_must_be_a_declared_slider():
+    with pytest.raises(ValueError, match="drag"):
+        build_scene(["interactive-var: a, 0, 2, 5", "point: at=(a,0,0), drag=nope"])
+
+
+def test_dragged_sliders_hide_by_default_and_slider_true_overrides():
+    scene, _, _ = build_scene(
+        [
+            "interactive-var: t, -2, 2, 41",
+            "interactive-var: b, 0, 1, 3",
+            "point: at=(t,t,t**2), drag=t",
+        ]
+    )
+    visible = {s["name"]: s["visible"] for s in scene["sliders"]}
+    assert visible == {"t": False, "b": True}
+    point = next(p for p in scene["primitives"] if p["type"] == "point")
+    assert point["drag"] == "t"
+
+    scene, _, _ = build_scene(
+        [
+            "interactive-var: t, -2, 2, 41, slider=true",
+            "point: at=(t,t,t**2), drag=t",
+        ]
+    )
+    assert scene["sliders"][0]["visible"] is True
+
+
+def test_drag_inside_repeat_still_hides_its_slider():
+    scene, _, _ = build_scene(
+        [
+            "interactive-var: t, 0, 3, 7",
+            "repeat: i=1..1; point: at=(t,0,0), drag=t",
+        ]
+    )
+    assert scene["sliders"][0]["visible"] is False
 
 
 DEMO = """Live 3D
@@ -153,6 +192,20 @@ DEMO = """Live 3D
 
    Live solids and constructions.
 
+.. interactive-plot3d::
+
+   backend: threejs
+   name: live-drag
+   interactive-var: t, -1.5, 1.5, 61
+   xrange: (-2, 2)
+   yrange: (-2, 2)
+   zrange: (-1, 3)
+   ticks: off
+   point: at=(t, t, t**2), color=red, drag=t
+   sphere: center=(-t, -t, 1), radius=0.3, color=teal
+
+   A draggable point with a dependent sphere.
+
 .. toctree::
    :hidden:
 
@@ -187,7 +240,7 @@ def test_sphinx_live_output_and_static_fallback(tmp_path):
     app, warnings = build_demo(tmp_path)
     assert "ERROR" not in warnings
     page = (Path(app.outdir) / "index.html").read_text()
-    assert page.count('class="munch-3d interactive-plot3d') == 3
+    assert page.count('class="munch-3d interactive-plot3d') == 4
     assert 'id="live-vector"' in page
     assert "A live vector and a plane." in page
     assert "munch-3d-fallback" in page
@@ -197,7 +250,7 @@ def test_sphinx_live_output_and_static_fallback(tmp_path):
     assert "jsxgraphcore.js" not in page
     assert (Path(app.outdir) / "_static/munchboka/vendor/katex/dist/katex.min.js").exists()
     assert "three-runtime.js" not in (Path(app.outdir) / "plain.html").read_text()
-    assert len(list((Path(app.outdir) / "_images").glob("*.png"))) == 3
+    assert len(list((Path(app.outdir) / "_images").glob("*.png"))) == 4
     assert (Path(app.outdir) / "_static/munchboka/vendor/three/build/three.module.js").exists()
 
 

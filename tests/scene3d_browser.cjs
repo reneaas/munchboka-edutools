@@ -69,6 +69,34 @@ const {chromium}=require('playwright');
         assert.deepEqual(await third.evaluate(el=>el.munch3d.errors),[]);
         await third.locator('.munch-3d-board').scrollIntoViewIfNeeded();
         await page.screenshot({path:'/tmp/munch-scene3d-solids.png'});
+        // A `drag=` point hides its own slider by default, yet still drives dependents.
+        const fourth=page.locator('.munch-3d').nth(3);await fourth.scrollIntoViewIfNeeded();
+        await page.waitForFunction(()=>document.querySelectorAll('.munch-3d')[3].classList.contains('munch-3d-ready'));
+        assert.equal(await fourth.locator('input[type=range]').count(),0);
+        const dragBoard=await fourth.locator('.munch-3d-board').boundingBox();
+        const dragT=await fourth.evaluate(el=>el.munch3d.vars.t);
+        const dragAzim=await fourth.evaluate(el=>el.munch3d.panel.getCamera().azim);
+        const dragPixel=await fourth.evaluate(el=>{
+            const point=el.munch3d.items.find(p=>p.type==='point').points[0];
+            return el.munch3d.panel.project(point);
+        });
+        await page.mouse.move(dragBoard.x+dragPixel[0],dragBoard.y+dragPixel[1]);
+        await page.mouse.down();
+        await page.mouse.move(dragBoard.x+dragBoard.width*.75,dragBoard.y+dragBoard.height*.25,{steps:10});
+        await page.mouse.up();
+        assert.notEqual(await fourth.evaluate(el=>el.munch3d.vars.t),dragT);
+        assert.equal(await fourth.evaluate(el=>el.munch3d.panel.getCamera().azim),dragAzim);
+        const draggedT=await fourth.evaluate(el=>el.munch3d.vars.t);
+        assert.deepEqual(
+            await fourth.evaluate(el=>el.munch3d.items.find(p=>p.type==='sphere').points[0]),
+            [-draggedT,-draggedT,1],
+        );
+        // Rotation still works on the same canvas, away from the draggable point.
+        await page.mouse.move(dragBoard.x+dragBoard.width*.1,dragBoard.y+dragBoard.height*.1);
+        await page.mouse.down();
+        await page.mouse.move(dragBoard.x+dragBoard.width*.4,dragBoard.y+dragBoard.height*.4,{steps:10});
+        await page.mouse.up();
+        assert.notEqual(await fourth.evaluate(el=>el.munch3d.panel.getCamera().azim),dragAzim);
         // Context recovery and removal release resources without accumulating GPU contexts.
         await page.evaluate(()=>{window.testGPU=document.querySelector('.munch-3d').munch3d.gpu;window.testLoss=window.testGPU.renderer.getContext().getExtension('WEBGL_lose_context');window.testLoss.loseContext();});
         await page.waitForFunction(()=>document.querySelector('.munch-3d').classList.contains('munch-3d-error'));

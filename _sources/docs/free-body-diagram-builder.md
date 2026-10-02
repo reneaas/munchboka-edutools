@@ -37,19 +37,17 @@ The directive takes no required content. Optional options:
 2. **Hastighet** — an optional direction (degrees from +x). Only matters for
    forces whose default direction depends on motion (`friction`,
    `air-resistance`); leave it blank if the object is at rest.
-3. **Krefter** — add one or more forces by kind (`gravity`, `normal`,
-   `friction`, `air-resistance`, `custom`), with a length, color, and
-   optional name. Each kind has the same default attachment point/direction
-   and default color/name as the real directive. Open **Avansert** on a row
-   to override the attachment point, direction (degrees), or the
-   collinear-force offset — the same escape hatches the real directive
-   supports. `custom` always requires an explicit point and direction.
-4. **Akseindikator** — toggle the small corner x/y arrows.
-5. **Download as SVG**.
+3. **Krefter** — add forces using **Gravitasjon**, **Normalkraft**,
+   **Friksjon**, **Luftmotstand**, or **Custom**. Each row exposes length,
+   color, name, and offset directly. Standard forces use their default
+   attachment point and direction. **Custom** starts at the object's center
+   and adds a direction field (degrees counterclockwise from +x).
+4. **Download as SVG**.
 
 The builder starts with gravity only. Use **+ Legg til kraft** to add other
-forces. Every force starts with an offset of `0`; change it under **Avansert**
-to separate overlapping arrows, or clear it to enable automatic spacing.
+forces. Every force starts with an offset of `0`; change it directly in the
+row to separate overlapping arrows, or clear it to enable automatic spacing.
+The small x/y coordinate arrows are always shown.
 
 Default force names use vector notation (e.g. `$\vec G$`). Downloaded SVGs
 render the math labels as vector paths, including accents and subscripts.

@@ -484,7 +484,7 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="free-body-diagram-builder-directive">
 <h1><code class="docutils literal notranslate"><span class="pre">free-body-diagram-builder</span></code> directive<a class="headerlink" href="#free-body-diagram-builder-directive" title="Link to this heading">#</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">free-body-diagram-builder</span></code> directive embeds a small, fully client-side
+<link rel="stylesheet" href="../_static/munchboka/vendor/katex/dist/katex.min.css"><script src="../_static/munchboka/vendor/katex/dist/katex.min.js"></script><link rel="stylesheet" href="../_static/munchboka/vendor/jsxgraph/jsxgraph.css"><script src="../_static/munchboka/vendor/jsxgraph/jsxgraphcore.js"></script><link rel="stylesheet" href="../_static/munchboka/css/free_body_diagram_builder.css"><div class="munch-fbd-builder" id="fbd-builder-db11863e030d" data-board-width="640px" data-board-height="480"><noscript>Denne interaktive figurbyggeren krever JavaScript.</noscript></div><script src="../_static/munchboka/js/free_body_diagram_builder.js"></script><p>The <code class="docutils literal notranslate"><span class="pre">free-body-diagram-builder</span></code> directive embeds a small, fully client-side
 tool for sketching a <a class="reference internal" href="free-body-diagram.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">free-body-diagram</span></code></span></a>-style figure
 interactively: configure an object, an optional velocity, and one or more
 forces — using the same kinds and defaults as the real directive — then
@@ -517,19 +517,17 @@ size, center position, color, and opacity.</p></li>
 <li><p><strong>Hastighet</strong> — an optional direction (degrees from +x). Only matters for
 forces whose default direction depends on motion (<code class="docutils literal notranslate"><span class="pre">friction</span></code>,
 <code class="docutils literal notranslate"><span class="pre">air-resistance</span></code>); leave it blank if the object is at rest.</p></li>
-<li><p><strong>Krefter</strong> — add one or more forces by kind (<code class="docutils literal notranslate"><span class="pre">gravity</span></code>, <code class="docutils literal notranslate"><span class="pre">normal</span></code>,
-<code class="docutils literal notranslate"><span class="pre">friction</span></code>, <code class="docutils literal notranslate"><span class="pre">air-resistance</span></code>, <code class="docutils literal notranslate"><span class="pre">custom</span></code>), with a length, color, and
-optional name. Each kind has the same default attachment point/direction
-and default color/name as the real directive. Open <strong>Avansert</strong> on a row
-to override the attachment point, direction (degrees), or the
-collinear-force offset — the same escape hatches the real directive
-supports. <code class="docutils literal notranslate"><span class="pre">custom</span></code> always requires an explicit point and direction.</p></li>
-<li><p><strong>Akseindikator</strong> — toggle the small corner x/y arrows.</p></li>
+<li><p><strong>Krefter</strong> — add forces using <strong>Gravitasjon</strong>, <strong>Normalkraft</strong>,
+<strong>Friksjon</strong>, <strong>Luftmotstand</strong>, or <strong>Custom</strong>. Each row exposes length,
+color, name, and offset directly. Standard forces use their default
+attachment point and direction. <strong>Custom</strong> starts at the object’s center
+and adds a direction field (degrees counterclockwise from +x).</p></li>
 <li><p><strong>Download as SVG</strong>.</p></li>
 </ol>
 <p>The builder starts with gravity only. Use <strong>+ Legg til kraft</strong> to add other
-forces. Every force starts with an offset of <code class="docutils literal notranslate"><span class="pre">0</span></code>; change it under <strong>Avansert</strong>
-to separate overlapping arrows, or clear it to enable automatic spacing.</p>
+forces. Every force starts with an offset of <code class="docutils literal notranslate"><span class="pre">0</span></code>; change it directly in the
+row to separate overlapping arrows, or clear it to enable automatic spacing.
+The small x/y coordinate arrows are always shown.</p>
 <p>Default force names use vector notation (e.g. <code class="docutils literal notranslate"><span class="pre">$\vec</span> <span class="pre">G$</span></code>). Downloaded SVGs
 render the math labels as vector paths, including accents and subscripts.</p>
 <p>Like the real directive, every force’s true point of attack is marked with a

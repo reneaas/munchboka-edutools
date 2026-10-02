@@ -164,10 +164,11 @@ def build_object(
         ]
         points = ", ".join(f"({x:g}, {y:g})" for x, y in corners)
         wheel_x = body_w * 0.3
+        # Filled circles use alpha=0.2 in the plot renderer, with solid outlines.
         lines = [
             f"polygon: {points}, {color}{alpha_token}",
-            f"circle: ({cx - wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, black",
-            f"circle: ({cx + wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, black",
+            f"circle: ({cx - wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, gray",
+            f"circle: ({cx + wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, gray",
         ]
         # Contact forces (normal/friction) act on one actual wheel — not the gap
         # between them — per the standard convention for this kind of schematic.

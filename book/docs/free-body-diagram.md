@@ -6,7 +6,7 @@ velocity: angle=30
 force: gravity, length=0.5, name="$\vec G$"
 force: normal, length=0.4, name="$\vec N$"
 force: friction, length=0.25, name="$\vec R$"
-force: air-resistance, length=0.3, name="$\vec L$"
+force: air-resistance, length=0.3, name="$\vec L$", offset=0
 width: 60%
 :::
 
@@ -63,6 +63,10 @@ Lines after the first blank line become the figure caption, exactly like in
 | `square` | side length | the center of the square |
 | `toy-car` | overall body length | the car's center of mass (a simple schematic: one body rectangle plus two wheels — nothing more detailed is drawn) |
 
+Contact forces (`normal`, `friction`) always attach to a point that actually
+sits on the object: the bottom edge for `ball`/`square`, and one specific
+wheel — not the empty gap between the two wheels — for `toy-car`.
+
 `position` defaults to `(0, 0)`; `color` defaults to `black`; `alpha` (fill
 opacity) is optional and uses `plot`'s own `polygon`/`circle` default when
 omitted.
@@ -71,10 +75,10 @@ omitted.
 :::{free-body-diagram}
 object: toy-car, size=2, color=orange
 velocity: (1, 0)
-force: gravity, length=0.7, name="$\vec G$"
-force: normal, length=0.5, name="$\vec N$"
-force: friction, length=0.4, name="$\vec R$"
-force: air-resistance, length=0.5, name="$\vec L$"
+force: gravity, length=0.35, name="$\vec G$"
+force: normal, length=0.35, name="$\vec N$"
+force: friction, length=0.3, name="$\vec R$"
+force: air-resistance, length=0.4, name="$\vec L$"
 width: 60%
 :::
 ```
@@ -84,10 +88,10 @@ which yields:
 :::{free-body-diagram}
 object: toy-car, size=2, color=orange
 velocity: (1, 0)
-force: gravity, length=0.7, name="$\vec G$"
-force: normal, length=0.5, name="$\vec N$"
-force: friction, length=0.4, name="$\vec R$"
-force: air-resistance, length=0.5, name="$\vec L$"
+force: gravity, length=0.35, name="$\vec G$"
+force: normal, length=0.35, name="$\vec N$"
+force: friction, length=0.3, name="$\vec R$"
+force: air-resistance, length=0.4, name="$\vec L$"
 width: 60%
 :::
 
@@ -117,6 +121,19 @@ Any force — standard or `custom` — accepts these overrides:
   (degrees are measured counter-clockwise from the positive x-axis).
 - `color=` — any color `plot` understands.
 - `name=` — the label text (plain text or `$math$`); omit it for no label.
+- `offset=` — how far to nudge the drawn vector away from the force's true
+  point of attack (see below); set `offset=0` to draw it right on the point.
+
+Every force's true point of attack on the object is always marked with a
+small black dot, linked by a short dotted leader segment to where its arrow
+is actually drawn. By default this offset grows automatically for forces
+that share the same line of action — most commonly gravity and the normal
+force, which are collinear for any object resting symmetrically on flat
+ground — so the arrows read as distinct parallel vectors instead of
+stacking on top of each other, the same convention used in physics
+textbooks for concurrent/collinear forces. Give a force its own `offset=`
+to control this directly instead, including `offset=0` for a force that
+is already clearly visible without any nudge.
 
 ```{tip}
 Pick `length=` noticeably smaller than the object's own `size=` (roughly

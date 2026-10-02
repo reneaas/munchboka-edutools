@@ -2,7 +2,7 @@
 
 This section documents every Sphinx directive registered by `munchboka-edutools`.
 
-Total registered directive names: **56**
+Total registered directive names: **58**
 
 ## All Directives
 
@@ -21,6 +21,7 @@ Total registered directive names: **56**
 - [`factor-tree`](factor-tree.md) (directive)
 - [`flashcards`](flashcards.md) (directive)
 - [`free-body-diagram`](free-body-diagram.md) (directive)
+- [`free-body-diagram-builder`](free-body-diagram-builder.md) (directive)
 - [`ggb`](ggb.md) (directive)
 - [`ggb-popup`](ggb-popup.md) (directive)
 - [`ggbpopup`](ggbpopup.md) (alias)
@@ -45,6 +46,7 @@ Total registered directive names: **56**
 - [`parsons-puzzle`](parsons-puzzle.md) (directive)
 - [`parsonspuzzle`](parsonspuzzle.md) (alias)
 - [`plot`](plot.md) (directive)
+- [`plot-builder`](plot-builder.md) (directive)
 - [`plot3d-2`](plot3d-2.md) (directive)
 - [`polydiv`](polydiv.md) (directive)
 - [`popup`](popup.md) (directive)

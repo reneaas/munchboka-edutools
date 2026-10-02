@@ -169,10 +169,12 @@ def build_object(
             f"circle: ({cx - wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, black",
             f"circle: ({cx + wheel_x:g}, {body_bottom:g}), {wheel_r:g}, fill, black",
         ]
+        # Contact forces (normal/friction) act on one actual wheel — not the gap
+        # between them — per the standard convention for this kind of schematic.
         return FreeBodyObject(
             lines,
             centroid=(cx, cy),
-            contact=(cx, body_bottom - wheel_r),
+            contact=(cx + wheel_x, body_bottom - wheel_r),
             radius=body_w / 2,
         )
     raise ValueError(f"Unknown object: {kind}")
@@ -205,7 +207,7 @@ def default_attachment(kind, obj: FreeBodyObject, velocity):
 def parse_force(source: str, obj: FreeBodyObject, velocity) -> dict[str, Any]:
     pos, kw = _parse_kv_line(source)
     kind = pos[0] if pos else kw.get("kind")
-    allowed = {"kind", "length", "name", "color", "point", "direction"}
+    allowed = {"kind", "length", "name", "color", "point", "direction", "offset"}
     if set(kw) - allowed:
         raise ValueError(f"Unsupported force options: {', '.join(sorted(set(kw) - allowed))}")
     if kind not in FORCE_KINDS:
@@ -231,30 +233,121 @@ def parse_force(source: str, obj: FreeBodyObject, velocity) -> dict[str, Any]:
 
     name = _strip_wrapping_quotes(kw["name"]) if "name" in kw else DEFAULT_FORCE_NAME.get(kind, "")
     color = kw.get("color", DEFAULT_FORCE_COLOR.get(kind, "black"))
-    return dict(kind=kind, length=length, name=name, color=color, point=point, direction=direction)
+    offset = float(kw["offset"]) if "offset" in kw else None
+    return dict(
+        kind=kind,
+        length=length,
+        name=name,
+        color=color,
+        point=point,
+        direction=direction,
+        offset=offset,
+    )
+
+
+def _perpendicular(direction: tuple[float, float]) -> tuple[float, float]:
+    dx, dy = direction
+    return (-dy, dx)
+
+
+def _collinear_groups(forces: list[dict[str, Any]], tol: float = 1e-6) -> list[list[int]]:
+    """Cluster force indices whose line of action coincides: parallel (or
+    antiparallel) directions whose attachment points also lie on that same
+    infinite line, e.g. gravity and normal for an object resting symmetrically
+    on flat ground. Preserves each group's original relative order."""
+    groups: list[list[int]] = []
+    assigned = [False] * len(forces)
+    for i, force in enumerate(forces):
+        if assigned[i]:
+            continue
+        group = [i]
+        assigned[i] = True
+        px, py = force["point"]
+        dx, dy = force["direction"]
+        for j in range(i + 1, len(forces)):
+            if assigned[j]:
+                continue
+            other = forces[j]
+            ox, oy = other["point"]
+            odx, ody = other["direction"]
+            if abs(dx * ody - dy * odx) > tol:
+                continue
+            vx, vy = ox - px, oy - py
+            if math.hypot(vx, vy) > tol and abs(dx * vy - dy * vx) > tol:
+                continue
+            group.append(j)
+            assigned[j] = True
+        groups.append(group)
+    return groups
+
+
+def _assign_draw_points(forces: list[dict[str, Any]], spacing: float) -> list[dict[str, Any]]:
+    """Offset every force's vector perpendicular to its own line of action, by
+    an amount that grows with its rank inside any group it shares a line with
+    (e.g. gravity and normal for an object resting symmetrically on flat
+    ground). Each force keeps its true `point` (marked with a dot) and gains a
+    `draw_point` (where its vector is actually drawn from), connected by a
+    short line-segment \u2014 the standard textbook convention for concurrent/
+    collinear forces, and also what keeps the point mark itself visible:
+    `plot`'s own `point:` primitive is drawn before `vector:` (which always
+    renders on top), so a point left exactly at its vector's own tail would be
+    fully covered. Offsetting therefore defaults to on, even for a lone force
+    with nothing to avoid overlapping, but a force's own explicit `offset=`
+    (parsed in `parse_force`) always wins over the auto-computed amount \u2014
+    including `offset=0` to disable it entirely for a force that's already
+    clearly visible on its own.
+    """
+    for group in _collinear_groups(forces):
+        perp = _perpendicular(forces[group[0]]["direction"])
+        for rank, index in enumerate(group):
+            force = forces[index]
+            offset = force["offset"] if force.get("offset") is not None else (rank + 1) * spacing
+            px, py = force["point"]
+            force["draw_point"] = (px + perp[0] * offset, py + perp[1] * offset)
+    return forces
 
 
 def build_force_lines(
-    length: float, name: str, color: str, point: tuple[float, float], direction: tuple[float, float]
+    color: str,
+    name: str,
+    length: float,
+    true_point: tuple[float, float],
+    direction: tuple[float, float],
+    draw_point: tuple[float, float],
 ) -> tuple[list[str], tuple[float, float]]:
-    px, py = point
+    tpx, tpy = true_point
+    dpx, dpy = draw_point
     ux, uy = direction
-    tip = (px + ux * length, py + uy * length)
-    lines = [f"vector: ({px:g}, {py:g}), ({tip[0]:g}, {tip[1]:g}), {color}"]
+    tip = (dpx + ux * length, dpy + uy * length)
+    # Always mark the actual point of action on the object, and connect it to
+    # the (always slightly offset, see _assign_draw_points) vector with a thin
+    # leader segment so the dot isn't hidden under the vector's own tail.
+    # `point:` only ever accepts a bare `(x, y)` — plot.py's own regex is
+    # anchored right after the closing paren, so a trailing color token here
+    # would make the whole line fail to parse and get silently dropped.
+    lines = [f"point: ({tpx:g}, {tpy:g})"]
+    if math.hypot(dpx - tpx, dpy - tpy) > 1e-9:
+        lines.append(f"line-segment: ({tpx:g}, {tpy:g}), ({dpx:g}, {dpy:g}), dotted, {color}")
+    lines.append(f"vector: ({dpx:g}, {dpy:g}), ({tip[0]:g}, {tip[1]:g}), {color}")
     if name:
         offset = length * 0.18 + 0.12
-        lx, ly = px + ux * (length + offset), py + uy * (length + offset)
+        lx, ly = dpx + ux * (length + offset), dpy + uy * (length + offset)
         lines.append(f'text: {lx:g}, {ly:g}, "{name}", center-center')
     return lines, tip
 
 
 def axis_indicator_lines(xmin: float, ymin: float, extent: float, margin: float) -> list[str]:
     ox, oy = xmin + margin, ymin + margin
+    # A small gap beyond each arrowhead, plus `plot`'s own "the text sits away
+    # from the anchor" position tokens (`center-right`/`top-center`, NOT
+    # `center-left`/`bottom-center` which place the text on the near side,
+    # overlapping the arrow) so the labels clear the arrowheads entirely.
+    gap = extent * 0.2
     return [
         f"vector: ({ox:g}, {oy:g}), ({ox + extent:g}, {oy:g}), black",
-        f'text: {ox + extent:g}, {oy:g}, "$x$", center-left',
+        f'text: {ox + extent + gap:g}, {oy:g}, "$x$", center-right',
         f"vector: ({ox:g}, {oy:g}), ({ox:g}, {oy + extent:g}), black",
-        f'text: {ox:g}, {oy + extent:g}, "$y$", bottom-center',
+        f'text: {ox:g}, {oy + extent + gap:g}, "$y$", top-center',
     ]
 
 
@@ -282,13 +375,21 @@ def compile_scene(
 
     if not force_sources:
         raise ValueError("free-body-diagram requires at least one force:")
-    for raw in force_sources:
-        force = parse_force(raw, obj, velocity)
+    forces = [parse_force(raw, obj, velocity) for raw in force_sources]
+    spacing = max(r * 0.22, 0.08)
+    _assign_draw_points(forces, spacing)
+    for force in forces:
         force_lines, tip = build_force_lines(
-            force["length"], force["name"], force["color"], force["point"], force["direction"]
+            force["color"],
+            force["name"],
+            force["length"],
+            force["point"],
+            force["direction"],
+            force["draw_point"],
         )
         lines.extend(force_lines)
         points.append(force["point"])
+        points.append(force["draw_point"])
         points.append(tip)
 
     xs = [p[0] for p in points]

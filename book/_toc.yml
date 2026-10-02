@@ -17,6 +17,7 @@ chapters:
   - file: docs/factor-tree.md
   - file: docs/flashcards.md
   - file: docs/free-body-diagram.md
+  - file: docs/free-body-diagram-builder.md
   - file: docs/ggb.md
   - file: docs/ggb-popup.md
   - file: docs/ggbpopup.md
@@ -44,6 +45,7 @@ chapters:
   - file: docs/parsons-puzzle.md
   - file: docs/parsonspuzzle.md
   - file: docs/plot.md
+  - file: docs/plot-builder.md
   - file: docs/plot3d-2.md
   - file: docs/polydiv.md
   - file: docs/popup.md

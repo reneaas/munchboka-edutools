@@ -1,4 +1,5 @@
 from ._version import __version__
+from ._assets import ASSET_RETRY_ONERROR
 
 import importlib
 import pkgutil
@@ -94,9 +95,20 @@ def _copy_static(app):
             full = os.path.join(out_static_root, relpath)
             if os.path.exists(full):
                 if relpath.endswith(".css"):
-                    app.add_css_file(f"munchboka/{relpath}", priority=priority)
+                    attributes = {}
+                    if relpath in {"css/admonitions.css", "css/part.css"}:
+                        attributes["onerror"] = ASSET_RETRY_ONERROR
+                    app.add_css_file(
+                        f"munchboka/{relpath}", priority=priority, **attributes
+                    )
                 elif relpath.endswith(".js"):
-                    app.add_js_file(f"munchboka/{relpath}", priority=priority)
+                    attributes = {}
+                    if relpath in {
+                        "js/part.js", "js/solution2.js", "js/goals.js",
+                        "js/proof.js", "js/hint.js",
+                    }:
+                        attributes["onerror"] = ASSET_RETRY_ONERROR
+                    app.add_js_file(f"munchboka/{relpath}", priority=priority, **attributes)
 
         # Register CSS files (including CodeMirror CSS for interactive code)
         app.add_css_file(

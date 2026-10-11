@@ -169,16 +169,12 @@
     [data-mode="auto"] .zoom-indicator {
         background-color: rgba(255, 255, 255, 0.2);
     }
-    
-    [data-mode="auto"] .adaptive-figure {
-        filter: brightness(0.9);
-    }
 }
 
 [data-mode="dark"] .zoom-indicator {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-[data-mode="dark"] .adaptive-figure {
-    filter: brightness(0.9);
-}
+/* Figure colors are handled on img/svg by figures.css and general_style.css.
+   Do not filter .adaptive-figure containers too: nested filters cause Safari
+   to paint SVGs in the wrong position or leave them blank. */

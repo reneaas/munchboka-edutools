@@ -27,6 +27,7 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util import logging
 from sphinx.util.nodes import _make_id, make_id
 import re
+from .._assets import ASSET_RETRY_ONERROR
 
 logger = logging.getLogger(__name__)
 
@@ -806,7 +807,7 @@ def setup(app):
     app.add_directive("proof", ProofDirective)
     app.add_directive("hint", HintDirective)
     app.add_directive("hints", HintDirective)
-    app.add_js_file("munchboka/js/solution_timer.js")
+    app.add_js_file("munchboka/js/solution_timer.js", onerror=ASSET_RETRY_ONERROR)
 
     return {
         "version": "0.1",

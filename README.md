@@ -38,6 +38,13 @@ sphinx:
 
 All packaged directives are auto-registered. Static assets (including print-friendly CSS and JS) are placed under `_static/munchboka/` during the build.
 
+The core styles and scripts for `part`, `answer`, `solution`, `goals`, `proof`,
+and `hint` automatically retry failed downloads twice, after 300 ms and 600 ms.
+Retries preserve stylesheet order and use a fresh query parameter to bypass a
+cached failure. This lets transient failures recover without a page refresh.
+Rebuild and redeploy your book after upgrading to include the recovery handlers
+in its HTML. Persistent network failures still require connectivity to return.
+
 ### Interactive 3D math graphs
 
 `backend: threejs` is the default for `interactive-plot3d`, giving live
@@ -121,6 +128,15 @@ Run tests:
 ```bash
 pytest -q
 ```
+
+To exercise asset recovery in a browser (requires Node.js and Playwright):
+
+```bash
+pytest tests/test_asset_recovery.py --basetemp=/tmp/munchboka-asset-tests
+node tests/asset_recovery_browser.cjs /tmp/munchboka-asset-tests/test_core_asset_recovery0/out
+```
+
+Set `MUNCH_CHROMIUM` to a Chrome executable if Playwright's Chromium is not installed.
 
 ## Quick Links
 

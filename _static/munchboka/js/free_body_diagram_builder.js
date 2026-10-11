@@ -14,9 +14,9 @@
         "air-resistance": "$\\vec L$", custom: ""
     };
     var FORCE_KIND_LABELS = [
-        ["gravity", "gravity (tyngde)"], ["normal", "normal (normalkraft)"],
-        ["friction", "friction (friksjon)"], ["air-resistance", "air-resistance (luftmotstand)"],
-        ["custom", "custom (egendefinert)"]
+        ["gravity", "Gravitasjon"], ["normal", "Normalkraft"],
+        ["friction", "Friksjon"], ["air-resistance", "Luftmotstand"],
+        ["custom", "Custom"]
     ];
     var OBJECT_KIND_LABELS = [["ball", "ball"], ["square", "square (kloss)"], ["toy-car", "toy-car (bil)"]];
 
@@ -167,7 +167,7 @@
                     });
                     [cx - wheelX, cx + wheelX].forEach(function (wx) {
                         board.create("circle", [[wx, bodyBottom], wheelR], {
-                            fillColor: "black", fillOpacity: 1, withLabel: false, fixed: true, highlight: false, strokeColor: "black"
+                            fillColor: "gray", fillOpacity: 0.2, withLabel: false, fixed: true, highlight: false, strokeColor: "gray"
                         });
                     });
                 },
@@ -337,52 +337,40 @@
             FORCE_KIND_LABELS.forEach(function (pair) { kindSelect.appendChild(option(pair[0], pair[1])); });
             kindSelect.value = kind || "gravity";
             var lengthInput = el("input", {type: "number", step: "any", min: "0.01", class: "plot-builder-xy", placeholder: "lengde", value: length || "0.4"});
+            var lengthLabel = el("label", {class: "fbd-length", text: "lengde"}, [lengthInput]);
             var colorInput = el("input", {type: "color", value: DEFAULT_FORCE_COLOR[kindSelect.value], title: "Farge"});
             var nameInput = el("input", {type: "text", placeholder: DEFAULT_FORCE_NAME[kindSelect.value] || "navn"});
             kindSelect.addEventListener("change", function () {
                 colorInput.value = DEFAULT_FORCE_COLOR[kindSelect.value] || "#000000";
                 nameInput.placeholder = DEFAULT_FORCE_NAME[kindSelect.value] || "navn";
+                directionLabel.hidden = kindSelect.value !== "custom";
                 scheduleRebuild();
             });
 
-            var pointXInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", placeholder: "punkt x"});
-            var pointYInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", placeholder: "punkt y"});
-            var directionInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", placeholder: "retning\u00b0"});
-            var offsetInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", placeholder: "offset", value: offset == null ? "0" : offset});
-            var advanced = el("details", {class: "fbd-advanced"});
-            var summary = el("summary", {text: "Avansert: eget punkt / retning / offset"});
-            advanced.appendChild(summary);
-            advanced.appendChild(makeRow([pointXInput, pointYInput, directionInput, offsetInput]));
+            var offsetInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", placeholder: "offset", "aria-label": "Offset", value: offset == null ? "0" : offset});
+            var offsetLabel = el("label", {class: "fbd-offset", text: "Offset"}, [offsetInput]);
 
+            var directionInput = el("input", {type: "number", step: "any", class: "plot-builder-xy", "aria-label": "Retning (grader)", value: "0"});
+            var directionLabel = el("label", {class: "fbd-direction", text: "Retning (grader)"}, [directionInput]);
+            directionLabel.hidden = kindSelect.value !== "custom";
             var error = el("span", {class: "plot-builder-error"});
             var rowData = {
                 kindSelect: kindSelect, lengthInput: lengthInput, colorInput: colorInput, nameInput: nameInput,
-                pointXInput: pointXInput, pointYInput: pointYInput, directionInput: directionInput,
-                offsetInput: offsetInput, error: error
+                offsetInput: offsetInput, directionInput: directionInput, error: error
             };
-            var row = makeRow([kindSelect, lengthInput, colorInput, nameInput], function () {
+            var row = makeRow([kindSelect, lengthLabel, colorInput, nameInput, offsetLabel, directionLabel], function () {
                 forceRows = forceRows.filter(function (r) { return r !== rowData; });
                 wrapper.remove();
                 scheduleRebuild();
             });
             var wrapper = el("div");
             wrapper.appendChild(row);
-            wrapper.appendChild(advanced);
             wrapper.appendChild(error);
             forceList.appendChild(wrapper);
             forceRows.push(rowData);
             scheduleRebuild();
         }
         addForceBtn.addEventListener("click", function () { addForceRow(); });
-
-        // --- Axis indicator ---
-        var axisFieldset = el("fieldset", {}, [el("legend", {text: "Akseindikator"})]);
-        var axisIndicatorCheckbox = el("input", {type: "checkbox", checked: "checked"});
-        var axisLabel = el("label");
-        axisLabel.appendChild(axisIndicatorCheckbox);
-        axisLabel.appendChild(document.createTextNode(" vis liten x/y-pil i hj\u00f8rnet"));
-        axisFieldset.appendChild(axisLabel);
-        fieldsets.appendChild(axisFieldset);
 
         // --- Download ---
         var downloadBtn = el("button", {type: "button", class: "plot-builder-download"});
@@ -427,26 +415,16 @@
 
             var defaults = defaultAttachment(kind, obj, velocity);
             var point = defaults.point, direction = defaults.direction;
+            if (kind === "custom") {
+                var degrees = numberOr(row.directionInput.value, null);
+                if (degrees === null) return {error: "Oppgi retning i grader."};
+                var radians = degrees * Math.PI / 180;
+                point = obj.centroid;
+                direction = [Math.cos(radians), Math.sin(radians)];
+            }
 
-            var px = row.pointXInput.value.trim(), py = row.pointYInput.value.trim();
-            if (px !== "" && py !== "") {
-                var ox = numberOr(px, null), oy = numberOr(py, null);
-                if (ox !== null && oy !== null) point = [ox, oy];
-            }
-            var dirRaw = row.directionInput.value.trim();
-            if (dirRaw !== "") {
-                var deg = numberOr(dirRaw, null);
-                if (deg !== null) {
-                    var rad = deg * Math.PI / 180;
-                    direction = [Math.cos(rad), Math.sin(rad)];
-                }
-            }
             if (!point || !direction) {
-                return {
-                    error: (kind === "friction" || kind === "air-resistance")
-                        ? "Mangler standard angrepspunkt her \u2014 legg til hastighet over, eller fyll inn punkt/retning under \u00abAvansert\u00bb."
-                        : "Mangler angrepspunkt \u2014 fyll inn punkt og retning under \u00abAvansert\u00bb."
-                };
+                return {error: "Oppgi hastighet for denne krafttypen."};
             }
             var name = row.nameInput.value.trim() || DEFAULT_FORCE_NAME[kind] || "";
             var offsetRaw = row.offsetInput.value.trim();
@@ -524,9 +502,7 @@
                     state.textsForExport.push({el: label, source: nameSource});
                 }
             });
-            if (axisIndicatorCheckbox.checked) {
-                drawAxisIndicator(board, bounds.xmin, bounds.ymin, bounds.span, bounds.margin, state.textsForExport);
-            }
+            drawAxisIndicator(board, bounds.xmin, bounds.ymin, bounds.span, bounds.margin, state.textsForExport);
             board.update();
             // The arrowhead <marker> isn't rendered until after this update
             // pass, so the color fix (see fixArrowheadColor) must come after.

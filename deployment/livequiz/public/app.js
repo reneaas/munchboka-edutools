@@ -189,10 +189,10 @@
     if(!host&&!token){app.replaceChildren(el('h1','Bli med på nytt'),el('p','Denne fanen har ingen deltakerøkt. Åpne den opprinnelige fanen eller bli med med spillkoden.'),link('Til spillkoden','./'));return;}
     const query={room:id,...(host?{host:'1'}:{})};
     const heading=el('h1','Henter spill …'),connection=el('p','Kobler til …','hint'),meta=el('p',undefined,'hint'),timer=el('p',undefined,'timer'),stage=el('section',undefined,'card stage'),controls=el('div',undefined,'actions'),results=el('section');
-    app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);
-    let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false;
+    app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=host;
+    let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null;
     const control=command=>async()=>{await api('control',{room:id,version:state.version,command});rendered='';};
-    function updateClock(){if(!state)return;const left=Math.max(0,state.deadline-(Date.now()/1000+offset));timer.textContent=state.phase==='question'?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';if(submit)submit.disabled=submitting||!online||Date.now()-lastPoll>5000||left<=0||state.submitted;}
+    function updateClock(){if(!state)return;const left=Math.max(0,state.deadline-(Date.now()/1000+offset));const txt=state.phase==='question'?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';timer.textContent=txt;if(hostClock)hostClock.textContent=txt;if(submit)submit.disabled=submitting||!online||Date.now()-lastPoll>5000||left<=0||state.submitted;}
     setInterval(updateClock,250);
     let overlay=null;
     const closePopup=()=>{if(overlay){overlay.remove();overlay=null;}};
@@ -204,19 +204,27 @@
       try{for(const v of [3,2,1]){n.textContent=String(v);n.style.animation='none';void n.offsetWidth;n.style.animation='';await new Promise(r=>setTimeout(r,1000));}n.textContent='Kjør!';await control('next')();}
       catch(e){showBoard(s,order);throw e;}
     }
+    function questionCard(s,order){
+      const q=s.question,card=el('article',undefined,'qcard'),head=el('div',undefined,'qcard-head'),body=el('div',undefined,'qcard-body');
+      hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
+      card.append(head,body);void content(q,body,{query,token});
+      if(q.type==='text'){if(s.phase==='question')card.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
+      else card.append(optionCards(q,order,s.phase==='reveal'));
+      return card;
+    }
     function render(s){
-      state=s;heading.textContent=s.title;meta.textContent=`${s.players} deltakere · ${s.answers} svar`+(s.index>=0?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
+      state=s;heading.textContent=s.title;meta.textContent=`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';stage.querySelectorAll('form input').forEach(n=>{n.disabled=true;});}
-      if(rendered===String(s.version)){updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();controls.replaceChildren();results.replaceChildren();submit=null;ack=null;
+      if(rendered===String(s.version)){updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;
       if(s.phase==='lobby'){
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Elevene skanner koden eller åpner lenken og skriver spillkoden.':'Vent på at læreren starter første spørsmål.'));
         if(host){const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button('Start første spørsmål',control('next')));}
       } else if(s.phase==='finished'){stage.append(el('h2','Takk for spillet!'),el('p','Se resultatene og snakk sammen om spørsmålene.'));}
       else {
-        void content(s.question,stage,{query,token});
+        if(!host)void content(s.question,stage,{query,token});
         const order=s.question.options.length?optionOrder(s.question.options.length,id+':'+s.index):[];
         if(host){
-          if(s.question.type!=='text')stage.append(optionCards(s.question,order,s.phase==='reveal'));
+          stage.classList.add('stage-flush');stage.append(questionCard(s,order));
           if(s.phase==='question')controls.append(button('Vis fasit nå',control('reveal'),'secondary'));
         }
         else if(s.phase==='question'){
@@ -228,7 +236,7 @@
         }
         if(s.phase==='reveal'){
           const correct=s.question.type==='text'?s.question.accepted:s.question.correct.map(i=>s.question.options[i]);
-          if(!host||s.question.type==='text'){stage.append(el('h2','Fasit'));correct.forEach(v=>stage.append(rich(v)));}
+          if(!host){stage.append(el('h2','Fasit'));correct.forEach(v=>stage.append(rich(v)));}
           if(!host)stage.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du svarte ikke på dette spørsmålet.','result'));
           if(host){controls.append(button('Vis fasit og resultater',()=>showAnswer(s,order),'secondary'));showAnswer(s,order);}
         }

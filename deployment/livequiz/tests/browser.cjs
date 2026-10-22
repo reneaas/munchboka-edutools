@@ -13,7 +13,10 @@ const assert = require('node:assert/strict');
  await t.getByRole('link',{name:'＋ Lag en quiz'}).click();
  await t.getByLabel('Quizens tittel').fill('Livequiz browser test');
  await t.getByLabel('Spørsmål',{exact:true}).fill('Hva er $2+2$?');
- // The code field is a CodeMirror editor: typing a colon-terminated line must auto-indent the next one.\n await t.locator('.question-editor').first().locator('.CodeMirror').click();\n await t.keyboard.type('for i in range(2):\\nprint(i)');\n assert.equal(await t.getByLabel('Kode (valgfritt)').inputValue(),'for i in range(2):\\n    print(i)');
+ // The code field is a CodeMirror editor and should auto-indent after a colon.
+ await t.locator('.question-editor').first().locator('.CodeMirror').click();
+ await t.keyboard.type('for i in range(2):\nprint(i)');
+ assert.equal(await t.getByLabel('Kode (valgfritt)').inputValue(),'for i in range(2):\n    print(i)');
  await t.getByLabel('YouTube-lenke eller video-ID (valgfritt)').fill('https://youtu.be/dQw4w9WgXcQ');
  await t.getByLabel('Svartid i sekunder (5–600)').fill('120');
  for(const [i,v] of ['3','4','5','6'].entries()) await t.getByLabel('Alternativ '+(i+1),{exact:true}).fill(v);
@@ -56,7 +59,10 @@ const assert = require('node:assert/strict');
  assert.equal(await s.getByRole('button',{name:'Send svar',exact:true}).isDisabled(),true);
  assert.equal(await s.locator('.answer-option',{hasText:'4'}).locator('input').isChecked(),true);
  await s.screenshot({path:'/tmp/livequiz-student.png',fullPage:true});
- // The host sees the options as a 2 x 2 card grid, in the same shuffled order as the students.\n await t.locator('.code-display .cm-keyword').first().waitFor();\n await s.locator('.code-display .cm-keyword').first().waitFor();
+ // The host sees the options as a 2 x 2 card grid, in the same shuffled order as the students.
+ await t.locator('.code-display .cm-keyword').first().waitFor();
+ await s.locator('.code-display .cm-keyword').first().waitFor();
+ for(const p of [t,s]){const box=await p.locator('.code-display .CodeMirror').boundingBox();assert.ok(box&&box.height>30,'code block visible, got '+JSON.stringify(box));}
  assert.equal(await t.locator('.option-card').count(),4);
  assert.equal(await t.locator('.option-grid').evaluate(g=>getComputedStyle(g).gridTemplateColumns.split(' ').length),2);
  assert.deepEqual(await t.locator('.option-card .rich').allInnerTexts(),await s.locator('.answer-option .rich').allInnerTexts());

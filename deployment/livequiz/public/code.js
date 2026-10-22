@@ -16,12 +16,15 @@
   };
   window.renderCodeBlock = function (container, code) {
     if (!window.CodeMirror || !container) return null;
-    return CodeMirror(container, {
+    const cm = CodeMirror(container, {
       value: code,
       mode: 'python',
       lineNumbers: false,
       readOnly: 'nocursor',
       viewportMargin: Infinity
     });
+    // The container may not be in the document yet; CodeMirror must re-measure once it is.
+    setTimeout(() => cm.refresh(), 0);
+    return cm;
   };
 })();

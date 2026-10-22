@@ -34,23 +34,13 @@ email delivery, authentication, backups, or the future save/reopen workflow.
 ## Automated deployment via GitHub Actions
 
 `.github/workflows/deploy-jeopardy.yml` deploys `pilot/public/` and
-`pilot/private/` via FTPS on every push to `main` that touches those paths, or
-manually from the Actions tab (`workflow_dispatch`). `dangerous-clean-slate` is
-left off, so existing server-only files (`jeopardy-private/database.php`) are
-never removed; only files present in the repo are uploaded/overwritten.
+`pilot/private/` via FTPS on pushes to `main` that touch those paths, or manually
+from the Actions tab. Both workflows use the existing shared secrets
+`CPANEL_FTP_SERVER`, `CPANEL_FTP_USERNAME`, and `CPANEL_FTP_PASSWORD`.
 
-Required repository secrets (Settings → Secrets and variables → Actions),
-shared with the `deploy-livequiz` workflow since both sites live on the same
-cPanel account:
-
-- `CPANEL_FTP_SERVER` — the FTP hostname (cPanel → FTP Accounts, or your
-  provider's documented FTP host).
-- `CPANEL_FTP_USERNAME` — the FTP account username.
-- `CPANEL_FTP_PASSWORD` — the FTP account password. Prefer a dedicated FTP
-  account over the main cPanel password if your host supports creating one.
-
-Because `jeopardy-private/` lives outside `public_html`, the FTP account must
-land at (or have access up to) the cPanel account home directory rather than
-being chrooted into a single subdomain's document root. The workflow assumes
-FTPS (explicit TLS); if your host only supports plaintext FTP, change
-`protocol: ftps` to `protocol: ftp` in both workflow files.
+The dedicated GitHub deploy FTP account must be rooted at `/home/zebfxvix` so it
+can reach both `public_html/jeopardy/` and `jeopardy-private/`. Update the
+`quiz_konto` account's Directory in cPanel to `/home/zebfxvix` if that account is
+the one stored in the secrets. The Jeopardy private deployment excludes
+`database.php`. Keep the account dedicated to deployment, protect the GitHub
+`production` environment, and use FTPS (explicit TLS).

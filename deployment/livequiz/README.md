@@ -64,18 +64,16 @@ rollback script is provided.
 ## Automated deployment via GitHub Actions
 
 `.github/workflows/deploy-livequiz.yml` deploys `public/` and `private/livequiz/`
-via FTPS on every push to `main` that touches those paths, or manually from the
-Actions tab (`workflow_dispatch`). `dangerous-clean-slate` is left off, so
-existing server-only files (`jeopardy-private/app.php`, `database.php`) are
-never removed; only files present in the repo are uploaded/overwritten. The
-packaging script (`package.py`) and its zip output are unaffected and remain
-available for manual deployment as a fallback.
-
-Required repository secrets (Settings → Secrets and variables → Actions),
-shared with the `deploy-jeopardy` workflow since both sites live on the same
-cPanel account: `CPANEL_FTP_SERVER`, `CPANEL_FTP_USERNAME`, and
-`CPANEL_FTP_PASSWORD`. See `deployment/jeopardy/README.md` for details,
-including how to switch to plaintext FTP if your host doesn't support FTPS.
+via FTPS on pushes to `main` that touch those paths, or manually from the Actions
+tab. It shares `CPANEL_FTP_SERVER`, `CPANEL_FTP_USERNAME`, and
+`CPANEL_FTP_PASSWORD` with the Jeopardy workflow. The FTP account must be rooted
+at `/home/zebfxvix` so it can reach both `public_html/quiz/` and
+`jeopardy-private/livequiz/`. If the secrets use the `quiz_konto` account, set
+its cPanel Directory to `/home/zebfxvix`; its current
+`/home/zebfxvix/public_html/munchboka.no/quiz_konto` path is not the live site
+directory. Use the dedicated deploy account with FTPS, and protect the GitHub
+`production` environment. The packaging script remains available as a manual
+fallback.
 
 ## Data, access and limits
 

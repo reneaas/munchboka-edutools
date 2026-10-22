@@ -1,10 +1,7 @@
 name: deploy-livequiz
 
 # Deploys the Livequiz proof of concept to quiz.munchboka.no (cPanel/Domene.no)
-# via FTPS, sharing the same cPanel account as Jeopardy. dangerous-clean-slate
-# is left off so files already on the server (e.g. the existing
-# jeopardy-private/app.php and database.php, never stored in this repo) are
-# never removed; only files present locally are uploaded/overwritten.
+# via the shared dedicated GitHub deploy FTP account, rooted at /home/zebfxvix.
 
 on:
   push:

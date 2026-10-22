@@ -1,9 +1,7 @@
 name: deploy-jeopardy
 
 # Deploys the Jeopardy maker to jeopardy.munchboka.no (cPanel/Domene.no) via
-# FTPS. dangerous-clean-slate is left off so files already on the server
-# (e.g. jeopardy-private/database.php, never stored in this repo) are never
-# removed; only files present locally are uploaded/overwritten.
+# Uses the dedicated GitHub deploy FTP account, rooted at /home/zebfxvix.
 
 on:
   push:
@@ -55,3 +53,4 @@ jobs:
           exclude: |
             **/.git*
             **/.DS_Store
+            database.php

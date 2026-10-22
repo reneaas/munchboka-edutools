@@ -31,6 +31,7 @@ jobs:
           local-dir: deployment/livequiz/public/
           server-dir: public_html/quiz/
           dangerous-clean-slate: false
+          log-level: verbose
           exclude: |
             **/.git*
             **/.DS_Store
@@ -51,6 +52,7 @@ jobs:
           local-dir: deployment/livequiz/private/livequiz/
           server-dir: jeopardy-private/livequiz/
           dangerous-clean-slate: false
+          log-level: verbose
           exclude: |
             **/.git*
             **/.DS_Store

@@ -30,6 +30,7 @@ jobs:
           local-dir: deployment/jeopardy/pilot/public/
           server-dir: public_html/jeopardy/
           dangerous-clean-slate: false
+          log-level: verbose
           exclude: |
             **/.git*
             **/.DS_Store
@@ -50,6 +51,7 @@ jobs:
           local-dir: deployment/jeopardy/pilot/private/
           server-dir: jeopardy-private/
           dangerous-clean-slate: false
+          log-level: verbose
           exclude: |
             **/.git*
             **/.DS_Store

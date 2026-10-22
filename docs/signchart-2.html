@@ -37,7 +37,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=d35dfce7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=2580ef29" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/style.css?v=b30732ed" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/mathjax/style.css?v=194b018e" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/figures.css?v=46e199f0" />
@@ -66,7 +66,27 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
     <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=c5b7ed32" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=acd93126" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
@@ -78,7 +98,27 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=fd6d533f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=0a0f323a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=a1529215" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/print_pdf.css?v=448841f9" />
     <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
@@ -100,7 +140,27 @@
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script src="../_static/munchboka/js/solution_timer.js?v=192f5d3d"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution_timer.js?v=8d1f44f8"></script>
     <script src="../_static/munchboka/js/calculator_popup.js?v=93ae1e49"></script>
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/flashcards.js?v=293ceac2"></script>
@@ -135,11 +195,111 @@
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
     <script src="../_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
-    <script src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
-    <script src="../_static/munchboka/js/part.js?v=ca40db03"></script>
-    <script src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
-    <script src="../_static/munchboka/js/proof.js?v=2793954e"></script>
-    <script src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/part.js?v=ca40db03"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/proof.js?v=2793954e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
@@ -523,8 +683,8 @@ factors: true
  <defs>
   <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
  </defs>
- <g id="sgc2_7e017cad5fdd_dc1fd8_figure_1">
-  <g id="sgc2_7e017cad5fdd_dc1fd8_patch_1">
+ <g id="sgc2_7e017cad5fdd_9c14b0_figure_1">
+  <g id="sgc2_7e017cad5fdd_9c14b0_patch_1">
    <path d="M 0 209.702022 
 L 569.764115 209.702022 
 L 569.764115 0 
@@ -533,8 +693,8 @@ L 0 209.702022
 z
 " style="fill: none"/>
   </g>
-  <g id="sgc2_7e017cad5fdd_dc1fd8_axes_1">
-   <g id="sgc2_7e017cad5fdd_dc1fd8_patch_2">
+  <g id="sgc2_7e017cad5fdd_9c14b0_axes_1">
+   <g id="sgc2_7e017cad5fdd_9c14b0_patch_2">
     <path d="M 91.953584 197.225598 
 L 559.564115 197.225598 
 L 559.564115 50.750087 
@@ -543,19 +703,19 @@ L 91.953584 197.225598
 z
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_matplotlib.axis_1">
-    <g id="sgc2_7e017cad5fdd_dc1fd8_xtick_1">
-     <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_1">
+   <g id="sgc2_7e017cad5fdd_9c14b0_matplotlib.axis_1">
+    <g id="sgc2_7e017cad5fdd_9c14b0_xtick_1">
+     <g id="sgc2_7e017cad5fdd_9c14b0_line2d_1">
       <defs>
-       <path id="sgc2_7e017cad5fdd_dc1fd8_m7369cde211" d="M 0 0 
+       <path id="sgc2_7e017cad5fdd_9c14b0_m7369cde211" d="M 0 0 
 L 0 -10 
 " style="stroke: #000000; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_dc1fd8_m7369cde211" x="198.228704" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_9c14b0_m7369cde211" x="198.228704" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_dc1fd8_text_1">
+     <g id="sgc2_7e017cad5fdd_9c14b0_text_1">
       <!-- $0$ -->
       <g transform="translate(192.745847 32.59933) scale(0.24 -0.24)">
        <defs>
@@ -585,13 +745,13 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_dc1fd8_xtick_2">
-     <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_2">
+    <g id="sgc2_7e017cad5fdd_9c14b0_xtick_2">
+     <g id="sgc2_7e017cad5fdd_9c14b0_line2d_2">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_dc1fd8_m7369cde211" x="283.248801" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_9c14b0_m7369cde211" x="283.248801" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_dc1fd8_text_2">
+     <g id="sgc2_7e017cad5fdd_9c14b0_text_2">
       <!-- $\frac{\pi}{2}$ -->
       <g transform="translate(278.30034 29.004838) scale(0.24 -0.24)">
        <defs>
@@ -656,26 +816,26 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_dc1fd8_xtick_3">
-     <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_3">
+    <g id="sgc2_7e017cad5fdd_9c14b0_xtick_3">
+     <g id="sgc2_7e017cad5fdd_9c14b0_line2d_3">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_dc1fd8_m7369cde211" x="368.268898" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_9c14b0_m7369cde211" x="368.268898" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_dc1fd8_text_3">
+     <g id="sgc2_7e017cad5fdd_9c14b0_text_3">
       <!-- $\pi$ -->
       <g transform="translate(361.628577 32.59933) scale(0.24 -0.24)">
        <use xlink:href="#CMMI12-19" transform="scale(0.996264)"/>
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_dc1fd8_xtick_4">
-     <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_4">
+    <g id="sgc2_7e017cad5fdd_9c14b0_xtick_4">
+     <g id="sgc2_7e017cad5fdd_9c14b0_line2d_4">
       <g>
-       <use xlink:href="#sgc2_7e017cad5fdd_dc1fd8_m7369cde211" x="453.288994" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#sgc2_7e017cad5fdd_9c14b0_m7369cde211" x="453.288994" y="50.750087" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
-     <g id="sgc2_7e017cad5fdd_dc1fd8_text_4">
+     <g id="sgc2_7e017cad5fdd_9c14b0_text_4">
       <!-- $\frac{3 \pi}{2}$ -->
       <g transform="translate(444.243463 29.004838) scale(0.24 -0.24)">
        <defs>
@@ -721,7 +881,7 @@ z
       </g>
      </g>
     </g>
-    <g id="sgc2_7e017cad5fdd_dc1fd8_text_5">
+    <g id="sgc2_7e017cad5fdd_9c14b0_text_5">
      <!-- $x$ -->
      <g transform="translate(546.259941 23.804405) scale(0.24 -0.24)">
       <defs>
@@ -763,135 +923,135 @@ z
      </g>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_matplotlib.axis_2"/>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_5">
+   <g id="sgc2_7e017cad5fdd_9c14b0_matplotlib.axis_2"/>
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_5">
     <defs>
-     <path id="sgc2_7e017cad5fdd_dc1fd8_m0f98f9ff23" d="M 3 0 
+     <path id="sgc2_7e017cad5fdd_9c14b0_m0f98f9ff23" d="M 3 0 
 L -3 -3 
 L -3 3 
 z
 " style="stroke: #000000; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#sgc2_7e017cad5fdd_dc1fd8_m0f98f9ff23" x="559.564115" y="57.408065" style="stroke: #000000; stroke-linejoin: miter"/>
+     <use xlink:href="#sgc2_7e017cad5fdd_9c14b0_m0f98f9ff23" x="559.564115" y="57.408065" style="stroke: #000000; stroke-linejoin: miter"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_6">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_6">
     <path d="M 91.953584 101.794583 
 L 189.726695 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_7">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_7">
     <path d="M 206.730714 101.794583 
 L 359.766888 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_8">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_8">
     <path d="M 376.770907 101.794583 
 L 559.564115 101.794583 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_9">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_9">
     <path d="M 91.953584 146.181101 
 L 274.746791 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_10">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_10">
     <path d="M 291.750811 146.181101 
 L 444.786985 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_11">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_11">
     <path d="M 461.791004 146.181101 
 L 559.564115 146.181101 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_12">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_12">
     <path d="M 91.953584 190.56762 
 L 189.726695 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_13">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_13">
     <path d="M 206.730714 190.56762 
 L 274.746791 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_14">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_14">
     <path d="M 291.750811 190.56762 
 L 359.766888 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_15">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_15">
     <path d="M 376.770907 190.56762 
 L 444.786985 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #ff0000; stroke-width: 2; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_16">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_16">
     <path d="M 461.791004 190.56762 
 L 559.564115 190.56762 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #0000ff; stroke-width: 2"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_17">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_17">
     <path d="M 198.228704 168.374361 
 L 198.228704 110.671887 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_18">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_18">
     <path d="M 198.228704 92.917279 
 L 198.228704 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_19">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_19">
     <path d="M 283.248801 168.374361 
 L 283.248801 155.058405 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_20">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_20">
     <path d="M 283.248801 137.303798 
 L 283.248801 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_21">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_21">
     <path d="M 368.268898 168.374361 
 L 368.268898 110.671887 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_22">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_22">
     <path d="M 368.268898 92.917279 
 L 368.268898 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_23">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_23">
     <path d="M 453.288994 168.374361 
 L 453.288994 155.058405 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_line2d_24">
+   <g id="sgc2_7e017cad5fdd_9c14b0_line2d_24">
     <path d="M 453.288994 137.303798 
 L 453.288994 75.162672 
-" clip-path="url(#sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+" clip-path="url(#sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_patch_3">
+   <g id="sgc2_7e017cad5fdd_9c14b0_patch_3">
     <path d="M 91.953584 197.225598 
 L 91.953584 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_patch_4">
+   <g id="sgc2_7e017cad5fdd_9c14b0_patch_4">
     <path d="M 559.564115 197.225598 
 L 559.564115 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_patch_5">
+   <g id="sgc2_7e017cad5fdd_9c14b0_patch_5">
     <path d="M 91.953584 57.408065 
 L 559.564115 57.408065 
 " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_patch_6">
+   <g id="sgc2_7e017cad5fdd_9c14b0_patch_6">
     <path d="M 91.953584 50.750087 
 L 559.564115 50.750087 
 " style="fill: none"/>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_6">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_6">
     <!-- $\sin{\left(x \right)}$ -->
     <g transform="translate(9.698322 107.772167) scale(0.24 -0.24)">
      <defs>
@@ -1007,19 +1167,19 @@ z
      <use xlink:href="#CMR17-29" transform="translate(218.886998 0.003177) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_7">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_7">
     <!-- $0$ -->
     <g transform="translate(192.745847 107.771407) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_8">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_8">
     <!-- $0$ -->
     <g transform="translate(362.78604 107.771407) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_9">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_9">
     <!-- $\cos{\left(x \right)}$ -->
     <g transform="translate(7.2 152.158685) scale(0.24 -0.24)">
      <defs>
@@ -1065,19 +1225,19 @@ z
      <use xlink:href="#CMR17-29" transform="translate(229.296708 0.003177) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_10">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_10">
     <!-- $0$ -->
     <g transform="translate(277.765944 152.157925) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_11">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_11">
     <!-- $0$ -->
     <g transform="translate(447.806137 152.157925) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_12">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_12">
     <!-- $f(x)$ -->
     <g transform="translate(26.366757 196.544444) scale(0.24 -0.24)">
      <defs>
@@ -1117,25 +1277,25 @@ z
      <use xlink:href="#CMR17-29" transform="translate(149.435132 0) scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_13">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_13">
     <!-- $0$ -->
     <g transform="translate(192.745847 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_14">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_14">
     <!-- $0$ -->
     <g transform="translate(277.765944 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_15">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_15">
     <!-- $0$ -->
     <g transform="translate(362.78604 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
     </g>
    </g>
-   <g id="sgc2_7e017cad5fdd_dc1fd8_text_16">
+   <g id="sgc2_7e017cad5fdd_9c14b0_text_16">
     <!-- $0$ -->
     <g transform="translate(447.806137 196.544444) scale(0.24 -0.24)">
      <use xlink:href="#CMR17-30" transform="scale(0.996264)"/>
@@ -1144,7 +1304,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="sgc2_7e017cad5fdd_dc1fd8_p1a50ef78ca">
+  <clipPath id="sgc2_7e017cad5fdd_9c14b0_p1a50ef78ca">
    <rect x="91.953584" y="50.750087" width="467.610531" height="146.475511"/>
   </clipPath>
  </defs>

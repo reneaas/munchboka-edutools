@@ -403,11 +403,16 @@
     updateModal();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  function init() {
     initializeSolutions(document);
     observeSolutions();
     observeDocument();
     window.setInterval(tick, UPDATE_INTERVAL_MS);
-  });
-})();
+  }
 
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

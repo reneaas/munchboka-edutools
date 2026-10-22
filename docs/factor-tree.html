@@ -37,7 +37,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=d35dfce7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=2580ef29" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/style.css?v=b30732ed" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/mathjax/style.css?v=194b018e" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/figures.css?v=46e199f0" />
@@ -66,7 +66,27 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
     <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=c5b7ed32" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=acd93126" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
@@ -78,7 +98,27 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=fd6d533f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=0a0f323a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=a1529215" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/print_pdf.css?v=448841f9" />
     <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
@@ -100,7 +140,27 @@
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script src="../_static/munchboka/js/solution_timer.js?v=192f5d3d"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution_timer.js?v=8d1f44f8"></script>
     <script src="../_static/munchboka/js/calculator_popup.js?v=93ae1e49"></script>
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/flashcards.js?v=293ceac2"></script>
@@ -133,11 +193,111 @@
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
     <script src="../_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
-    <script src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
-    <script src="../_static/munchboka/js/part.js?v=ca40db03"></script>
-    <script src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
-    <script src="../_static/munchboka/js/proof.js?v=2793954e"></script>
-    <script src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/part.js?v=ca40db03"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/proof.js?v=2793954e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
@@ -517,8 +677,8 @@ document.write(`
  <defs>
   <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
  </defs>
- <g id="ft_06e037995121_a4b448_figure_1">
-  <g id="ft_06e037995121_a4b448_patch_1">
+ <g id="ft_06e037995121_4b8e5b_figure_1">
+  <g id="ft_06e037995121_4b8e5b_patch_1">
    <path d="M 0 208.8 
 L 147.421502 208.8 
 L 147.421502 0 
@@ -527,39 +687,39 @@ L 0 208.8
 z
 " style="fill: none"/>
   </g>
-  <g id="ft_06e037995121_a4b448_axes_1">
-   <g id="ft_06e037995121_a4b448_line2d_1">
+  <g id="ft_06e037995121_4b8e5b_axes_1">
+   <g id="ft_06e037995121_4b8e5b_line2d_1">
     <path d="M 52.926141 50.4 
 L 32.141532 86.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_line2d_2">
+   <g id="ft_06e037995121_4b8e5b_line2d_2">
     <path d="M 52.926141 50.4 
 L 73.710751 86.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_line2d_3">
+   <g id="ft_06e037995121_4b8e5b_line2d_3">
     <path d="M 73.710751 86.4 
 L 52.926141 122.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_line2d_4">
+   <g id="ft_06e037995121_4b8e5b_line2d_4">
     <path d="M 73.710751 86.4 
 L 94.495361 122.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_line2d_5">
+   <g id="ft_06e037995121_4b8e5b_line2d_5">
     <path d="M 94.495361 122.4 
 L 73.710751 158.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_line2d_6">
+   <g id="ft_06e037995121_4b8e5b_line2d_6">
     <path d="M 94.495361 122.4 
 L 115.27997 158.4 
-" clip-path="url(#ft_06e037995121_a4b448_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#ft_06e037995121_4b8e5b_p0545984a59)" style="fill: none; stroke: #455a64; stroke-width: 1.2; stroke-linecap: square"/>
    </g>
-   <g id="ft_06e037995121_a4b448_text_1">
-    <g id="ft_06e037995121_a4b448_patch_2">
+   <g id="ft_06e037995121_4b8e5b_text_1">
+    <g id="ft_06e037995121_4b8e5b_patch_2">
      <path d="M 52.926141 67.32 
 C 57.413378 67.32 61.717433 65.537202 64.890388 62.364247 
 C 68.063343 59.191291 69.846141 54.887236 69.846141 50.4 
@@ -638,8 +798,8 @@ z
      <use xlink:href="#DejaVuSans-34" transform="translate(63.623047 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_2">
-    <g id="ft_06e037995121_a4b448_patch_3">
+   <g id="ft_06e037995121_4b8e5b_text_2">
+    <g id="ft_06e037995121_4b8e5b_patch_3">
      <path d="M 32.141532 100.510312 
 C 35.88363 100.510312 39.472966 99.023561 42.119029 96.377498 
 C 44.765093 93.731434 46.251844 90.142099 46.251844 86.4 
@@ -683,8 +843,8 @@ z
      <use xlink:href="#DejaVuSans-32" transform="translate(0 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_3">
-    <g id="ft_06e037995121_a4b448_patch_4">
+   <g id="ft_06e037995121_4b8e5b_text_3">
+    <g id="ft_06e037995121_4b8e5b_patch_4">
      <path d="M 73.710751 103.32 
 C 78.197987 103.32 82.502042 101.537202 85.674998 98.364247 
 C 88.847953 95.191291 90.630751 90.887236 90.630751 86.4 
@@ -703,8 +863,8 @@ z
      <use xlink:href="#DejaVuSans-32" transform="translate(63.623047 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_4">
-    <g id="ft_06e037995121_a4b448_patch_5">
+   <g id="ft_06e037995121_4b8e5b_text_4">
+    <g id="ft_06e037995121_4b8e5b_patch_5">
      <path d="M 52.926141 136.510312 
 C 56.66824 136.510312 60.257576 135.023561 62.903639 132.377498 
 C 65.549702 129.731434 67.036454 126.142099 67.036454 122.4 
@@ -722,8 +882,8 @@ z
      <use xlink:href="#DejaVuSans-32" transform="translate(0 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_5">
-    <g id="ft_06e037995121_a4b448_patch_6">
+   <g id="ft_06e037995121_4b8e5b_text_5">
+    <g id="ft_06e037995121_4b8e5b_patch_6">
      <path d="M 94.495361 139.32 
 C 98.982597 139.32 103.286652 137.537202 106.459607 134.364247 
 C 109.632563 131.191291 111.415361 126.887236 111.415361 122.4 
@@ -758,8 +918,8 @@ z
      <use xlink:href="#DejaVuSans-31" transform="translate(63.623047 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_6">
-    <g id="ft_06e037995121_a4b448_patch_7">
+   <g id="ft_06e037995121_4b8e5b_text_6">
+    <g id="ft_06e037995121_4b8e5b_patch_7">
      <path d="M 73.710751 172.510312 
 C 77.45285 172.510312 81.042185 171.023561 83.688249 168.377498 
 C 86.334312 165.731434 87.821064 162.142099 87.821064 158.4 
@@ -811,8 +971,8 @@ z
      <use xlink:href="#DejaVuSans-33" transform="translate(0 0.78125)"/>
     </g>
    </g>
-   <g id="ft_06e037995121_a4b448_text_7">
-    <g id="ft_06e037995121_a4b448_patch_8">
+   <g id="ft_06e037995121_4b8e5b_text_7">
+    <g id="ft_06e037995121_4b8e5b_patch_8">
      <path d="M 115.27997 172.510312 
 C 119.022069 172.510312 122.611405 171.023561 125.257468 168.377498 
 C 127.903531 165.731434 129.390283 162.142099 129.390283 158.4 
@@ -845,7 +1005,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="ft_06e037995121_a4b448_p0545984a59">
+  <clipPath id="ft_06e037995121_4b8e5b_p0545984a59">
    <rect x="7.2" y="7.2" width="133.021502" height="194.4"/>
   </clipPath>
  </defs>

@@ -36,7 +36,7 @@
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
-    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/clickable_figures/style.css?v=d35dfce7" />
+    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/clickable_figures/style.css?v=2580ef29" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/escapeRoom/style.css?v=b30732ed" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/mathjax/style.css?v=194b018e" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/misc_styles/figures.css?v=46e199f0" />
@@ -65,7 +65,27 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
     <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
-    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/admonitions.css?v=a3692687" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="_static/munchboka/css/admonitions.css?v=a3692687" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/dialogue.css?v=c5b7ed32" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/figures.css?v=acd93126" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/popup.css?v=26181dfd" />
@@ -77,7 +97,27 @@
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/table.css?v=fd6d533f" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/pairPuzzle/style.css?v=0a0f323a" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/parsons/parsonsPuzzle.css?v=a1529215" />
-    <link rel="stylesheet" type="text/css" href="_static/munchboka/css/part.css?v=bc286cc2" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="_static/munchboka/css/part.css?v=bc286cc2" />
     <link rel="stylesheet" type="text/css" href="_static/munchboka/css/print_pdf.css?v=448841f9" />
     <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
@@ -99,7 +139,27 @@
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script src="_static/munchboka/js/solution_timer.js?v=192f5d3d"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/solution_timer.js?v=8d1f44f8"></script>
     <script src="_static/munchboka/js/calculator_popup.js?v=93ae1e49"></script>
     <script src="_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="_static/munchboka/js/flashcards.js?v=293ceac2"></script>
@@ -132,11 +192,111 @@
     <script src="_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
     <script src="_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
-    <script src="_static/munchboka/js/solution2.js?v=a2d1029e"></script>
-    <script src="_static/munchboka/js/part.js?v=ca40db03"></script>
-    <script src="_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
-    <script src="_static/munchboka/js/proof.js?v=2793954e"></script>
-    <script src="_static/munchboka/js/hint.js?v=9d6836a9"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/solution2.js?v=a2d1029e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/part.js?v=ca40db03"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/proof.js?v=2793954e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="_static/munchboka/js/hint.js?v=9d6836a9"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>

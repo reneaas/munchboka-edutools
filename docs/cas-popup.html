@@ -37,7 +37,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/jeopardy.css?v=71d9bb06" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/legacy_1t/parsonsPuzzle.css?v=9fbab2c7" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/static_code_blocks.css?v=68f9364b" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=d35dfce7" />
+    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/clickable_figures/style.css?v=2580ef29" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/escapeRoom/style.css?v=b30732ed" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/mathjax/style.css?v=194b018e" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/misc_styles/figures.css?v=46e199f0" />
@@ -66,7 +66,27 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
     <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/admonitions.css?v=a3692687" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/dialogue.css?v=c5b7ed32" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/figures.css?v=acd93126" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/popup.css?v=26181dfd" />
@@ -78,7 +98,27 @@
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/table.css?v=fd6d533f" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/pairPuzzle/style.css?v=0a0f323a" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/parsons/parsonsPuzzle.css?v=a1529215" />
-    <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
+    <link onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" rel="stylesheet" type="text/css" href="../_static/munchboka/css/part.css?v=bc286cc2" />
     <link rel="stylesheet" type="text/css" href="../_static/munchboka/css/print_pdf.css?v=448841f9" />
     <link id="highlight-theme-light" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css" />
     <link id="highlight-theme-dark" rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css" />
@@ -100,7 +140,27 @@
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script src="../_static/munchboka/js/solution_timer.js?v=192f5d3d"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution_timer.js?v=8d1f44f8"></script>
     <script src="../_static/munchboka/js/calculator_popup.js?v=93ae1e49"></script>
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/flashcards.js?v=293ceac2"></script>
@@ -133,11 +193,111 @@
     <script src="../_static/munchboka/js/escapeRoom/escape-room.js?v=1498b374"></script>
     <script src="../_static/munchboka/js/parsons/parsonsPuzzle.js?v=57870877"></script>
     <script src="../_static/munchboka/js/print_answer_key.js?v=eebcd271"></script>
-    <script src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
-    <script src="../_static/munchboka/js/part.js?v=ca40db03"></script>
-    <script src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
-    <script src="../_static/munchboka/js/proof.js?v=2793954e"></script>
-    <script src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/solution2.js?v=a2d1029e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/part.js?v=ca40db03"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/goals.js?v=a2f2d5f7"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/proof.js?v=2793954e"></script>
+    <script onerror="if (!this.dataset.munchbokaRetryPending) {
+  var attempt = Number(this.dataset.munchbokaRetry || 0) + 1;
+  if (attempt &lt;= 2) {
+    var replacement = document.createElement(this.tagName);
+    for (var i = 0; i &lt; this.attributes.length; i++) {
+      replacement.setAttribute(this.attributes[i].name, this.attributes[i].value);
+    }
+    if (this.nonce) replacement.nonce = this.nonce;
+    replacement.dataset.munchbokaRetry = String(attempt);
+    var attribute = this.tagName === &#x27;LINK&#x27; ? &#x27;href&#x27; : &#x27;src&#x27;;
+    var url = new window.URL(this.getAttribute(attribute), document.baseURI);
+    url.searchParams.set(&#x27;munchboka_retry&#x27;, String(attempt));
+    replacement.setAttribute(attribute, url.href);
+    this.dataset.munchbokaRetryPending = &#x27;true&#x27;;
+    var failed = this;
+    window.setTimeout(function () {
+      if (failed.parentNode) failed.parentNode.replaceChild(replacement, failed);
+    }, attempt * 300);
+  }
+}
+" src="../_static/munchboka/js/hint.js?v=9d6836a9"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
@@ -502,9 +662,9 @@ document.write(`
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-509c7b76" class="ggb-cas-button">Åpne CAS‑vindu</button>
-<div id="dialog-ggb-cas-509c7b76" title="CAS‑vindu" style="display:none;">
-    <div id="ggb-cas-509c7b76" class="ggb-window"></div>
+<button id="button-ggb-cas-1f38cead" class="ggb-cas-button">Åpne CAS‑vindu</button>
+<div id="dialog-ggb-cas-1f38cead" title="CAS‑vindu" style="display:none;">
+    <div id="ggb-cas-1f38cead" class="ggb-window"></div>
 </div>
 
 <style>
@@ -555,12 +715,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
 (function() {
   $(function() {
     let ggbReady = false;
-    const storageKey = 'ggb-cas-state-ggb-cas-509c7b76';
+    const storageKey = 'ggb-cas-state-ggb-cas-1f38cead';
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-509c7b76").width(),
-            h = $("#ggb-cas-509c7b76").height();
+      const w = $("#ggb-cas-1f38cead").width(),
+            h = $("#ggb-cas-1f38cead").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
@@ -631,7 +791,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       }
     }
 
-    const $dlg = $("#dialog-ggb-cas-509c7b76").dialog({
+    const $dlg = $("#dialog-ggb-cas-1f38cead").dialog({
       autoOpen: false,
       width: 390, height: 580,
       resizable: true, draggable: true,
@@ -641,7 +801,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-509c7b76",
+            appName: "classic", id: "ggb-cas-1f38cead",
             width: 350, height: 500,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: false,
@@ -653,7 +813,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
               // Restore state after a short delay to ensure GeoGebra is fully initialized
               setTimeout(restoreState, 100);
             }
-          }, true).inject("ggb-cas-509c7b76");
+          }, true).inject("ggb-cas-1f38cead");
         } else {
           applySize();
         }
@@ -674,12 +834,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
           localStorage.removeItem(storageKey + '-timestamp');
           if (ggbReady && window.ggbApplet) {
             // Clear the container
-            $("#ggb-cas-509c7b76").empty();
+            $("#ggb-cas-1f38cead").empty();
             // Reset the flag
             ggbReady = false;
             // Recreate the applet from scratch
             new GGBApplet({
-              appName: "classic", id: "ggb-cas-509c7b76",
+              appName: "classic", id: "ggb-cas-1f38cead",
               width: 350, height: 500,
               perspective: "C", language: "nb",
               showToolBar: true, showAlgebraInput: false,
@@ -689,7 +849,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
                 ggbReady = true; 
                 applySize();
               }
-            }, true).inject("ggb-cas-509c7b76");
+            }, true).inject("ggb-cas-1f38cead");
           }
         } catch (e) {
           console.error('Failed to reset:', e);
@@ -741,7 +901,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-509c7b76')) {
+          if (!e.target.closest('#ggb-cas-1f38cead')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -769,7 +929,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-509c7b76');
+      const ggbContainer = document.getElementById('ggb-cas-1f38cead');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -815,10 +975,10 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-509c7b76").button()
+    $("#button-ggb-cas-1f38cead").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-509c7b76").dialog("open");
+        $("#dialog-ggb-cas-1f38cead").dialog("open");
       });
   });
 })();
@@ -837,9 +997,9 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-adad8bee" class="ggb-cas-button">Åpne CAS‑vindu</button>
-<div id="dialog-ggb-cas-adad8bee" title="CAS‑vindu" style="display:none;">
-    <div id="ggb-cas-adad8bee" class="ggb-window"></div>
+<button id="button-ggb-cas-bcb03171" class="ggb-cas-button">Åpne CAS‑vindu</button>
+<div id="dialog-ggb-cas-bcb03171" title="CAS‑vindu" style="display:none;">
+    <div id="ggb-cas-bcb03171" class="ggb-window"></div>
 </div>
 
 <style>
@@ -890,12 +1050,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
 (function() {
   $(function() {
     let ggbReady = false;
-    const storageKey = 'ggb-cas-state-ggb-cas-adad8bee';
+    const storageKey = 'ggb-cas-state-ggb-cas-bcb03171';
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-adad8bee").width(),
-            h = $("#ggb-cas-adad8bee").height();
+      const w = $("#ggb-cas-bcb03171").width(),
+            h = $("#ggb-cas-bcb03171").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
@@ -966,7 +1126,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       }
     }
 
-    const $dlg = $("#dialog-ggb-cas-adad8bee").dialog({
+    const $dlg = $("#dialog-ggb-cas-bcb03171").dialog({
       autoOpen: false,
       width: 640, height: 780,
       resizable: true, draggable: true,
@@ -976,7 +1136,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-adad8bee",
+            appName: "classic", id: "ggb-cas-bcb03171",
             width: 600, height: 700,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: false,
@@ -988,7 +1148,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
               // Restore state after a short delay to ensure GeoGebra is fully initialized
               setTimeout(restoreState, 100);
             }
-          }, true).inject("ggb-cas-adad8bee");
+          }, true).inject("ggb-cas-bcb03171");
         } else {
           applySize();
         }
@@ -1009,12 +1169,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
           localStorage.removeItem(storageKey + '-timestamp');
           if (ggbReady && window.ggbApplet) {
             // Clear the container
-            $("#ggb-cas-adad8bee").empty();
+            $("#ggb-cas-bcb03171").empty();
             // Reset the flag
             ggbReady = false;
             // Recreate the applet from scratch
             new GGBApplet({
-              appName: "classic", id: "ggb-cas-adad8bee",
+              appName: "classic", id: "ggb-cas-bcb03171",
               width: 600, height: 700,
               perspective: "C", language: "nb",
               showToolBar: true, showAlgebraInput: false,
@@ -1024,7 +1184,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
                 ggbReady = true; 
                 applySize();
               }
-            }, true).inject("ggb-cas-adad8bee");
+            }, true).inject("ggb-cas-bcb03171");
           }
         } catch (e) {
           console.error('Failed to reset:', e);
@@ -1076,7 +1236,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-adad8bee')) {
+          if (!e.target.closest('#ggb-cas-bcb03171')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1104,7 +1264,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-adad8bee');
+      const ggbContainer = document.getElementById('ggb-cas-bcb03171');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1150,10 +1310,10 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-adad8bee").button()
+    $("#button-ggb-cas-bcb03171").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-adad8bee").dialog("open");
+        $("#dialog-ggb-cas-bcb03171").dialog("open");
       });
   });
 })();
@@ -1172,9 +1332,9 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<button id="button-ggb-cas-cf30fcb7" class="ggb-cas-button">"Open</button>
-<div id="dialog-ggb-cas-cf30fcb7" title="Calculator" "CAS Calculator"" style="display:none;">
-    <div id="ggb-cas-cf30fcb7" class="ggb-window"></div>
+<button id="button-ggb-cas-7e1d7db4" class="ggb-cas-button">"Open</button>
+<div id="dialog-ggb-cas-7e1d7db4" title="Calculator" "CAS Calculator"" style="display:none;">
+    <div id="ggb-cas-7e1d7db4" class="ggb-window"></div>
 </div>
 
 <style>
@@ -1225,12 +1385,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
 (function() {
   $(function() {
     let ggbReady = false;
-    const storageKey = 'ggb-cas-state-ggb-cas-cf30fcb7';
+    const storageKey = 'ggb-cas-state-ggb-cas-7e1d7db4';
 
     function applySize() {
       if (!ggbReady) return;
-      const w = $("#ggb-cas-cf30fcb7").width(),
-            h = $("#ggb-cas-cf30fcb7").height();
+      const w = $("#ggb-cas-7e1d7db4").width(),
+            h = $("#ggb-cas-7e1d7db4").height();
       window.ggbApplet.setSize(Math.round(w), Math.round(h));
     }
 
@@ -1301,7 +1461,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       }
     }
 
-    const $dlg = $("#dialog-ggb-cas-cf30fcb7").dialog({
+    const $dlg = $("#dialog-ggb-cas-7e1d7db4").dialog({
       autoOpen: false,
       width: 540, height: 680,
       resizable: true, draggable: true,
@@ -1311,7 +1471,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
       open: function() {
         if (!ggbReady) {
           new GGBApplet({
-            appName: "classic", id: "ggb-cas-cf30fcb7",
+            appName: "classic", id: "ggb-cas-7e1d7db4",
             width: 500, height: 600,
             perspective: "C", language: "nb",
             showToolBar: true, showAlgebraInput: false,
@@ -1323,7 +1483,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
               // Restore state after a short delay to ensure GeoGebra is fully initialized
               setTimeout(restoreState, 100);
             }
-          }, true).inject("ggb-cas-cf30fcb7");
+          }, true).inject("ggb-cas-7e1d7db4");
         } else {
           applySize();
         }
@@ -1344,12 +1504,12 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
           localStorage.removeItem(storageKey + '-timestamp');
           if (ggbReady && window.ggbApplet) {
             // Clear the container
-            $("#ggb-cas-cf30fcb7").empty();
+            $("#ggb-cas-7e1d7db4").empty();
             // Reset the flag
             ggbReady = false;
             // Recreate the applet from scratch
             new GGBApplet({
-              appName: "classic", id: "ggb-cas-cf30fcb7",
+              appName: "classic", id: "ggb-cas-7e1d7db4",
               width: 500, height: 600,
               perspective: "C", language: "nb",
               showToolBar: true, showAlgebraInput: false,
@@ -1359,7 +1519,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
                 ggbReady = true; 
                 applySize();
               }
-            }, true).inject("ggb-cas-cf30fcb7");
+            }, true).inject("ggb-cas-7e1d7db4");
           }
         } catch (e) {
           console.error('Failed to reset:', e);
@@ -1411,7 +1571,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
             target = target.parentElement;
           }
           // Prevent page scroll but don't stop the event from reaching GeoGebra
-          if (!e.target.closest('#ggb-cas-cf30fcb7')) {
+          if (!e.target.closest('#ggb-cas-7e1d7db4')) {
             e.preventDefault();
             e.stopPropagation();
           }
@@ -1439,7 +1599,7 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     
     // Monitor GeoGebra applet focus/interaction to control scroll lock
     function bindScrollLock() {
-      const ggbContainer = document.getElementById('ggb-cas-cf30fcb7');
+      const ggbContainer = document.getElementById('ggb-cas-7e1d7db4');
       if (!ggbContainer) {
         setTimeout(bindScrollLock, 300);
         return;
@@ -1485,10 +1645,10 @@ html[data-theme="dark"] .ggb-reset-btn:hover {
     // Cleanup on dialog close
     $dlg.on('dialogclose', unlockScroll);
 
-    $("#button-ggb-cas-cf30fcb7").button()
+    $("#button-ggb-cas-7e1d7db4").button()
       .on("click touchend pointerup", e => {
         e.preventDefault();
-        $("#dialog-ggb-cas-cf30fcb7").dialog("open");
+        $("#dialog-ggb-cas-7e1d7db4").dialog("open");
       });
   });
 })();

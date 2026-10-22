@@ -14,8 +14,11 @@ Deployment status is recorded at the end of this file.
 - One correct choice, multiple correct choices (exact set), or typed accepted
   answers (case/whitespace normalization; no algebraic equivalence or tolerance).
 - Text, safe LaTeX via existing local KaTeX assets, literal code blocks, uploaded
-  images via existing private Jeopardy media storage, and click-to-load YouTube
-  embeds. Code is displayed, not executed. YouTube is an external service; school
+  images via existing private Jeopardy media storage, and automatically loaded YouTube
+  embeds. Active questions request autoplay with sound; results do not restart playback.
+  Browser settings can block autoplay; player controls remain available for play/sound.
+  Captions are requested off, but YouTube may honor viewer preferences. YouTube no
+  longer supports hiding titles, and subtitles burned into the video image cannot be removed. Code is displayed, not executed. YouTube is an external service; school
   network and video permissions determine actual playback. Projector/player video
   playback is independent, not synchronized. The timer continues during videos.
 - Separate six-digit PIN for each session, locally generated QR code, lobby,

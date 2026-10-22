@@ -80,11 +80,13 @@
       catch (_) { img.replaceWith(el('p', 'Bildet kunne ikke lastes.')); }
     }
     if (q.youtube) {
-      const slot = el('div');
-      slot.append(button('▶ Vis YouTube-video', () => {
-        const frame = el('iframe'); frame.title = 'YouTube-video'; frame.src = 'https://www.youtube-nocookie.com/embed/' + q.youtube;
-        frame.allow = 'encrypted-media; picture-in-picture; fullscreen'; frame.allowFullscreen = true; slot.replaceChildren(frame);
-      }, 'secondary')); target.append(slot);
+      const frame = el('iframe'); frame.title = 'YouTube-video';
+      // Request sound on; browsers may require pressing Play. YouTube may still apply
+      // viewer caption preferences; showinfo/modestbranding no longer hide titles.
+      const options = new URLSearchParams({autoplay: context.autoplay === false ? '0' : '1', mute: '0', playsinline: '1', cc_load_policy: '0', rel: '0'});
+      frame.src = 'https://www.youtube-nocookie.com/embed/' + q.youtube + '?' + options;
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; frame.allowFullscreen = true;
+      target.append(frame, el('p', 'Videoen starter med lyd. Trykk Spill av hvis nettleseren blokkerer automatisk avspilling.', 'hint'));
     }
   }
   function home() {
@@ -230,7 +232,7 @@
     function questionCard(s,order,header,body){
       const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
-      header.append(head);body.append(media);void content(q,media,{query,token},header);
+      header.append(head);body.append(media);void content(q,media,{query,token,autoplay:s.state==='QUESTION_ACTIVE'},header);
       if(!host&&s.state==='QUESTION_ACTIVE')body.append(answerForm(s,order));
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
       else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));

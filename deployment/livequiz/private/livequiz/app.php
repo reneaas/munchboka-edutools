@@ -173,16 +173,34 @@ function lq_answer(PDO $db, array $input, string $token): array {
         return ['accepted' => true];
     });
 }
+function lq_is_done(array $r, int $players, int $answers): bool {
+    if ($r['phase'] !== 'question') return false;
+    return time() >= (int)$r['deadline'] || ($players > 0 && $answers >= $players);
+}
+function lq_auto_reveal(PDO $db, array $r): bool {
+    return lq_transaction($db, function () use ($db, $r) {
+        $now = lq_room($db, $r['id'], true);
+        $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$now['id']])->fetchColumn();
+        $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$now['id'], (int)$now['question_index']])->fetchColumn();
+        if (!lq_is_done($now, $players, $answers)) return false;
+        lq_query($db, "UPDATE lq_rooms SET phase = 'reveal', version = version + 1 WHERE id = ?", [$now['id']]);
+        return true;
+    });
+}
 function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): array {
     $r = lq_room($db, $room);
     if ($host && (int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
     $p = $host ? null : lq_player($db, $room, $token);
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
-    $index = (int)$r['question_index']; $revealed = in_array($r['phase'], ['reveal', 'finished'], true);
+    $index = (int)$r['question_index'];
+    $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn();
+    $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn();
+    // Every poller may trigger the reveal, so it happens even if the host tab is in the background.
+    if (lq_is_done($r, $players, $answers) && lq_auto_reveal($db, $r)) $r = lq_room($db, $room);
+    $revealed = in_array($r['phase'], ['reveal', 'finished'], true);
     $state = ['room' => $room, 'title' => $content['title'], 'phase' => $r['phase'], 'index' => $index,
         'version' => (int)$r['version'], 'deadline' => (int)$r['deadline'], 'now' => time(), 'total' => count($content['questions']),
-        'players' => (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn(),
-        'answers' => (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn()];
+        'players' => $players, 'answers' => $answers];
     if ($host) $state['pin'] = $r['pin'];
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
         $q = $content['questions'][$index];
@@ -198,6 +216,16 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
     if ($host && $r['phase'] === 'lobby') $state['roster'] = lq_query($db, 'SELECT nickname FROM lq_players WHERE room_id = ? ORDER BY nickname', [$room])->fetchAll(PDO::FETCH_COLUMN);
     if ($revealed) {
         $state['leaderboard'] = lq_query($db, 'SELECT p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname LIMIT 60', [$room])->fetchAll();
+    }
+    if ($host && $r['phase'] === 'reveal' && isset($content['questions'][$index])) {
+        $cq = $content['questions'][$index]; $counts = array_fill(0, count($cq['options']), 0); $correct = 0;
+        $rows = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchAll();
+        foreach ($rows as $row) {
+            if ((int)$row['points'] > 0) $correct++;
+            if ($cq['type'] === 'text') continue;
+            foreach (json_decode($row['answer'], true, 8, JSON_THROW_ON_ERROR) as $i) if (isset($counts[$i])) $counts[$i]++;
+        }
+        $state['distribution'] = ['counts' => $counts, 'correct' => $correct, 'answered' => count($rows)];
     }
     return $state;
 }

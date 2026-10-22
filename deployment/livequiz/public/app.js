@@ -37,6 +37,38 @@
     for (let i = n - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     return order;
   }
+  function optionCards(q, order, revealed) {
+    const grid = el('div', undefined, 'option-grid');
+    order.forEach((orig, pos) => {
+      const card = el('div', undefined, 'option-card' + (revealed ? (q.correct.includes(orig) ? ' correct' : ' wrong') : ''));
+      card.append(el('span', String(pos + 1), 'option-badge'), rich(q.options[orig])); grid.append(card);
+    });
+    return grid;
+  }
+  function answerChart(s, order) {
+    const q = s.question, d = s.distribution || {counts: [], correct: 0, answered: 0}, wrap = el('div'), text = q.type === 'text';
+    const rows = text
+      ? [{label: 'Riktig', count: d.correct, ok: true}, {label: 'Feil', count: d.answered - d.correct}, {label: 'Ikke svart', count: Math.max(0, s.players - d.answered)}]
+      : order.map((orig, pos) => ({label: q.options[orig], badge: pos + 1, count: d.counts[orig] || 0, ok: q.correct.includes(orig)}));
+    const base = Math.max(1, text ? s.players : d.answered), chart = el('div', undefined, 'chart');
+    if (text) wrap.append(el('p', 'Riktig svar: ' + q.accepted.join(' · '), 'hint'));
+    for (const r of rows) {
+      const row = el('div', undefined, 'chart-row' + (r.ok ? ' correct' : '')), label = el('div', undefined, 'chart-label');
+      if (r.badge) label.append(el('span', String(r.badge), 'option-badge'), rich(r.label)); else label.append(el('span', r.label));
+      const track = el('div', undefined, 'chart-track'), bar = el('div', undefined, 'chart-bar'); bar.style.width = '0'; track.append(bar);
+      row.append(label, track, el('span', String(r.count), 'chart-count')); chart.append(row);
+      const pct = r.count > 0 ? Math.max(3, Math.round(100 * r.count / base)) : 0;
+      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
+    }
+    wrap.append(chart, el('p', `${d.answered} av ${s.players} svarte · ${d.correct} riktige`, 'hint'));
+    return wrap;
+  }
+  function leaderboardList(rows) {
+    if (!rows.length) return el('p', 'Ingen deltakere ennå.', 'hint');
+    const list = el('ol', undefined, 'board');
+    rows.forEach((p, i) => { const li = el('li'); li.append(el('span', String(i + 1), 'rank'), el('span', p.nickname, 'name'), el('strong', p.score + ' poeng')); list.append(li); });
+    return list;
+  }
   async function content(q, target, context = {}) {
     target.append(rich(q.prompt));
     if (q.code) { const holder = el('div', undefined, 'code-display'); target.append(holder); renderCodeBlock(holder, q.code); }
@@ -160,12 +192,22 @@
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false;
     const control=command=>async()=>{await api('control',{room:id,version:state.version,command});rendered='';};
-    function updateClock(){if(!state)return;const left=Math.max(0,state.deadline-(Date.now()/1000+offset));timer.textContent=state.phase==='question'?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute · venter på læreren'):'';if(submit)submit.disabled=submitting||!online||Date.now()-lastPoll>5000||left<=0||state.submitted;}
+    function updateClock(){if(!state)return;const left=Math.max(0,state.deadline-(Date.now()/1000+offset));timer.textContent=state.phase==='question'?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';if(submit)submit.disabled=submitting||!online||Date.now()-lastPoll>5000||left<=0||state.submitted;}
     setInterval(updateClock,250);
+    let overlay=null;
+    const closePopup=()=>{if(overlay){overlay.remove();overlay=null;}};
+    function popup(build){closePopup();overlay=el('div',undefined,'overlay');const card=el('div',undefined,'popup-card');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');overlay.append(card);build(card);document.body.append(overlay);const first=card.querySelector('button');if(first)first.focus();}
+    function showAnswer(s,order){popup(card=>card.append(el('h2','Fasit'),answerChart(s,order),button('Vis leaderboard',()=>showBoard(s,order))));}
+    function showBoard(s,order){popup(card=>{const last=s.index+1>=s.total;card.append(el('h2','Leaderboard'),leaderboardList((s.leaderboard||[]).slice(0,5)),button(last?'Vis sluttresultat':'Neste spørsmål',last?control('next'):()=>countdownThenNext(s,order)));});}
+    async function countdownThenNext(s,order){
+      closePopup();overlay=el('div',undefined,'overlay');const n=el('div','','countdown');n.setAttribute('role','status');n.setAttribute('aria-live','assertive');overlay.append(n);document.body.append(overlay);
+      try{for(const v of [3,2,1]){n.textContent=String(v);n.style.animation='none';void n.offsetWidth;n.style.animation='';await new Promise(r=>setTimeout(r,1000));}n.textContent='Kjør!';await control('next')();}
+      catch(e){showBoard(s,order);throw e;}
+    }
     function render(s){
       state=s;heading.textContent=s.title;meta.textContent=`${s.players} deltakere · ${s.answers} svar`+(s.index>=0?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';stage.querySelectorAll('form input').forEach(n=>{n.disabled=true;});}
-      if(rendered===String(s.version)){updateClock();return;}rendered=String(s.version);stage.replaceChildren();controls.replaceChildren();results.replaceChildren();submit=null;ack=null;
+      if(rendered===String(s.version)){updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();controls.replaceChildren();results.replaceChildren();submit=null;ack=null;
       if(s.phase==='lobby'){
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Elevene skanner koden eller åpner lenken og skriver spillkoden.':'Vent på at læreren starter første spørsmål.'));
         if(host){const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button('Start første spørsmål',control('next')));}
@@ -173,7 +215,10 @@
       else {
         void content(s.question,stage,{query,token});
         const order=s.question.options.length?optionOrder(s.question.options.length,id+':'+s.index):[];
-        if(host){order.forEach((orig,pos)=>stage.append(rich((pos+1)+'. '+s.question.options[orig])));controls.append(button(s.phase==='question'?'Vis fasit / steng svar':s.index+1<s.total?'Neste spørsmål':'Vis sluttresultat',control(s.phase==='question'?'reveal':'next')));}
+        if(host){
+          if(s.question.type!=='text')stage.append(optionCards(s.question,order,s.phase==='reveal'));
+          if(s.phase==='question')controls.append(button('Vis fasit nå',control('reveal'),'secondary'));
+        }
         else if(s.phase==='question'){
           const form=el('form');selection=s.answer??(s.question.type==='text'?'':[]);
           if(s.question.type==='text'){form.append(field('Ditt svar',selection,v=>selection=v));}
@@ -183,8 +228,9 @@
         }
         if(s.phase==='reveal'){
           const correct=s.question.type==='text'?s.question.accepted:s.question.correct.map(i=>s.question.options[i]);
-          stage.append(el('h2','Fasit'));correct.forEach(v=>stage.append(rich(v)));
+          if(!host||s.question.type==='text'){stage.append(el('h2','Fasit'));correct.forEach(v=>stage.append(rich(v)));}
           if(!host)stage.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du svarte ikke på dette spørsmålet.','result'));
+          if(host){controls.append(button('Vis fasit og resultater',()=>showAnswer(s,order),'secondary'));showAnswer(s,order);}
         }
       }
       if(host&&s.phase!=='finished')controls.append(button('Avslutt spillet',control('finish'),'quiet'));

@@ -66,15 +66,17 @@ rollback script is provided.
 `deployment/deploy.sh` pulls `main` from the public GitHub repository and copies
 Livequiz and Jeopardy into `~/public_html/quiz`, `~/jeopardy-private/livequiz`,
 `~/public_html/jeopardy` and `~/jeopardy-private`. It never deletes files and
-does nothing when the commit is unchanged. One-time setup in cPanel:
+does nothing when the commit is unchanged. No terminal is needed; the only
+setup is one cPanel → Cron Jobs entry, every 5 minutes, that always runs the
+latest script from `main`:
 
-1. Terminal (or SSH) as `zebfxvix`: `mkdir -p ~/bin && curl -fsSL https://raw.githubusercontent.com/reneaas/munchboka-edutools/main/deployment/deploy.sh -o ~/bin/deploy.sh && chmod +x ~/bin/deploy.sh`
-2. Run `FORCE=1 ~/bin/deploy.sh` once and check that it prints `deployed <commit>`.
-3. cPanel → Cron Jobs → every 5 minutes: `/bin/bash $HOME/bin/deploy.sh >> $HOME/deploy.log 2>&1`
+```sh
+curl -fsSL https://raw.githubusercontent.com/reneaas/munchboka-edutools/main/deployment/deploy.sh | /bin/bash >> $HOME/deploy.log 2>&1
+```
 
-The cron job uses the installed `~/bin/deploy.sh`; re-download it only when the
-script itself changes. Logs go to `~/deploy.log`. `package.py` remains a manual
-fallback.
+The first run deploys immediately. Check `~/deploy.log` in File Manager for
+`deployed <commit>` or an error. Anyone who can push to `main` controls what the
+server runs, as with any deployment. `package.py` remains a manual fallback.
 
 ## Data, access and limits
 
@@ -85,7 +87,16 @@ answers/grades are withheld until the teacher reveals or finishes the game.
 Room-scoped image access checks the current question and original ownership.
 Answers and room transitions share a room row lock. Duplicate answer retries
 acknowledge the first answer without changing its score. Timer expiry closes
-submissions server-side; the teacher explicitly reveals the answer.
+submissions server-side. The server reveals the answer automatically when the
+timer runs out or every participant has answered (whichever poll sees it first, so
+it works even if the teacher's tab is in the background); the teacher can also
+reveal early with "Vis fasit nå".
+
+Host screen: options are shown as a 2 x 2 card grid. On reveal, a focused popup
+shows the correct option highlighted with a bar chart of how many chose each option
+(typed questions show right/wrong/unanswered), then "Vis leaderboard" shows the
+top five, and "Neste spørsmål" starts a centred 3-2-1 countdown before the next
+question. The chart data is only sent to the host, and only after reveal.
 
 The current auth system treats every verified Osloskolen account alike, so both
 teachers and students with those accounts can author/host. There is no staff-role
@@ -103,7 +114,8 @@ snapshots. Quiz sign-in uses the existing PHP mail transport and verified sender
 
 ## Verification (2026-10-22)
 
-- 62 backend checks passed under PHP 8.4 with an isolated SQLite database.
+- 71 backend checks passed under PHP 8.4 with an isolated SQLite database, including
+  auto reveal on timeout and on all-answered, and host-only answer distribution.
 - Separate teacher and mobile student browser contexts passed quiz creation,
   image upload/display, math rendering, code display, PIN/QR generation, all
   three answer types, refresh recovery, answer reveal and the 3000-point final

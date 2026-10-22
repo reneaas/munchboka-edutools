@@ -25,8 +25,9 @@ Deployment status is recorded at the end of this file.
   playback is not compliant with YouTube's visible-player requirements.
   Captions are requested off, but YouTube may honor viewer preferences. YouTube no
   longer supports hiding titles, and subtitles burned into the video image cannot be removed. Code is displayed, not executed. YouTube is an external service; school
-  network and video permissions determine actual playback. Projector/player video
-  playback is independent, not synchronized. The timer continues during videos.
+  network and video permissions determine actual playback. YouTube playback is host-only; participant screens never create a player,
+  request YouTube resources or receive the video ID, including on results.
+  Students hear the host’s speakers. The timer continues during videos.
 - Separate six-digit PIN for each session, locally generated QR code, lobby,
   teacher-controlled questions, deadline, reveal, final scoreboard and recovery
   after refreshing the same student tab. Student tokens stay in sessionStorage;

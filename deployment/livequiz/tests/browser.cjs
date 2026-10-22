@@ -8,6 +8,8 @@ const assert = require('node:assert/strict');
  const student2 = await browser.newContext({viewport:{width:390,height:844}});
  const t = await teacher.newPage(), s = await student.newPage(), s2 = await student2.newPage();
  for (const context of [teacher, student, student2]) await require('./youtube-stub.cjs')(context);
+ const participantVideoRequests=[];
+ for(const context of [student,student2])context.on('request',request=>{if(/youtube(?:-nocookie)?\.com/.test(request.url()))participantVideoRequests.push(request.url());});
  const errors=[]; for(const p of [t,s,s2])p.on('pageerror',e=>errors.push(e.message));
  const base=process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8765';
  const currentState=page=>page.evaluate(async()=>{
@@ -165,6 +167,7 @@ const assert = require('node:assert/strict');
  await t.setViewportSize({width:1280,height:1000});
  await t.screenshot({path:'/tmp/livequiz-host-question.png',fullPage:true});
  // Automatic embed on question entry, with audible autoplay and no forced captions.
+ for(const page of [s,s2]){assert.equal(await page.locator('.quiz-video, iframe').count(),0);assert.equal((await currentState(page)).question.youtube,undefined);}
  const video = new URL(await t.locator('iframe').getAttribute('src'));
  assert.equal(video.origin + video.pathname,'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
  assert.equal(video.searchParams.get('autoplay'),'0'); // API starts playback after listeners are ready.
@@ -195,6 +198,7 @@ const assert = require('node:assert/strict');
  await t.waitForTimeout(800);await t.screenshot({path:'/tmp/livequiz-popup-answer.png'});
  await s.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await sharedState([t,s,s2],'QUESTION_RESULTS');
+ for(const page of [s,s2])assert.equal(await page.locator('.quiz-video, iframe').count(),0);
  for(const page of [s,s2]){
 	 await gridFits(page);
 	 assert.deepEqual(await page.locator('.chart-count').allInnerTexts(),await t.locator('.chart-count').allInnerTexts());
@@ -292,6 +296,7 @@ const assert = require('node:assert/strict');
  assert.equal(denied.status(),403);
  const boot=await (await student.request.get(base+'/index.php?api=bootstrap')).json();
  const noAuth=await student.request.post(base+'/index.php?api=save',{headers:{'X-CSRF-Token':boot.csrf},data:{}});assert.equal(noAuth.status(),401);
+ assert.deepEqual(participantVideoRequests,[]);
  assert.deepEqual(errors,[]);
  console.log('Browser flows passed: authoring/media/math/code; all answer types; host + three participants; shared question/results/leaderboard/countdown/finished states; refresh in results, leaderboard and countdown; timeout with disconnected player; late join; zero-count bars; simultaneous and duplicate answers; duplicate host progression; server countdown deadlines; final scores; CSRF and participant authorization.');
  await browser.close();

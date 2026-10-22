@@ -235,6 +235,8 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
         $q = $content['questions'][$index];
         if (!$revealed) unset($q['correct'], $q['accepted']);
+        // Only the host receives the video ID, including on the results screen.
+        if (!$host) unset($q['youtube']);
         $state['question'] = $q;
     }
     if ($p) {

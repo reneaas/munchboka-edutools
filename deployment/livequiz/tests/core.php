@@ -59,6 +59,8 @@ check(lq_join($db,$room['pin'],'Elev',$token)['room']===$rid,'existing player re
 $state=lq_state($db,$rid,0,$token,false);
 check(!isset($state['question']['correct'])&&!isset($state['question']['accepted'])&&!isset($state['leaderboard']),'answer key and score hidden');
 check($state['question']['prompt']==='Hva er $2+2$?','math preserved');
+check(!isset($state['question']['youtube']),'participants never receive question video ID');
+check(lq_state($db,$rid,1,'',true)['question']['youtube']==='dQw4w9WgXcQ','host retains question video');
 check(lq_answer($db,['room'=>$rid,'index'=>0,'answer'=>[1]],$token)===['accepted'=>true],'answer acknowledged without grade');
 lq_answer($db,['room'=>$rid,'index'=>0,'answer'=>[0]],$token);
 check((int)$db->query('SELECT COUNT(*) FROM lq_answers')->fetchColumn()===1,'answer retry does not duplicate');
@@ -70,6 +72,7 @@ rejects(fn()=>lq_answer($db,['room'=>$rid,'index'=>0,'answer'=>[1]],$other),'lat
 lq_control($db,1,['room'=>$rid,'version'=>2,'command'=>'reveal']);
 $state=lq_state($db,$rid,0,$token,false);
 check($state['points']===1000&&$state['question']['correct']===[1],'reveal gives grade and key');
+check(!isset($state['question']['youtube']),'participant results omit video ID');
 check((int)$state['leaderboard'][0]['score']===1000,'leaderboard server scored');
 function progressQuestion(PDO $db, string $room): void {
     $state = lq_state($db,$room,1,'',true);

@@ -17,7 +17,7 @@ $db->exec('CREATE TABLE jp_media (id TEXT PRIMARY KEY, owner_id INTEGER, mime TE
 $checks = 0;
 function check(bool $ok, string $label): void { global $checks; if (!$ok) throw new RuntimeException('FAIL: '.$label); $checks++; }
 function rejects(callable $fn, string $label): void { try { $fn(); } catch (DomainException $e) { check(true,$label); return; } throw new RuntimeException('FAIL: '.$label); }
-$q = ['type'=>'single','prompt'=>'Hva er $2+2$?','code'=>'print(2+2)','youtube'=>'https://youtu.be/dQw4w9WgXcQ','image'=>null,'seconds'=>30,'options'=>['3','4'],'correct'=>[1],'accepted'=>[]];
+$q = ['type'=>'single','prompt'=>'Hva er $2+2$?','code'=>'print(2+2)','youtube'=>'https://youtu.be/dQw4w9WgXcQ','image'=>null,'seconds'=>30,'options'=>['3','4','5','6'],'correct'=>[1],'accepted'=>[]];
 $multi = array_replace($q, ['type'=>'multi','options'=>['2','3','4'],'correct'=>[0,1],'youtube'=>'']);
 $typed = array_replace($q, ['type'=>'text','accepted'=>['Fire','4'],'youtube'=>'']);
 $quiz = ['title'=>'Matematikk','questions'=>[$q,$multi,$typed]];
@@ -54,7 +54,7 @@ $quiz['title']='Changed after start';lq_save($db,1,['id'=>$id,'revision'=>2,'con
 check(lq_state($db,$rid,1,'',true)['title']==='Matematikk','room snapshot independent');
 lq_control($db,1,['room'=>$rid,'version'=>1,'command'=>'next']);
 rejects(fn()=>lq_control($db,1,['room'=>$rid,'version'=>1,'command'=>'next']),'duplicate advance rejected');
-rejects(fn()=>lq_join($db,$room['pin'],'Late',str_repeat('c',64)),'late join rejected');
+check(lq_join($db,$room['pin'],'Late',str_repeat('c',64))['room']===$rid,'late participant joins current session');
 check(lq_join($db,$room['pin'],'Elev',$token)['room']===$rid,'existing player reconnects');
 $state=lq_state($db,$rid,0,$token,false);
 check(!isset($state['question']['correct'])&&!isset($state['question']['accepted'])&&!isset($state['leaderboard']),'answer key and score hidden');
@@ -71,12 +71,34 @@ lq_control($db,1,['room'=>$rid,'version'=>2,'command'=>'reveal']);
 $state=lq_state($db,$rid,0,$token,false);
 check($state['points']===1000&&$state['question']['correct']===[1],'reveal gives grade and key');
 check((int)$state['leaderboard'][0]['score']===1000,'leaderboard server scored');
-lq_control($db,1,['room'=>$rid,'version'=>3,'command'=>'next']);
+function progressQuestion(PDO $db, string $room): void {
+    $state = lq_state($db,$room,1,'',true);
+    rejects(fn()=>lq_control($db,1,['room'=>$room,'version'=>$state['version'],'command'=>'next']),'results cannot skip leaderboard');
+    lq_control($db,1,['room'=>$room,'version'=>$state['version'],'command'=>'leaderboard']);
+    $board = lq_state($db,$room,0,str_repeat('a',64),false);
+    check($board['state']==='LEADERBOARD','participant receives persistent leaderboard');
+    $input = ['room'=>$room,'version'=>$board['version'],'command'=>'next'];
+    lq_control($db,1,$input);
+    rejects(fn()=>lq_control($db,1,$input),'duplicate next cannot skip a question');
+    $countdown = lq_state($db,$room,1,'',true);
+    if ($countdown['phase'] === 'finished') return;
+    check($countdown['state']==='COUNTDOWN'&&$countdown['countdown_end']===$countdown['deadline'],'server countdown deadline');
+    check($countdown['countdown_end']-$countdown['now']>2.5&&$countdown['countdown_end']-$countdown['now']<=3.001,'countdown lasts three full seconds');
+    check($countdown['index']===$state['index'],'countdown has not advanced question');
+    rejects(fn()=>lq_answer($db,['room'=>$room,'index'=>$state['index']+1,'answer'=>[0]],str_repeat('a',64)),'countdown rejects early answers');
+    lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[time()-1,$room]);
+    $next = lq_state($db,$room,0,str_repeat('a',64),false);
+    check($next['state']==='QUESTION_ACTIVE'&&$next['index']===$state['index']+1,'participant poll advances expired countdown');
+    check($next['version']===$countdown['version']+1,'countdown advances exactly once');
+    check(lq_state($db,$room,1,'',true)['deadline']===$next['deadline'],'host and player share question deadline');
+    check((int)lq_room($db,$room)['deadline']>1000000000000,'new question stores precise deadline without schema change');
+}
+progressQuestion($db,$rid);
 check(lq_answer($db,['room'=>$rid,'index'=>0,'answer'=>[1]],$token)['accepted'],'old retry safe after advance');
 check(lq_answer($db,['room'=>$rid,'index'=>1,'answer'=>[1,0]],$token)['accepted'],'multi submission');
-lq_control($db,1,['room'=>$rid,'version'=>4,'command'=>'reveal']);lq_control($db,1,['room'=>$rid,'version'=>5,'command'=>'next']);
+lq_control($db,1,['room'=>$rid,'version'=>lq_room($db,$rid)['version'],'command'=>'reveal']);progressQuestion($db,$rid);
 lq_answer($db,['room'=>$rid,'index'=>2,'answer'=>'fire'],$token);
-lq_control($db,1,['room'=>$rid,'version'=>6,'command'=>'reveal']);lq_control($db,1,['room'=>$rid,'version'=>7,'command'=>'next']);
+lq_control($db,1,['room'=>$rid,'version'=>lq_room($db,$rid)['version'],'command'=>'reveal']);progressQuestion($db,$rid);
 $state=lq_state($db,$rid,0,$token,false);check($state['phase']==='finished'&&(int)$state['leaderboard'][0]['score']===3000,'complete game scores');
 rejects(fn()=>lq_answer($db,['room'=>$rid,'index'=>2,'answer'=>'fire'],$other),'finished rejects new answers');
 $ar=lq_create_room($db,1,$id);$ra=$ar['room'];$a1=str_repeat('1',64);$a2=str_repeat('2',64);
@@ -87,8 +109,8 @@ check(lq_state($db,$ra,1,'',true)['phase']==='question','no reveal until everyon
 lq_answer($db,['room'=>$ra,'index'=>0,'answer'=>[0]],$a2);
 $s=lq_state($db,$ra,1,'',true);
 check($s['phase']==='reveal'&&$s['version']===3,'auto reveal when all have answered');
-check($s['distribution']['counts']===[1,1]&&$s['distribution']['correct']===1&&$s['distribution']['answered']===2,'host gets answer distribution');
-check(!isset(lq_state($db,$ra,0,$a1,false)['distribution']),'participants do not get distribution');
+check($s['distribution']['counts']===[1,1,0,0]&&$s['distribution']['correct']===1&&$s['distribution']['answered']===2,'four bars include zero counts');
+check(lq_state($db,$ra,0,$a1,false)['distribution']===$s['distribution'],'participants share authoritative results');
 rejects(fn()=>lq_control($db,1,['room'=>$ra,'version'=>2,'command'=>'reveal']),'manual reveal after auto reveal rejected');
 check(lq_state($db,$ra,1,'',true)['version']===3,'auto reveal is applied once');
 $tr=lq_create_room($db,1,$id);$rt=$tr['room'];lq_join($db,$tr['pin'],'C',str_repeat('3',64));lq_join($db,$tr['pin'],'D',str_repeat('4',64));
@@ -96,7 +118,7 @@ lq_control($db,1,['room'=>$rt,'version'=>1,'command'=>'next']);
 check(lq_state($db,$rt,1,'',true)['phase']==='question','question stays open before deadline');
 $db->exec("UPDATE lq_rooms SET deadline = 1 WHERE id = '$rt'");
 $s=lq_state($db,$rt,1,'',true);
-check($s['phase']==='reveal'&&$s['distribution']['answered']===0&&$s['distribution']['counts']===[0,0],'auto reveal when time is out');
+check($s['state']==='QUESTION_RESULTS'&&$s['distribution']['answered']===0&&$s['distribution']['counts']===[0,0,0,0],'deadline closes question with disconnected or unanswered players');
 $er=lq_create_room($db,1,$id);lq_control($db,1,['room'=>$er['room'],'version'=>1,'command'=>'next']);
 check(lq_state($db,$er['room'],1,'',true)['phase']==='question','empty room never auto reveals before deadline');
 $img=str_repeat('d',32);$db->prepare('INSERT INTO jp_media VALUES (?,1,?,?,?)')->execute([$img,'image/png',3,'PNG']);

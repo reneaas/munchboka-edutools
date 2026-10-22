@@ -3,7 +3,7 @@
 .question-editor .CodeMirror{margin-top:8px}
 .CodeMirror{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
 .stage-flush{padding:0;border:0;background:none;box-shadow:none}
-.question-modal{width:min(1100px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;border:1px solid #d1e0e6;border-radius:10px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #0006;overscroll-behavior:contain}
+.question-modal{width:min(1100px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;border:1px solid #d1e0e6;border-radius:10px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #0006;overscroll-behavior:contain;animation:lq-pop .2s ease-out;letter-spacing:0}
 .question-modal::backdrop{background:rgba(17,40,58,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .question-modal .qcard{border:0;border-radius:0;box-shadow:none}
 .question-modal .option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -11,6 +11,27 @@
 .question-modal-footer .hint{margin:6px 0}
 .question-modal-footer .actions{margin-top:16px;flex-wrap:wrap}
 .modal-notice{color:#922c2c}
+.modal-title{margin:24px;font-size:26px;letter-spacing:0}
+.results-analysis{padding:0 24px 16px}
+.question-modal .board{margin:24px}
+.question-modal .board li{flex-wrap:wrap;font-size:18px}
+.question-modal .board .name{flex-basis:100px}
+.question-answer-form>label,.question-answer-form>button,.question-answer-form>.hint{margin-left:24px;margin-right:24px}
+.question-modal .answer-option{position:relative;margin:0;cursor:pointer;flex-wrap:wrap;align-content:center}
+.question-modal .answer-option input{position:absolute;width:1px;height:1px;opacity:0}
+.question-modal .answer-option:has(input:checked){outline:3px solid #143f55;outline-offset:2px;background:#155363}
+.question-modal .answer-option:has(input:checked) .option-badge{background:#fff;color:#143f55}
+.question-modal .answer-option:has(input:focus-visible){outline:3px solid #b76900;outline-offset:3px}
+.question-modal .answer-option:has(input:disabled){cursor:default;opacity:.65}
+.question-modal .option-card{flex-wrap:wrap}
+.correct-label{flex-basis:100%;font-size:13px;text-align:right}
+.question-modal .option-card.wrong{opacity:.7}
+.question-modal.countdown-modal{width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:hidden}
+.countdown-modal[open]{display:grid;place-items:center}
+.countdown-modal .countdown{font-size:180px;text-align:center;overflow-wrap:anywhere;max-width:100%;padding:24px}
+.countdown-modal .question-modal-footer{position:absolute;bottom:0;left:0;right:0;color:#fff}
+.countdown-modal .hint,.countdown-modal .quiet{color:#fff}
+@media(max-width:600px){.countdown-modal .countdown{font-size:100px}.question-modal .board{margin:16px}.results-analysis{padding:0 16px 16px}}
 body:has(.question-modal[open]){overflow:hidden}
 @media(max-width:600px){.question-modal{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}.question-modal .qcard-head{flex-wrap:wrap}.question-modal .qcard-body{padding:18px 16px 6px}.question-modal .qcard-body>.rich:first-child{font-size:22px}.question-modal .option-grid{padding:16px;gap:8px}.question-modal .option-card{font-size:16px;padding:10px;gap:8px}.question-modal-footer{padding:0 16px 18px}}
 .qcard{overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 8px 30px #17332e33}
@@ -53,4 +74,4 @@ body:has(.question-modal[open]){overflow:hidden}
 @keyframes lq-pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
 @keyframes lq-beat{0%{transform:scale(1.25);opacity:0}25%{opacity:1}100%{transform:scale(.9);opacity:.85}}
 @media(max-width:600px){.option-grid{grid-template-columns:1fr}.chart-row{grid-template-columns:1fr 40px}.chart-label{grid-column:1/-1}.popup-card{padding:22px}}
-@media(prefers-reduced-motion:reduce){.overlay,.popup-card,.countdown{animation:none}.chart-bar{transition:none}}
+@media(prefers-reduced-motion:reduce){.overlay,.popup-card,.countdown,.question-modal{animation:none}.chart-bar{transition:none}}

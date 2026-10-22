@@ -116,7 +116,7 @@ function lq_join(PDO $db, string $pin, string $name, string $token): array {
         if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillkoden er ugyldig eller utløpt.');
         $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
         if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
-        if ($old || $r['phase'] !== 'lobby') throw new DomainException('Spillet er startet. Be læreren starte et nytt spill.');
+        if ($old || $r['phase'] === 'finished') throw new DomainException('Spillet er avsluttet. Be læreren starte et nytt spill.');
         if ((int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
         lq_query($db, 'INSERT INTO lq_players (id, room_id, nickname, token_hash) VALUES (?, ?, ?, ?)', [bin2hex(random_bytes(16)), $r['id'], $name, hash('sha256', $token)]);
         return ['room' => $r['id']];
@@ -133,15 +133,40 @@ function lq_control(PDO $db, int $uid, array $input): array {
         if ((int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
         $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $qs = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'];
-        if ($cmd === 'next' && in_array($phase, ['lobby', 'reveal'], true)) {
-            $index++; $phase = $index < count($qs) ? 'question' : 'finished';
-            if ($phase === 'question') $deadline = time() + $qs[$index]['seconds'];
+        if ($cmd === 'next' && $phase === 'lobby') {
+            $index = 0; $phase = 'question'; $deadline = time() + $qs[$index]['seconds'];
         } elseif ($cmd === 'reveal' && $phase === 'question') { $phase = 'reveal'; }
+        elseif ($cmd === 'leaderboard' && $phase === 'reveal') { $phase = 'leaderboard'; }
+        elseif ($cmd === 'next' && $phase === 'leaderboard') {
+            $phase = $index + 1 < count($qs) ? 'countdown' : 'finished';
+            if ($phase === 'countdown') $deadline = (int)ceil(microtime(true) * 1000) + 3000;
+        }
         elseif ($cmd === 'finish' && $phase !== 'finished') { $phase = 'finished'; }
         else throw new DomainException('Denne handlingen er ikke tilgjengelig nå.');
-        lq_query($db, 'UPDATE lq_rooms SET phase = ?, question_index = ?, deadline = ?, version = version + 1 WHERE id = ?', [$phase, $index, $deadline, $r['id']]);
+        lq_transition($db, $r, $phase, $index, $deadline);
         return ['ok' => true];
     });
+}
+function lq_transition(PDO $db, array $room, string $phase, int $index, int $deadline): array {
+    lq_query($db, 'UPDATE lq_rooms SET phase = ?, question_index = ?, deadline = ?, version = version + 1 WHERE id = ?', [$phase, $index, $deadline, $room['id']]);
+    return array_replace($room, ['phase' => $phase, 'question_index' => $index, 'deadline' => $deadline, 'version' => (int)$room['version'] + 1]);
+}
+function lq_deadline(array $room): int|float {
+    $deadline = (int)$room['deadline'];
+    return $deadline > 1000000000000 ? $deadline / 1000 : $deadline;
+}
+function lq_advance_locked(PDO $db, array $room): array {
+    if ($room['phase'] === 'countdown' && microtime(true) >= lq_deadline($room)) {
+        $index = (int)$room['question_index'] + 1;
+        $questions = json_decode($room['content'], true, 32, JSON_THROW_ON_ERROR)['questions'];
+        $room = lq_transition($db, $room, 'question', $index, (int)round((lq_deadline($room) + $questions[$index]['seconds']) * 1000));
+    }
+    if ($room['phase'] === 'question') {
+        $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room['id']])->fetchColumn();
+        $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room['id'], (int)$room['question_index']])->fetchColumn();
+        if (lq_is_done($room, $players, $answers)) $room = lq_transition($db, $room, 'reveal', (int)$room['question_index'], 0);
+    }
+    return $room;
 }
 function lq_normalize_answer(string $s): string {
     $s = preg_replace('/\s+/u', ' ', trim($s));
@@ -166,40 +191,33 @@ function lq_answer(PDO $db, array $input, string $token): array {
         if (!is_int($index) || $index < 0) throw new DomainException('Ugyldig spørsmål.');
         // Retries return the original acknowledgement, without leaking points before reveal.
         if (lq_query($db, 'SELECT 1 FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = ?', [$r['id'], $p['id'], $index])->fetchColumn()) return ['accepted' => true];
-        if ($r['phase'] !== 'question' || $index !== (int)$r['question_index'] || time() >= (int)$r['deadline']) throw new DomainException('Spørsmålet er stengt.');
+        if ($r['phase'] !== 'question' || $index !== (int)$r['question_index'] || microtime(true) >= lq_deadline($r)) throw new DomainException('Spørsmålet er stengt.');
         $q = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'][$index];
         [$answer, $points] = lq_grade($q, $input['answer'] ?? null);
         lq_query($db, 'INSERT INTO lq_answers (room_id, player_id, question_index, answer, points) VALUES (?, ?, ?, ?, ?)', [$r['id'], $p['id'], $index, json_encode($answer, JSON_THROW_ON_ERROR), $points]);
+        lq_advance_locked($db, $r);
         return ['accepted' => true];
     });
 }
 function lq_is_done(array $r, int $players, int $answers): bool {
     if ($r['phase'] !== 'question') return false;
-    return time() >= (int)$r['deadline'] || ($players > 0 && $answers >= $players);
-}
-function lq_auto_reveal(PDO $db, array $r): bool {
-    return lq_transaction($db, function () use ($db, $r) {
-        $now = lq_room($db, $r['id'], true);
-        $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$now['id']])->fetchColumn();
-        $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$now['id'], (int)$now['question_index']])->fetchColumn();
-        if (!lq_is_done($now, $players, $answers)) return false;
-        lq_query($db, "UPDATE lq_rooms SET phase = 'reveal', version = version + 1 WHERE id = ?", [$now['id']]);
-        return true;
-    });
+    return microtime(true) >= lq_deadline($r) || ($players > 0 && $answers >= $players);
 }
 function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): array {
-    $r = lq_room($db, $room);
+    return lq_transaction($db, function () use ($db, $room, $uid, $token, $host) {
+    $r = lq_room($db, $room, true);
     if ($host && (int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
     $p = $host ? null : lq_player($db, $room, $token);
+    $r = lq_advance_locked($db, $r);
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $index = (int)$r['question_index'];
     $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn();
     $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn();
-    // Every poller may trigger the reveal, so it happens even if the host tab is in the background.
-    if (lq_is_done($r, $players, $answers) && lq_auto_reveal($db, $r)) $r = lq_room($db, $room);
-    $revealed = in_array($r['phase'], ['reveal', 'finished'], true);
+    $revealed = in_array($r['phase'], ['reveal', 'leaderboard', 'countdown', 'finished'], true);
+    $states = ['lobby' => 'LOBBY', 'question' => 'QUESTION_ACTIVE', 'reveal' => 'QUESTION_RESULTS', 'leaderboard' => 'LEADERBOARD', 'countdown' => 'COUNTDOWN', 'finished' => 'QUIZ_FINISHED'];
     $state = ['room' => $room, 'title' => $content['title'], 'phase' => $r['phase'], 'index' => $index,
-        'version' => (int)$r['version'], 'deadline' => (int)$r['deadline'], 'now' => time(), 'total' => count($content['questions']),
+        'state' => $states[$r['phase']], 'countdown_end' => $r['phase'] === 'countdown' ? lq_deadline($r) : null,
+        'version' => (int)$r['version'], 'deadline' => lq_deadline($r), 'now' => microtime(true), 'total' => count($content['questions']),
         'players' => $players, 'answers' => $answers];
     if ($host) $state['pin'] = $r['pin'];
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
@@ -215,9 +233,9 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
     }
     if ($host && $r['phase'] === 'lobby') $state['roster'] = lq_query($db, 'SELECT nickname FROM lq_players WHERE room_id = ? ORDER BY nickname', [$room])->fetchAll(PDO::FETCH_COLUMN);
     if ($revealed) {
-        $state['leaderboard'] = lq_query($db, 'SELECT p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname LIMIT 60', [$room])->fetchAll();
+        $state['leaderboard'] = lq_query($db, 'SELECT p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname, p.id LIMIT 60', [$room])->fetchAll();
     }
-    if ($host && $r['phase'] === 'reveal' && isset($content['questions'][$index])) {
+    if ($r['phase'] === 'reveal' && isset($content['questions'][$index])) {
         $cq = $content['questions'][$index]; $counts = array_fill(0, count($cq['options']), 0); $correct = 0;
         $rows = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchAll();
         foreach ($rows as $row) {
@@ -228,6 +246,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
         $state['distribution'] = ['counts' => $counts, 'correct' => $correct, 'answered' => count($rows)];
     }
     return $state;
+    });
 }
 function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image): array {
     $r = lq_room($db, $room);
@@ -235,7 +254,7 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
     else lq_player($db, $room, $token);
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $q = $content['questions'][(int)$r['question_index']] ?? null;
-    if (!in_array($r['phase'], ['question','reveal'], true) || ($q['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');
+    if (!in_array($r['phase'], ['question','reveal','leaderboard'], true) || ($q['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');
     return jp_media($db, lq_id($image), (int)$r['owner_id']);
 }
 

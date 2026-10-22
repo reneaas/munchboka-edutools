@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy public_html/jeopardy
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
           username: ${{ secrets.CPANEL_FTP_USERNAME }}
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy jeopardy-private
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
           username: ${{ secrets.CPANEL_FTP_USERNAME }}

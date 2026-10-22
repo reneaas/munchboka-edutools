@@ -155,4 +155,44 @@ check($db->query('SELECT code_hash FROM jp_login')->fetchColumn()==='untouched',
 rejects(fn()=>lq_verify($db,'12345678'),'quiz code cannot be reused');
 seedQuizCode($db,time()+600,'new@osloskolen.no');lq_verify($db,'12345678');
 check($_SESSION['uid']>1 && lq_query($db,'SELECT email FROM jp_users WHERE id = ?',[$_SESSION['uid']])->fetchColumn()==='new@osloskolen.no','quiz new verified account');
+// Scoring is a quiz snapshot setting, with legacy fixed-point compatibility.
+check(lq_validate($db,1,$quiz)['scoring']==='fixed','missing scoring defaults to fixed');
+rejects(fn()=>lq_validate($db,1,array_replace($quiz,['scoring'=>'unknown'])),'invalid scoring rejected');
+foreach ([5,30,600] as $duration) {
+    check(lq_points(1000,'speed',$duration,$duration)===1000,'full speed points');
+    check(lq_points(1000,'speed',$duration,$duration/2)===500,'halfway speed points');
+    check(lq_points(1000,'speed',$duration,0)===0,'minimum speed points');
+    check(lq_points(0,'speed',$duration,$duration)===0,'wrong answer no speed points');
+    check(lq_points(1000,'fixed',$duration,0)===1000,'fixed score independent of time');
+}
+check(lq_points(1000,'speed',600,0.1)===0,'last moment correct answer rounds to zero');
+check(lq_points(1000,'speed',30,60)===1000 && lq_points(1000,'speed',30,-5)===0,'speed points clamped');
+foreach ([$q,$multi,$typed] as $question) {
+    $question['seconds']=600;
+    $speedQuiz=lq_save($db,1,['content'=>['title'=>'Speed','scoring'=>'speed','questions'=>[$question]]]);
+    $speedRoom=lq_create_room($db,1,$speedQuiz['id']);$sr=$speedRoom['room'];
+    $fast=bin2hex(random_bytes(32));$slow=bin2hex(random_bytes(32));$wrong=bin2hex(random_bytes(32));
+    foreach ([$fast,$slow,$wrong] as $n=>$tok) lq_join($db,$speedRoom['pin'],'Speed '.$n,$tok);
+    lq_save($db,1,['id'=>$speedQuiz['id'],'revision'=>1,'content'=>['title'=>'Changed','scoring'=>'fixed','questions'=>[$question]]]);
+    check(lq_state($db,$sr,0,$fast,false)['scoring']==='speed','room preserves scoring snapshot');
+    lq_control($db,1,['room'=>$sr,'version'=>1,'command'=>'next']);
+    check((int)lq_room($db,$sr)['deadline']>1000000000000,'first question precise deadline');
+    $correctAnswer=$question['type']==='text'?'fire':$question['correct'];
+    $wrongAnswer=$question['type']==='text'?'wrong':[2];
+    lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$correctAnswer],$fast);
+    lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)+300)*1000),$sr]);
+    lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$correctAnswer,'points'=>1000,'elapsed'=>0],$slow);
+    check(!isset(lq_state($db,$sr,0,$slow,false)['points']),'speed score hidden until reveal');
+    lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$slow);
+    lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$wrong);
+    $fastState=lq_state($db,$sr,0,$fast,false);$slowState=lq_state($db,$sr,0,$slow,false);
+    check($fastState['points']>=990 && $slowState['points']>=490 && $slowState['points']<=500,'all answer types reward earlier correct answers');
+    check(lq_state($db,$sr,0,$wrong,false)['points']===0,'wrong speed answer zero');
+    check($slowState['distribution']['correct']===2,'speed results count correctness');
+    check((int)$slowState['leaderboard'][0]['score']===$fastState['points'],'leaderboard uses speed score');
+    // A valid answer just before the deadline can round to zero: correctness
+    // must use the stored answer, including for typed-answer result charts.
+    lq_query($db,'UPDATE lq_answers SET points = 0 WHERE room_id = ?',[$sr]);
+    check(lq_state($db,$sr,0,$slow,false)['distribution']['correct']===2,'zero-point correct answers remain correct');
+}
 echo "$checks backend checks passed\n";

@@ -25,7 +25,15 @@ Deployment status is recorded at the end of this file.
   teacher-controlled questions, deadline, reveal, final scoreboard and recovery
   after refreshing the same student tab. Student tokens stay in sessionStorage;
   opening a different tab/device does not recover that player automatically.
-- 1000 points for a correct answer, zero otherwise; no speed bonus or partial credit.
+- Quiz-level scoring choice: fixed 1000 points, or speed scoring from 1000 at the
+  start to zero at the deadline (500 halfway), rounded to the nearest integer.
+  Formula: `round(1000 * (1 - elapsed / time_limit))`, clamped to 0–1000.
+  A correct answer that rounds to zero still counts as correct in results.
+  Only fully correct answers earn points; incorrect answers earn zero.
+  Speed uses server processing time and the question deadline, never client timestamps.
+  Network delay and time spent watching videos count toward elapsed time.
+  Existing quizzes/rooms default to fixed scoring. Each room snapshots its scoring
+  choice, so edits affect newly created games only. No database migration needed.
 - Snapshot isolation: editing a quiz does not change already-created sessions.
 - One poll per second per device (every 200 ms during the transition countdown), non-overlapping requests, retry backoff and
   visible connection status. Server deadlines and first-answer-wins semantics.
@@ -114,7 +122,7 @@ compatibility:
 Every manual transition checks owner, CSRF, current version and allowed source
 state. Stale/repeated controls return an error without advancing again. Room locks
 serialize controls, answers, joins and state snapshots. Scores still come solely
-from the persisted answers: 1000 for a correct answer, otherwise zero.
+from the persisted answers using the room’s fixed or speed scoring choice; wrong answers always earn zero.
 
 All clients show centered dialogs with blurred backdrops. Four-choice questions
 use a 2 x 2 grid; existing two-to-six-choice, multi-answer and text questions are

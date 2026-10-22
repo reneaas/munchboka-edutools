@@ -32,7 +32,9 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
     if (!is_array($data)) throw new DomainException('Ugyldig quiz.');
     $title = jp_text($data['title'] ?? '', 180); $questions = $data['questions'] ?? null;
     if ($title === '' || !is_array($questions) || !array_is_list($questions) || count($questions) < 1 || count($questions) > 50) throw new DomainException('Gi quizen en tittel og 1–50 spørsmål.');
-    $out = ['title' => $title, 'questions' => []];
+    $scoring = $data['scoring'] ?? 'fixed';
+    if (!in_array($scoring, ['fixed', 'speed'], true)) throw new DomainException('Ugyldig poengstil.');
+    $out = ['title' => $title, 'scoring' => $scoring, 'questions' => []];
     foreach ($questions as $q) {
         if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text'], true)) throw new DomainException('Ugyldig spørsmålstype.');
         $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => jp_text($q['code'] ?? '', 8000),
@@ -134,7 +136,7 @@ function lq_control(PDO $db, int $uid, array $input): array {
         $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $qs = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'];
         if ($cmd === 'next' && $phase === 'lobby') {
-            $index = 0; $phase = 'question'; $deadline = time() + $qs[$index]['seconds'];
+            $index = 0; $phase = 'question'; $deadline = (int)round((microtime(true) + $qs[$index]['seconds']) * 1000);
         } elseif ($cmd === 'reveal' && $phase === 'question') { $phase = 'reveal'; }
         elseif ($cmd === 'leaderboard' && $phase === 'reveal') { $phase = 'leaderboard'; }
         elseif ($cmd === 'next' && $phase === 'leaderboard') {
@@ -184,6 +186,12 @@ function lq_grade(array $q, mixed $answer): array {
     if ($q['type'] === 'single' && count($answer) !== 1) throw new DomainException('Velg ett alternativ.');
     return [$answer, $answer === $q['correct'] ? 1000 : 0];
 }
+function lq_points(int $grade, string $scoring, int $seconds, float $remaining): int {
+    if ($grade === 0) return 0;
+    if ($scoring !== 'speed') return 1000;
+    // Server time only: 1000 at the start, 500 halfway, 0 at the deadline.
+    return (int)round(1000 * max(0.0, min(1.0, $remaining / $seconds)));
+}
 function lq_answer(PDO $db, array $input, string $token): array {
     return lq_transaction($db, function () use ($db, $input, $token) {
         $r = lq_room($db, $input['room'] ?? '', true); $p = lq_player($db, $r['id'], $token);
@@ -191,9 +199,12 @@ function lq_answer(PDO $db, array $input, string $token): array {
         if (!is_int($index) || $index < 0) throw new DomainException('Ugyldig spørsmål.');
         // Retries return the original acknowledgement, without leaking points before reveal.
         if (lq_query($db, 'SELECT 1 FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = ?', [$r['id'], $p['id'], $index])->fetchColumn()) return ['accepted' => true];
-        if ($r['phase'] !== 'question' || $index !== (int)$r['question_index'] || microtime(true) >= lq_deadline($r)) throw new DomainException('Spørsmålet er stengt.');
-        $q = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'][$index];
-        [$answer, $points] = lq_grade($q, $input['answer'] ?? null);
+        $receivedAt = microtime(true);
+        if ($r['phase'] !== 'question' || $index !== (int)$r['question_index'] || $receivedAt >= lq_deadline($r)) throw new DomainException('Spørsmålet er stengt.');
+        $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+        $q = $content['questions'][$index];
+        [$answer, $grade] = lq_grade($q, $input['answer'] ?? null);
+        $points = lq_points($grade, $content['scoring'] ?? 'fixed', $q['seconds'], lq_deadline($r) - $receivedAt);
         lq_query($db, 'INSERT INTO lq_answers (room_id, player_id, question_index, answer, points) VALUES (?, ?, ?, ?, ?)', [$r['id'], $p['id'], $index, json_encode($answer, JSON_THROW_ON_ERROR), $points]);
         lq_advance_locked($db, $r);
         return ['accepted' => true];
@@ -216,6 +227,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
     $revealed = in_array($r['phase'], ['reveal', 'leaderboard', 'countdown', 'finished'], true);
     $states = ['lobby' => 'LOBBY', 'question' => 'QUESTION_ACTIVE', 'reveal' => 'QUESTION_RESULTS', 'leaderboard' => 'LEADERBOARD', 'countdown' => 'COUNTDOWN', 'finished' => 'QUIZ_FINISHED'];
     $state = ['room' => $room, 'title' => $content['title'], 'phase' => $r['phase'], 'index' => $index,
+        'scoring' => $content['scoring'] ?? 'fixed',
         'state' => $states[$r['phase']], 'countdown_end' => $r['phase'] === 'countdown' ? lq_deadline($r) : null,
         'version' => (int)$r['version'], 'deadline' => lq_deadline($r), 'now' => microtime(true), 'total' => count($content['questions']),
         'players' => $players, 'answers' => $answers];
@@ -239,9 +251,10 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
         $cq = $content['questions'][$index]; $counts = array_fill(0, count($cq['options']), 0); $correct = 0;
         $rows = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchAll();
         foreach ($rows as $row) {
-            if ((int)$row['points'] > 0) $correct++;
+            $submitted = json_decode($row['answer'], true, 8, JSON_THROW_ON_ERROR);
+            if (lq_grade($cq, $submitted)[1] > 0) $correct++;
             if ($cq['type'] === 'text') continue;
-            foreach (json_decode($row['answer'], true, 8, JSON_THROW_ON_ERROR) as $i) if (isset($counts[$i])) $counts[$i]++;
+            foreach ($submitted as $i) if (isset($counts[$i])) $counts[$i]++;
         }
         $state['distribution'] = ['counts' => $counts, 'correct' => $correct, 'answered' => count($rows)];
     }

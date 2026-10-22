@@ -130,7 +130,6 @@
         select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; changed(); renderQuestions();}; typeLabel.append(select);
         const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
         card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
-        makeCodeEditor(codeField.querySelector('textarea'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
         upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await api('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
         imageLabel.append(upload);card.append(imageLabel);
@@ -148,6 +147,7 @@
         const preview=el('div',undefined,'preview');
         card.append(group(button('Forhåndsvis',()=>{preview.replaceChildren();let normalized=q.youtube; if(normalized){try{const u=new URL(normalized);normalized=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){}if(!/^[\w-]{11}$/.test(normalized))throw new Error('Kontroller YouTube-lenken.');}void content({...q,youtube:normalized},preview);q.options.forEach((o,i)=>preview.append(rich((i+1)+'. '+o)));},'secondary'),button('Fjern spørsmål',()=>{if(model.questions.length===1)throw new Error('Quizen trenger minst ett spørsmål.');model.questions.splice(index,1);changed();renderQuestions();},'quiet')),preview);
         list.append(card);
+        makeCodeEditor(codeField.querySelector('textarea'));
       });
     }
     app.append(button('＋ Legg til spørsmål',()=>{if(model.questions.length>=50)throw new Error('Maks 50 spørsmål.');model.questions.push(blankQuestion());changed();renderQuestions();}));renderQuestions();changed();

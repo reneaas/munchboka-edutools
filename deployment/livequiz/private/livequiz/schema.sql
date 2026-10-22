@@ -1,0 +1,48 @@
+CREATE TABLE IF NOT EXISTS lq_quizzes (
+ id CHAR(32) CHARACTER SET ascii PRIMARY KEY,
+ owner_id BIGINT UNSIGNED NOT NULL,
+ title VARCHAR(180) NOT NULL,
+ content MEDIUMTEXT NOT NULL,
+ revision INT NOT NULL DEFAULT 1,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ INDEX lq_owner (owner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS lq_rooms (
+ id CHAR(32) CHARACTER SET ascii PRIMARY KEY,
+ pin CHAR(6) CHARACTER SET ascii NOT NULL UNIQUE,
+ owner_id BIGINT UNSIGNED NOT NULL,
+ content MEDIUMTEXT NOT NULL,
+ phase VARCHAR(12) NOT NULL DEFAULT 'lobby',
+ question_index INT NOT NULL DEFAULT -1,
+ version INT NOT NULL DEFAULT 1,
+ deadline BIGINT NOT NULL DEFAULT 0,
+ expires_at BIGINT NOT NULL,
+ INDEX lq_room_owner (owner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS lq_players (
+ id CHAR(32) CHARACTER SET ascii PRIMARY KEY,
+ room_id CHAR(32) CHARACTER SET ascii NOT NULL,
+ nickname VARCHAR(80) NOT NULL,
+ token_hash CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE,
+ INDEX lq_player_room (room_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS lq_answers (
+ room_id CHAR(32) CHARACTER SET ascii NOT NULL,
+ player_id CHAR(32) CHARACTER SET ascii NOT NULL,
+ question_index INT NOT NULL,
+ answer TEXT NOT NULL,
+ points INT NOT NULL,
+ PRIMARY KEY (room_id, player_id, question_index)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS lq_login (
+    email VARCHAR(254) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    challenge CHAR(64) CHARACTER SET ascii NULL,
+    code_hash VARCHAR(255) NULL,
+    expires_at BIGINT NOT NULL DEFAULT 0,
+    attempts INT NOT NULL DEFAULT 0,
+    sent_at BIGINT NOT NULL DEFAULT 0,
+    window_at BIGINT NOT NULL DEFAULT 0,
+    send_count INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

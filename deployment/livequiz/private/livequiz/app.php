@@ -1,0 +1,208 @@
+<?php
+declare(strict_types=1);
+// Deployed beside the existing private Jeopardy application, not its credentials.
+if (!function_exists('jp_db')) require __DIR__ . '/../app.php';
+function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
+    $s = $db->prepare($sql); $s->execute($args); return $s;
+}
+function lq_transaction(PDO $db, callable $fn): mixed {
+    $db->beginTransaction();
+    try { $r = $fn(); $db->commit(); return $r; }
+    catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack(); throw $e; }
+}
+function lq_id(mixed $id): string {
+    if (!is_string($id) || !preg_match('/^[a-f0-9]{32}$/D', $id)) throw new DomainException('Ugyldig ID.');
+    return $id;
+}
+function lq_youtube(string $s): string {
+    if ($s === '' || preg_match('/^[a-zA-Z0-9_-]{11}$/D', $s)) return $s;
+    $u = parse_url($s);
+    if (!$u || !in_array($u['scheme'] ?? '', ['https', 'http'], true)) throw new DomainException('Ugyldig YouTube-lenke.');
+    $host = strtolower($u['host'] ?? ''); $id = '';
+    if ($host === 'youtu.be') $id = trim($u['path'] ?? '', '/');
+    if (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+        parse_str($u['query'] ?? '', $params);
+        $id = $params['v'] ?? '';
+        if (preg_match('~^/(?:embed|shorts)/([a-zA-Z0-9_-]{11})/?$~D', $u['path'] ?? '', $m)) $id = $m[1];
+    }
+    if (!is_string($id) || !preg_match('/^[a-zA-Z0-9_-]{11}$/D', $id)) throw new DomainException('Ugyldig YouTube-lenke.');
+    return $id;
+}
+function lq_validate(PDO $db, int $uid, mixed $data): array {
+    if (!is_array($data)) throw new DomainException('Ugyldig quiz.');
+    $title = jp_text($data['title'] ?? '', 180); $questions = $data['questions'] ?? null;
+    if ($title === '' || !is_array($questions) || !array_is_list($questions) || count($questions) < 1 || count($questions) > 50) throw new DomainException('Gi quizen en tittel og 1–50 spørsmål.');
+    $out = ['title' => $title, 'questions' => []];
+    foreach ($questions as $q) {
+        if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text'], true)) throw new DomainException('Ugyldig spørsmålstype.');
+        $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => jp_text($q['code'] ?? '', 8000),
+            'youtube' => lq_youtube(jp_text($q['youtube'] ?? '', 500)), 'image' => null];
+        $seconds = $q['seconds'] ?? 30;
+        if (!is_int($seconds) || $seconds < 5 || $seconds > 600) throw new DomainException('Velg 5–600 sekunder.');
+        $c['seconds'] = $seconds;
+        if (($q['image'] ?? null) !== null) {
+            if (!is_array($q['image'])) throw new DomainException('Ugyldig bilde.');
+            $id = lq_id($q['image']['id'] ?? null); jp_media($db, $id, $uid, false);
+            $alt = jp_text($q['image']['alt'] ?? '', 500);
+            if ($alt === '') throw new DomainException('Skriv en bildebeskrivelse.');
+            $c['image'] = ['id' => $id, 'alt' => $alt];
+        }
+        if ($c['prompt'] === '' && $c['code'] === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');
+        $c['options'] = []; $c['correct'] = []; $c['accepted'] = [];
+        if ($c['type'] === 'text') {
+            $a = $q['accepted'] ?? null;
+            if (!is_array($a) || !array_is_list($a) || count($a) < 1 || count($a) > 20) throw new DomainException('Legg til 1–20 godkjente svar.');
+            foreach ($a as $v) { $v = jp_text($v, 500); if ($v === '') throw new DomainException('Godkjente svar kan ikke være tomme.'); $c['accepted'][] = $v; }
+        } else {
+            $opts = $q['options'] ?? null; $correct = $q['correct'] ?? null;
+            if (!is_array($opts) || !array_is_list($opts) || count($opts) < 2 || count($opts) > 6 || !is_array($correct) || !array_is_list($correct) || !$correct) throw new DomainException('Legg til 2–6 alternativer og marker fasit.');
+            foreach ($opts as $v) { $v = jp_text($v, 1000); if ($v === '') throw new DomainException('Svaralternativer kan ikke være tomme.'); $c['options'][] = $v; }
+            foreach ($correct as $v) if (!is_int($v) || $v < 0 || $v >= count($opts)) throw new DomainException('Ugyldig fasit.');
+            $c['correct'] = array_values(array_unique($correct)); sort($c['correct']);
+            if ($c['type'] === 'single' && count($c['correct']) !== 1) throw new DomainException('Velg nøyaktig ett riktig alternativ.');
+        }
+        $out['questions'][] = $c;
+    }
+    return $out;
+}
+function lq_quiz(PDO $db, int $uid, string $id): array {
+    $r = lq_query($db, 'SELECT * FROM lq_quizzes WHERE id = ? AND owner_id = ?', [lq_id($id), $uid])->fetch();
+    if (!$r) throw new DomainException('Quizen finnes ikke på din konto.');
+    return $r;
+}
+function lq_save(PDO $db, int $uid, array $input): array {
+    $content = lq_validate($db, $uid, $input['content'] ?? null);
+    return lq_transaction($db, function () use ($db, $uid, $input, $content) {
+        $id = $input['id'] ?? ''; $rev = 1; $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        if ($id === '') {
+            $id = bin2hex(random_bytes(16));
+            lq_query($db, 'INSERT INTO lq_quizzes (id, owner_id, title, content, revision) VALUES (?, ?, ?, ?, 1)', [$id, $uid, $content['title'], $json]);
+        } else {
+            $r = lq_query($db, 'SELECT revision FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetchColumn();
+            if ($r === false || (int)$r !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
+            $rev = (int)$r + 1;
+            lq_query($db, 'UPDATE lq_quizzes SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$content['title'], $json, $rev, $id]);
+        }
+        return ['id' => $id, 'revision' => $rev];
+    });
+}
+function lq_create_room(PDO $db, int $uid, string $id): array {
+    $quiz = lq_quiz($db, $uid, $id);
+    for ($attempt = 0; $attempt < 10; $attempt++) {
+        $room = bin2hex(random_bytes(16)); $pin = (string)random_int(100000, 999999);
+        try {
+            lq_query($db, 'INSERT INTO lq_rooms (id, pin, owner_id, content, expires_at) VALUES (?, ?, ?, ?, ?)', [$room, $pin, $uid, $quiz['content'], time() + 21600]);
+            return ['room' => $room, 'pin' => $pin];
+        } catch (PDOException $e) { if ($e->getCode() !== '23000') throw $e; }
+    }
+    throw new DomainException('Kunne ikke lage spillkode. Prøv igjen.');
+}
+function lq_room(PDO $db, string $id, bool $lock = false): array {
+    $r = lq_query($db, 'SELECT * FROM lq_rooms WHERE id = ?' . ($lock ? ' FOR UPDATE' : ''), [lq_id($id)])->fetch();
+    if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillet finnes ikke eller er utløpt.');
+    return $r;
+}
+function lq_join(PDO $db, string $pin, string $name, string $token): array {
+    if (!preg_match('/^[0-9]{6}$/D', $pin) || !preg_match('/^[a-f0-9]{64}$/D', $token)) throw new DomainException('Skriv en gyldig spillkode.');
+    $name = jp_text($name, 80); if ($name === '') throw new DomainException('Skriv et kallenavn.');
+    return lq_transaction($db, function () use ($db, $pin, $name, $token) {
+        $r = lq_query($db, 'SELECT * FROM lq_rooms WHERE pin = ? FOR UPDATE', [$pin])->fetch();
+        if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillkoden er ugyldig eller utløpt.');
+        $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
+        if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
+        if ($old || $r['phase'] !== 'lobby') throw new DomainException('Spillet er startet. Be læreren starte et nytt spill.');
+        if ((int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
+        lq_query($db, 'INSERT INTO lq_players (id, room_id, nickname, token_hash) VALUES (?, ?, ?, ?)', [bin2hex(random_bytes(16)), $r['id'], $name, hash('sha256', $token)]);
+        return ['room' => $r['id']];
+    });
+}
+function lq_player(PDO $db, string $room, string $token): array {
+    $r = lq_query($db, 'SELECT * FROM lq_players WHERE room_id = ? AND token_hash = ?', [$room, hash('sha256', $token)])->fetch();
+    if (!$r) throw new DomainException('Bli med i spillet først.'); return $r;
+}
+function lq_control(PDO $db, int $uid, array $input): array {
+    return lq_transaction($db, function () use ($db, $uid, $input) {
+        $r = lq_room($db, $input['room'] ?? '', true);
+        if ((int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
+        if ((int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
+        $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
+        $qs = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'];
+        if ($cmd === 'next' && in_array($phase, ['lobby', 'reveal'], true)) {
+            $index++; $phase = $index < count($qs) ? 'question' : 'finished';
+            if ($phase === 'question') $deadline = time() + $qs[$index]['seconds'];
+        } elseif ($cmd === 'reveal' && $phase === 'question') { $phase = 'reveal'; }
+        elseif ($cmd === 'finish' && $phase !== 'finished') { $phase = 'finished'; }
+        else throw new DomainException('Denne handlingen er ikke tilgjengelig nå.');
+        lq_query($db, 'UPDATE lq_rooms SET phase = ?, question_index = ?, deadline = ?, version = version + 1 WHERE id = ?', [$phase, $index, $deadline, $r['id']]);
+        return ['ok' => true];
+    });
+}
+function lq_normalize_answer(string $s): string {
+    $s = preg_replace('/\s+/u', ' ', trim($s));
+    return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower(strtr($s, ['Æ'=>'æ','Ø'=>'ø','Å'=>'å']));
+}
+function lq_grade(array $q, mixed $answer): array {
+    if ($q['type'] === 'text') {
+        $answer = jp_text($answer, 500);
+        if ($answer === '') throw new DomainException('Skriv et svar.');
+        return [$answer, in_array(lq_normalize_answer($answer), array_map('lq_normalize_answer', $q['accepted']), true) ? 1000 : 0];
+    }
+    if (!is_array($answer) || !array_is_list($answer) || !$answer || count($answer) > 6) throw new DomainException('Velg et svar.');
+    foreach ($answer as $v) if (!is_int($v) || $v < 0 || $v >= count($q['options'])) throw new DomainException('Ugyldig svaralternativ.');
+    $answer = array_values(array_unique($answer)); sort($answer);
+    if ($q['type'] === 'single' && count($answer) !== 1) throw new DomainException('Velg ett alternativ.');
+    return [$answer, $answer === $q['correct'] ? 1000 : 0];
+}
+function lq_answer(PDO $db, array $input, string $token): array {
+    return lq_transaction($db, function () use ($db, $input, $token) {
+        $r = lq_room($db, $input['room'] ?? '', true); $p = lq_player($db, $r['id'], $token);
+        $index = $input['index'] ?? null;
+        if (!is_int($index) || $index < 0) throw new DomainException('Ugyldig spørsmål.');
+        // Retries return the original acknowledgement, without leaking points before reveal.
+        if (lq_query($db, 'SELECT 1 FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = ?', [$r['id'], $p['id'], $index])->fetchColumn()) return ['accepted' => true];
+        if ($r['phase'] !== 'question' || $index !== (int)$r['question_index'] || time() >= (int)$r['deadline']) throw new DomainException('Spørsmålet er stengt.');
+        $q = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR)['questions'][$index];
+        [$answer, $points] = lq_grade($q, $input['answer'] ?? null);
+        lq_query($db, 'INSERT INTO lq_answers (room_id, player_id, question_index, answer, points) VALUES (?, ?, ?, ?, ?)', [$r['id'], $p['id'], $index, json_encode($answer, JSON_THROW_ON_ERROR), $points]);
+        return ['accepted' => true];
+    });
+}
+function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): array {
+    $r = lq_room($db, $room);
+    if ($host && (int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
+    $p = $host ? null : lq_player($db, $room, $token);
+    $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+    $index = (int)$r['question_index']; $revealed = in_array($r['phase'], ['reveal', 'finished'], true);
+    $state = ['room' => $room, 'title' => $content['title'], 'phase' => $r['phase'], 'index' => $index,
+        'version' => (int)$r['version'], 'deadline' => (int)$r['deadline'], 'now' => time(), 'total' => count($content['questions']),
+        'players' => (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn(),
+        'answers' => (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn()];
+    if ($host) $state['pin'] = $r['pin'];
+    if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
+        $q = $content['questions'][$index];
+        if (!$revealed) unset($q['correct'], $q['accepted']);
+        $state['question'] = $q;
+    }
+    if ($p) {
+        $a = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = ?', [$room, $p['id'], $index])->fetch();
+        $state['submitted'] = (bool)$a;
+        if ($a) $state['answer'] = json_decode($a['answer'], true, 8, JSON_THROW_ON_ERROR);
+        if ($a && $revealed) $state['points'] = (int)$a['points'];
+    }
+    if ($host && $r['phase'] === 'lobby') $state['roster'] = lq_query($db, 'SELECT nickname FROM lq_players WHERE room_id = ? ORDER BY nickname', [$room])->fetchAll(PDO::FETCH_COLUMN);
+    if ($revealed) {
+        $state['leaderboard'] = lq_query($db, 'SELECT p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname LIMIT 60', [$room])->fetchAll();
+    }
+    return $state;
+}
+function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image): array {
+    $r = lq_room($db, $room);
+    if ($host) { if ((int)$r['owner_id'] !== $uid) throw new DomainException('Ingen tilgang.'); }
+    else lq_player($db, $room, $token);
+    $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+    $q = $content['questions'][(int)$r['question_index']] ?? null;
+    if (!in_array($r['phase'], ['question','reveal'], true) || ($q['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');
+    return jp_media($db, lq_id($image), (int)$r['owner_id']);
+}
+
+require_once __DIR__ . '/auth.php';

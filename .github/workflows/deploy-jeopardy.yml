@@ -1,0 +1,55 @@
+name: deploy-jeopardy
+
+# Deploys the Jeopardy maker to jeopardy.munchboka.no (cPanel/Domene.no) via
+# FTPS. dangerous-clean-slate is left off so files already on the server
+# (e.g. jeopardy-private/database.php, never stored in this repo) are never
+# removed; only files present locally are uploaded/overwritten.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deployment/jeopardy/pilot/public/**"
+      - "deployment/jeopardy/pilot/private/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy-public:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy public_html/jeopardy
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: deployment/jeopardy/pilot/public/
+          server-dir: public_html/jeopardy/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.DS_Store
+
+  deploy-private:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy jeopardy-private
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: deployment/jeopardy/pilot/private/
+          server-dir: jeopardy-private/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.DS_Store

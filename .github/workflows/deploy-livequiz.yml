@@ -1,0 +1,56 @@
+name: deploy-livequiz
+
+# Deploys the Livequiz proof of concept to quiz.munchboka.no (cPanel/Domene.no)
+# via FTPS, sharing the same cPanel account as Jeopardy. dangerous-clean-slate
+# is left off so files already on the server (e.g. the existing
+# jeopardy-private/app.php and database.php, never stored in this repo) are
+# never removed; only files present locally are uploaded/overwritten.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deployment/livequiz/public/**"
+      - "deployment/livequiz/private/livequiz/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy-public:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy public_html/quiz
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: deployment/livequiz/public/
+          server-dir: public_html/quiz/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.DS_Store
+
+  deploy-private:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy jeopardy-private/livequiz
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: deployment/livequiz/private/livequiz/
+          server-dir: jeopardy-private/livequiz/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.DS_Store

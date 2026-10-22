@@ -1,0 +1,8 @@
+Options -Indexes
+DirectoryIndex index.php
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://quiz.munchboka.no%{REQUEST_URI} [R=301,L]
+<FilesMatch "(?i)(^error_log$|^php\.ini$|\.(log|sql|zip)$)">
+    Require all denied
+</FilesMatch>

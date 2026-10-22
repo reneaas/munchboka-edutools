@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
  const student = await browser.newContext({viewport:{width:390,height:844}});
  const student2 = await browser.newContext({viewport:{width:390,height:844}});
  const t = await teacher.newPage(), s = await student.newPage(), s2 = await student2.newPage();
- for (const context of [teacher, student, student2]) await context.route('https://www.youtube-nocookie.com/**', route => route.fulfill({body:'<html>Test video</html>',contentType:'text/html'}));
+ for (const context of [teacher, student, student2]) await require('./youtube-stub.cjs')(context);
  const errors=[]; for(const p of [t,s,s2])p.on('pageerror',e=>errors.push(e.message));
  const base=process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8765';
  const currentState=page=>page.evaluate(async()=>{
@@ -167,7 +167,8 @@ const assert = require('node:assert/strict');
  // Automatic embed on question entry, with audible autoplay and no forced captions.
  const video = new URL(await t.locator('iframe').getAttribute('src'));
  assert.equal(video.origin + video.pathname,'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
- assert.equal(video.searchParams.get('autoplay'),'1');
+ assert.equal(video.searchParams.get('autoplay'),'0'); // API starts playback after listeners are ready.
+ assert.equal(await t.evaluate(()=>window.__ytPlayers.at(-1).state),1);
  assert.equal(video.searchParams.get('mute'),'0');
  assert.equal(video.searchParams.get('cc_load_policy'),'0');
  assert.match(await t.locator('iframe').getAttribute('allow'),/autoplay/);
@@ -180,6 +181,9 @@ const assert = require('node:assert/strict');
  await dialog.getByRole('heading',{name:'Fasit',exact:true}).waitFor();
  assert.equal(await t.locator('.active-question-modal').count(),0);
  assert.equal(new URL(await t.locator('iframe').getAttribute('src')).searchParams.get('autoplay'),'0');
+ await t.waitForFunction(()=>window.__ytPlayers.at(-1).ready);
+ assert.equal(await t.evaluate(()=>window.__ytPlayers.at(-1).state),-1);
+ assert.equal(await t.evaluate(()=>window.__ytPlayers.slice(0,-1).every(player=>player.destroyed)),true);
  assert.equal(await t.evaluate(()=>document.activeElement?.textContent),'Fasit');
  assert.equal(await dialog.locator('.chart-row').count(),4);
  assert.equal(await dialog.locator('.chart-row.correct .rich').innerText(),'4');

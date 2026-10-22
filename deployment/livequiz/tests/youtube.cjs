@@ -1,0 +1,46 @@
+const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert = require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
+ try {
+  const context=await browser.newContext();await require('./youtube-stub.cjs')(context);
+  const page=await context.newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8765');
+  await page.waitForFunction(()=>typeof window.quizYouTube==='function');
+  await page.clock.install();await page.clock.pauseAt(new Date());
+  await page.evaluate(async()=>{window.__ytBlocked=true;await window.quizYouTube(document.body,'dQw4w9WgXcQ');});
+  await page.getByText('Nettleseren blokkerte automatisk avspilling. Trykk Spill av.',{exact:true}).waitFor();
+  const visible=()=>page.locator('.quiz-video-screen').evaluate(el=>el.classList.contains('video-visible'));
+  assert.equal(await visible(),false);
+  await page.clock.fastForward(6000);assert.equal(await visible(),false);
+  await page.evaluate(()=>window.__ytBlocked=false);
+  await page.getByRole('button',{name:'Spill av',exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.__ytPlayers[0].muted),false);
+  await page.clock.fastForward(3999);assert.equal(await visible(),false);
+  await page.clock.fastForward(1);assert.equal(await visible(),true);
+  assert.equal(await page.locator('iframe').evaluate(el=>getComputedStyle(el).pointerEvents),'none');
+  assert.equal(await page.locator('iframe').getAttribute('tabindex'),'-1');
+  await page.getByRole('button',{name:'Pause',exact:true}).click();assert.equal(await visible(),false);
+  await page.getByRole('button',{name:'Spill av',exact:true}).click();
+  await page.clock.fastForward(3000);
+  await page.evaluate(()=>window.__ytPlayers[0].emit(3));
+  await page.clock.fastForward(5000);assert.equal(await visible(),false);
+  await page.evaluate(()=>window.__ytPlayers[0].emit(1));
+  await page.clock.fastForward(3999);assert.equal(await visible(),false);
+  await page.clock.fastForward(1);assert.equal(await visible(),true);
+  await page.evaluate(()=>window.__ytPlayers[0].emit(0));assert.equal(await visible(),false);
+  await page.getByRole('button',{name:'Spill igjen',exact:true}).click();
+  await page.evaluate(()=>document.querySelector('.quiz-video').remove());
+  await page.clock.fastForward(5000);
+  assert.equal(await page.evaluate(()=>window.__ytPlayers[0].destroyed),true);
+  await page.evaluate(async()=>{await window.quizYouTube(document.body,'dQw4w9WgXcQ',false);});
+  await page.getByRole('button',{name:'Spill av',exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.__ytPlayers.at(-1).state),-1);
+  await page.evaluate(()=>window.__ytPlayers.at(-1).events.onError({data:100}));
+  assert.equal(await page.getByRole('button',{name:'Spill av',exact:true}).isDisabled(),true);
+  await page.getByText('Videoen kunne ikke spilles av.',{exact:false}).waitFor();
+  assert.equal(await visible(),false);
+  assert.deepEqual(errors,[]);
+  console.log('YouTube presentation tests passed: blocked autoplay, audible play, 4-second reveal, pointer/keyboard isolation, pause/end, buffering reset, removal cleanup, results without autoplay and playback error. API mocked; actual YouTube title disappearance is not guaranteed.');
+ } finally {await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});

@@ -79,16 +79,9 @@
       try { const blob = await api('media', undefined, {...context.query, image: q.image.id}, context.token || '', true); const url = URL.createObjectURL(blob); img.onload = () => URL.revokeObjectURL(url); img.src = url; }
       catch (_) { img.replaceWith(el('p', 'Bildet kunne ikke lastes.')); }
     }
-    if (q.youtube) {
-      const frame = el('iframe'); frame.title = 'YouTube-video';
-      // Request sound on; browsers may require pressing Play. YouTube may still apply
-      // viewer caption preferences; showinfo/modestbranding no longer hide titles.
-      const options = new URLSearchParams({autoplay: context.autoplay === false ? '0' : '1', mute: '0', playsinline: '1', cc_load_policy: '0', rel: '0'});
-      frame.src = 'https://www.youtube-nocookie.com/embed/' + q.youtube + '?' + options;
-      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; frame.allowFullscreen = true;
-      target.append(frame, el('p', 'Videoen starter med lyd. Trykk Spill av hvis nettleseren blokkerer automatisk avspilling.', 'hint'));
-    }
+    if (q.youtube) void window.quizYouTube(target, q.youtube, context.autoplay !== false);
   }
+
   function home() {
     app.replaceChildren(el('p', 'LÆR SAMMEN', 'eyebrow'), el('h1', 'Klar for neste spørsmål?'), el('p', 'Bli med i lærerens quiz. Du trenger bare spillkoden og et kallenavn.', 'intro'));
     const form = el('form', undefined, 'card join'); let pin = params.get('pin') || '', name = '';

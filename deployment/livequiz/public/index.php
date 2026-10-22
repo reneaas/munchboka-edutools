@@ -6,7 +6,7 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: DENY');
 header('X-Robots-Tag: noindex, nofollow');
-header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://www.youtube.com/iframe_api https://www.youtube.com/s/player/; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
 $local = PHP_SAPI === 'cli-server' && getenv('LIVEQUIZ_LOCAL') === '1';
 if (!$local && ($_SERVER['HTTPS'] ?? '') !== 'on') { header('Location: https://quiz.munchboka.no/', true, 302); exit; }
 ini_set('session.use_strict_mode', '1');
@@ -83,6 +83,6 @@ session_write_close();
 <!doctype html>
 <html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Livequiz · Munchboka</title>
 <link rel="stylesheet" href="vendor/katex/katex.min.css"><link rel="stylesheet" href="vendor/codemirror/lib/codemirror.min.css"><link rel="stylesheet" href="app.css?v=<?= filemtime(__DIR__.'/app.css') ?>">
-<script defer src="vendor/katex/katex.min.js"></script><script defer src="math.js"></script><script defer src="vendor/qrcode.js"></script><script defer src="vendor/codemirror/lib/codemirror.min.js"></script><script defer src="vendor/codemirror/mode/python/python.min.js"></script><script defer src="code.js"></script><script defer src="app.js?v=<?= filemtime(__DIR__.'/app.js') ?>"></script></head>
+<script defer src="vendor/katex/katex.min.js"></script><script defer src="math.js"></script><script defer src="vendor/qrcode.js"></script><script defer src="vendor/codemirror/lib/codemirror.min.js"></script><script defer src="vendor/codemirror/mode/python/python.min.js"></script><script defer src="code.js"></script><script defer src="youtube.js?v=<?= filemtime(__DIR__.'/youtube.js') ?>"></script><script defer src="app.js?v=<?= filemtime(__DIR__.'/app.js') ?>"></script></head>
 <body><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>
 <main><div id="notice" role="alert" hidden></div><div id="app"><p>Laster …</p></div></main><footer>Spørsmål, samtale og læring · En klasse om gangen</footer></body></html>

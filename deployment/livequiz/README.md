@@ -16,7 +16,13 @@ Deployment status is recorded at the end of this file.
 - Text, safe LaTeX via existing local KaTeX assets, literal code blocks, uploaded
   images via existing private Jeopardy media storage, and automatically loaded YouTube
   embeds. Active questions request autoplay with sound; results do not restart playback.
-  Browser settings can block autoplay; player controls remain available for play/sound.
+  Video fades in after four uninterrupted seconds in the YouTube PLAYING state.
+  Buffering, pause and end hide it immediately and reset the reveal timer. Pointer
+  and keyboard interaction with the iframe are disabled; separate Play/Pause controls
+  provide a fallback when audible autoplay is blocked. Removed players are destroyed.
+  This is a best-effort timing workaround: YouTube offers no title-visibility event,
+  and four seconds does not guarantee that titles/captions will be absent. Hiding
+  playback is not compliant with YouTube's visible-player requirements.
   Captions are requested off, but YouTube may honor viewer preferences. YouTube no
   longer supports hiding titles, and subtitles burned into the video image cannot be removed. Code is displayed, not executed. YouTube is an external service; school
   network and video permissions determine actual playback. Projector/player video
@@ -200,6 +206,11 @@ In another terminal run `node tests/browser.cjs` with Playwright resolvable, or 
 `PLAYWRIGHT_MODULE` to its installed module path. `CHROMIUM_PATH` optionally selects
 an existing browser executable. The fixture uses an isolated database and a
 **test-only login page**. Never upload the fixture or tests to hosting.
+
+`node tests/youtube.cjs` uses the same fixture and environment options to check
+four-second reveal timing, blocked autoplay, buffering, pause/end, errors and
+player cleanup. Both browser suites mock the external YouTube API; they do not
+verify actual media playback, title timing or YouTube policy compliance.
 
 The browser test creates a quiz, uploads an image, checks math/code display,
 generates PIN/QR, joins through a separate mobile-sized browser context, answers,

@@ -167,3 +167,5 @@ cython_debug/
 !src/munchboka_edutools/static/vendor/three/build/**
 !src/munchboka_edutools/static/vendor/katex/dist/
 !src/munchboka_edutools/static/vendor/katex/dist/**
+!deployment/livequiz/public/vendor/codemirror/lib/
+!deployment/livequiz/public/vendor/codemirror/lib/**

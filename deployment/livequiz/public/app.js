@@ -5,8 +5,8 @@
   const params = new URLSearchParams(location.search);
   let csrf = '', uid = 0, pending = false, dirty = false, uploads = 0;
   const el = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
-  function error(e) { notice.textContent = e.message || String(e); notice.hidden = false; }
-  function clearError() { notice.hidden = true; }
+  function error(e) { const target = document.querySelector('.question-modal .modal-notice') || notice; target.textContent = e.message || String(e); target.hidden = false; }
+  function clearError() { notice.hidden = true; const target = document.querySelector('.question-modal .modal-notice'); if (target) target.hidden = true; }
   function button(label, fn, cls = '') {
     const b = el('button', label, cls); b.type = 'button';
     b.onclick = async () => { b.disabled = true; clearError(); try { await fn(); } catch (e) { error(e); } finally { b.disabled = false; } }; return b;
@@ -195,7 +195,7 @@
     function updateClock(){if(!state)return;const left=Math.max(0,state.deadline-(Date.now()/1000+offset));const txt=state.phase==='question'?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';timer.textContent=txt;if(hostClock)hostClock.textContent=txt;if(submit)submit.disabled=submitting||!online||Date.now()-lastPoll>5000||left<=0||state.submitted;}
     setInterval(updateClock,250);
     let overlay=null;
-    const closePopup=()=>{if(overlay){overlay.remove();overlay=null;}};
+    const closePopup=()=>{if(overlay){if(overlay instanceof HTMLDialogElement){timer.before(connection,meta);results.before(controls);overlay.close();}overlay.remove();overlay=null;}};
     function popup(build){closePopup();overlay=el('div',undefined,'overlay');const card=el('div',undefined,'popup-card');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');overlay.append(card);build(card);document.body.append(overlay);const first=card.querySelector('button');if(first)first.focus();}
     function showAnswer(s,order){popup(card=>card.append(el('h2','Fasit'),answerChart(s,order),button('Vis leaderboard',()=>showBoard(s,order))));}
     function showBoard(s,order){popup(card=>{const last=s.index+1>=s.total;card.append(el('h2','Leaderboard'),leaderboardList((s.leaderboard||[]).slice(0,5)),button(last?'Vis sluttresultat':'Neste spørsmål',last?control('next'):()=>countdownThenNext(s,order)));});}
@@ -212,6 +212,13 @@
       else card.append(optionCards(q,order,s.phase==='reveal'));
       return card;
     }
+    function showQuestion(s,order){
+      closePopup();overlay=el('dialog',undefined,'question-modal');
+      const card=questionCard(s,order),title=card.querySelector('.qcard-head'),footer=el('div',undefined,'question-modal-footer'),message=el('p',undefined,'modal-notice');
+      title.id='host-question-title';title.tabIndex=-1;overlay.setAttribute('aria-labelledby',title.id);message.hidden=true;message.setAttribute('role','alert');
+      overlay.addEventListener('cancel',event=>event.preventDefault());
+      footer.append(meta,connection,message,controls);overlay.append(card,footer);document.body.append(overlay);overlay.showModal();title.focus();
+    }
     function render(s){
       state=s;heading.textContent=s.title;meta.textContent=`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';stage.querySelectorAll('form input').forEach(n=>{n.disabled=true;});}
@@ -224,8 +231,9 @@
         if(!host)void content(s.question,stage,{query,token});
         const order=s.question.options.length?optionOrder(s.question.options.length,id+':'+s.index):[];
         if(host){
-          stage.classList.add('stage-flush');stage.append(questionCard(s,order));
-          if(s.phase==='question')controls.append(button('Vis fasit nå',control('reveal'),'secondary'));
+          stage.classList.add('stage-flush');
+          if(s.phase==='question'){controls.append(button('Vis fasit nå',control('reveal'),'secondary'));showQuestion(s,order);}
+          else stage.append(questionCard(s,order));
         }
         else if(s.phase==='question'){
           const form=el('form');selection=s.answer??(s.question.type==='text'?'':[]);

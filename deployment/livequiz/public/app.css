@@ -3,6 +3,16 @@
 .question-editor .CodeMirror{margin-top:8px}
 .CodeMirror{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
 .stage-flush{padding:0;border:0;background:none;box-shadow:none}
+.question-modal{width:min(1100px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;border:1px solid #d1e0e6;border-radius:10px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #0006;overscroll-behavior:contain}
+.question-modal::backdrop{background:rgba(17,40,58,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.question-modal .qcard{border:0;border-radius:0;box-shadow:none}
+.question-modal .option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.question-modal-footer{padding:0 24px 24px}
+.question-modal-footer .hint{margin:6px 0}
+.question-modal-footer .actions{margin-top:16px;flex-wrap:wrap}
+.modal-notice{color:#922c2c}
+body:has(.question-modal[open]){overflow:hidden}
+@media(max-width:600px){.question-modal{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}.question-modal .qcard-head{flex-wrap:wrap}.question-modal .qcard-body{padding:18px 16px 6px}.question-modal .qcard-body>.rich:first-child{font-size:22px}.question-modal .option-grid{padding:16px;gap:8px}.question-modal .option-card{font-size:16px;padding:10px;gap:8px}.question-modal-footer{padding:0 16px 18px}}
 .qcard{overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 8px 30px #17332e33}
 .qcard-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:#143f55;color:#fff;font-weight:700}
 .qcard-timer{font-size:22px;font-variant-numeric:tabular-nums}

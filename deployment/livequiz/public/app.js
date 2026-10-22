@@ -28,9 +28,18 @@
     if (!response.ok) throw new Error(result.error || 'Forespørselen mislyktes.'); return result;
   }
   function rich(text) { const n = el('div', text, 'rich'); window.renderMathInElement(n); return n; }
+  function optionOrder(n, seed) {
+    let a = 1779033703 ^ seed.length;
+    for (let i = 0; i < seed.length; i++) { a = Math.imul(a ^ seed.charCodeAt(i), 3432918353); a = a << 13 | a >>> 19; }
+    a >>>= 0;
+    const rand = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const order = Array.from({length: n}, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    return order;
+  }
   async function content(q, target, context = {}) {
     target.append(rich(q.prompt));
-    if (q.code) { const pre = el('pre'); pre.append(el('code', q.code)); target.append(pre); }
+    if (q.code) { const holder = el('div', undefined, 'code-display'); target.append(holder); renderCodeBlock(holder, q.code); }
     if (q.image) {
       const img = el('img', undefined, 'question-image'); img.alt = q.image.alt; target.append(img);
       try { const blob = await api('media', undefined, {...context.query, image: q.image.id}, context.token || '', true); const url = URL.createObjectURL(blob); img.onload = () => URL.revokeObjectURL(url); img.src = url; }
@@ -119,7 +128,9 @@
         const typeLabel = el('label','Svartype'), select = el('select');
         for (const [value,label] of [['single','Ett riktig alternativ'],['multi','Flere riktige alternativer'],['text','Skriv svaret']]) { const o = el('option',label); o.value=value; select.append(o); }
         select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; changed(); renderQuestions();}; typeLabel.append(select);
-        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea'), field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
+        const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
+        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
+        makeCodeEditor(codeField.querySelector('textarea'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
         upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await api('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
         imageLabel.append(upload);card.append(imageLabel);
@@ -161,11 +172,12 @@
       } else if(s.phase==='finished'){stage.append(el('h2','Takk for spillet!'),el('p','Se resultatene og snakk sammen om spørsmålene.'));}
       else {
         void content(s.question,stage,{query,token});
-        if(host){s.question.options.forEach((v,i)=>stage.append(rich((i+1)+'. '+v)));controls.append(button(s.phase==='question'?'Vis fasit / steng svar':s.index+1<s.total?'Neste spørsmål':'Vis sluttresultat',control(s.phase==='question'?'reveal':'next')));}
+        const order=s.question.options.length?optionOrder(s.question.options.length,id+':'+s.index):[];
+        if(host){order.forEach((orig,pos)=>stage.append(rich((pos+1)+'. '+s.question.options[orig])));controls.append(button(s.phase==='question'?'Vis fasit / steng svar':s.index+1<s.total?'Neste spørsmål':'Vis sluttresultat',control(s.phase==='question'?'reveal':'next')));}
         else if(s.phase==='question'){
           const form=el('form');selection=s.answer??(s.question.type==='text'?'':[]);
           if(s.question.type==='text'){form.append(field('Ditt svar',selection,v=>selection=v));}
-          else s.question.options.forEach((v,i)=>{const label=el('label',undefined,'answer-option'),input=el('input');input.type=s.question.type==='single'?'radio':'checkbox';input.name='answer';input.checked=selection.includes(i);input.onchange=()=>{selection=s.question.type==='single'?[i]:input.checked?[...selection,i]:selection.filter(x=>x!==i);};label.append(input,rich(v));form.append(label);});
+          else order.forEach(orig=>{const v=s.question.options[orig];const label=el('label',undefined,'answer-option'),input=el('input');input.type=s.question.type==='single'?'radio':'checkbox';input.name='answer';input.checked=selection.includes(orig);input.onchange=()=>{selection=s.question.type==='single'?[orig]:input.checked?[...selection,orig]:selection.filter(x=>x!==orig);};label.append(input,rich(v));form.append(label);});
           submit=el('button','Send svar');submit.type='submit';ack=el('p',s.submitted?'Svaret er mottatt. Vent på læreren.':'','hint');ack.setAttribute('role','status');form.append(submit,ack);
           form.onsubmit=async e=>{e.preventDefault();if(submit.disabled)return;submit.disabled=true;submitting=true;clearError();try{await api('answer',{room:id,index:s.index,answer:selection},{},token);state.submitted=true;form.querySelectorAll('input').forEach(n=>n.disabled=true);ack.textContent='Svaret er mottatt. Vent på læreren.';}catch(err){error(err);}finally{submitting=false;updateClock();}};if(s.submitted)form.querySelectorAll('input').forEach(n=>n.disabled=true);stage.append(form);
         }

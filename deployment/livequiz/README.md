@@ -149,3 +149,9 @@ MIT license bundled in `vendor/LICENSE`, obtained from the version-pinned npm
 package via jsDelivr. Upstream: https://github.com/kazuhikoarase/qrcode-generator.
 No external QR service receives the join URL. KaTeX and math rendering are loaded
 from the quiz domain's own bundled local files.
+
+`public/vendor/codemirror/`: CodeMirror 5.65.2 core and Python mode, MIT license
+bundled in `vendor/codemirror/LICENSE`, same version already used by the
+`interactive-code` directive elsewhere in this project. `code.js` wires it into
+the question editor's code field (syntax highlighting, auto-indent) and question
+display (read-only, same highlighting). Code is never executed, only displayed.

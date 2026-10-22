@@ -92,7 +92,7 @@
     if (!data.quizzes.length) app.append(el('p', 'Din første quiz starter med et godt spørsmål.'));
     const grid = el('div', undefined, 'library');
     for (const q of data.quizzes) {
-      const card = el('article', undefined, 'card'); card.append(el('h2', q.title), el('p', 'Versjon ' + q.revision), group(link('Rediger', '?edit=' + q.id), button('Start spill', async () => { const r = await api('create', {id:q.id}); location.href = '?host=' + r.room; }))); grid.append(card);
+      const card = el('article', undefined, 'card'); card.append(el('h2', q.title), el('p', 'Versjon ' + q.revision), group(link('Rediger', '?edit=' + q.id), button('Start spill', async () => { const r = await api('create', {id:q.id}); location.href = '?host=' + r.room; }), button('Slett', async () => { if (!confirm('Slette «' + q.title + '»? Dette kan ikke angres.')) return; await api('delete', {id:q.id}); card.remove(); }, 'quiet'))); grid.append(card);
     }
     app.append(grid);
     if (data.rooms.length) {

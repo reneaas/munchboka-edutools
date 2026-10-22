@@ -25,7 +25,7 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','logout'];
+        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
         if ($action === 'join') {
@@ -35,7 +35,7 @@ if ($action !== null) {
         // Release PHP's session lock before polling queries, uploads or room locks.
         if (!in_array($action, ['send','verify','logout'], true)) session_write_close();
         if ($action === 'bootstrap') lq_response(['uid'=>$uid, 'csrf'=>$csrf, 'pending'=>isset($_SESSION['email_pending'])]);
-        $teacherActions = ['library','quiz','save','create','control','upload'];
+        $teacherActions = ['library','quiz','save','create','control','upload','delete'];
         if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
         require getenv('LIVEQUIZ_PRIVATE') ?: '/home/zebfxvix/jeopardy-private/livequiz/app.php';
         $db = jp_db();
@@ -60,6 +60,7 @@ if ($action !== null) {
             case 'library': lq_response(['quizzes'=>lq_query($db, 'SELECT id, title, revision FROM lq_quizzes WHERE owner_id = ? ORDER BY updated_at DESC', [$uid])->fetchAll(), 'rooms'=>lq_query($db, 'SELECT id, pin, phase FROM lq_rooms WHERE owner_id = ? AND expires_at > ? ORDER BY expires_at DESC LIMIT 20', [$uid,time()])->fetchAll()]);
             case 'quiz': $q = lq_quiz($db, $uid, jp_text($_GET['id'] ?? '', 32)); lq_response(['id'=>$q['id'], 'revision'=>(int)$q['revision'], 'content'=>json_decode($q['content'], true, 32, JSON_THROW_ON_ERROR)]);
             case 'save': lq_response(lq_save($db, $uid, $input));
+            case 'delete': lq_response(lq_delete($db, $uid, $input));
             case 'create': lq_response(lq_create_room($db, $uid, jp_text($input['id'] ?? '', 32)));
             case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 6), jp_text($input['name'] ?? '', 80), $token));
             case 'control': lq_response(lq_control($db, $uid, $input));

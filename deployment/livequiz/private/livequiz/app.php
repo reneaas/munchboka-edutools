@@ -86,6 +86,12 @@ function lq_save(PDO $db, int $uid, array $input): array {
         return ['id' => $id, 'revision' => $rev];
     });
 }
+function lq_delete(PDO $db, int $uid, array $input): array {
+    $id = lq_id($input['id'] ?? '');
+    lq_quiz($db, $uid, $id);
+    lq_query($db, 'DELETE FROM lq_quizzes WHERE id = ? AND owner_id = ?', [$id, $uid]);
+    return ['ok' => true];
+}
 function lq_create_room(PDO $db, int $uid, string $id): array {
     $quiz = lq_quiz($db, $uid, $id);
     for ($attempt = 0; $attempt < 10; $attempt++) {

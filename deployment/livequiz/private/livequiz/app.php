@@ -186,11 +186,13 @@ function lq_grade(array $q, mixed $answer): array {
     if ($q['type'] === 'single' && count($answer) !== 1) throw new DomainException('Velg ett alternativ.');
     return [$answer, $answer === $q['correct'] ? 1000 : 0];
 }
-function lq_points(int $grade, string $scoring, int $seconds, float $remaining): int {
+function lq_points(int $grade, string $scoring, int $seconds, float $remaining, bool $hasVideo = false): int {
     if ($grade === 0) return 0;
     if ($scoring !== 'speed') return 1000;
-    // Server time only: 1000 at the start, 500 halfway, 0 at the deadline.
-    return (int)round(1000 * max(0.0, min(1.0, $remaining / $seconds)));
+    // Video questions keep full points for the first four seconds. The answer
+    // deadline stays unchanged; the remaining interval decays linearly to zero.
+    $scoredSeconds = max(1, $seconds - ($hasVideo ? 4 : 0));
+    return (int)round(1000 * max(0.0, min(1.0, $remaining / $scoredSeconds)));
 }
 function lq_answer(PDO $db, array $input, string $token): array {
     return lq_transaction($db, function () use ($db, $input, $token) {
@@ -204,7 +206,7 @@ function lq_answer(PDO $db, array $input, string $token): array {
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
         $q = $content['questions'][$index];
         [$answer, $grade] = lq_grade($q, $input['answer'] ?? null);
-        $points = lq_points($grade, $content['scoring'] ?? 'fixed', $q['seconds'], lq_deadline($r) - $receivedAt);
+        $points = lq_points($grade, $content['scoring'] ?? 'fixed', $q['seconds'], lq_deadline($r) - $receivedAt, !empty($q['youtube']));
         lq_query($db, 'INSERT INTO lq_answers (room_id, player_id, question_index, answer, points) VALUES (?, ?, ?, ?, ?)', [$r['id'], $p['id'], $index, json_encode($answer, JSON_THROW_ON_ERROR), $points]);
         lq_advance_locked($db, $r);
         return ['accepted' => true];

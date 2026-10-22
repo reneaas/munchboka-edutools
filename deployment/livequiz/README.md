@@ -38,7 +38,12 @@ Deployment status is recorded at the end of this file.
   A correct answer that rounds to zero still counts as correct in results.
   Only fully correct answers earn points; incorrect answers earn zero.
   Speed uses server processing time and the question deadline, never client timestamps.
-  Network delay and time spent watching videos count toward elapsed time.
+  YouTube questions keep full points for the first four seconds from the server's
+  question start. Afterwards the score decreases to zero at the existing deadline:
+  `round(1000 * remaining / (time_limit - 4))`, clamped to 0–1000. A 30-second
+  video question gives 1000 through second 4, 500 at second 17, and zero at 30.
+  This grace period is not synchronized to actual host playback or buffering.
+  Network delay and video time beyond the grace period count toward elapsed time.
   Existing quizzes/rooms default to fixed scoring. Each room snapshots its scoring
   choice, so edits affect newly created games only. No database migration needed.
 - Snapshot isolation: editing a quiz does not change already-created sessions.

@@ -167,6 +167,13 @@ foreach ([5,30,600] as $duration) {
     check(lq_points(1000,'speed',$duration,0)===0,'minimum speed points');
     check(lq_points(0,'speed',$duration,$duration)===0,'wrong answer no speed points');
     check(lq_points(1000,'fixed',$duration,0)===1000,'fixed score independent of time');
+    check(lq_points(1000,'speed',$duration,$duration,true)===1000,'video full points at start');
+    check(lq_points(1000,'speed',$duration,$duration-2,true)===1000,'video full points during grace');
+    check(lq_points(1000,'speed',$duration,$duration-4,true)===1000,'video full points at grace boundary');
+    check(lq_points(1000,'speed',$duration,($duration-4)/2,true)===500,'video halfway through scoring interval');
+    check(lq_points(1000,'speed',$duration,0,true)===0,'video score reaches zero at original deadline');
+    check(lq_points(0,'speed',$duration,$duration-2,true)===0,'wrong video answer during grace earns zero');
+    check(lq_points(1000,'fixed',$duration,0,true)===1000,'fixed video scoring unaffected');
 }
 check(lq_points(1000,'speed',600,0.1)===0,'last moment correct answer rounds to zero');
 check(lq_points(1000,'speed',30,60)===1000 && lq_points(1000,'speed',30,-5)===0,'speed points clamped');
@@ -182,13 +189,15 @@ foreach ([$q,$multi,$typed] as $question) {
     check((int)lq_room($db,$sr)['deadline']>1000000000000,'first question precise deadline');
     $correctAnswer=$question['type']==='text'?'fire':$question['correct'];
     $wrongAnswer=$question['type']==='text'?'wrong':[2];
+    lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)+598)*1000),$sr]);
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$correctAnswer],$fast);
-    lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)+300)*1000),$sr]);
+    lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)+(empty($question['youtube'])?300:298))*1000),$sr]);
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$correctAnswer,'points'=>1000,'elapsed'=>0],$slow);
     check(!isset(lq_state($db,$sr,0,$slow,false)['points']),'speed score hidden until reveal');
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$slow);
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$wrong);
     $fastState=lq_state($db,$sr,0,$fast,false);$slowState=lq_state($db,$sr,0,$slow,false);
+    if (!empty($question['youtube'])) check($fastState['points']===1000,'server applies video grace from room snapshot');
     check($fastState['points']>=990 && $slowState['points']>=490 && $slowState['points']<=500,'all answer types reward earlier correct answers');
     check(lq_state($db,$sr,0,$wrong,false)['points']===0,'wrong speed answer zero');
     check($slowState['distribution']['correct']===2,'speed results count correctness');

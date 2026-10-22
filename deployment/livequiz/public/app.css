@@ -3,62 +3,64 @@
 .question-editor .CodeMirror{margin-top:8px}
 .CodeMirror{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
 .stage-flush{padding:0;border:0;background:none;box-shadow:none}
-.question-modal{width:min(1100px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;border:1px solid #d1e0e6;border-radius:10px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #0006;overscroll-behavior:contain;animation:lq-pop .2s ease-out;letter-spacing:0}
+.question-modal{box-sizing:border-box;width:900px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:0;overflow:hidden;border:1px solid #d1e0e6;border-radius:10px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #0006;animation:lq-pop .2s ease-out;letter-spacing:0}
+.question-modal[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
 .question-modal::backdrop{background:rgba(17,40,58,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.question-modal .qcard{border:0;border-radius:0;box-shadow:none}
-.question-modal .option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.question-modal-footer{padding:0 24px 24px}
-.question-modal-footer .hint{margin:6px 0}
-.question-modal-footer .actions{margin-top:16px;flex-wrap:wrap}
+.modal-header,.modal-body,.question-modal-footer{min-width:0;min-height:0}
+.modal-header{max-height:35dvh;overflow:auto;border-bottom:1px solid var(--line)}
+.modal-header>.rich{padding:18px 24px;font-size:24px;line-height:1.4}
+.modal-body{overflow:auto;overscroll-behavior:contain;padding:24px}
+.modal-body>*{min-width:0;max-width:100%}
+.question-media:empty{display:none}
+.question-media:not(:empty){margin-bottom:24px}
+.question-modal img,.question-modal canvas,.question-media>svg{max-width:100%;height:auto}
+.question-modal svg{max-width:100%}
+.question-modal .question-image{max-height:none;margin:16px auto;object-fit:contain}
+.question-modal iframe{max-width:100%}
+.question-modal .rich{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.question-modal .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden}
+.question-modal .rich>.katex{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle}
+.question-modal .code-display{min-width:0;max-width:100%;overflow:auto}
+.question-modal-footer{padding:12px 24px;border-top:1px solid var(--line);background:#fff}
+.question-modal-footer .hint{margin:2px 0}
+.question-modal-footer .actions{margin:10px 0 0;flex-wrap:wrap}
 .modal-notice{color:#922c2c}
-.modal-title{margin:24px;font-size:26px;letter-spacing:0}
-.results-analysis{padding:0 24px 16px}
-.question-modal .board{margin:24px}
+.modal-title{margin:0;padding:18px 24px;font-size:26px;letter-spacing:0}
+.results-analysis{margin-top:24px}
+.question-modal .board{margin:0}
 .question-modal .board li{flex-wrap:wrap;font-size:18px}
 .question-modal .board .name{flex-basis:100px}
-.question-answer-form>label,.question-answer-form>button,.question-answer-form>.hint{margin-left:24px;margin-right:24px}
-.question-modal .answer-option{position:relative;margin:0;cursor:pointer;flex-wrap:wrap;align-content:center}
+.question-answer-form>button{margin-top:16px}
+.question-modal .answer-option{margin:0;cursor:pointer}
 .question-modal .answer-option input{position:absolute;width:1px;height:1px;opacity:0}
 .question-modal .answer-option:has(input:checked){outline:3px solid #143f55;outline-offset:2px;background:#155363}
 .question-modal .answer-option:has(input:checked) .option-badge{background:#fff;color:#143f55}
 .question-modal .answer-option:has(input:focus-visible){outline:3px solid #b76900;outline-offset:3px}
 .question-modal .answer-option:has(input:disabled){cursor:default;opacity:.65}
-.question-modal .option-card{flex-wrap:wrap}
-.correct-label{flex-basis:100%;font-size:13px;text-align:right}
+.correct-label{position:absolute;bottom:6px;left:8px;right:8px;font-size:12px;text-align:center}
 .question-modal .option-card.wrong{opacity:.7}
-.question-modal.countdown-modal{width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:hidden}
-.countdown-modal[open]{display:grid;place-items:center}
+.question-modal.countdown-modal{width:100%;max-width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;background:transparent;box-shadow:none;grid-template-rows:minmax(0,1fr) auto}
+.countdown-modal .modal-header{display:none}
+.countdown-modal .modal-body{display:grid;place-items:center}
 .countdown-modal .countdown{font-size:180px;text-align:center;overflow-wrap:anywhere;max-width:100%;padding:24px}
-.countdown-modal .question-modal-footer{position:absolute;bottom:0;left:0;right:0;color:#fff}
+.countdown-modal .question-modal-footer{background:transparent;border:0;color:#fff}
 .countdown-modal .hint,.countdown-modal .quiet{color:#fff}
-@media(max-width:600px){.countdown-modal .countdown{font-size:100px}.question-modal .board{margin:16px}.results-analysis{padding:0 16px 16px}}
 body:has(.question-modal[open]){overflow:hidden}
-@media(max-width:600px){.question-modal{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}.question-modal .qcard-head{flex-wrap:wrap}.question-modal .qcard-body{padding:18px 16px 6px}.question-modal .qcard-body>.rich:first-child{font-size:22px}.question-modal .option-grid{padding:16px;gap:8px}.question-modal .option-card{font-size:16px;padding:10px;gap:8px}.question-modal-footer{padding:0 16px 18px}}
-.qcard{overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 8px 30px #17332e33}
-.qcard-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:#143f55;color:#fff;font-weight:700}
+.qcard-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 24px;background:#143f55;color:#fff;font-weight:700}
 .qcard-timer{font-size:22px;font-variant-numeric:tabular-nums}
-.qcard-body{padding:22px 24px 6px}
-.qcard-body>.rich:first-child{font-size:26px;line-height:1.4}
-.qcard-body .code-display{margin-top:14px}
-.qcard-body .question-image{margin:16px auto 8px}
-.qcard-note{margin:0;padding:6px 24px 22px;color:var(--muted)}
-.option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
-.qcard .option-grid{margin:0;padding:16px 24px 24px}
-.option-card{display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 14px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:#2a7081 linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04) 34%,rgba(0,0,0,.07));color:#fff;font-size:18px;font-weight:700;line-height:1.3;box-shadow:0 2px 6px #0002}
-.option-card .rich{flex:1;min-width:0;overflow-wrap:anywhere}
+.qcard-note{margin:0;color:var(--muted)}
+.question-modal .option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:16px;margin:0;padding:0;min-width:0}
+.question-modal .option-card{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:100px;margin:0;padding:32px 16px;border:1px solid #205b69;border-radius:8px;background:#2a7081;color:#fff;font-size:18px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 2px 6px #0002}
+.question-modal .option-card .rich{width:100%;min-width:0;overflow-wrap:anywhere}
 .option-badge{flex:0 0 auto;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#eaf0e6;font-size:15px;font-weight:750}
-.option-card .option-badge{background:rgba(255,255,255,.22);color:#fff}
-.option-card.correct{background-color:#1f8f5f;outline:3px solid #9be3b5;outline-offset:2px}
-.option-card.wrong{opacity:.4}
+.question-modal .option-card .option-badge{position:absolute;top:6px;left:8px;width:24px;height:24px;background:rgba(255,255,255,.22);color:#fff}
+.question-modal .option-card.correct{background:#1f8f5f;outline:3px solid #9be3b5;outline-offset:2px}
 .chart-row.correct .option-badge{background:var(--green);color:#fff}
-.overlay{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:rgba(23,51,46,.6);animation:lq-fade .2s}
-.popup-card{width:min(760px,100%);max-height:92vh;overflow:auto;padding:32px;border-radius:22px;background:#fff;box-shadow:0 24px 70px #0006;animation:lq-pop .22s ease-out}
-.popup-card h2{margin-top:0;font-size:28px}
 .chart{display:grid;gap:12px;margin:20px 0 14px}
-.chart-row{display:grid;grid-template-columns:minmax(120px,38%) 1fr 44px;align-items:center;gap:12px}
+.chart-row{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr) 44px;align-items:center;gap:12px;min-width:0}
 .chart-label{display:flex;align-items:center;gap:10px;min-width:0;font-size:17px}
 .chart-label .rich{min-width:0;overflow-wrap:anywhere}
-.chart-track{height:30px;border-radius:9px;background:#edf1ea;overflow:hidden}
+.chart-track{min-width:0;height:30px;border:1px solid #d6dfd4;border-radius:9px;background:#edf1ea;overflow:hidden}
 .chart-bar{height:100%;border-radius:9px;background:#a9bdb3;transition:width .6s ease}
 .chart-row.correct .chart-bar{background:var(--green)}
 .chart-row.correct .chart-label{font-weight:700}
@@ -68,10 +70,8 @@ body:has(.question-modal[open]){overflow:hidden}
 .board li:first-child{background:#e7f4ec;font-weight:700}
 .board .rank{width:34px;font-weight:750;color:var(--green)}
 .board .name{flex:1;min-width:0;overflow-wrap:anywhere}
-.popup-card>button{margin-top:6px}
-.countdown{font-size:min(38vw,260px);font-weight:800;line-height:1;color:#fff;animation:lq-beat 1s ease-in-out infinite}
-@keyframes lq-fade{from{opacity:0}to{opacity:1}}
+.countdown{font-weight:800;line-height:1;color:#fff;animation:lq-beat 1s ease-in-out infinite}
 @keyframes lq-pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
 @keyframes lq-beat{0%{transform:scale(1.25);opacity:0}25%{opacity:1}100%{transform:scale(.9);opacity:.85}}
-@media(max-width:600px){.option-grid{grid-template-columns:1fr}.chart-row{grid-template-columns:1fr 40px}.chart-label{grid-column:1/-1}.popup-card{padding:22px}}
-@media(prefers-reduced-motion:reduce){.overlay,.popup-card,.countdown,.question-modal{animation:none}.chart-bar{transition:none}}
+@media(max-width:600px){.modal-header>.rich{font-size:20px;padding:16px}.modal-title,.qcard-head{padding:12px 16px}.modal-body{padding:16px}.question-modal-footer{padding:10px 16px}.question-modal .option-card{font-size:16px;padding-left:10px;padding-right:10px}.chart-row{grid-template-columns:minmax(0,1fr) 40px}.chart-label{grid-column:1/-1}.countdown-modal .countdown{font-size:100px}}
+@media(prefers-reduced-motion:reduce){.countdown,.question-modal{animation:none}.chart-bar{transition:none}}

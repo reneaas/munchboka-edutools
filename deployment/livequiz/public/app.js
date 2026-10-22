@@ -71,8 +71,8 @@
     rows.forEach((p, i) => { const li = el('li'); li.append(el('span', String(i + 1), 'rank'), el('span', p.nickname, 'name'), el('strong', p.score + ' poeng')); list.append(li); });
     return list;
   }
-  async function content(q, target, context = {}) {
-    target.append(rich(q.prompt));
+  async function content(q, target, context = {}, promptTarget = target) {
+    promptTarget.append(rich(q.prompt));
     if (q.code) { const holder = el('div', undefined, 'code-display'); target.append(holder); renderCodeBlock(holder, q.code); }
     if (q.image) {
       const img = el('img', undefined, 'question-image'); img.alt = q.image.alt; target.append(img);
@@ -208,31 +208,32 @@
     const closePopup=()=>{if(overlay){timer.before(connection,meta);results.before(controls);overlay.close();overlay.remove();overlay=null;}};
     function popup(build,cls=''){
       closePopup();overlay=el('dialog',undefined,'question-modal '+cls);
-      build(overlay);
+      const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body');
+      overlay.append(header,body);build(header,body);
       const title=overlay.querySelector('h2,.qcard-head,[role=status]'),footer=el('div',undefined,'question-modal-footer'),message=el('p',undefined,'modal-notice');
       title.id='quiz-modal-title';title.tabIndex=-1;overlay.setAttribute('aria-labelledby',title.id);message.hidden=true;message.setAttribute('role','alert');
       overlay.addEventListener('cancel',event=>event.preventDefault());
       footer.append(meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);overlay.showModal();title.focus();
     }
     function showAnswer(s,order){
-      popup(card=>{
+      popup((header,body)=>{
+        header.append(el('h2','Fasit','modal-title'));questionCard(s,order,header,body);
         const analysis=el('section',undefined,'results-analysis');analysis.append(answerChart(s,order));
         if(!host)analysis.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du svarte ikke på dette spørsmålet.','result'));
-        card.append(el('h2','Fasit','modal-title'),questionCard(s,order),analysis);
+        body.append(analysis);
       },'results-modal');
     }
-    function showBoard(s){popup(card=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));card.append(el('h2','Leaderboard','modal-title'),entries);},'leaderboard-modal');}
+    function showBoard(s){popup((header,body)=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));header.append(el('h2','Leaderboard','modal-title'));body.append(entries);},'leaderboard-modal');}
     function showCountdown(){
-      popup(card=>{countdown=el('div','','countdown');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','assertive');card.append(countdown);},'countdown-modal');
+      popup((header,body)=>{countdown=el('div','','countdown');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','assertive');body.append(countdown);},'countdown-modal');
     }
-    function questionCard(s,order){
-      const q=s.question,card=el('article',undefined,'qcard'),head=el('div',undefined,'qcard-head'),body=el('div',undefined,'qcard-body');
+    function questionCard(s,order,header,body){
+      const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
-      card.append(head,body);void content(q,body,{query,token});
-      if(!host&&s.state==='QUESTION_ACTIVE')card.append(answerForm(s,order));
-      else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')card.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
-      else card.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));
-      return card;
+      header.append(head);body.append(media);void content(q,media,{query,token},header);
+      if(!host&&s.state==='QUESTION_ACTIVE')body.append(answerForm(s,order));
+      else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
+      else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));
     }
     function answerForm(s,order){
       const form=el('form',undefined,'question-answer-form');selection=s.answer??(s.question.type==='text'?'':[]);
@@ -279,7 +280,7 @@
         stage.classList.add('stage-flush');
         if(s.state==='QUESTION_ACTIVE'){
           if(host)controls.prepend(button('Vis fasit nå',control('reveal'),'secondary'));
-          popup(card=>card.append(questionCard(s,order)),'active-question-modal');
+          popup((header,body)=>questionCard(s,order,header,body),'active-question-modal');
         }else if(s.state==='QUESTION_RESULTS'){
           if(host)controls.prepend(button('Vis leaderboard',control('leaderboard')));
           showAnswer(s,order);

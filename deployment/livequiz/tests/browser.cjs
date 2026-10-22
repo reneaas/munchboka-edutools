@@ -30,10 +30,26 @@ const assert = require('node:assert/strict');
 	 return states;
  }
  async function modalFits(page){
+	 await page.waitForFunction(()=>Math.abs(document.querySelector('dialog').getBoundingClientRect().width-Math.min(900,innerWidth-32))<.5);
 	 const modal=page.getByRole('dialog'),bounds=await modal.boundingBox(),viewport=page.viewportSize();
-	 assert.ok(bounds&&bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height);
+	 assert.ok(bounds&&bounds.x>=16&&bounds.y>=15.5&&bounds.x+bounds.width<=viewport.width-15.5&&bounds.y+bounds.height<=viewport.height-15.5);
 	 assert.equal(await modal.evaluate(element=>element.scrollWidth<=element.clientWidth),true);
 	 assert.match(await modal.evaluate(element=>getComputedStyle(element,'::backdrop').backdropFilter),/blur\(8px\)/);
+	 const header=await modal.locator('.modal-header').boundingBox(),footer=await modal.locator('.question-modal-footer').boundingBox();
+	 await modal.locator('.modal-body').evaluate(body=>body.scrollTop=body.scrollHeight);
+	 assert.deepEqual(await modal.locator('.modal-header').boundingBox(),header);
+	 assert.deepEqual(await modal.locator('.question-modal-footer').boundingBox(),footer);
+	 assert.ok(header.y>=bounds.y&&footer.y+footer.height<=bounds.y+bounds.height);
+	 await modal.locator('.modal-body').evaluate(body=>body.scrollTop=0);
+ }
+ async function gridFits(page){
+	 await modalFits(page);
+	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:getComputedStyle(grid).gap,cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
+	 assert.equal(geometry.gap,'16px');assert.equal(geometry.cards.length,4);
+	 const [first,second,third,fourth]=geometry.cards;
+	 for(const card of geometry.cards){assert.ok(card.height>=100);assert.ok(Math.abs(card.width-first.width)<.5);assert.ok(Math.abs(card.height-first.height)<.5);assert.ok(card.contained);}
+	 assert.equal(first.y,second.y);assert.equal(third.y,fourth.y);assert.equal(first.x,third.x);assert.equal(second.x,fourth.x);
+	 assert.ok(Math.abs(second.x-first.x-first.width-16)<.5);assert.ok(Math.abs(third.y-first.y-first.height-16)<.5);
  }
  await t.goto(base+'/_test_login.php');
  await t.getByRole('link',{name:'＋ Lag en quiz'}).click();
@@ -48,7 +64,15 @@ const assert = require('node:assert/strict');
  for(const [i,v] of ['3','4','5','6'].entries()) await t.getByLabel('Alternativ '+(i+1),{exact:true}).fill(v);
  await t.getByLabel('Riktig 2',{exact:true}).check();
  // PNG upload travels through the real PHP upload endpoint and private DB storage.
- await t.locator('input[type=file]').setInputFiles({name:'test.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
+ const diagram=await t.evaluate(()=>{
+	 const canvas=document.createElement('canvas');canvas.width=2400;canvas.height=1600;
+	 const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,2400,1600);
+	 context.strokeStyle='#143f55';context.lineWidth=14;context.strokeRect(700,500,700,500);
+	 context.beginPath();context.moveTo(250,1100);context.lineTo(2100,1100);context.moveTo(1400,750);context.lineTo(1950,750);context.lineTo(1850,680);context.moveTo(1950,750);context.lineTo(1850,820);context.stroke();
+	 context.font='100px serif';context.fillStyle='#143f55';context.fillText('m',1000,800);context.fillText('F',1700,650);
+	 return canvas.toDataURL('image/png').split(',')[1];
+ });
+ await t.locator('input[type=file]').setInputFiles({name:'diagram.png',mimeType:'image/png',buffer:Buffer.from(diagram,'base64')});
  await t.getByLabel('Bildebeskrivelse').fill('Testbilde');
  await t.getByRole('button',{name:'＋ Legg til spørsmål',exact:true}).click();
  let card=t.locator('.question-editor').nth(1);
@@ -77,7 +101,7 @@ const assert = require('node:assert/strict');
  await s.getByText('Ditt svar',{exact:true}).waitFor({timeout:500}).catch(()=>{});
  await s.locator('.answer-option:has(.rich:text-is("4"))').click();
  assert.ok(await s.locator('.katex').count());
- await s.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth===1);
+ await s.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth===2400);
  const before=await s.evaluate(async()=>{const room=new URLSearchParams(location.search).get('room');return (await fetch('index.php?api=state&room='+room,{headers:{'X-Player-Token':sessionStorage.getItem('lq-room-'+room)}})).json();});
  assert.equal(before.question.correct,undefined); assert.equal(before.question.accepted,undefined);
  await s.getByRole('button',{name:'Send svar',exact:true}).click();await s.getByText('Svaret er mottatt. Vent på læreren.',{exact:true}).waitFor();
@@ -95,7 +119,7 @@ const assert = require('node:assert/strict');
  const questionModal=t.getByRole('dialog',{name:/Spørsmål 1 av 3/});
  assert.equal(await questionModal.evaluate(modal=>modal.matches(':modal')),true);
  assert.match(await questionModal.evaluate(modal=>getComputedStyle(modal,'::backdrop').backdropFilter),/blur\(8px\)/);
- assert.equal(await questionModal.locator('.qcard-body .rich').first().innerText(),await s.locator('.qcard-body > .rich').first().innerText());
+ assert.equal(await questionModal.locator('.modal-header > .rich').innerText(),await s.locator('.modal-header > .rich').innerText());
  assert.equal(await questionModal.locator('.option-card').count(),4);
  assert.equal(await questionModal.getByRole('button',{name:'Vis fasit nå',exact:true}).isVisible(),true);
  assert.equal(await questionModal.getByRole('button',{name:'Avslutt spillet',exact:true}).isVisible(),true);
@@ -105,6 +129,10 @@ const assert = require('node:assert/strict');
  assert.equal(await questionModal.evaluate(modal=>modal.matches(':modal')),true);
  for(const viewport of [{width:390,height:844},{width:1280,height:720},{width:1280,height:1000}]){
 	 await t.setViewportSize(viewport);
+	 await gridFits(t);
+	 const image=await t.locator('.question-image').boundingBox(),body=await t.locator('.modal-body').boundingBox();
+	 assert.ok(image.width<=body.width);assert.ok(Math.abs(image.width/image.height-1.5)<.01);
+	 assert.equal(await t.locator('.modal-body').evaluate(body=>body.scrollHeight>body.clientHeight),true);
 	 const bounds=await questionModal.boundingBox();
 	 assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height);
 	 assert.equal(await questionModal.evaluate(modal=>modal.scrollWidth<=modal.clientWidth),true);
@@ -113,6 +141,19 @@ const assert = require('node:assert/strict');
 	 await questionModal.evaluate(modal=>modal.scrollTop=0);
 	 await t.screenshot({path:`/tmp/livequiz-host-modal-${viewport.width}x${viewport.height}.png`});
  }
+ await gridFits(s);
+ await t.setViewportSize({width:390,height:844});
+ await t.evaluate(()=>{
+	 const answers=[...document.querySelectorAll('.option-card .rich')];window.layoutAnswers=answers.map(answer=>answer.textContent);
+	 answers[0].textContent='An alternative with very long text '.repeat(12);answers[1].textContent='UnbrokenAnswer'.repeat(30);
+	 answers[2].textContent='$$\\sqrt{\\frac{'+Array(50).fill('x^2').join('+')+'}{2}}$$';window.renderMathInElement(answers[2]);
+	 const media=document.querySelector('.question-media'),canvas=document.createElement('canvas'),svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+	 canvas.width=4000;canvas.height=1000;canvas.className='layout-stress';svg.setAttribute('width','4000');svg.setAttribute('height','1000');svg.setAttribute('viewBox','0 0 4000 1000');svg.classList.add('layout-stress');media.append(canvas,svg);
+ });
+ await gridFits(t);assert.ok(await t.locator('.option-card .katex').count());
+ for(const element of await t.locator('.layout-stress').all()){const bounds=await element.boundingBox();assert.ok(bounds.width<=356);assert.ok(Math.abs(bounds.width/bounds.height-4)<.01);}
+ await t.evaluate(()=>{document.querySelectorAll('.layout-stress').forEach(element=>element.remove());document.querySelectorAll('.option-card .rich').forEach((answer,index)=>answer.textContent=window.layoutAnswers[index]);delete window.layoutAnswers;});
+ await t.setViewportSize({width:1280,height:1000});
  await t.screenshot({path:'/tmp/livequiz-host-question.png',fullPage:true});
  // Check video URL without making an external YouTube request.
  await t.route('https://www.youtube-nocookie.com/**',route=>route.fulfill({body:'<html>Test video</html>',contentType:'text/html'}));
@@ -127,11 +168,15 @@ const assert = require('node:assert/strict');
  assert.equal(await dialog.locator('.chart-row').count(),4);
  assert.equal(await dialog.locator('.chart-row.correct .rich').innerText(),'4');
  assert.deepEqual((await dialog.locator('.chart-count').allInnerTexts()).sort(),['0','0','1','1']);
+ await gridFits(t);
+ const bars=await dialog.locator('.chart-row').evaluateAll(rows=>rows.map(row=>({count:Number(row.querySelector('.chart-count').textContent),track:row.querySelector('.chart-track').getBoundingClientRect().width,bar:row.querySelector('.chart-bar').style.width})));
+ assert.equal(bars.length,4);for(const bar of bars){assert.ok(bar.track>0);assert.equal(bar.bar,bar.count?'50%':'0%');}
+ await dialog.locator('.chart').scrollIntoViewIfNeeded();
  await t.waitForTimeout(800);await t.screenshot({path:'/tmp/livequiz-popup-answer.png'});
  await s.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await sharedState([t,s,s2],'QUESTION_RESULTS');
  for(const page of [s,s2]){
-	 await modalFits(page);
+	 await gridFits(page);
 	 assert.deepEqual(await page.locator('.chart-count').allInnerTexts(),await t.locator('.chart-count').allInnerTexts());
 	 assert.equal(await page.locator('.option-card.correct .rich').innerText(),'4');
 	 assert.equal(await page.getByRole('button',{name:'Vis leaderboard',exact:true}).count(),0);
@@ -162,6 +207,8 @@ const assert = require('node:assert/strict');
  await t.waitForTimeout(350);await t.screenshot({path:'/tmp/livequiz-countdown.png'});
  await s.getByText('Velg primtallene',{exact:true}).waitFor();
  const nextStates=await sharedState([t,s,s2],'QUESTION_ACTIVE');
+ await gridFits(t);await gridFits(s);
+ await t.screenshot({path:'/tmp/livequiz-short-question-desktop.png'});await s.screenshot({path:'/tmp/livequiz-short-question-mobile.png'});
  assert.equal(nextStates[0].index,1);
  assert.equal(nextStates[0].deadline,countdownStates[0].countdown_end+120);
  await s.locator('.answer-option:has(.rich:text-is("2"))').click();await s.locator('.answer-option:has(.rich:text-is("3"))').click();

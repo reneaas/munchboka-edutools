@@ -1,14 +1,9 @@
 name: deploy-jeopardy
 
 # Deploys the Jeopardy maker to jeopardy.munchboka.no (cPanel/Domene.no) via
-# Uses the dedicated GitHub deploy FTP account, rooted at /home/zebfxvix.
+# Superseded by deployment/deploy.sh (cPanel cron pull); kept as a manual fallback.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "deployment/jeopardy/pilot/public/**"
-      - "deployment/jeopardy/pilot/private/**"
   workflow_dispatch: {}
 
 jobs:

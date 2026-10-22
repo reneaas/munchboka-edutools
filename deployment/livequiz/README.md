@@ -61,18 +61,19 @@ Rollback: remove the two new quiz directories. The original Jeopardy files remai
 unchanged. New tables may remain pending a retention decision; no destructive
 rollback script is provided.
 
-## Automated deployment via GitHub Actions
+## Automated deployment
 
-`.github/workflows/deploy-livequiz.yml` deploys `public/` and `private/livequiz/`
-via FTPS on pushes to `main` that touch those paths, or manually from the Actions
-tab. It shares `CPANEL_FTP_SERVER`, `CPANEL_FTP_USERNAME`, and
-`CPANEL_FTP_PASSWORD` with the Jeopardy workflow. The FTP account must be rooted
-at `/home/zebfxvix` so it can reach both `public_html/quiz/` and
-`jeopardy-private/livequiz/`. If the secrets use the `quiz_konto` account, set
-its cPanel Directory to `/home/zebfxvix`; its current
-`/home/zebfxvix/public_html/munchboka.no/quiz_konto` path is not the live site
-directory. Use the dedicated deploy account with FTPS, and protect the GitHub
-`production` environment. The packaging script remains available as a manual
+`deployment/deploy.sh` pulls `main` from the public GitHub repository and copies
+Livequiz and Jeopardy into `~/public_html/quiz`, `~/jeopardy-private/livequiz`,
+`~/public_html/jeopardy` and `~/jeopardy-private`. It never deletes files and
+does nothing when the commit is unchanged. One-time setup in cPanel:
+
+1. Terminal (or SSH) as `zebfxvix`: `mkdir -p ~/bin && curl -fsSL https://raw.githubusercontent.com/reneaas/munchboka-edutools/main/deployment/deploy.sh -o ~/bin/deploy.sh && chmod +x ~/bin/deploy.sh`
+2. Run `FORCE=1 ~/bin/deploy.sh` once and check that it prints `deployed <commit>`.
+3. cPanel → Cron Jobs → every 5 minutes: `/bin/bash $HOME/bin/deploy.sh >> $HOME/deploy.log 2>&1`
+
+The cron job uses the installed `~/bin/deploy.sh`; re-download it only when the
+script itself changes. Logs go to `~/deploy.log`. `package.py` remains a manual
 fallback.
 
 ## Data, access and limits

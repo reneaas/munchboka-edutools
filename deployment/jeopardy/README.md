@@ -31,16 +31,10 @@ must not be committed to Git.
 Success verifies connectivity and a read-only query, not write privileges,
 email delivery, authentication, backups, or the future save/reopen workflow.
 
-## Automated deployment via GitHub Actions
+## Automated deployment
 
-`.github/workflows/deploy-jeopardy.yml` deploys `pilot/public/` and
-`pilot/private/` via FTPS on pushes to `main` that touch those paths, or manually
-from the Actions tab. Both workflows use the existing shared secrets
-`CPANEL_FTP_SERVER`, `CPANEL_FTP_USERNAME`, and `CPANEL_FTP_PASSWORD`.
-
-The dedicated GitHub deploy FTP account must be rooted at `/home/zebfxvix` so it
-can reach both `public_html/jeopardy/` and `jeopardy-private/`. Update the
-`quiz_konto` account's Directory in cPanel to `/home/zebfxvix` if that account is
-the one stored in the secrets. The Jeopardy private deployment excludes
-`database.php`. Keep the account dedicated to deployment, protect the GitHub
-`production` environment, and use FTPS (explicit TLS).
+Deployment is pull-based: a cPanel cron job runs `deployment/deploy.sh`, which
+pulls `main` from the public GitHub repository and copies `pilot/public/` and
+`pilot/private/` into `~/public_html/jeopardy` and `~/jeopardy-private`. It only
+copies, so `database.php` is never touched. See `deployment/livequiz/README.md`
+for the one-time cron setup. The FTP workflows are manual-only fallbacks.

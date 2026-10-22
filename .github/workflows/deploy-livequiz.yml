@@ -1,14 +1,9 @@
 name: deploy-livequiz
 
 # Deploys the Livequiz proof of concept to quiz.munchboka.no (cPanel/Domene.no)
-# via the shared dedicated GitHub deploy FTP account, rooted at /home/zebfxvix.
+# Superseded by deployment/deploy.sh (cPanel cron pull); kept as a manual fallback.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "deployment/livequiz/public/**"
-      - "deployment/livequiz/private/livequiz/**"
   workflow_dispatch: {}
 
 jobs:

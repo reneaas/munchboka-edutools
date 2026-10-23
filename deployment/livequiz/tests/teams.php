@@ -55,6 +55,10 @@ check((int)lq_room($db,$ridTeam)['version']===$startVersion,'failed start leaves
 $db->exec('DROP TRIGGER block_team_start');
 $controlTeam('next');
 $overview=lq_state($db,$ridTeam,1,'',true);$teams=$overview['teams'];
+// Put all three teammates first so the test guarantees different answers within
+// one team, regardless of the randomized assignment.
+$tokensById=[];foreach($tokens as $token)$tokensById[lq_player($db,$ridTeam,$token)['id']]=$token;
+$tokens=[];foreach($teams as $team)foreach($team['members'] as $member)$tokens[]=$tokensById[$member['id']];
 check($overview['state']==='TEAM_OVERVIEW' && $overview['index']===-1,'overview before first question');
 check(array_map(fn($team)=>count($team['members']),$teams)===[3,2],'persisted balanced teams');
 rejects(fn()=>lq_control($db,1,['room'=>$ridTeam,'version'=>$startVersion,'command'=>'next']),'duplicate start cannot reshuffle');
@@ -71,17 +75,31 @@ check($countdown['state']==='COUNTDOWN' && $countdown['index']===-1,'first quest
 check($countdown['countdown_end']-$countdown['now']>2.5,'three-second countdown');
 lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)-0.1)*1000),$ridTeam]);
 check(lq_state($db,$ridTeam,1,'',true)['index']===0,'countdown begins question zero');
-foreach(array_slice($tokens,0,4) as $i=>$token)lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[$i<3?1:0]],$token);
-lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[0]],$tokens[0]);
+// Lag 1: two correct answers and one wrong answer. Lag 2: one correct,
+// one disconnected. Every answer remains independent.
+foreach(array_slice($tokens,0,4) as $i=>$token)lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[$i===2?0:1]],$token);
+lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[0],'points'=>100000,'team_id'=>2],$tokens[0]);
+$firstPlayer=lq_player($db,$ridTeam,$tokens[0]);
+$stored=lq_query($db,'SELECT answer, points FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = 0',[$ridTeam,$firstPlayer['id']])->fetch();
+check(json_decode($stored['answer'],true)===[1] && (int)$stored['points']===1000,'repeated answer cannot replace original or inject points');
+check((int)lq_query($db,'SELECT COUNT(*) FROM lq_answers WHERE room_id = ?',[$ridTeam])->fetchColumn()===4,'retry creates no additional answer record');
+try {
+    lq_query($db,'INSERT INTO lq_answers (room_id,player_id,question_index,answer,points) VALUES (?,?,?,?,?)',[$ridTeam,$firstPlayer['id'],0,'[1]',1000]);
+    throw new RuntimeException('Expected unique constraint rejection');
+} catch(PDOException $e) { check(true,'database prevents duplicate participant/question records'); }
+
 check(lq_state($db,$ridTeam,1,'',true)['state']==='QUESTION_ACTIVE','disconnected player stays eligible until deadline');
 lq_query($db,'UPDATE lq_rooms SET deadline = 1 WHERE id = ?',[$ridTeam]);
 $results=lq_state($db,$ridTeam,1,'',true);
 check($results['state']==='QUESTION_RESULTS' && $results['distribution']['counts']===[1,3,0,0],'results count individual answers after timeout');
 check($results['distribution']['correct']===3 && $results['answers']===4,'individual correct and submission counts');
 rejects(fn()=>lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[1]],$tokens[4]),'disconnected player cannot submit late');
-$correctIds=[];foreach(array_slice($tokens,0,3) as $token)$correctIds[]=lq_player($db,$ridTeam,$token)['id'];
+$correctIds=[];foreach([0,1,3] as $i)$correctIds[]=lq_player($db,$ridTeam,$tokens[$i])['id'];
 foreach($results['leaderboard'] as $team)check($team['score']===1000*count(array_intersect(array_column($team['members'],'id'),$correctIds)),'team sum matches individual scores');
 check(array_sum(array_column($results['leaderboard'],'score'))===3000,'no duplicate points');
+$teamScores=array_column($results['leaderboard'],'score','id');
+check($teamScores[1]===2000 && $teamScores[2]===1000,'teammates can disagree and each earns their own points');
+foreach([1000,1000,0,1000,0] as $i=>$expected)check((lq_state($db,$ridTeam,0,$tokens[$i],false)['points']??0)===$expected,'personal result independent of teammates');
 $controlTeam('leaderboard');check(lq_state($db,$ridTeam,0,$tokens[0],false)['leaderboard']===$results['leaderboard'],'participant and host see same leaderboard');
 $controlTeam('next');
 lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)-0.1)*1000),$ridTeam]);
@@ -90,6 +108,13 @@ foreach($tokens as $token)lq_answer($db,['room'=>$ridTeam,'index'=>1,'answer'=>[
 $results=lq_state($db,$ridTeam,1,'',true);
 check($results['state']==='QUESTION_RESULTS','all answered ends question');
 check(array_sum(array_column($results['leaderboard'],'score'))===8000,'team scores accumulate across questions');
+foreach([2000,2000,1000,2000,1000] as $i=>$expected){
+    $player=lq_player($db,$ridTeam,$tokens[$i]);
+    $total=(int)lq_query($db,'SELECT SUM(points) FROM lq_answers WHERE room_id = ? AND player_id = ?',[$ridTeam,$player['id']])->fetchColumn();
+    check($total===$expected,'individual total accumulates independently across questions');
+}
+$teamScores=array_column($results['leaderboard'],'score','id');
+check($teamScores[1]===5000 && $teamScores[2]===3000,'team cumulative score sums cumulative individual totals');
 $controlTeam('leaderboard');$controlTeam('next');
 $final=lq_state($db,$ridTeam,0,$tokens[0],false);
 check($final['state']==='QUIZ_FINISHED' && $final['teams']===$teams,'teams stable through entire lifecycle');

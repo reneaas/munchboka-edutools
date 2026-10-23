@@ -153,7 +153,7 @@ function lq_control(PDO $db, int $uid, array $input): array {
                 lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
                 $phase = 'teams';
             } else {
-                $index = 0; $phase = 'question'; $deadline = (int)round((microtime(true) + $qs[$index]['seconds']) * 1000);
+                $phase = 'countdown'; $deadline = (int)ceil(microtime(true) * 1000) + 3000;
             }
         } elseif ($cmd === 'next' && $phase === 'teams') {
             $phase = 'countdown'; $deadline = (int)ceil(microtime(true) * 1000) + 3000;

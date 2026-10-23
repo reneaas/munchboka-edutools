@@ -75,6 +75,8 @@ persist a partial assignment or reshuffle teams. Polling only reads assignments.
 
 The host sees all team cards; participants see their own team. The host continues
 from the overview into the synchronized three-second `COUNTDOWN`, then question 0.
+Individual games also start with the same synchronized countdown before question 0.
+The answer deadline and scoring timer begin after that countdown.
 Subsequent lifecycle transitions are unchanged. Only the host may configure or
 advance a room. Settings lock once assignments are made. Team games reject new
 participants after that point; existing browser tokens reconnect to the same team.
@@ -169,7 +171,7 @@ compatibility:
 
 | State | Stored phase | Transition |
 | --- | --- | --- |
-| `LOBBY` | `lobby` | Host starts the first question |
+| `LOBBY` | `lobby` | Host starts the first countdown (or team overview) |
 | `QUESTION_ACTIVE` | `question` | All participants answered, deadline, or host reveal |
 | `QUESTION_RESULTS` | `reveal` | Host selects "Vis leaderboard" |
 | `LEADERBOARD` | `leaderboard` | Host selects "Neste spørsmål" or final results |

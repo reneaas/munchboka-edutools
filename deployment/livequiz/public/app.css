@@ -91,3 +91,7 @@ body:has(.question-modal[open]){overflow:hidden}
 .team-members{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px}
 .board strong{flex-shrink:0}
 @media(max-width:600px){.board li{gap:8px;padding:12px;font-size:16px}.board .rank{width:24px;flex-shrink:0}}
+
+.music-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;width:100%}
+.music-controls label{display:flex;align-items:center;gap:8px;font-size:14px;margin:0}
+.music-controls input[type=range]{width:120px;padding:0;accent-color:var(--green)}

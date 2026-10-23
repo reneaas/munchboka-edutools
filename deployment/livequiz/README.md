@@ -5,6 +5,17 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Background music
+
+The host plays `public/music/quiz_soundtrack.mp3` in a loop during active questions,
+starting at 25% volume with a short fade-in. Music pauses during countdowns, results,
+leaderboards, YouTube questions, expired timers and lost connections. The same
+player resumes its position on the next ordinary question. Host controls allow
+music to be switched off and volume adjusted; participants never create a player
+or download the track. Start/Next primes playback; if the browser blocks autoplay,
+use “Spill musikk”. Reloading resets the controls to their defaults. The existing
+deployment script copies the track with the public files.
+
 ## Included
 
 - Separate quiz email-code sign-in using the existing Osloskolen account records.

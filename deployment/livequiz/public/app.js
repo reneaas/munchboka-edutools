@@ -197,9 +197,11 @@
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=true;
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false;
+    const music=host?window.quizMusic():null;
     const control=(command, extra={})=>async()=>{
       if(command==='next'&&modeDirty)throw new Error('Lagre spillmodus før du starter.');
       if(controlling)return;controlling=true;
+      if(command==='next')music?.unlock();
       try{await api('control',{room:id,version:state.version,command,...extra});if(command==='configure')modeDirty=false;}
       finally{controlling=false;requestPoll();}
     };
@@ -235,6 +237,7 @@
     function updateClock(){
       if(!state)return;
       const now=Date.now()/1000+offset,left=Math.max(0,state.deadline-now),active=state.state==='QUESTION_ACTIVE';
+      music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube);
       const txt=active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
@@ -328,6 +331,7 @@
           showAnswer(s,order);
         }
       }
+      if(music)controls.append(music.controls);
       updateClock();
     }
     function renderResults(s){

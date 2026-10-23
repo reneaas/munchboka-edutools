@@ -53,6 +53,51 @@ Deployment status is recorded at the end of this file.
   limits, **not a measured hosting capacity guarantee**. New players may join an
   unfinished game and receive its current state; existing players may reconnect.
 
+## Randomized team play
+
+In the host lobby, select **Individuelt spill** (default) or **Tilfeldige lag**,
+set **Maks antall spillere per lag** (default 3, integer 2–60), then click
+**Lagre spillmodus**. Unsaved settings block starting. Individual rooms follow
+exactly the existing question/results/leaderboard/countdown flow.
+
+For team rooms, **Fordel lag og start** locks the room and reads the current lobby
+roster. `teams.php` computes `K = ceil(N / M)` and rejects an empty roster or
+`floor(N / K) < M - 1`, leaving the lobby and settings intact. It uses an unbiased
+Fisher–Yates shuffle (`random_int`) and deals players round-robin into K teams.
+For N=13, M=3, the correct sizes are **[3,3,3,2,2]**; [3,2,2,2,2] totals only 11.
+
+Settings and assignments live in the room's existing `content` JSON under `play`.
+No schema migration, second database or new service is required. Old rooms without
+this key default to individual mode. Assignment and the transition to
+`TEAM_OVERVIEW` commit in one transaction, using the same room lock and version
+checks as joining, answering and progression. A failed or duplicate start cannot
+persist a partial assignment or reshuffle teams. Polling only reads assignments.
+
+The host sees all team cards; participants see their own team. The host continues
+from the overview into the synchronized three-second `COUNTDOWN`, then question 0.
+Subsequent lifecycle transitions are unchanged. Only the host may configure or
+advance a room. Settings lock once assignments are made. Team games reject new
+participants after that point; existing browser tokens reconnect to the same team.
+Individual games still allow late joins. Disconnected players remain eligible,
+but the question deadline always closes the question, so nobody blocks it forever.
+
+Answers and points remain individual, including the optional speed-scoring mode
+and video grace period already supported by the app. No new timing-based scoring
+is introduced by teams. Charts still count each individual answer. The team
+leaderboard sums authoritative stored member scores through `lq_team_total`;
+it does not maintain a separate counter that retries could increment twice.
+Scores accumulate across questions. Ties use team number ascending for a stable
+order. Sum scoring intentionally gives larger teams more potential points than
+smaller ones. Team identities, members and personal membership are consistent
+across polling and refreshes. Refresh existing tabs after deployment.
+
+Team-specific tests: `php tests/teams.php` (also runs `core.php`) and
+`node tests/teams-browser.cjs` against the disposable fixture below. The backend
+suite covers all specified examples and every N=1–60/M=2–60 combination. The
+browser suite uses one host and five independently authenticated participant tabs,
+including a disconnected player. SQLite and the local PHP server do not establish
+MySQL/InnoDB concurrency guarantees or classroom load capacity.
+
 ## cPanel deployment for quiz.munchboka.no
 
 The quiz is a separate website with a host-only `__Host-livequiz` session cookie.

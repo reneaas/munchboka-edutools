@@ -80,3 +80,14 @@ body:has(.question-modal[open]){overflow:hidden}
 .quiz-video-screen iframe{display:block;width:100%;height:100%;min-height:200px;margin:0;opacity:0;pointer-events:none;transition:none}
 .quiz-video-screen.video-visible iframe{opacity:1;transition:opacity .5s ease}
 @media(prefers-reduced-motion:reduce){.quiz-video-screen.video-visible iframe{transition:none}}
+
+.mode-settings{margin:24px 0;padding:20px;border:1px solid var(--line);border-radius:12px}
+.mode-settings [hidden]{display:none}
+.mode-settings fieldset{border:0;padding:0;margin:0}.mode-settings legend{font-weight:700}
+.mode-settings input[type=radio]{margin-right:10px;accent-color:var(--green)}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px}
+.team-card{padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--paper);min-width:0;overflow-wrap:anywhere}
+.team-card h3{margin:0}.team-card ul{padding-left:20px;line-height:1.8}
+.team-members{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px}
+.board strong{flex-shrink:0}
+@media(max-width:600px){.board li{gap:8px;padding:12px;font-size:16px}.board .rank{width:24px;flex-shrink:0}}

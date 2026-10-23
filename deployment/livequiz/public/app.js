@@ -68,7 +68,11 @@
   function leaderboardList(rows) {
     if (!rows.length) return el('p', 'Ingen deltakere ennå.', 'hint');
     const list = el('ol', undefined, 'board');
-    rows.forEach((p, i) => { const li = el('li'); li.append(el('span', String(i + 1), 'rank'), el('span', p.nickname, 'name'), el('strong', p.score + ' poeng')); list.append(li); });
+    rows.forEach((p, i) => {
+      const li = el('li'), name = el('span', p.name || p.nickname, 'name');
+      if (p.members) name.append(el('small', p.members.map(member => member.nickname).join(' · '), 'team-members'));
+      li.append(el('span', String(i + 1), 'rank'), name, el('strong', p.score + ' poeng')); list.append(li);
+    });
     return list;
   }
   async function content(q, target, context = {}, promptTarget = target) {
@@ -192,8 +196,42 @@
     const heading=el('h1','Henter spill …'),connection=el('p','Kobler til …','hint'),meta=el('p',undefined,'hint'),timer=el('p',undefined,'timer'),stage=el('section',undefined,'card stage'),controls=el('div',undefined,'actions'),results=el('section');
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=true;
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
-    let polling=false, pollAgain=false, pollTimer=null, controlling=false;
-    const control=command=>async()=>{if(controlling)return;controlling=true;try{await api('control',{room:id,version:state.version,command});}finally{controlling=false;requestPoll();}};
+    let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false;
+    const control=(command, extra={})=>async()=>{
+      if(command==='next'&&modeDirty)throw new Error('Lagre spillmodus før du starter.');
+      if(controlling)return;controlling=true;
+      try{await api('control',{room:id,version:state.version,command,...extra});if(command==='configure')modeDirty=false;}
+      finally{controlling=false;requestPoll();}
+    };
+    function modeSettings(s) {
+      modeDirty=false;
+      const form=el('form',undefined,'mode-settings'), modes=el('fieldset'), legend=el('legend','Spillmodus');modes.append(legend);
+      let selected=s.mode||'individual';
+      const maximum=field('Maks antall spillere per lag',s.max_team_size||3,()=>{modeDirty=true;},'number'), input=maximum.querySelector('input');
+      input.min=2;input.max=60;input.step=1;input.required=true;
+      maximum.hidden=selected!=='teams';input.disabled=selected!=='teams';
+      for(const [value,title] of [['individual','Individuelt spill'],['teams','Tilfeldige lag']]){
+        const label=el('label',title), radio=el('input');radio.type='radio';radio.name='game-mode';radio.value=value;radio.checked=selected===value;
+        radio.onchange=()=>{selected=value;maximum.hidden=value!=='teams';input.disabled=value!=='teams';modeDirty=true;};label.prepend(radio);modes.append(label);
+      }
+      const saveMode=el('button','Lagre spillmodus');saveMode.type='submit';
+      form.append(modes,maximum,el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere kan ikke bli med etter lagfordelingen.','hint'),saveMode);
+      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',{mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3})();}catch(e){error(e);}finally{saveMode.disabled=false;}};
+      return form;
+    }
+    function showTeams(s) {
+      popup((header,body)=>{
+        header.append(el('h2','Lagene er klare','modal-title'));
+        body.append(el('p',host?'Finn laget ditt. Start første spørsmål når alle er klare.':`Du er på Lag ${s.my_team}. Vent på læreren.`,'intro'));
+        const cards=el('div',undefined,'team-grid');
+        for(const team of s.teams){
+          if(!host&&team.id!==s.my_team)continue;
+          const card=el('section',undefined,'team-card');card.append(el('h3',team.name),el('p',`${team.members.length} deltakere`,'hint'));
+          const members=el('ul');for(const member of team.members)members.append(el('li',member.nickname));card.append(members);cards.append(card);
+        }
+        body.append(cards);
+      },'teams-modal');
+    }
     function updateClock(){
       if(!state)return;
       const now=Date.now()/1000+offset,left=Math.max(0,state.deadline-now),active=state.state==='QUESTION_ACTIVE';
@@ -222,7 +260,7 @@
         body.append(analysis);
       },'results-modal');
     }
-    function showBoard(s){popup((header,body)=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));header.append(el('h2','Leaderboard','modal-title'));body.append(entries);},'leaderboard-modal');}
+    function showBoard(s){popup((header,body)=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));header.append(el('h2',s.mode==='teams'?'Lagresultater':'Leaderboard','modal-title'));body.append(entries);},'leaderboard-modal');}
     function showCountdown(){
       popup((header,body)=>{countdown=el('div','','countdown');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','assertive');body.append(countdown);},'countdown-modal');
     }
@@ -260,7 +298,7 @@
     function render(s){
       if(state&&s.version<state.version)return;
       if(state&&s.version===state.version&&state.submitted)s.submitted=true;
-      state=s;heading.textContent=s.title;meta.textContent=`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
+      state=s;heading.textContent=s.title;meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
       if(rendered===String(s.version)){if(s.state==='LEADERBOARD')overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
@@ -268,11 +306,15 @@
       if(s.state==='LOBBY'){
         stage.append(el('p', s.scoring === 'speed' ? 'Raske riktige svar: 0–1000 poeng. Jo raskere du svarer riktig, desto flere poeng. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir 0.' : 'Faste poeng: 1000 for riktig svar, 0 for feil svar.', 'hint'));
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Elevene skanner koden eller åpner lenken og skriver spillkoden.':'Vent på at læreren starter første spørsmål.'));
-        if(host){const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button('Start første spørsmål',control('next')));}
+        if(host){stage.append(modeSettings(s));const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button(s.mode==='teams'?'Fordel lag og start':'Start første spørsmål',control('next')));}
       } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Takk for spillet!'),el('p','Se resultatene og snakk sammen om spørsmålene.'));}
       else if(s.state==='LEADERBOARD'){
         if(host)controls.prepend(button(s.index+1>=s.total?'Vis sluttresultat':'Neste spørsmål',control('next')));
         showBoard(s);
+      }
+      else if(s.state==='TEAM_OVERVIEW'){
+        if(host)controls.prepend(button('Start første spørsmål',control('next')));
+        showTeams(s);
       }
       else if(s.state==='COUNTDOWN')showCountdown();
       else {

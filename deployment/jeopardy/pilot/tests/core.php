@@ -189,4 +189,25 @@ rejects(fn() => jp_shared_media($db, $share['token'], $imageId), 'revoked link r
 $reshare = jp_share($db, 10, $shareGameId, 2);
 check($reshare['token'] !== $share['token'], 'resharing creates new token');
 rejects(fn() => jp_shared_game($db, $share['token']), 'old token remains invalid after resharing');
+// Delete only an owned game; revoke its shares and remove dependent revisions.
+rejects(fn() => jp_delete($db, 11, $shareGameId), 'other owner cannot delete');
+check(jp_shared_game($db, $reshare['token'])['id'] === $shareGameId, 'denied delete preserves sharing');
+rejects(fn() => jp_delete($db, 10, 'bad-id'), 'invalid delete id rejected');
+$mediaBefore = (int) $db->query('SELECT COUNT(*) FROM jp_media')->fetchColumn();
+$otherBefore = jp_game($db, $id, 10);
+// A database failure must roll back share/revision removal too.
+$db->exec("CREATE TRIGGER prevent_delete BEFORE DELETE ON jp_games BEGIN SELECT RAISE(ABORT, 'test failure'); END");
+try { jp_delete($db, 10, $shareGameId); throw new RuntimeException('Expected delete failure'); }
+catch (PDOException $e) { check(true, 'delete failure propagated'); }
+check(jp_shared_game($db, $reshare['token'])['id'] === $shareGameId, 'failed delete rolls back share removal');
+$stmt = $db->prepare('SELECT COUNT(*) FROM jp_revisions WHERE game_id = ?');
+$stmt->execute([$shareGameId]); check((int) $stmt->fetchColumn() === 2, 'failed delete rolls back revisions');
+$db->exec('DROP TRIGGER prevent_delete');
+jp_delete($db, 10, $shareGameId);
+rejects(fn() => jp_game($db, $shareGameId, 10), 'deleted game unavailable');
+rejects(fn() => jp_shared_game($db, $reshare['token']), 'deleted game sharing revoked');
+$stmt->execute([$shareGameId]); check((int) $stmt->fetchColumn() === 0, 'deleted game revisions removed');
+check((int) $db->query('SELECT COUNT(*) FROM jp_media')->fetchColumn() === $mediaBefore, 'shared media retained');
+check(jp_game($db, $id, 10) === $otherBefore, 'other games preserved');
+rejects(fn() => jp_delete($db, 10, $shareGameId), 'repeated delete rejected safely');
 echo $checks . " core checks passed.\n";

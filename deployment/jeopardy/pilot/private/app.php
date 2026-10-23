@@ -166,6 +166,25 @@ function jp_game(PDO $db, string $id, int $uid): array
     return $game;
 }
 
+function jp_delete(PDO $db, int $uid, string $id): void
+{
+    if (!preg_match('/^[a-f0-9]{32}$/D', $id)) throw new DomainException('Ugyldig spill.');
+    $db->beginTransaction();
+    try {
+        $stmt = $db->prepare('SELECT id FROM jp_games WHERE id = ? AND owner_id = ? FOR UPDATE');
+        $stmt->execute([$id, $uid]);
+        if (!$stmt->fetchColumn()) throw new DomainException('Spillet finnes ikke eller tilhører en annen konto.');
+        $db->prepare('DELETE FROM jp_shares WHERE game_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM jp_revisions WHERE game_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM jp_games WHERE id = ? AND owner_id = ?')->execute([$id, $uid]);
+        // Media may also belong to other Jeopardy games or Livequiz snapshots.
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        throw $e;
+    }
+}
+
 function jp_save(PDO $db, int $uid): string
 {
     $id = jp_input('id', 32);

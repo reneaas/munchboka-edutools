@@ -15,6 +15,9 @@ The directory name `pilot` is retained for deployment continuity. Registration i
   and a visible raw expression for invalid math.
 - One optional PNG, JPEG or WebP image on each question and answer, including
   image-only content. Editable image descriptions and live previews.
+- Delete saved games from “Mine quizer” after confirmation. Deletion requires
+  login, CSRF and ownership, and removes the game, revisions and sharing links
+  in one transaction. Uploaded media stays available for other games/Livequiz.
 - Explicit online saving, revision checks and retained revision snapshots.
   Network/validation failures leave the editor contents in the current tab.
   Unsaved edits trigger a navigation warning. No autosave or offline draft store.

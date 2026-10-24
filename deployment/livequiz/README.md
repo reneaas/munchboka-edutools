@@ -5,17 +5,18 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
-## Question images
+## Question images and videos
 
-During questions and results, the host's image scales to the space remaining after
-question text, controls and answer alternatives. The full image stays visible
+During questions and results, the host's image or video scales to the space remaining after
+question text, controls and answer alternatives. The full image or 16:9 video stays visible
 without cropping, and resizing the window recalculates the fit. Short landscape
 screens put the image beside the alternatives and use compact controls. Results
 reserve a separate scrollable statistics section so charts do not displace the
 image or answers. Other
 media can scroll within the media area; exceptionally long question/answer text
 retains scrolling rather than being cut off. Participant screens remain image-free.
-`tests/image-fit-browser.cjs` checks portrait, landscape and square images across
+`tests/video-fit-browser.cjs` checks video fitting and playback controls using a
+mock YouTube API. `tests/image-fit-browser.cjs` checks portrait, landscape and square images across
 projector, desktop, tablet and phone sizes.
 
 ## Light and dark themes

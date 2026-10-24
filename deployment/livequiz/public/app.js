@@ -81,7 +81,7 @@
   async function content(q, target, context = {}, promptTarget = target) {
     promptTarget.append(rich(q.prompt));
     if (q.code) { const holder = el('div', undefined, 'code-display'); target.append(holder); renderCodeBlock(holder, q.code); }
-    if (q.image) {
+    if (q.image && context.showImages !== false) {
       const img = el('img', undefined, 'question-image'); img.alt = q.image.alt; target.append(img);
       try { const blob = await api('media', undefined, {...context.query, image: q.image.id}, context.token || '', true); const url = URL.createObjectURL(blob); img.onload = () => URL.revokeObjectURL(url); img.src = url; }
       catch (_) { img.replaceWith(el('p', 'Bildet kunne ikke lastes.')); }
@@ -298,7 +298,7 @@
     function questionCard(s,order,header,body){
       const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
-      header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,autoplay:s.state==='QUESTION_ACTIVE'},header);
+      header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:host,autoplay:s.state==='QUESTION_ACTIVE'},header);
       if(!host&&s.state==='QUESTION_ACTIVE')body.append(answerForm(s,order));
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
       else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));

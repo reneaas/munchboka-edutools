@@ -6,6 +6,7 @@ const assert=require('node:assert/strict');
  try {
  const owner=await browser.newContext(),guest=await browser.newContext(),other=await browser.newContext(),student=await browser.newContext();
  const t=await owner.newPage(),g=await guest.newPage(),o=await other.newPage(),s=await student.newPage();
+ const participantMedia=[];student.on('request',r=>{if(new URL(r.url()).searchParams.get('api')==='media'||/youtube(?:-nocookie)?\.com/.test(r.url()))participantMedia.push(r.url());});
  const errors=[];for(const page of [t,g,o,s])page.on('pageerror',e=>errors.push(e.message));
  const base=process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8798';
  const call=(page,action,data,headers={})=>page.evaluate(async({action,data,headers})=>{
@@ -45,7 +46,7 @@ const assert=require('node:assert/strict');
  await g.getByRole('button',{name:'Start første spørsmål'}).click();await g.locator('.countdown').waitFor();
  await g.locator('.active-question-modal').waitFor();await s.locator('.active-question-modal').waitFor();
  await g.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth>0);
- await s.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth>0);
+ assert.equal(await s.locator('.question-image').count(),0);
  await s.locator('.answer-option:has(.rich:text-is("4"))').locator('input').check();await s.getByRole('button',{name:'Send svar',exact:true}).click();
  await g.getByRole('heading',{name:'Fasit',exact:true}).waitFor();await s.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await g.getByRole('button',{name:'Vis leaderboard'}).click();await g.getByRole('heading',{name:'Leaderboard',exact:true}).waitFor();
@@ -53,7 +54,7 @@ const assert=require('node:assert/strict');
  await card.getByRole('button',{name:'Slå av deling'}).click();
  const revoked=await other.newPage();await revoked.goto(share);await revoked.getByRole('alert').filter({hasText:'Delingslenken er ugyldig eller slått av.'}).waitFor();
  await o.reload();await o.locator('.pin').waitFor(); // Existing room survives revocation.
- assert.deepEqual(errors,[]);
+ assert.deepEqual(errors,[]);assert.deepEqual(participantMedia,[]);
  console.log('Sharing browser checks passed: owner link, two account-free hosts, isolated rooms, refresh, guest image display, participant scoring, host progression, edit/delete/share denial, CSRF, and revocation.');
  } finally {await browser.close();}
 })();

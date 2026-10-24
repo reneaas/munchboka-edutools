@@ -22,6 +22,17 @@ $multi = array_replace($q, ['type'=>'multi','options'=>['2','3','4'],'correct'=>
 $typed = array_replace($q, ['type'=>'text','accepted'=>['Fire','4'],'youtube'=>'']);
 $quiz = ['title'=>'Matematikk','questions'=>[$q,$multi,$typed]];
 $saved = lq_save($db,1,['content'=>$quiz]); $id=$saved['id'];
+$spacedCode="\n  print(2 * 3 + 5)  \n\n";
+$spacedQuiz=lq_save($db,1,['content'=>['title'=>'Code whitespace','questions'=>[array_replace($q,['code'=>$spacedCode])]]]);
+$spacedContent=json_decode(lq_quiz($db,1,$spacedQuiz['id'])['content'],true);
+check($spacedContent['questions'][0]['code']===$spacedCode,'saved code preserves leading/trailing spaces and blank lines');
+$spacedRoom=lq_create_room($db,1,$spacedQuiz['id']);
+check(json_decode(lq_room($db,$spacedRoom['room'])['content'],true)['questions'][0]['code']===$spacedCode,'game snapshot preserves code whitespace');
+rejects(fn()=>lq_code([]),'code must be a string');
+rejects(fn()=>lq_code(str_repeat(' ',8001)),'code length limit includes whitespace');
+rejects(fn()=>lq_code("\xff"),'invalid UTF-8 code rejected');
+rejects(fn()=>lq_validate($db,1,['title'=>'Blank','questions'=>[array_replace($q,['prompt'=>'','code'=>" \n\t",'youtube'=>''])]]),'whitespace-only code is not question content');
+
 check($saved['revision']===1,'save first revision');
 check(json_decode(lq_quiz($db,1,$id)['content'],true)['questions'][0]['youtube']==='dQw4w9WgXcQ','normalize video');
 rejects(fn()=>lq_quiz($db,2,$id),'cross-account read');

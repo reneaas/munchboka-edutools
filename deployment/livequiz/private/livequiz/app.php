@@ -29,6 +29,10 @@ function lq_youtube(string $s): string {
     if (!is_string($id) || !preg_match('/^[a-zA-Z0-9_-]{11}$/D', $id)) throw new DomainException('Ugyldig YouTube-lenke.');
     return $id;
 }
+function lq_code(mixed $value): string {
+    jp_text($value, 8000); // Validate type, size and UTF-8 without trimming code.
+    return $value;
+}
 function lq_validate(PDO $db, int $uid, mixed $data): array {
     if (!is_array($data)) throw new DomainException('Ugyldig quiz.');
     $title = jp_text($data['title'] ?? '', 180); $questions = $data['questions'] ?? null;
@@ -38,7 +42,7 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
     $out = ['title' => $title, 'scoring' => $scoring, 'questions' => []];
     foreach ($questions as $q) {
         if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text'], true)) throw new DomainException('Ugyldig spørsmålstype.');
-        $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => jp_text($q['code'] ?? '', 8000),
+        $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => lq_code($q['code'] ?? ''),
             'youtube' => lq_youtube(jp_text($q['youtube'] ?? '', 500)), 'image' => null];
         $seconds = $q['seconds'] ?? 30;
         if (!is_int($seconds) || $seconds < 5 || $seconds > 600) throw new DomainException('Velg 5–600 sekunder.');
@@ -49,7 +53,7 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
             $alt = jp_text($q['image']['alt'] ?? '', 500);
             $c['image'] = ['id' => $id, 'alt' => $alt];
         }
-        if ($c['prompt'] === '' && $c['code'] === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');
+        if ($c['prompt'] === '' && trim($c['code']) === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');
         $c['options'] = []; $c['correct'] = []; $c['accepted'] = [];
         if ($c['type'] === 'text') {
             $a = $q['accepted'] ?? null;

@@ -217,7 +217,9 @@ const assert = require('node:assert/strict');
  for(const page of [s,s2])assert.equal(await page.locator('.quiz-video, iframe').count(),0);
  for(const page of [s,s2]){
 	 await gridFits(page);
-	 assert.deepEqual(await page.locator('.chart-count').allInnerTexts(),await t.locator('.chart-count').allInnerTexts());
+	 assert.equal(await page.locator('.chart').count(),0);
+     assert.equal(await page.locator('.option-card.correct').count(),1);
+     assert.equal(await page.locator('.results-analysis .result').count(),1);
 	 assert.equal(await page.locator('.option-card.correct .rich').innerText(),'4');
 	 assert.equal(await page.getByRole('button',{name:'Vis leaderboard',exact:true}).count(),0);
  }

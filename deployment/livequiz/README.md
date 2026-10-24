@@ -5,6 +5,14 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Participant results
+
+After a question, participants see the correct answers and their own points,
+including zero when they did not answer. Typed questions list accepted answers.
+Only the teacher sees answer-distribution charts and statistics; participant
+state responses omit the distribution. The separate leaderboard is unchanged.
+`tests/results-browser.cjs` checks these screens for all three question types.
+
 ## Question images and videos
 
 During questions and results, the host's image or video scales to the space remaining after

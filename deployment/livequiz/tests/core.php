@@ -127,7 +127,7 @@ lq_answer($db,['room'=>$ra,'index'=>0,'answer'=>[0]],$a2);
 $s=lq_state($db,$ra,1,'',true);
 check($s['phase']==='reveal'&&$s['version']===4,'auto reveal when all have answered');
 check($s['distribution']['counts']===[1,1,0,0]&&$s['distribution']['correct']===1&&$s['distribution']['answered']===2,'four bars include zero counts');
-check(lq_state($db,$ra,0,$a1,false)['distribution']===$s['distribution'],'participants share authoritative results');
+check(!isset(lq_state($db,$ra,0,$a1,false)['distribution']),'participant results omit statistics');
 rejects(fn()=>lq_control($db,1,['room'=>$ra,'version'=>3,'command'=>'reveal']),'manual reveal after auto reveal rejected');
 check(lq_state($db,$ra,1,'',true)['version']===4,'auto reveal is applied once');
 $tr=lq_create_room($db,1,$id);$rt=$tr['room'];lq_join($db,$tr['pin'],'C',str_repeat('3',64));lq_join($db,$tr['pin'],'D',str_repeat('4',64));
@@ -230,11 +230,11 @@ foreach ([$q,$multi,$typed] as $question) {
     if (!empty($question['youtube'])) check($fastState['points']===1000,'server applies video grace from room snapshot');
     check($fastState['points']>=990 && $slowState['points']>=490 && $slowState['points']<=500,'all answer types reward earlier correct answers');
     check(lq_state($db,$sr,0,$wrong,false)['points']===0,'wrong speed answer zero');
-    check($slowState['distribution']['correct']===2,'speed results count correctness');
+    check(lq_state($db,$sr,1,'',true)['distribution']['correct']===2,'host speed results count correctness');
     check((int)$slowState['leaderboard'][0]['score']===$fastState['points'],'leaderboard uses speed score');
     // A valid answer just before the deadline can round to zero: correctness
     // must use the stored answer, including for typed-answer result charts.
     lq_query($db,'UPDATE lq_answers SET points = 0 WHERE room_id = ?',[$sr]);
-    check(lq_state($db,$sr,0,$slow,false)['distribution']['correct']===2,'zero-point correct answers remain correct');
+    check(lq_state($db,$sr,1,'',true)['distribution']['correct']===2,'zero-point correct answers remain correct');
 }
 echo "$checks backend checks passed\n";

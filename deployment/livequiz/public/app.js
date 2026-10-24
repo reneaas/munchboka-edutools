@@ -286,8 +286,12 @@
     function showAnswer(s,order){
       popup((header,body)=>{
         header.append(el('h2','Fasit','modal-title'));questionCard(s,order,header,body);
-        const analysis=el('section',undefined,'results-analysis');analysis.append(answerChart(s,order));
-        if(!host)analysis.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du svarte ikke på dette spørsmålet.','result'));
+        const analysis=el('section',undefined,'results-analysis');
+        if(host)analysis.append(answerChart(s,order));
+        else {
+          if(s.question.type==='text')analysis.append(el('p','Riktig svar: '+s.question.accepted.join(' · ')));
+          analysis.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du fikk 0 poeng. Du svarte ikke på dette spørsmålet.','result'));
+        }
         body.append(analysis);
       },'results-modal');
     }
@@ -331,6 +335,7 @@
       if(state&&s.version<state.version)return;
       if(state&&s.version===state.version&&state.submitted)s.submitted=true;
       state=s;heading.textContent=s.title;meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
+      if(!host&&s.state==='QUESTION_RESULTS')meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`Spørsmål ${s.index+1} av ${s.total}`;
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
       if(rendered===String(s.version)){if(s.state==='LEADERBOARD')overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;

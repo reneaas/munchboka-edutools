@@ -284,7 +284,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host, st
         $state['leaderboard'] = lq_query($db, 'SELECT p.id, p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname, p.id LIMIT 60', [$room])->fetchAll();
     }
     if ($revealed && $play['mode'] === 'teams') $state['leaderboard'] = lq_team_leaderboard($play['teams'], $state['leaderboard']);
-    if ($r['phase'] === 'reveal' && isset($content['questions'][$index])) {
+    if ($host && $r['phase'] === 'reveal' && isset($content['questions'][$index])) {
         $cq = $content['questions'][$index]; $counts = array_fill(0, count($cq['options']), 0); $correct = 0;
         $rows = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchAll();
         foreach ($rows as $row) {

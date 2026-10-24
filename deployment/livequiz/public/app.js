@@ -120,21 +120,57 @@
     app.append(form);
     if(pending)app.append(el('p','Koden gjelder i ti minutter. Sjekk også søppelpost.','hint'),button('Be om en ny kode',()=>{pending=false;login();},'quiet'));
   }
+  function organizationDialog(title,fields,save) {
+    const dialog=el('dialog',undefined,'organization-dialog'),form=el('form'),message=el('p','','modal-notice');message.setAttribute('role','alert');
+    const submit=el('button','Lagre');submit.type='submit';
+    const close=()=>{dialog.close();dialog.remove();};
+    form.append(el('h2',title),...fields,message,group(submit,button('Avbryt',close,'quiet')));dialog.append(form);document.body.append(dialog);
+    dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
+    form.onsubmit=async event=>{event.preventDefault();submit.disabled=true;message.textContent='';try{await save();close();await library();}catch(e){message.textContent=e.message;}finally{submit.disabled=false;}};
+    dialog.showModal();form.querySelector('input,select')?.focus();
+  }
   async function library() {
     app.replaceChildren(el('p', 'DITT KLASSEROM', 'eyebrow'), el('h1', 'Mine quizer'));
     if (!uid) { app.append(el('p', 'Logg inn med Osloskolen-kontoen din for å lage og lagre quizer.'), link('Logg inn', '?login=1')); return; }
-    app.append(link('＋ Lag en quiz', '?new=1'));
-    const data = await api('library');
-    if (!data.quizzes.length) app.append(el('p', 'Din første quiz starter med et godt spørsmål.'));
-    const grid = el('div', undefined, 'library');
-    for (const q of data.quizzes) {
-      const card = el('article', undefined, 'card'); card.append(el('h2', q.title), el('p', 'Versjon ' + q.revision), group(link('Rediger', '?edit=' + q.id), button('Start spill', async () => { const r = await api('create', {id:q.id}); location.href = '?host=' + r.room; }), button('Del quiz',()=>shareQuiz(q,card),'secondary'), button('Slett', async () => { if (!confirm('Slette «' + q.title + '»? Dette kan ikke angres.')) return; await api('delete', {id:q.id}); card.remove(); }, 'quiet'))); grid.append(card);
+    const data=await api('library'),folders=new Map(data.folders.map(folder=>[folder.id,folder]));
+    const current=folders.get(params.get('folder'))||null,currentId=current?.id||null;
+    const libraryUrl=id=>'?teacher=1'+(id?'&folder='+id:'');
+    const folderPath=id=>{const names=[];for(let f=folders.get(id);f;f=folders.get(f.parent))names.unshift(f.name);return names.join(' / ');};
+    const sorted=[...folders.values()].sort((a,b)=>folderPath(a.id).localeCompare(folderPath(b.id),'nb'));
+    function destination(value,excluded=null){
+      const label=el('label','Mappe'),select=el('select');
+      select.append(Object.assign(el('option','Mine quizer (øverste nivå)'),{value:''}));
+      for(const folder of sorted){
+        let forbidden=false;for(let f=folder;f;f=folders.get(f.parent))if(f.id===excluded)forbidden=true;
+        if(!forbidden)select.append(Object.assign(el('option',folderPath(folder.id)),{value:folder.id}));
+      }
+      select.value=value||'';label.append(select);return {label,value:()=>select.value||null};
+    }
+    function nameDialog(title,command,folder=null){
+      let name=folder?.name||'';const input=field('Mappenavn',name,value=>name=value);input.querySelector('input').required=true;input.querySelector('input').maxLength=120;
+      organizationDialog(title,[input],()=>api('organize',{command,id:folder?.id,name,parent:currentId}));
+    }
+    const breadcrumbs=el('div',undefined,'folder-breadcrumbs');breadcrumbs.setAttribute('aria-label','Mappesti');breadcrumbs.append(link('Mine quizer',libraryUrl(null)));
+    const ancestors=[];for(let f=current;f;f=folders.get(f.parent))ancestors.unshift(f);
+    for(const folder of ancestors)breadcrumbs.append(el('span','/'),link(folder.name,libraryUrl(folder.id)));
+    app.append(breadcrumbs,group(link('＋ Lag en quiz','?new=1'+(currentId?'&folder='+currentId:'')),button('Ny mappe',()=>nameDialog('Ny mappe','create-folder'),'secondary')));
+    if(current){
+      app.append(el('h2',current.name),group(button('Gi mappen nytt navn',()=>nameDialog('Gi mappen nytt navn','rename-folder',current),'quiet'),
+        button('Flytt mappe',()=>{const target=destination(current.parent,current.id);organizationDialog('Flytt «'+current.name+'»',[target.label],()=>api('organize',{command:'move-folder',id:current.id,parent:target.value()}));},'quiet'),
+        button('Slett mappe',async()=>{if(!confirm('Slette mappen «'+current.name+'»? Quizer og undermapper flyttes ett nivå opp. Ingen quizer slettes.'))return;await api('organize',{command:'delete-folder',id:current.id});location.href=libraryUrl(current.parent);},'quiet')));
+    }
+    const children=sorted.filter(folder=>folder.parent===currentId),quizzes=data.quizzes.filter(quiz=>quiz.folder===currentId);
+    if(children.length){const list=el('div',undefined,'folder-list');for(const folder of children)list.append(link('📁 '+folder.name,libraryUrl(folder.id)));app.append(list);}
+    if(!children.length&&!quizzes.length)app.append(el('p',current?'Denne mappen er tom. Lag en quiz eller flytt en quiz hit.':'Lag en quiz eller en mappe for å komme i gang.','hint'));
+    const grid=el('div',undefined,'library');
+    for(const q of quizzes){
+      const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p','Versjon '+q.revision),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
+        button('Start spill',async()=>{const r=await api('create',{id:q.id});location.href='?host='+r.room;}),button('Del quiz',()=>shareQuiz(q,card),'secondary'),
+        button('Flytt',()=>{const target=destination(q.folder);organizationDialog('Flytt «'+q.title+'»',[target.label],()=>api('organize',{command:'move-quiz',id:q.id,parent:target.value()}));},'quiet'),
+        button('Slett',async()=>{if(!confirm('Slette «'+q.title+'»? Dette kan ikke angres.'))return;await api('delete',{id:q.id});await library();},'quiet')));grid.append(card);
     }
     app.append(grid);
-    if (data.rooms.length) {
-      app.append(el('h2', 'Siste spill · tilgjengelig i seks timer'));
-      for (const r of data.rooms) app.append(link('Spill ' + r.pin + (r.phase === 'finished' ? ' · avsluttet' : ' · åpne'), '?host=' + r.id));
-    }
+    if(data.rooms.length){app.append(el('h2','Siste spill · tilgjengelig i seks timer'));for(const r of data.rooms)app.append(link('Spill '+r.pin+(r.phase==='finished'?' · avsluttet':' · åpne'),'?host='+r.id));}
   }
   async function shareQuiz(q,card) {
     const data=await api('share',{id:q.id,enabled:true});
@@ -172,7 +208,7 @@
     const save = button('Lagre quiz', async () => {
       if (uploads) throw new Error('Vent til bildet er lastet opp.');
       saving = true; changed(); const snapshot = JSON.stringify(model);
-      try { const r = await api('save', {id:saved.id, revision:saved.revision, content:JSON.parse(snapshot)}); saved = {...saved,...r}; baseline = snapshot; history.replaceState(null,'','?edit='+r.id); }
+      try { const r = await api('save', {id:saved.id, revision:saved.revision, content:JSON.parse(snapshot),...(!saved.id&&params.get('folder')?{folder:params.get('folder')}:{})}); saved = {...saved,...r}; baseline = snapshot; history.replaceState(null,'','?edit='+r.id); }
       finally { saving = false; changed(); }
     });
     const start = button('Start spill', async () => {
@@ -183,7 +219,7 @@
     for (const [value, label] of [['fixed','Faste poeng'], ['speed','Raske riktige svar']]) { const option = el('option', label); option.value = value; scoringSelect.append(option); }
     scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, link('Mine quizer','?teacher=1')), status,
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status,
       field('Quizens tittel', model.title, v => {model.title=v; changed();}), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     function renderQuestions() {
       list.replaceChildren();

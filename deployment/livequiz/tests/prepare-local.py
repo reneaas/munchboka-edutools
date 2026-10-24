@@ -15,7 +15,7 @@ app = (legacy / 'private/app.php').read_text().replace('function jp_db(): PDO', 
 app += '''
 class LocalQuizPDO extends PDO {
  public function prepare(string $q, array $options = []): PDOStatement|false {
-  return parent::prepare(str_replace(' FOR UPDATE', '', $q), $options);
+  return parent::prepare(str_replace([' FOR UPDATE', 'INSERT IGNORE'], ['', 'INSERT OR IGNORE'], $q), $options);
  }
 }
 function jp_db(): PDO {

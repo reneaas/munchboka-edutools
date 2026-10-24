@@ -78,11 +78,15 @@ function lq_quiz(PDO $db, int $uid, string $id): array {
 }
 function lq_save(PDO $db, int $uid, array $input): array {
     $content = lq_validate($db, $uid, $input['content'] ?? null);
+    if (($input['id'] ?? '') === '' && !empty($input['folder'])) lq_library_prepare($db, $uid);
     return lq_transaction($db, function () use ($db, $uid, $input, $content) {
         $id = $input['id'] ?? ''; $rev = 1; $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         if ($id === '') {
+            $library = !empty($input['folder']) ? lq_library_data($db, $uid, true) : null;
+            $folder = $library !== null ? lq_folder_id($library, $input['folder']) : null;
             $id = bin2hex(random_bytes(16));
             lq_query($db, 'INSERT INTO lq_quizzes (id, owner_id, title, content, revision) VALUES (?, ?, ?, ?, 1)', [$id, $uid, $content['title'], $json]);
+            if ($folder !== null) { $library['quiz_folders'][$id] = $folder; lq_library_write($db, $uid, $library); }
         } else {
             $r = lq_query($db, 'SELECT revision, content FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetch();
             if ($r === false || (int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
@@ -97,9 +101,15 @@ function lq_save(PDO $db, int $uid, array $input): array {
 }
 function lq_delete(PDO $db, int $uid, array $input): array {
     $id = lq_id($input['id'] ?? '');
-    lq_quiz($db, $uid, $id);
-    lq_query($db, 'DELETE FROM lq_quizzes WHERE id = ? AND owner_id = ?', [$id, $uid]);
-    return ['ok' => true];
+    lq_library_prepare($db, $uid);
+    return lq_transaction($db, function () use ($db, $uid, $id) {
+        $library = lq_library_data($db, $uid, true);
+        lq_quiz($db, $uid, $id);
+        lq_query($db, 'DELETE FROM lq_quizzes WHERE id = ? AND owner_id = ?', [$id, $uid]);
+        unset($library['quiz_folders'][$id]);
+        lq_library_write($db, $uid, $library);
+        return ['ok' => true];
+    });
 }
 function lq_create_room(PDO $db, int $uid, string $id): array {
     $quiz = lq_quiz($db, $uid, $id);
@@ -315,5 +325,6 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
     return jp_media($db, lq_id($image), (int)$r['owner_id']);
 }
 
+require_once __DIR__ . '/library.php';
 require_once __DIR__ . '/sharing.php';
 require_once __DIR__ . '/auth.php';

@@ -189,3 +189,11 @@ nav{align-items:center;flex-wrap:wrap}
 .question-modal .media-question-body .quiz-video-screen iframe{width:min(100cqw,calc(100cqh * 16 / 9));height:min(100cqh,calc(100cqw * 9 / 16));min-height:0;max-width:100%;aspect-ratio:16/9;margin:0}
 .question-modal .media-question-body .quiz-video>button{justify-self:start;padding:6px 10px;font-size:13px}
 .question-modal .media-question-body .quiz-video>.hint{margin:0;font-size:12px;line-height:1.3}
+
+.folder-breadcrumbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:20px 0}
+.folder-breadcrumbs .button{max-width:100%;overflow-wrap:anywhere}
+.folder-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px;margin:24px 0}
+.folder-list .button{text-align:left;overflow-wrap:anywhere}
+.organization-dialog{width:480px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink)}
+.organization-dialog::backdrop{background:#0008}
+.organization-dialog h2{overflow-wrap:anywhere}

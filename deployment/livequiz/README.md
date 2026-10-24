@@ -5,6 +5,28 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Folders and subfolders
+
+The teacher library has **Ny mappe**, clickable folders and a breadcrumb path.
+Open a folder to create subfolders or save a new quiz directly inside it. Use
+**Flytt** on a quiz to choose its folder or return it to the top level. Inside a
+folder, use **Gi mappen nytt navn**, **Flytt mappe**, or **Slett mappe**. Deleting a
+folder moves its quizzes and direct subfolders to its parent; it never deletes
+quiz content. Quiz edits, share links and running games are independent of moves.
+
+Organization is private to each signed-in teacher. One `lq_library` record per
+teacher stores the folder tree and quiz assignments. The new table is created
+additively on first library access in the **existing database**, without changes
+to existing quiz tables or a manual deployment step. The database user needs
+CREATE permission for this first use. Folder mutations lock the teacher's record;
+quiz creation in a folder is atomic. Invalid parents, cross-owner access and
+folder cycles are rejected. Up to 500 folders per teacher; names are limited to
+120 UTF-8 bytes. Legacy quizzes start at the library's top level.
+
+`php tests/folders.php` checks migration, ownership, nesting, moves and safe
+removal. `tests/folders-browser.cjs` covers the library UI and new quiz saving,
+including mobile/dark mode, CSRF and account-free guest restrictions.
+
 ## Participant results
 
 After a question, participants see the correct answers and their own points,

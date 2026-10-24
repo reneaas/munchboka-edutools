@@ -92,6 +92,7 @@ session_write_close();
 ?>
 <!doctype html>
 <html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Livequiz · Munchboka</title>
+<script src="theme.js?v=<?= filemtime(__DIR__.'/theme.js') ?>"></script>
 <link rel="stylesheet" href="vendor/katex/katex.min.css"><link rel="stylesheet" href="vendor/codemirror/lib/codemirror.min.css"><link rel="stylesheet" href="app.css?v=<?= filemtime(__DIR__.'/app.css') ?>">
 <script defer src="vendor/katex/katex.min.js"></script><script defer src="math.js"></script><script defer src="vendor/qrcode.js"></script><script defer src="vendor/codemirror/lib/codemirror.min.js"></script><script defer src="vendor/codemirror/mode/python/python.min.js"></script><script defer src="code.js"></script><script defer src="youtube.js?v=<?= filemtime(__DIR__.'/youtube.js') ?>"></script><script defer src="music.js?v=<?= filemtime(__DIR__.'/music.js') ?>"></script><script defer src="app.js?v=<?= filemtime(__DIR__.'/app.js') ?>"></script></head>
 <body><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>

@@ -5,6 +5,17 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Light and dark themes
+
+Use **Mørk modus / Lys modus** in the site header or game dialog to switch themes.
+The site initially follows the device's color preference. A manual selection is
+saved in that browser and survives refresh/navigation, with changes synced across
+tabs. Teachers and participants choose independently. If browser storage is
+unavailable, switching still works for the current page. Both themes cover the
+quiz editor, questions, results, team cards and leaderboards; images, QR codes and
+videos keep their original colors. `tests/theme-browser.cjs` checks theme switching,
+persistence, game dialogs, editor colors, mobile width and unavailable storage.
+
 ## Share a quiz with another teacher
 
 In **Mine quizer**, choose **Del quiz**, then **Kopier lenke**. Anyone with that

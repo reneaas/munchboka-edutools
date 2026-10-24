@@ -281,7 +281,7 @@
       const title=overlay.querySelector('h2,.qcard-head,[role=status]'),footer=el('div',undefined,'question-modal-footer'),message=el('p',undefined,'modal-notice');
       title.id='quiz-modal-title';title.tabIndex=-1;overlay.setAttribute('aria-labelledby',title.id);message.hidden=true;message.setAttribute('role','alert');
       overlay.addEventListener('cancel',event=>event.preventDefault());
-      footer.append(meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);overlay.showModal();title.focus();
+      footer.append(window.quizThemeButton(),meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);overlay.showModal();title.focus();
     }
     function showAnswer(s,order){
       popup((header,body)=>{

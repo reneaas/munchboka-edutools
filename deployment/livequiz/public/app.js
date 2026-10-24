@@ -297,6 +297,7 @@
     }
     function questionCard(s,order,header,body){
       const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
+      if(host&&q.image)body.classList.add('image-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:host,autoplay:s.state==='QUESTION_ACTIVE'},header);
       if(!host&&s.state==='QUESTION_ACTIVE')body.append(answerForm(s,order));

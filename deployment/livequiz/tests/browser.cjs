@@ -47,12 +47,12 @@ const assert = require('node:assert/strict');
  }
  async function gridFits(page){
 	 await modalFits(page);
-	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:getComputedStyle(grid).gap,cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
-	 assert.equal(geometry.gap,'16px');assert.equal(geometry.cards.length,4);
+	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:getComputedStyle(grid).gap,cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {minimum:parseFloat(getComputedStyle(card).minHeight),x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
+	 const gap=parseFloat(geometry.gap);assert.ok([12,16].includes(gap));assert.equal(geometry.cards.length,4);
 	 const [first,second,third,fourth]=geometry.cards;
-	 for(const card of geometry.cards){assert.ok(card.height>=100);assert.ok(Math.abs(card.width-first.width)<.5);assert.ok(Math.abs(card.height-first.height)<.5);assert.ok(card.contained);}
+	 for(const card of geometry.cards){assert.ok(card.height>=card.minimum-.5);assert.ok(Math.abs(card.width-first.width)<.5);assert.ok(Math.abs(card.height-first.height)<.5);assert.ok(card.contained);}
 	 assert.equal(first.y,second.y);assert.equal(third.y,fourth.y);assert.equal(first.x,third.x);assert.equal(second.x,fourth.x);
-	 assert.ok(Math.abs(second.x-first.x-first.width-16)<.5);assert.ok(Math.abs(third.y-first.y-first.height-16)<.5);
+	 assert.ok(Math.abs(second.x-first.x-first.width-gap)<.5);assert.ok(Math.abs(third.y-first.y-first.height-gap)<.5);
  }
  await t.goto(base+'/_test_login.php');
  await t.getByRole('link',{name:'＋ Lag en quiz'}).click();
@@ -158,8 +158,8 @@ const assert = require('node:assert/strict');
 	 await t.setViewportSize(viewport);
 	 await gridFits(t);
 	 const image=await t.locator('.question-image').boundingBox(),body=await t.locator('.modal-body').boundingBox();
-	 assert.ok(image.width<=body.width);assert.ok(Math.abs(image.width/image.height-1.5)<.01);
-	 assert.equal(await t.locator('.modal-body').evaluate(body=>body.scrollHeight>body.clientHeight),true);
+	 assert.ok(image.width<=body.width);assert.ok(image.height>0);assert.equal(await t.locator('.question-image').evaluate(e=>getComputedStyle(e).objectFit),'contain');
+	 assert.equal(await t.locator('.modal-body').evaluate(body=>body.scrollHeight>body.clientHeight+1),false);
 	 const bounds=await questionModal.boundingBox();
 	 assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height);
 	 assert.equal(await questionModal.evaluate(modal=>modal.scrollWidth<=modal.clientWidth),true);
@@ -178,7 +178,7 @@ const assert = require('node:assert/strict');
 	 canvas.width=4000;canvas.height=1000;canvas.className='layout-stress';svg.setAttribute('width','4000');svg.setAttribute('height','1000');svg.setAttribute('viewBox','0 0 4000 1000');svg.classList.add('layout-stress');media.append(canvas,svg);
  });
  await gridFits(t);assert.ok(await t.locator('.option-card .katex').count());
- for(const element of await t.locator('.layout-stress').all()){const bounds=await element.boundingBox();assert.ok(bounds.width<=356);assert.ok(Math.abs(bounds.width/bounds.height-4)<.01);}
+ for(const element of await t.locator('.layout-stress').all()){const bounds=await element.boundingBox();assert.ok(bounds.width<=356);assert.ok(Math.abs(bounds.width/bounds.height-4)<.01,JSON.stringify({bounds,style:await element.evaluate(e=>({tag:e.tagName,width:getComputedStyle(e).width,height:getComputedStyle(e).height,flex:getComputedStyle(e).flex}))}));}
  await t.evaluate(()=>{document.querySelectorAll('.layout-stress').forEach(element=>element.remove());document.querySelectorAll('.option-card .rich').forEach((answer,index)=>answer.textContent=window.layoutAnswers[index]);delete window.layoutAnswers;});
  await t.setViewportSize({width:1280,height:1000});
  await t.screenshot({path:'/tmp/livequiz-host-question.png',fullPage:true});

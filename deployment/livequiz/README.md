@@ -5,6 +5,17 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Question images
+
+During an active question, the host's image scales to the space remaining after
+question text, controls and answer alternatives. The full image stays visible
+without cropping, and resizing the window recalculates the fit. Short landscape
+screens put the image beside the alternatives and use compact controls. Other
+media can scroll within the media area; exceptionally long question/answer text
+retains scrolling rather than being cut off. Participant screens remain image-free.
+`tests/image-fit-browser.cjs` checks portrait, landscape and square images across
+projector, desktop, tablet and phone sizes.
+
 ## Light and dark themes
 
 Use **Mørk modus / Lys modus** in the site header or game dialog to switch themes.

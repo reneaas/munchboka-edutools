@@ -2,11 +2,11 @@
   "content": [
     {
       "content": null,
-      "created": "2026-10-24T12:03:37.475970Z",
+      "created": "2026-10-24T13:47:56.730831Z",
       "format": null,
       "hash": null,
       "hash_algorithm": null,
-      "last_modified": "2026-10-24T12:03:37.475970Z",
+      "last_modified": "2026-10-24T13:47:56.730831Z",
       "mimetype": null,
       "name": "oppgaver",
       "path": "oppgaver",
@@ -15,11 +15,11 @@
       "writable": true
     }
   ],
-  "created": "2026-10-24T12:03:37.475970Z",
+  "created": "2026-10-24T13:47:56.730831Z",
   "format": "json",
   "hash": null,
   "hash_algorithm": null,
-  "last_modified": "2026-10-24T12:03:37.475970Z",
+  "last_modified": "2026-10-24T13:47:56.730831Z",
   "mimetype": null,
   "name": "",
   "path": "",

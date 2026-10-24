@@ -47,7 +47,6 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
             if (!is_array($q['image'])) throw new DomainException('Ugyldig bilde.');
             $id = lq_id($q['image']['id'] ?? null); jp_media($db, $id, $uid, false);
             $alt = jp_text($q['image']['alt'] ?? '', 500);
-            if ($alt === '') throw new DomainException('Skriv en bildebeskrivelse.');
             $c['image'] = ['id' => $id, 'alt' => $alt];
         }
         if ($c['prompt'] === '' && $c['code'] === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');

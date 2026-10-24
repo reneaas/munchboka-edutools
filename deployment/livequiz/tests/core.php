@@ -140,6 +140,13 @@ $er=lq_create_room($db,1,$id);lq_control($db,1,['room'=>$er['room'],'version'=>1
 check(lq_state($db,$er['room'],1,'',true)['phase']==='question','empty room never auto reveals before deadline');
 $img=str_repeat('d',32);$db->prepare('INSERT INTO jp_media VALUES (?,1,?,?,?)')->execute([$img,'image/png',3,'PNG']);
 $withImage=array_replace($q,['image'=>['id'=>$img,'alt'=>'Diagram']]);
+foreach ([['id'=>$img], ['id'=>$img,'alt'=>'']] as $imageWithoutDescription) {
+    $imageQuiz=lq_save($db,1,['content'=>['title'=>'No image description','questions'=>[array_replace($q,['image'=>$imageWithoutDescription])]]]);
+    $imageContent=json_decode(lq_quiz($db,1,$imageQuiz['id'])['content'],true);
+    check($imageContent['questions'][0]['image']['id']===$img,'image saved without description');
+    check($imageContent['questions'][0]['image']['alt']==='','missing and empty image descriptions accepted');
+}
+check(lq_validate($db,1,['title'=>'Existing description','questions'=>[$withImage]])['questions'][0]['image']['alt']==='Diagram','existing description preserved');
 rejects(fn()=>lq_validate($db,2,['title'=>'Stolen','questions'=>[$withImage]]),'image ownership validation');
 $i=lq_save($db,1,['content'=>['title'=>'Images','questions'=>[$withImage,$q]]]);$ir=lq_create_room($db,1,$i['id']);$it=str_repeat('e',64);lq_join($db,$ir['pin'],'Img',$it);
 rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,false,$img),'lobby hides future image');

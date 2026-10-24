@@ -34,6 +34,13 @@ const assert=require('node:assert/strict');
  }
  await page.evaluate(()=>{const grid=document.querySelector('.option-grid');for(let i=0;i<2;i++)grid.append(grid.firstElementChild.cloneNode(true));});
  for(const size of [{width:1280,height:720},{width:390,height:844}]){await page.setViewportSize(size);await fits();}
+ await page.getByRole('button',{name:'Vis fasit nå'}).click();await page.getByRole('heading',{name:'Fasit',exact:true}).waitFor();
+ await page.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth>0);
+ for(const size of [{width:1280,height:720},{width:390,height:844},{width:844,height:390}]){
+  await page.setViewportSize(size);await fits();
+  assert.equal(await page.locator('.results-analysis').evaluate(e=>e.clientHeight>0),true);
+  await page.screenshot({path:`/tmp/livequiz-image-results-${size.width}x${size.height}.png`});
+ }
  console.log('Image fit checks passed: portrait, landscape, square; desktop, projector, tablet, mobile and landscape phone; image and all alternatives visible without scrolling.');
  }finally{await browser.close();}
 })();

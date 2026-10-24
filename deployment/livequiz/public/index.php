@@ -25,17 +25,17 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete'];
+        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete','share','shared-start'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
-        if ($action === 'join') {
+        if (in_array($action, ['join','shared-start'], true)) {
             if (time() < ($_SESSION['lq_join_after'] ?? 0)) lq_response(['error'=>'Vent to sekunder og prøv igjen.'], 429);
             $_SESSION['lq_join_after'] = time() + 2;
         }
         // Release PHP's session lock before polling queries, uploads or room locks.
         if (!in_array($action, ['send','verify','logout'], true)) session_write_close();
         if ($action === 'bootstrap') lq_response(['uid'=>$uid, 'csrf'=>$csrf, 'pending'=>isset($_SESSION['email_pending'])]);
-        $teacherActions = ['library','quiz','save','create','control','upload','delete'];
+        $teacherActions = ['library','quiz','save','create','upload','delete','share'];
         if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
         require getenv('LIVEQUIZ_PRIVATE') ?: '/home/zebfxvix/jeopardy-private/livequiz/app.php';
         $db = jp_db();
@@ -46,6 +46,8 @@ if ($action !== null) {
             $input = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
             if (!is_array($input)) throw new DomainException('Ugyldig forespørsel.');
         }
+        $hostToken = $_SERVER['HTTP_X_HOST_TOKEN'] ?? '';
+        if (strlen($hostToken) > 64) throw new DomainException('Ugyldig vertsnøkkel.');
         $token = $_SERVER['HTTP_X_PLAYER_TOKEN'] ?? '';
         if (strlen($token) > 64) throw new DomainException('Ugyldig deltaker.');
         $room = $_GET['room'] ?? ''; $host = ($_GET['host'] ?? '') === '1';
@@ -61,15 +63,23 @@ if ($action !== null) {
             case 'quiz': $q = lq_quiz($db, $uid, jp_text($_GET['id'] ?? '', 32)); lq_response(['id'=>$q['id'], 'revision'=>(int)$q['revision'], 'content'=>json_decode($q['content'], true, 32, JSON_THROW_ON_ERROR)]);
             case 'save': lq_response(lq_save($db, $uid, $input));
             case 'delete': lq_response(lq_delete($db, $uid, $input));
+            case 'share':
+                if (!is_bool($input['enabled'] ?? null)) throw new DomainException('Ugyldig delingsvalg.');
+                lq_response(lq_share($db, $uid, jp_text($input['id'] ?? '', 32), $input['enabled']));
+            case 'shared':
+                $shared = lq_shared_quiz($db, jp_text($_GET['id'] ?? '', 32), jp_text($_SERVER['HTTP_X_QUIZ_SHARE'] ?? '', 64));
+                $content = json_decode($shared['content'], true, 32, JSON_THROW_ON_ERROR);
+                lq_response(['title'=>$shared['title'], 'total'=>count($content['questions'])]);
+            case 'shared-start': lq_response(lq_shared_start($db, jp_text($input['id'] ?? '', 32), jp_text($input['key'] ?? '', 64), jp_text($input['host_token'] ?? '', 64)));
             case 'create': lq_response(lq_create_room($db, $uid, jp_text($input['id'] ?? '', 32)));
             case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 6), jp_text($input['name'] ?? '', 80), $token));
-            case 'control': lq_response(lq_control($db, $uid, $input));
+            case 'control': lq_response(lq_control($db, $uid, $input, $hostToken));
             case 'answer': lq_response(lq_answer($db, $input, $token));
-            case 'state': lq_response(lq_state($db, $room, $uid, $token, $host));
+            case 'state': lq_response(lq_state($db, $room, $uid, $token, $host, $hostToken));
             case 'upload': lq_response(['image'=>jp_upload($db, $uid, $_FILES['image'] ?? [])]);
             case 'media':
                 $image = lq_id($_GET['image'] ?? null);
-                if ($room !== '') $m = lq_room_media($db, $room, $uid, $token, $host, $image);
+                if ($room !== '') $m = lq_room_media($db, $room, $uid, $token, $host, $image, $hostToken);
                 elseif ($uid) $m = jp_media($db, $image, $uid);
                 else throw new DomainException('Ingen tilgang.');
                 header('Content-Type: '.$m['mime']); header('Content-Length: '.strlen($m['bytes'])); echo $m['bytes']; exit;

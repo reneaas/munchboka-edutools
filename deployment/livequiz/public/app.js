@@ -20,7 +20,10 @@
   function group(...children) { const n = el('div', undefined, 'actions'); n.append(...children); return n; }
   async function api(action, data, query = {}, token = '', binary = false) {
     const url = new URL('index.php', location.href); url.search = new URLSearchParams({api: action, ...query});
-    const headers = {}; if (token) headers['X-Player-Token'] = token;
+    const headers = {};
+    if(params.has('host')){const key=sessionStorage.getItem('lq-host-'+params.get('host'));if(key)headers['X-Host-Token']=key;}
+    if(action==='shared')headers['X-Quiz-Share']=new URLSearchParams(location.hash.slice(1)).get('key')||'';
+    if (token) headers['X-Player-Token'] = token;
     if (data !== undefined) { headers['X-CSRF-Token'] = csrf; if (!(data instanceof FormData)) headers['Content-Type'] = 'application/json'; }
     const response = await fetch(url, {method: data === undefined ? 'GET' : 'POST', headers, body: data === undefined ? undefined : data instanceof FormData ? data : JSON.stringify(data), credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(10000)});
     if (binary && response.ok) return response.blob();
@@ -125,13 +128,38 @@
     if (!data.quizzes.length) app.append(el('p', 'Din første quiz starter med et godt spørsmål.'));
     const grid = el('div', undefined, 'library');
     for (const q of data.quizzes) {
-      const card = el('article', undefined, 'card'); card.append(el('h2', q.title), el('p', 'Versjon ' + q.revision), group(link('Rediger', '?edit=' + q.id), button('Start spill', async () => { const r = await api('create', {id:q.id}); location.href = '?host=' + r.room; }), button('Slett', async () => { if (!confirm('Slette «' + q.title + '»? Dette kan ikke angres.')) return; await api('delete', {id:q.id}); card.remove(); }, 'quiet'))); grid.append(card);
+      const card = el('article', undefined, 'card'); card.append(el('h2', q.title), el('p', 'Versjon ' + q.revision), group(link('Rediger', '?edit=' + q.id), button('Start spill', async () => { const r = await api('create', {id:q.id}); location.href = '?host=' + r.room; }), button('Del quiz',()=>shareQuiz(q,card),'secondary'), button('Slett', async () => { if (!confirm('Slette «' + q.title + '»? Dette kan ikke angres.')) return; await api('delete', {id:q.id}); card.remove(); }, 'quiet'))); grid.append(card);
     }
     app.append(grid);
     if (data.rooms.length) {
       app.append(el('h2', 'Siste spill · tilgjengelig i seks timer'));
       for (const r of data.rooms) app.append(link('Spill ' + r.pin + (r.phase === 'finished' ? ' · avsluttet' : ' · åpne'), '?host=' + r.id));
     }
+  }
+  async function shareQuiz(q,card) {
+    const data=await api('share',{id:q.id,enabled:true});
+    card.querySelector('.share-panel')?.remove();
+    const panel=el('section',undefined,'share-panel');
+    const url=new URL('./',location.href);url.searchParams.set('share',q.id);url.hash=new URLSearchParams({key:data.key});
+    const label=field('Delingslenke',url.href,()=>{}),input=label.querySelector('input');input.readOnly=true;input.onclick=()=>input.select();
+    const status=el('p','','hint');status.setAttribute('role','status');
+    panel.append(el('p','Alle med lenken kan starte et eget spill uten konto. De kan ikke redigere quizen din. Lenken bruker siste lagrede versjon.','hint'),label,
+      group(button('Kopier lenke',async()=>{try{await navigator.clipboard.writeText(url.href);status.textContent='Lenken er kopiert.';}catch(_){input.focus();input.select();status.textContent='Kopier den markerte lenken.';}}),
+        button('Slå av deling',async()=>{await api('share',{id:q.id,enabled:false});panel.replaceChildren(el('p','Deling er slått av. Gamle lenker kan ikke starte nye spill. Spill som allerede er startet, fortsetter.','hint'));},'quiet')),status);
+    card.append(panel);input.focus();input.select();
+  }
+  async function sharedQuiz() {
+    const id=params.get('share'),key=new URLSearchParams(location.hash.slice(1)).get('key')||'';
+    const quiz=await api('shared',undefined,{id});
+    app.replaceChildren(el('p','DELT QUIZ','eyebrow'),el('h1',quiz.title),el('p',`${quiz.total} spørsmål · Du trenger ingen konto.`,'intro'),
+      el('p','Start et eget spill for klassen din. Du styrer spørsmålene og får en egen spillkode til elevene. Hold denne fanen åpen; den gir deg tilgang til å styre spillet.'),
+      button('Start spill for min klasse',async()=>{
+        const hostToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
+        // Verify storage works before creating a room whose controls depend on it.
+        sessionStorage.setItem('lq-storage-check','1');sessionStorage.removeItem('lq-storage-check');
+        const room=await api('shared-start',{id,key,host_token:hostToken});
+        sessionStorage.setItem('lq-host-'+room.room,hostToken);location.href='?host='+room.room;
+      }));
   }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {
@@ -349,5 +377,5 @@
     await poll();
   }
   window.addEventListener('beforeunload',e=>{if(dirty||uploads){e.preventDefault();e.returnValue='';}});
-  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
+  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('share'))await sharedQuiz();else if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
 })();

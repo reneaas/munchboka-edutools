@@ -81,9 +81,12 @@ function lq_save(PDO $db, int $uid, array $input): array {
             $id = bin2hex(random_bytes(16));
             lq_query($db, 'INSERT INTO lq_quizzes (id, owner_id, title, content, revision) VALUES (?, ?, ?, ?, 1)', [$id, $uid, $content['title'], $json]);
         } else {
-            $r = lq_query($db, 'SELECT revision FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetchColumn();
-            if ($r === false || (int)$r !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
-            $rev = (int)$r + 1;
+            $r = lq_query($db, 'SELECT revision, content FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetch();
+            if ($r === false || (int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
+            $rev = (int)$r['revision'] + 1;
+            $previous = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+            if (isset($previous['_share'])) $content['_share'] = $previous['_share'];
+            $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             lq_query($db, 'UPDATE lq_quizzes SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$content['title'], $json, $rev, $id]);
         }
         return ['id' => $id, 'revision' => $rev];
@@ -98,6 +101,10 @@ function lq_delete(PDO $db, int $uid, array $input): array {
 function lq_create_room(PDO $db, int $uid, string $id): array {
     $quiz = lq_quiz($db, $uid, $id);
     $content = json_decode($quiz['content'], true, 32, JSON_THROW_ON_ERROR);
+    return lq_insert_room($db, $uid, $content);
+}
+function lq_insert_room(PDO $db, int $uid, array $content): array {
+    unset($content['_share']);
     $content['play'] = lq_validate_play('individual', 3);
     $snapshot = json_encode($content, JSON_THROW_ON_ERROR);
     for ($attempt = 0; $attempt < 10; $attempt++) {
@@ -134,10 +141,10 @@ function lq_player(PDO $db, string $room, string $token): array {
     $r = lq_query($db, 'SELECT * FROM lq_players WHERE room_id = ? AND token_hash = ?', [$room, hash('sha256', $token)])->fetch();
     if (!$r) throw new DomainException('Bli med i spillet først.'); return $r;
 }
-function lq_control(PDO $db, int $uid, array $input): array {
-    return lq_transaction($db, function () use ($db, $uid, $input) {
+function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): array {
+    return lq_transaction($db, function () use ($db, $uid, $input, $hostToken) {
         $r = lq_room($db, $input['room'] ?? '', true);
-        if ((int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
+        lq_require_host($r, $uid, $hostToken);
         if ((int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
         $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
@@ -236,10 +243,10 @@ function lq_is_done(array $r, int $players, int $answers): bool {
     if ($r['phase'] !== 'question') return false;
     return microtime(true) >= lq_deadline($r) || ($players > 0 && $answers >= $players);
 }
-function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): array {
-    return lq_transaction($db, function () use ($db, $room, $uid, $token, $host) {
+function lq_state(PDO $db, string $room, int $uid, string $token, bool $host, string $hostToken = ''): array {
+    return lq_transaction($db, function () use ($db, $room, $uid, $token, $host, $hostToken) {
     $r = lq_room($db, $room, true);
-    if ($host && (int)$r['owner_id'] !== $uid) throw new DomainException('Dette er ikke ditt spill.');
+    if ($host) lq_require_host($r, $uid, $hostToken);
     $p = $host ? null : lq_player($db, $room, $token);
     $r = lq_advance_locked($db, $r);
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
@@ -292,9 +299,9 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host): a
     return $state;
     });
 }
-function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image): array {
+function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image, string $hostToken = ''): array {
     $r = lq_room($db, $room);
-    if ($host) { if ((int)$r['owner_id'] !== $uid) throw new DomainException('Ingen tilgang.'); }
+    if ($host) lq_require_host($r, $uid, $hostToken);
     else lq_player($db, $room, $token);
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $q = $content['questions'][(int)$r['question_index']] ?? null;
@@ -302,4 +309,5 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
     return jp_media($db, lq_id($image), (int)$r['owner_id']);
 }
 
+require_once __DIR__ . '/sharing.php';
 require_once __DIR__ . '/auth.php';

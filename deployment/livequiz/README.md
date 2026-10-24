@@ -5,6 +5,34 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Share a quiz with another teacher
+
+In **Mine quizer**, choose **Del quiz**, then **Kopier lenke**. Anyone with that
+link can select **Start spill for min klasse** without signing in. Each start
+creates an independent, six-hour game with its own PIN, participants, scores and
+individual/team settings. Guests can host but cannot edit, delete or reshare the
+source through the owner APIs. They can forward the link they received.
+
+The link uses the latest saved version. Started games keep a snapshot, so later
+edits do not change an ongoing class. **Slå av deling** invalidates the link for
+new starts; ongoing games continue. Sharing again creates a new key. Deleting
+the source quiz also disables its link. The original owner retains access to
+rooms created from their quiz in the recent-games list.
+
+Share keys use 256 random bits and are carried in the URL fragment, then a request
+header/body, rather than in request URLs. Every guest room has a separate host
+credential, stored in that tab's sessionStorage and hashed in its room snapshot.
+Keep the hosting tab open; refresh works, but the room URL alone cannot recover
+guest control in another browser. Student URLs/PINs do not contain host access.
+Host authorization is checked for state, control and room media; CSRF checks
+remain mandatory for mutations. Credentials are not returned in game state.
+Sharing metadata uses existing JSON columns in the same database: no new table,
+account or database migration is required. Deployment includes `sharing.php`.
+
+Validation: `php tests/sharing.php` extends the backend checks; run
+`node tests/sharing-browser.cjs` against a disposable `prepare-local.py` fixture
+with the same Playwright environment variables as the other browser tests.
+
 ## Background music
 
 The host randomly selects one of `public/music/song_1.mp3` through `song_7.mp3`

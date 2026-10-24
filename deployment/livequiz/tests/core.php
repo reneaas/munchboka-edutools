@@ -38,6 +38,19 @@ check(lq_grade($multi,[1,0])[1]===1000,'multi order independent');
 check(lq_grade($multi,[0])[1]===0,'multi requires complete answer');
 check(lq_grade($multi,[0,1,2])[1]===0,'multi extra choice incorrect');
 check(lq_grade($typed,'  FIRE  ')[1]===1000,'typed normalization');
+$words=array_replace($typed,['accepted'=>['Right left']]);
+foreach (["right left","RIGHTLEFT"," R i G h T   l E F t ","right\tleft","right\nleft","right\u{00A0}left","right\u{2003}left"] as $variant) {
+    check(lq_grade($words,$variant)[1]===1000,'case and all whitespace normalized');
+}
+check(lq_grade(array_replace($typed,['accepted'=>['Æ Ø Å']]),'æøå')[1]===1000,'Norwegian case normalization');
+foreach ([['0.25','0,25'],['0,25','0.25'],['-0.25',' - 0 , 2 5 '],['+0,25','+0.25'],['.25',',25']] as [$expected,$submitted]) {
+    check(lq_grade(array_replace($typed,['accepted'=>[$expected]]),$submitted)[1]===1000,'decimal separator normalized on both sides');
+}
+foreach ([['0.25','0,26'],['0.25','0,2,5'],['0.25','0.250'],['a,b','a.b'],['1,2,3','1.2.3']] as [$expected,$submitted]) {
+    check(lq_grade(array_replace($typed,['accepted'=>[$expected]]),$submitted)[1]===0,'normalization preserves other differences');
+}
+rejects(fn()=>lq_grade($typed," \t\u{00A0}\u{2003}"),'whitespace-only answer rejected');
+
 rejects(fn()=>lq_grade($q,[0,1]),'single cannot submit multi');
 rejects(fn()=>lq_grade($q,[12]),'invalid option');
 rejects(fn()=>lq_grade($q,['1']),'option strict integer');

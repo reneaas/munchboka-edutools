@@ -197,13 +197,16 @@ function lq_advance_locked(PDO $db, array $room): array {
     return $room;
 }
 function lq_normalize_answer(string $s): string {
-    $s = preg_replace('/\s+/u', ' ', trim($s));
-    return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower(strtr($s, ['Æ'=>'æ','Ø'=>'ø','Å'=>'å']));
+    $s = preg_replace('/[\s\p{Z}]+/u', '', $s);
+    $s = function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower(strtr($s, ['Æ'=>'æ','Ø'=>'ø','Å'=>'å']));
+    // Normalize decimal separators only for a complete numeric answer.
+    if (preg_match('/^[+-]?(?:[0-9]+(?:[.,][0-9]+)?|[.,][0-9]+)$/D', $s)) $s = str_replace(',', '.', $s);
+    return $s;
 }
 function lq_grade(array $q, mixed $answer): array {
     if ($q['type'] === 'text') {
         $answer = jp_text($answer, 500);
-        if ($answer === '') throw new DomainException('Skriv et svar.');
+        if (lq_normalize_answer($answer) === '') throw new DomainException('Skriv et svar.');
         return [$answer, in_array(lq_normalize_answer($answer), array_map('lq_normalize_answer', $q['accepted']), true) ? 1000 : 0];
     }
     if (!is_array($answer) || !array_is_list($answer) || !$answer || count($answer) > 6) throw new DomainException('Velg et svar.');

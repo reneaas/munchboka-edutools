@@ -87,7 +87,8 @@ deployment script copies the track with the public files.
 - Quiz library, creation, editing, explicit online saves and revision conflict
   checks. One to fifty questions, two to six choices, 5–600 second answer windows.
 - One correct choice, multiple correct choices (exact set), or typed accepted
-  answers (case/whitespace normalization; no algebraic equivalence or tolerance).
+  answers (lowercase, all whitespace removed, and comma/dot decimal separators
+  treated equally for numeric answers; no algebraic equivalence or tolerance).
 - Text, safe LaTeX via existing local KaTeX assets, literal code blocks, uploaded
   images via existing private Jeopardy media storage, and automatically loaded YouTube
   embeds. Active questions request autoplay with sound; results do not restart playback.

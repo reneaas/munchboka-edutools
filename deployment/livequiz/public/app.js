@@ -199,7 +199,7 @@
         upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await api('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
         imageLabel.append(upload);card.append(imageLabel);
         if(q.image)card.append(button('Fjern bilde',()=>{q.image=null;changed();renderQuestions();},'quiet'));
-        if(q.type==='text') card.append(field('Godkjente svar – ett per linje',q.accepted.join('\n'),v=>{q.accepted=v.split('\n').filter(x=>x.trim());changed();},'textarea'),el('p','Store/små bokstaver og ekstra mellomrom ignoreres. Ingen algebraisk eller numerisk tilnærming.','hint'));
+        if(q.type==='text') card.append(field('Godkjente svar – ett per linje',q.accepted.join('\n'),v=>{q.accepted=v.split('\n').filter(x=>x.trim());changed();},'textarea'),el('p','Store/små bokstaver og alle mellomrom ignoreres. Desimaltall godtas med både komma og punktum (0,25 = 0.25). Ingen algebraisk eller numerisk tilnærming.','hint'));
         else {
           card.append(el('p','Marker riktig(e) alternativ(er). Flere riktige krever hele det riktige settet.','hint'));
           q.options.forEach((value,i)=>{

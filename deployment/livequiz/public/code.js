@@ -19,7 +19,7 @@
     const cm = CodeMirror(container, {
       value: code,
       mode: 'python',
-      lineNumbers: false,
+      lineNumbers: true,
       readOnly: 'nocursor',
       viewportMargin: Infinity
     });

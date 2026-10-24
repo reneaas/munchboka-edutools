@@ -7,10 +7,13 @@ Deployment status is recorded at the end of this file.
 
 ## Background music
 
-The host plays `public/music/quiz_soundtrack.mp3` in a loop during active questions,
-starting at 25% volume with a short fade-in. Music pauses during countdowns, results,
+The host randomly selects one of `public/music/song_1.mp3` through `song_7.mp3`
+for each ordinary question and loops it from the beginning, starting at 25% volume
+with a short fade-in. Independent selections can repeat a song on consecutive
+questions. Music pauses during countdowns, results,
 leaderboards, YouTube questions, expired timers and lost connections. The same
-player resumes its position on the next ordinary question. Host controls allow
+player keeps its selection and position when toggled or reconnected within a question.
+Host controls allow
 music to be switched off and volume adjusted; participants never create a player
 or download the track. Start/Next primes playback; if the browser blocks autoplay,
 use “Spill musikk”. Reloading resets the controls to their defaults. The existing

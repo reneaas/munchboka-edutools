@@ -1,10 +1,12 @@
 /* One host-only player, retained across questions and modal replacements. */
 window.quizMusic = function () {
-  const audio = new Audio('music/quiz_soundtrack.mp3');
+  const tracks = Array.from({length: 7}, (_, index) => `music/song_${index + 1}.mp3`);
+  const audio = new Audio(tracks[0]);
   audio.loop = true;
   audio.preload = 'none';
   audio.volume = 0;
   let enabled = true, active = false, pending = false, blocked = false, volume = .25;
+  let currentQuestion = null;
   const controls = document.createElement('div');
   controls.className = 'music-controls';
   const toggle = document.createElement('button');
@@ -50,7 +52,13 @@ window.quizMusic = function () {
   return {
     controls,
     unlock() { blocked = false; describe(); play(true); },
-    update(shouldPlay) {
+    update(shouldPlay, question = 0) {
+      if (shouldPlay && question !== currentQuestion) {
+        stop();
+        currentQuestion = question;
+        audio.src = tracks[Math.floor(Math.random() * tracks.length)];
+        audio.currentTime = 0;
+      }
       active = shouldPlay;
       if (!wanted()) stop();
       else if (audio.paused) play();

@@ -197,3 +197,11 @@ nav{align-items:center;flex-wrap:wrap}
 .organization-dialog{width:480px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink)}
 .organization-dialog::backdrop{background:#0008}
 .organization-dialog h2{overflow-wrap:anywhere}
+
+.lightning-modal .modal-body{text-align:center;padding:32px}
+.lightning-modal .intro{margin:16px auto}
+.lightning-timer{font-size:clamp(36px,7vw,80px);font-weight:800;font-variant-numeric:tabular-nums;margin:20px 0;color:var(--green)}
+.lightning-question-modal{animation:none}
+.lightning-question-modal .qcard-head{background:#573882}
+.lightning-question-modal .media-question-body .question-answer-form{margin:0}
+.lightning-question-modal .media-question-body .question-answer-form .hint:empty{display:none}

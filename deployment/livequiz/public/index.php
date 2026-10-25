@@ -25,7 +25,7 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete','share','shared-start','organize'];
+        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete','share','shared-start','organize','lightning-answer'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
         if (in_array($action, ['join','shared-start'], true)) {
@@ -75,6 +75,7 @@ if ($action !== null) {
             case 'create': lq_response(lq_create_room($db, $uid, jp_text($input['id'] ?? '', 32)));
             case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 6), jp_text($input['name'] ?? '', 80), $token));
             case 'control': lq_response(lq_control($db, $uid, $input, $hostToken));
+            case 'lightning-answer': lq_response(lq_lightning_answer($db, $input, $token));
             case 'answer': lq_response(lq_answer($db, $input, $token));
             case 'state': lq_response(lq_state($db, $room, $uid, $token, $host, $hostToken));
             case 'upload': lq_response(['image'=>jp_upload($db, $uid, $_FILES['image'] ?? [])]);

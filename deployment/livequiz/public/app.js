@@ -138,7 +138,7 @@
     const folderPath=id=>{const names=[];for(let f=folders.get(id);f;f=folders.get(f.parent))names.unshift(f.name);return names.join(' / ');};
     const sorted=[...folders.values()].sort((a,b)=>folderPath(a.id).localeCompare(folderPath(b.id),'nb'));
     function destination(value,excluded=null){
-      const label=el('label','Mappe'),select=el('select');
+      const label=el('label','Mappe'),select=el('select');select.setAttribute('aria-label','Mappe');
       select.append(Object.assign(el('option','Mine quizer (øverste nivå)'),{value:''}));
       for(const folder of sorted){
         let forbidden=false;for(let f=folder;f;f=folders.get(f.parent))if(f.id===excluded)forbidden=true;
@@ -280,9 +280,12 @@
         const label=el('label',title), radio=el('input');radio.type='radio';radio.name='game-mode';radio.value=value;radio.checked=selected===value;
         radio.onchange=()=>{selected=value;maximum.hidden=value!=='teams';input.disabled=value!=='teams';modeDirty=true;};label.prepend(radio);modes.append(label);
       }
+      const lightningLabel=el('label','Aktiver lynrunde'),lightningToggle=el('input');lightningToggle.type='checkbox';lightningToggle.checked=s.lightning?.enabled||false;lightningLabel.prepend(lightningToggle);
+      const lightningDuration=field('Varighet på lynrunde (sekunder)',s.lightning?.seconds||60,()=>{modeDirty=true;},'number'),durationInput=lightningDuration.querySelector('input');durationInput.min=5;durationInput.max=600;durationInput.step=1;durationInput.required=true;
+      const showLightningDuration=()=>{lightningDuration.hidden=!lightningToggle.checked;durationInput.disabled=!lightningToggle.checked;};showLightningDuration();lightningToggle.onchange=()=>{modeDirty=true;showLightningDuration();};
       const saveMode=el('button','Lagre spillmodus');saveMode.type='submit';
-      form.append(modes,maximum,el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere kan ikke bli med etter lagfordelingen.','hint'),saveMode);
-      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',{mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3})();}catch(e){error(e);}finally{saveMode.disabled=false;}};
+      form.append(modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere kan ikke bli med etter lagfordelingen.','hint'),saveMode);
+      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',{mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:Number(durationInput.value)}})();}catch(e){error(e);}finally{saveMode.disabled=false;}};
       return form;
     }
     function showTeams(s) {
@@ -300,8 +303,8 @@
     }
     function updateClock(){
       if(!state)return;
-      const now=Date.now()/1000+offset,left=Math.max(0,state.deadline-now),active=state.state==='QUESTION_ACTIVE';
-      music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube,state.index);
+      const now=Date.now()/1000+offset,left=Math.max(0,state.deadline-now),active=['QUESTION_ACTIVE','LIGHTNING_ACTIVE'].includes(state.state);
+      music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube,state.state==='LIGHTNING_ACTIVE'?'lightning':state.index);
       const txt=active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
@@ -337,10 +340,10 @@
     }
     function questionCard(s,order,header,body){
       const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
-      if(host&&(q.image||q.youtube))body.classList.add('media-question-body');
-      hostClock=el('span',undefined,'qcard-timer');head.append(el('span',`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
-      header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:host,autoplay:s.state==='QUESTION_ACTIVE'},header);
-      if(!host&&s.state==='QUESTION_ACTIVE')body.append(answerForm(s,order));
+      if((host||s.state==='LIGHTNING_ACTIVE')&&(q.image||q.youtube))body.classList.add('media-question-body');
+      hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
+      header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:host||s.state==='LIGHTNING_ACTIVE',autoplay:s.state==='QUESTION_ACTIVE'},header);
+      if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE'].includes(s.state))body.append(answerForm(s,order));
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
       else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));
     }
@@ -360,7 +363,12 @@
       const acknowledgement=ack,submitButton=submit;
       form.onsubmit=async event=>{
         event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input').forEach(input=>input.disabled=true);
-        try{await api('answer',{room:id,index:s.index,answer:selection},{},token);if(state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
+        try{
+          const lightning=s.state==='LIGHTNING_ACTIVE';
+          const reply=await api(lightning?'lightning-answer':'answer',{room:id,index:s.index,answer:selection},{},token);
+          if(lightning){lastPoll=Date.now();online=true;render(reply.state);renderResults(reply.state);}
+          else {if(state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
+        }
         catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=false);}
         finally{submitting=false;updateClock();requestPoll();}
       };
@@ -369,11 +377,14 @@
     }
     function render(s){
       if(state&&s.version<state.version)return;
-      if(state&&s.version===state.version&&state.submitted)s.submitted=true;
+      if(state&&s.version===state.version&&s.state==='LIGHTNING_ACTIVE'&&(s.progress??0)<(state.progress??0))return;
+      if(state&&s.version===state.version&&s.state!=='LIGHTNING_ACTIVE'&&state.submitted)s.submitted=true;
       state=s;heading.textContent=s.title;meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(!host&&s.state==='QUESTION_RESULTS')meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`Spørsmål ${s.index+1} av ${s.total}`;
+      if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
-      if(rendered===String(s.version)){if(s.state==='LEADERBOARD')overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=String(s.version);closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
+      const renderKey=String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
+      if(rendered===renderKey){if(['LEADERBOARD','LIGHTNING_FINISHED'].includes(s.state))overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=renderKey;closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
       if(host&&s.state!=='QUIZ_FINISHED')controls.append(button('Avslutt spillet',control('finish'),'quiet'));
       if(s.state==='LOBBY'){
@@ -382,14 +393,30 @@
         if(host){stage.append(modeSettings(s));const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button(s.mode==='teams'?'Fordel lag og start':'Start første spørsmål',control('next')));}
       } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Takk for spillet!'),el('p','Se resultatene og snakk sammen om spørsmålene.'));}
       else if(s.state==='LEADERBOARD'){
-        if(host)controls.prepend(button(s.index+1>=s.total?'Vis sluttresultat':'Neste spørsmål',control('next')));
+        if(host)controls.prepend(button(s.index+1>=s.total?(s.lightning?.enabled?'Start lynrunde':'Vis sluttresultat'):'Neste spørsmål',control('next')));
         showBoard(s);
       }
       else if(s.state==='TEAM_OVERVIEW'){
         if(host)controls.prepend(button('Start første spørsmål',control('next')));
         showTeams(s);
       }
-      else if(s.state==='COUNTDOWN')showCountdown();
+      else if(['COUNTDOWN','LIGHTNING_COUNTDOWN'].includes(s.state))showCountdown();
+      else if(s.state==='LIGHTNING_INTRO'){
+        if(host)controls.prepend(button('Start lynrunde',control('next')));
+        popup((header,body)=>{header.append(el('h2','LYNRUNDE','modal-title'));body.append(el('p','Svar på så mange spørsmål du klarer innen tiden er ute!','intro'),el('p',`${s.lightning.seconds} sekunder`,'lightning-timer'),el('p',host?'Start når alle er klare.':'Vent på læreren.','hint'));},'lightning-modal');
+      }
+      else if(s.state==='LIGHTNING_ACTIVE'){
+        if(host||s.completed){
+          popup((header,body)=>{header.append(el('h2','LYNRUNDE','modal-title'));hostClock=el('p','','lightning-timer');body.append(hostClock,el('p',host?'Runden er i gang!': 'Du har svart på alle spørsmålene!','intro'));if(!host)body.append(el('p','Vent til lynrunden er ferdig.','hint'));},'lightning-modal');
+        }else{
+          const order=s.question.options.length?optionOrder(s.question.options.length,id+':lightning:'+s.index):[];
+          popup((header,body)=>questionCard(s,order,header,body),'active-question-modal lightning-question-modal');
+        }
+      }
+      else if(s.state==='LIGHTNING_FINISHED'){
+        if(host)controls.prepend(button('Vis sluttresultat',control('next')));
+        showBoard(s);
+      }
       else {
         const order=s.question.options.length?optionOrder(s.question.options.length,id+':'+s.index):[];
         stage.classList.add('stage-flush');
@@ -414,7 +441,7 @@
       if(polling)return;polling=true;
       try{const started=Date.now(),s=await api('state',undefined,query,token);online=true;failures=0;lastPoll=Date.now();offset=s.now-(started+lastPoll)/2000;connection.textContent='Tilkoblet';render(s);renderResults(s);}
       catch(e){online=false;failures++;connection.textContent='Mistet kontakt: '+e.message+' Kobler til igjen …';updateClock();}
-      finally{polling=false;const interval=state?.state==='COUNTDOWN'?200:state?.state==='QUIZ_FINISHED'?10000:1000;pollTimer=setTimeout(poll,pollAgain?0:Math.min(10000,interval*2**Math.min(failures,3)));pollAgain=false;}
+      finally{polling=false;const interval=['COUNTDOWN','LIGHTNING_COUNTDOWN'].includes(state?.state)?200:state?.state==='QUIZ_FINISHED'?10000:1000;pollTimer=setTimeout(poll,pollAgain?0:Math.min(10000,interval*2**Math.min(failures,3)));pollAgain=false;}
     }
     await poll();
   }

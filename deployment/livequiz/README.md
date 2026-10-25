@@ -5,6 +5,57 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Optional Lightning Round (Lynrunde)
+
+In the room lobby, enable **Aktiver lynrunde**, choose **Varighet på lynrunde
+(sekunder)**, and save the game settings. It defaults to disabled and 60 seconds;
+valid durations are 5–600 integer seconds. This is a session setting, including
+sessions created by guest hosts through share links.
+
+Normal gameplay and the last normal results/leaderboard remain unchanged. The
+last leaderboard's **Start lynrunde** opens an introduction. The teacher starts
+the shared 3–2–1 countdown, after which all clients use one server deadline. The
+teacher sees only the Lightning Round heading and timer; participants answer
+independently, with no intervening answer reveal, charts or countdowns. Completing
+all questions displays a waiting screen. Expiry or completion by every eligible
+participant opens the final leaderboard; only the host can finish the game.
+
+Implementation:
+
+- `lightning.php` handles configuration, frozen participant membership, independent
+  Fisher–Yates question orders, progress, answering and completion. Orders are
+  stored once in the existing room JSON at countdown start. Late new joins are
+  refused; existing participant tokens can reconnect. Every original question is
+  included once per participant, including typed/multiple-answer questions.
+- Phases `light_intro`, `light_count`, `lightning`, `light_done` map to explicit
+  `LIGHTNING_*` client states and fit the existing phase column. The active
+  deadline equals the scheduled countdown end plus duration, even if polling is
+  delayed. The server rejects answers at/after the deadline.
+- Existing `lq_answers` rows store each Lightning Round answer with question key
+  `-1 - original_question_index`, keeping them distinct from normal answers under
+  the existing primary key. Progress is derived from these persisted answers.
+  The room row lock serializes submissions, retries and completion. Accepted
+  submissions return the next participant state in the same transaction; older
+  polling responses cannot move the browser back to an earlier question.
+- Correct Lightning Round answers earn 1,000 points and incorrect answers zero,
+  using the existing correctness grader. There is no speed bonus in this round.
+  The normal optional speed-scoring mode remains unchanged. Existing leaderboard
+  sums include both sets of answers, and team totals remain sums of individual
+  totals with unchanged assignments. No additional Lightning Round table or
+  database migration is required.
+- Participant images are an explicit exception to normal host-only media during
+  this round. Only the participant's current image is authorized; future images,
+  correct answers and question order are not sent. LaTeX, code and existing
+  question types are preserved. Videos remain absent on participant devices;
+  video-based questions therefore rely on recall from the normal round.
+
+Validation: `php tests/lightning.php`, `node tests/lightning-browser.cjs`, plus
+existing normal-game and team regressions. The browser suite uses separate host
+and participant contexts, overlapping duplicate HTTP requests, refresh, all-done
+and timed completion. Tests use the local SQLite fixture; production MySQL row
+locking follows the existing design but is not load-tested here. Independent
+random orders may occasionally coincide, particularly in short quizzes.
+
 ## Folders and subfolders
 
 The teacher library has **Ny mappe**, clickable folders and a breadcrumb path.

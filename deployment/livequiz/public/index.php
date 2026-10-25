@@ -91,11 +91,13 @@ if ($action !== null) {
     catch (Throwable $e) { error_log('Livequiz: '.get_class($e).' '.$e->getCode()); lq_response(['error'=>'Tjenesten er utilgjengelig. Ingen lagring er bekreftet. Prøv igjen.'], 503); }
 }
 session_write_close();
+require_once __DIR__.'/music-catalog.php';
+$musicTracks = lq_music_tracks(__DIR__.'/music');
 ?>
 <!doctype html>
 <html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Livequiz · Munchboka</title>
 <script src="theme.js?v=<?= filemtime(__DIR__.'/theme.js') ?>"></script>
 <link rel="stylesheet" href="vendor/katex/katex.min.css"><link rel="stylesheet" href="vendor/codemirror/lib/codemirror.min.css"><link rel="stylesheet" href="app.css?v=<?= filemtime(__DIR__.'/app.css') ?>">
 <script defer src="vendor/katex/katex.min.js"></script><script defer src="math.js"></script><script defer src="vendor/qrcode.js"></script><script defer src="vendor/codemirror/lib/codemirror.min.js"></script><script defer src="vendor/codemirror/mode/python/python.min.js"></script><script defer src="code.js?v=<?= filemtime(__DIR__.'/code.js') ?>"></script><script defer src="youtube.js?v=<?= filemtime(__DIR__.'/youtube.js') ?>"></script><script defer src="music.js?v=<?= filemtime(__DIR__.'/music.js') ?>"></script><script defer src="app.js?v=<?= filemtime(__DIR__.'/app.js') ?>"></script></head>
-<body><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>
+<body data-music-tracks="<?= htmlspecialchars(json_encode($musicTracks, JSON_THROW_ON_ERROR), ENT_QUOTES, 'UTF-8') ?>"><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>
 <main><div id="notice" role="alert" hidden></div><div id="app"><p>Laster …</p></div></main><footer>Spørsmål, samtale og læring · En klasse om gangen</footer></body></html>

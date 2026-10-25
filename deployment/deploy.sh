@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pull-based deploy for Jeopardy and Livequiz, run by a cPanel cron job.
-# Copies only; never deletes, so jeopardy-private/database.php is untouched.
+# Copies application files; only obsolete quiz audio files are removed.
 set -euo pipefail
 
 main() {
@@ -28,6 +28,16 @@ main() {
   copy deployment/jeopardy/pilot/public "$HOME/public_html/jeopardy"
   copy deployment/jeopardy/pilot/private "$HOME/jeopardy-private"
   copy deployment/livequiz/public "$HOME/public_html/quiz"
+  # Mirror supported songs only; never delete credentials or other application data.
+  local song name extension
+  for song in "$HOME/public_html/quiz/music/"*; do
+    [ -f "$song" ] || continue
+    name=${song##*/}
+    extension=${name##*.}
+    if [[ "$extension" =~ ^([mM][pP]3|[mM]4[aA]|[oO][gG][gG]|[wW][aA][vV])$ ]] && [ ! -f "deployment/livequiz/public/music/$name" ]; then
+      rm -- "$song"
+    fi
+  done
   copy deployment/livequiz/private/livequiz "$HOME/jeopardy-private/livequiz"
 
   echo "$commit" > "$marker"

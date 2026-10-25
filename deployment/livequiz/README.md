@@ -141,7 +141,11 @@ with the same Playwright environment variables as the other browser tests.
 
 ## Background music
 
-The host randomly selects one of `public/music/song_1.mp3` through `song_7.mp3`
+The server discovers MP3, M4A, OGG and WAV files directly in `public/music/`
+on each page load (case-insensitive extensions, arbitrary filenames). Hidden files,
+subdirectories and symlinks are ignored. Reload the teacher page after changing
+the collection. An empty collection disables music gracefully. Browser support
+for the chosen audio format still applies. The host randomly selects a track
 for each ordinary question and loops it from the beginning, starting at 25% volume
 with a short fade-in. Independent selections can repeat a song on consecutive
 questions. Music pauses during countdowns, results,
@@ -151,7 +155,8 @@ Host controls allow
 music to be switched off and volume adjusted; participants never create a player
 or download the track. Start/Next primes playback; if the browser blocks autoplay,
 use “Spill musikk”. Reloading resets the controls to their defaults. The existing
-deployment script copies the track with the public files.
+deployment script copies new tracks and removes obsolete supported audio files
+from the deployed quiz music folder. Music also plays during the Lightning Round.
 
 ## Included
 

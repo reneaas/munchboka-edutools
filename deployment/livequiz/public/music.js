@@ -1,7 +1,7 @@
 /* One host-only player, retained across questions and modal replacements. */
 window.quizMusic = function () {
-  const tracks = Array.from({length: 7}, (_, index) => `music/song_${index + 1}.mp3`);
-  const audio = new Audio(tracks[0]);
+  const tracks = JSON.parse(document.body.dataset.musicTracks || '[]');
+  const audio = new Audio(tracks[0] || undefined);
   audio.loop = true;
   audio.preload = 'none';
   audio.volume = 0;
@@ -18,13 +18,15 @@ window.quizMusic = function () {
   slider.type = 'range'; slider.min = 0; slider.max = 100; slider.value = 25;
   label.append(slider); controls.append(toggle, label);
   function describe() {
-    toggle.textContent = blocked && enabled ? 'Spill musikk' : enabled ? 'Musikk: på' : 'Musikk: av';
+    toggle.disabled = tracks.length === 0;
+    slider.disabled = tracks.length === 0;
+    toggle.textContent = !tracks.length ? 'Ingen musikk tilgjengelig' : blocked && enabled ? 'Spill musikk' : enabled ? 'Musikk: på' : 'Musikk: av';
     toggle.setAttribute('aria-pressed', String(enabled));
   }
-  function wanted() { return enabled && active; }
+  function wanted() { return tracks.length > 0 && enabled && active; }
   function stop() { audio.pause(); audio.volume = 0; }
   function play(prime = false) {
-    if (pending || blocked || !enabled || (!prime && !active)) return;
+    if (!tracks.length || pending || blocked || !enabled || (!prime && !active)) return;
     pending = true;
     // Called directly from Start/Next to unlock this element during a user gesture.
     audio.play().then(() => {
@@ -53,7 +55,7 @@ window.quizMusic = function () {
     controls,
     unlock() { blocked = false; describe(); play(true); },
     update(shouldPlay, question = 0) {
-      if (shouldPlay && question !== currentQuestion) {
+      if (tracks.length && shouldPlay && question !== currentQuestion) {
         stop();
         currentQuestion = question;
         audio.src = tracks[Math.floor(Math.random() * tracks.length)];

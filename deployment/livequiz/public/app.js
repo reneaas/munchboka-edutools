@@ -391,7 +391,7 @@
         stage.append(el('p', s.scoring === 'speed' ? 'Raske riktige svar: 0–1000 poeng. Jo raskere du svarer riktig, desto flere poeng. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir 0.' : 'Faste poeng: 1000 for riktig svar, 0 for feil svar.', 'hint'));
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Elevene skanner koden eller åpner lenken og skriver spillkoden.':'Vent på at læreren starter første spørsmål.'));
         if(host){stage.append(modeSettings(s));const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button(s.mode==='teams'?'Fordel lag og start':'Start første spørsmål',control('next')));}
-      } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Takk for spillet!'),el('p','Se resultatene og snakk sammen om spørsmålene.'));}
+      } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Det var det!'));}
       else if(s.state==='LEADERBOARD'){
         if(host)controls.prepend(button(s.index+1>=s.total?(s.lightning?.enabled?'Start lynrunde':'Vis sluttresultat'):'Neste spørsmål',control('next')));
         showBoard(s);

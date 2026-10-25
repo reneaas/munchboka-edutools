@@ -50,7 +50,7 @@ const assert=require('node:assert/strict');
  await s.locator('.answer-option:has(.rich:text-is("4"))').locator('input').check();await s.getByRole('button',{name:'Send svar',exact:true}).click();
  await g.getByRole('heading',{name:'Fasit',exact:true}).waitFor();await s.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await g.getByRole('button',{name:'Vis leaderboard'}).click();await g.getByRole('heading',{name:'Leaderboard',exact:true}).waitFor();
- await g.getByRole('button',{name:'Vis sluttresultat'}).click();await g.getByRole('heading',{name:'Takk for spillet!'}).waitFor();
+ await g.getByRole('button',{name:'Vis sluttresultat'}).click();await g.getByRole('heading',{name:'Det var det!'}).waitFor();
  await card.getByRole('button',{name:'Slå av deling'}).click();
  const revoked=await other.newPage();await revoked.goto(share);await revoked.getByRole('alert').filter({hasText:'Delingslenken er ugyldig eller slått av.'}).waitFor();
  await o.reload();await o.locator('.pin').waitFor(); // Existing room survives revocation.

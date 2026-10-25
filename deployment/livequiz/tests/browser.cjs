@@ -264,7 +264,7 @@ const assert = require('node:assert/strict');
  assert.deepEqual(await dialog.locator('.chart-count').allInnerTexts(),['1','1','0']);
  await s.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await dialog.getByRole('button',{name:'Vis leaderboard'}).click();
- await dialog.getByRole('button',{name:'Vis sluttresultat',exact:true}).click();await s.getByRole('heading',{name:'Takk for spillet!'}).waitFor();
+ await dialog.getByRole('button',{name:'Vis sluttresultat',exact:true}).click();await s.getByRole('heading',{name:'Det var det!'}).waitFor();
  assert.ok(await s.getByText('3000 poeng',{exact:true}).count());
  await sharedState([t,s,s2],'QUIZ_FINISHED');
  const shortQuestion={type:'single',prompt:'Velg fire',code:'',youtube:'',image:null,seconds:5,options:['3','4','5','6'],correct:[1],accepted:[]};

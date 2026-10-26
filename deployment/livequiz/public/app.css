@@ -205,3 +205,5 @@ nav{align-items:center;flex-wrap:wrap}
 .lightning-question-modal .qcard-head{background:#573882}
 .lightning-question-modal .media-question-body .question-answer-form{margin:0}
 .lightning-question-modal .media-question-body .question-answer-form .hint:empty{display:none}
+
+.question-order label{margin:0;min-width:120px}.question-editor{scroll-margin-top:20px}

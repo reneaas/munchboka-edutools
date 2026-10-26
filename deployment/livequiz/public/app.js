@@ -226,6 +226,19 @@
       model.questions.forEach((q,index) => {
         const card = el('section', undefined, 'card question-editor');
         card.append(el('h2', 'Spørsmål ' + (index+1)));
+        const positionLabel=el('label','Flytt til plass'),position=el('select');position.setAttribute('aria-label','Flytt til plass');
+        for(let i=0;i<model.questions.length;i++){const option=el('option',String(i+1));option.value=String(i);position.append(option);}
+        position.value=String(index);position.disabled=model.questions.length<2;positionLabel.append(position);
+        const move=button('Flytt spørsmål',()=>{
+          const destination=Number(position.value);
+          if(destination===index)return;
+          model.questions.splice(index,1);model.questions.splice(destination,0,q);
+          changed();renderQuestions();
+          const moved=list.children[destination];moved.querySelector('.question-order select').focus({preventScroll:true});moved.scrollIntoView({block:'start'});
+        },'secondary');
+        move.disabled=model.questions.length<2;
+        const ordering=group(positionLabel,move);ordering.classList.add('question-order');card.append(ordering);
+
         const typeLabel = el('label','Svartype'), select = el('select');
         for (const [value,label] of [['single','Ett riktig alternativ'],['multi','Flere riktige alternativer'],['text','Skriv svaret']]) { const o = el('option',label); o.value=value; select.append(o); }
         select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; changed(); renderQuestions();}; typeLabel.append(select);

@@ -139,6 +139,62 @@ Validation: `php tests/sharing.php` extends the backend checks; run
 `node tests/sharing-browser.cjs` against a disposable `prepare-local.py` fixture
 with the same Playwright environment variables as the other browser tests.
 
+## Quiz Race
+
+In the lobby, select **Spilltype → Quiz Race**, choose individual play or randomized
+teams, and save the settings. Regular quiz remains the default. Race replaces the
+normal question lifecycle for that session; Lightning Round and point scoring do
+not run in a race. Existing team allocation and maximum team size are unchanged.
+
+The initial shared three-second countdown leads to `RACE_ACTIVE`. There are no
+question timers or intermediate results. Each individual or team must answer every
+question correctly in one attempt. Correct answers advance; incorrect answers
+reset progress and shuffle all questions again. Shuffles are independent and may
+coincidentally repeat a previous order. First completion ends the race for everyone,
+shows the winner and progress board, and lets the host finish the game.
+
+Cooperative teams have one shared order/progress/attempt, and the existing team
+member list defines a fixed cyclic turn order. Only the active member receives the
+question and can submit. Teammates see whose turn it is. Active position is
+`(start + progress) % teamSize`; failure advances `start` by exactly one, resets
+progress, and increments the zero-based attempt. The interface displays attempts
+starting at one. Reset messages name the next starter and disappear after six
+seconds without delaying answers. No votes or independent team-member scores are
+used in this mode.
+
+`private/livequiz/race.php` persists competitors, shuffled orders, progress,
+attempts, starting positions, revisions, update/reset timestamps, completion times
+and the winner in the existing room JSON snapshot. No new tables or database are
+required. `race-answer` validates the participant, active member, attempt, revision
+and question while holding the existing room transaction/row lock. Repeated or
+stale submissions are rejected without changing progress or rotating twice. The
+first final correct answer processed under that lock commits the sole winner;
+later submissions are rejected. It reuses answer grading (including typed-answer
+normalization), without adding points to ordinary quiz answer records.
+
+Submission responses include immediate updated state and the next question when
+it is still that participant's turn. Other teammates and the teacher synchronize
+through existing polling. Client rendering uses the competitor's revision, so
+other competitors cannot erase a partially entered answer. Refreshing restores the
+same attempt and turn. New players cannot join after a race starts, but existing
+player tokens can reconnect. Shared-link hosts can also run races without accounts.
+The teacher sees a progress board; active participants receive code, math and
+current-question images. YouTube videos are not replayed in this mode.
+
+There is no automatic skip for a disconnected active teammate: the team waits for
+that member to reconnect. The host can end the game. Rooms retain the existing
+six-hour expiry. Winning order is server processing order, not client click time.
+MySQL/InnoDB concurrent locking and classroom load require production verification;
+local tests use SQLite and a single-worker PHP server.
+
+Verification: `php tests/race.php` covers team sizes 2–5, starter wraparound,
+failures by different members, fixed membership, independent competitors, hidden
+answers/media access, retries/stale turns, reconnects, one-question/single-member
+boundaries, shared hosting and terminal states. `node tests/race-browser.cjs`
+checks individual/team flows, immediate responses, images, mobile layouts,
+duplicate reset requests and competing winning submissions. Use the same fixture
+and Playwright variables as below; its default port is 8796.
+
 ## Background music
 
 The server discovers MP3, M4A, OGG and WAV files directly in `public/music/`

@@ -4,6 +4,7 @@ declare(strict_types=1);
 if (!function_exists('jp_db')) require __DIR__ . '/../app.php';
 require_once __DIR__ . '/teams.php';
 require_once __DIR__ . '/lightning.php';
+require_once __DIR__ . '/race.php';
 function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
     $s = $db->prepare($sql); $s->execute($args); return $s;
 }
@@ -121,6 +122,7 @@ function lq_insert_room(PDO $db, int $uid, array $content): array {
     unset($content['_share']);
     $content['play'] = lq_validate_play('individual', 3);
     $content['lightning'] = ['enabled'=>false,'seconds'=>60];
+    $content['game'] = 'regular';
     $snapshot = json_encode($content, JSON_THROW_ON_ERROR);
     for ($attempt = 0; $attempt < 10; $attempt++) {
         $room = bin2hex(random_bytes(16)); $pin = (string)random_int(100000, 999999);
@@ -145,7 +147,9 @@ function lq_join(PDO $db, string $pin, string $name, string $token): array {
         $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
         if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
         if (in_array($r['phase'], ['light_intro','light_count','lightning','light_done'], true)) throw new DomainException('Lynrunden er startet. Nye deltakere må vente til neste spill.');
-        $play = lq_play_settings(json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR));
+        $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+        if (lq_game($content)==='race' && $r['phase']!=='lobby') throw new DomainException('Løpet er startet. Nye deltakere må vente til neste spill.');
+        $play = lq_play_settings($content);
         if ($play['mode'] === 'teams' && $r['phase'] !== 'lobby') throw new DomainException('Lagene er allerede fordelt. Nye deltakere må vente til neste spill.');
         if ($old || $r['phase'] === 'finished') throw new DomainException('Spillet er avsluttet. Be læreren starte et nytt spill.');
         if ((int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
@@ -166,6 +170,8 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
         $qs = $content['questions']; $play = lq_play_settings($content);
         if ($cmd === 'configure' && $phase === 'lobby') {
+            $content['game'] = $input['game'] ?? lq_game($content);
+            if (!in_array($content['game'], ['regular','race'], true)) throw new DomainException('Ugyldig spilltype.');
             $content['play'] = lq_validate_play($input['mode'] ?? null, $input['max_team_size'] ?? null);
             $content['lightning'] = lq_validate_lightning($input['lightning'] ?? lq_lightning_settings($content));
             lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
@@ -177,10 +183,14 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
                 lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
                 $phase = 'teams';
             } else {
-                $phase = 'countdown'; $deadline = (int)ceil(microtime(true) * 1000) + 3000;
+                $phase = lq_game($content)==='race' ? 'race_count' : 'countdown';
+                if ($phase==='race_count') $r=lq_race_prepare($db,$r,$content);
+                $deadline = (int)ceil(microtime(true) * 1000) + 3000;
             }
         } elseif ($cmd === 'next' && $phase === 'teams') {
-            $phase = 'countdown'; $deadline = (int)ceil(microtime(true) * 1000) + 3000;
+            $phase = lq_game($content)==='race' ? 'race_count' : 'countdown';
+            if ($phase==='race_count') $r=lq_race_prepare($db,$r,$content);
+            $deadline = (int)ceil(microtime(true) * 1000) + 3000;
         } elseif ($cmd === 'reveal' && $phase === 'question') { $phase = 'reveal'; }
         elseif ($cmd === 'leaderboard' && $phase === 'reveal') { $phase = 'leaderboard'; }
         elseif ($cmd === 'next' && $phase === 'leaderboard') {
@@ -191,6 +201,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             $r = lq_lightning_prepare($db, $r, $content);
             $phase = 'light_count'; $deadline = (int)ceil(microtime(true)*1000)+3000;
         }
+        elseif ($cmd === 'next' && $phase === 'race_done') { $phase = 'finished'; }
         elseif ($cmd === 'next' && $phase === 'light_done') { $phase = 'finished'; }
         elseif ($cmd === 'finish' && $phase !== 'finished') { $phase = 'finished'; }
         else throw new DomainException('Denne handlingen er ikke tilgjengelig nå.');
@@ -207,6 +218,7 @@ function lq_deadline(array $room): int|float {
     return $deadline > 1000000000000 ? $deadline / 1000 : $deadline;
 }
 function lq_advance_locked(PDO $db, array $room): array {
+    if ($room['phase']==='race_count' && microtime(true)>=lq_deadline($room)) return lq_transition($db,$room,'race',-1,0);
     if (in_array($room['phase'], ['light_count','lightning'], true)) return lq_lightning_advance($db, $room);
     if ($room['phase'] === 'countdown' && microtime(true) >= lq_deadline($room)) {
         $index = (int)$room['question_index'] + 1;
@@ -285,10 +297,10 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn();
     $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn();
     $revealed = in_array($r['phase'], ['reveal', 'leaderboard', 'countdown', 'finished'], true);
-    $states = ['lobby' => 'LOBBY', 'teams' => 'TEAM_OVERVIEW', 'question' => 'QUESTION_ACTIVE', 'reveal' => 'QUESTION_RESULTS', 'leaderboard' => 'LEADERBOARD', 'countdown' => 'COUNTDOWN', 'finished' => 'QUIZ_FINISHED', 'light_intro'=>'LIGHTNING_INTRO', 'light_count'=>'LIGHTNING_COUNTDOWN', 'lightning'=>'LIGHTNING_ACTIVE', 'light_done'=>'LIGHTNING_FINISHED'];
+    $states = ['lobby' => 'LOBBY', 'teams' => 'TEAM_OVERVIEW', 'question' => 'QUESTION_ACTIVE', 'reveal' => 'QUESTION_RESULTS', 'leaderboard' => 'LEADERBOARD', 'countdown' => 'COUNTDOWN', 'finished' => 'QUIZ_FINISHED', 'race_count'=>'RACE_COUNTDOWN','race'=>'RACE_ACTIVE','race_done'=>'RACE_FINISHED', 'light_intro'=>'LIGHTNING_INTRO', 'light_count'=>'LIGHTNING_COUNTDOWN', 'lightning'=>'LIGHTNING_ACTIVE', 'light_done'=>'LIGHTNING_FINISHED'];
     $state = ['room' => $room, 'title' => $content['title'], 'phase' => $r['phase'], 'index' => $index,
         'scoring' => $content['scoring'] ?? 'fixed',
-        'state' => $states[$r['phase']], 'countdown_end' => in_array($r['phase'], ['countdown','light_count'], true) ? lq_deadline($r) : null,
+        'state' => $states[$r['phase']], 'countdown_end' => in_array($r['phase'], ['countdown','light_count','race_count'], true) ? lq_deadline($r) : null,
         'version' => (int)$r['version'], 'deadline' => lq_deadline($r), 'now' => microtime(true), 'total' => count($content['questions']),
         'players' => $players, 'answers' => $answers];
     $play = lq_play_settings($content);
@@ -297,8 +309,10 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     if ($p) foreach ($play['teams'] as $team) {
         if (in_array($p['id'], array_column($team['members'], 'id'), true)) $state['my_team'] = $team['id'];
     }
+    $state['game'] = lq_game($content);
     $state['lightning'] = lq_lightning_settings($content);
     if ($host) $state['pin'] = $r['pin'];
+    if (isset($content['_race']) && in_array($r['phase'],['race_count','race','race_done','finished'],true)) return lq_race_state($r,$p,$state,$content);
     if (in_array($r['phase'], ['light_intro','light_count','lightning','light_done'], true)) return lq_lightning_state($db,$r,$p,$state,$content);
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
         $q = $content['questions'][$index];
@@ -330,6 +344,13 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
 }
 function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image, string $hostToken = ''): array {
     $r = lq_room($db, $room);
+    if (!$host && $r['phase']==='race') {
+        $player=lq_player($db,$room,$token);$content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
+        $entry=lq_race_entry($content,$player['id']);
+        $q=$content['questions'][$entry['order'][$entry['progress']]];
+        if (lq_race_active($entry)['id']!==$player['id'] || ($q['image']['id'] ?? '')!==$image) throw new DomainException('Bildet er ikke tilgjengelig.');
+        return jp_media($db,lq_id($image),(int)$r['owner_id']);
+    }
     if (!$host && $r['phase']==='lightning' && microtime(true)<lq_deadline($r)) {
         $player=lq_player($db,$room,$token);
         $progress=lq_lightning_progress($db,$r,$player['id']);

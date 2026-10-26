@@ -169,7 +169,14 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
         $qs = $content['questions']; $play = lq_play_settings($content);
-        if ($cmd === 'configure' && $phase === 'lobby') {
+        if ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
+            unset($content['_race'],$content['_lightning']);
+            $content['_run']=($content['_run'] ?? 0)+1;
+            $play['teams']=[];$content['play']=$play;
+            lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
+            lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
+            $phase='lobby';$index=-1;
+        } elseif ($cmd === 'configure' && $phase === 'lobby') {
             $content['game'] = $input['game'] ?? lq_game($content);
             if (!in_array($content['game'], ['regular','race'], true)) throw new DomainException('Ugyldig spilltype.');
             $content['play'] = lq_validate_play($input['mode'] ?? null, $input['max_team_size'] ?? null);
@@ -259,9 +266,15 @@ function lq_points(int $grade, string $scoring, int $seconds, float $remaining, 
     $scoredSeconds = max(1, $seconds - ($hasVideo ? 4 : 0));
     return (int)round(1000 * max(0.0, min(1.0, $remaining / $scoredSeconds)));
 }
+// Old clients remain compatible for the first game only. Replays require their run ID.
+function lq_require_run(array $room,array $input): void {
+    $content=json_decode($room['content'],true,32,JSON_THROW_ON_ERROR);
+    if (($input['run'] ?? 0)!==($content['_run'] ?? 0)) throw new DomainException('Dette svaret tilhører et tidligere spill. Vent på det nye spillet.');
+}
 function lq_answer(PDO $db, array $input, string $token): array {
     return lq_transaction($db, function () use ($db, $input, $token) {
         $r = lq_room($db, $input['room'] ?? '', true); $p = lq_player($db, $r['id'], $token);
+        lq_require_run($r,$input);
         $index = $input['index'] ?? null;
         if (!is_int($index) || $index < 0) throw new DomainException('Ugyldig spørsmål.');
         // Retries return the original acknowledgement, without leaking points before reveal.
@@ -309,6 +322,7 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     if ($p) foreach ($play['teams'] as $team) {
         if (in_array($p['id'], array_column($team['members'], 'id'), true)) $state['my_team'] = $team['id'];
     }
+    $state['run'] = $content['_run'] ?? 0;
     $state['game'] = lq_game($content);
     $state['lightning'] = lq_lightning_settings($content);
     if ($host) $state['pin'] = $r['pin'];

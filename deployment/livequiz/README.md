@@ -139,6 +139,29 @@ Validation: `php tests/sharing.php` extends the backend checks; run
 `node tests/sharing-browser.cjs` against a disposable `prepare-local.py` fixture
 with the same Playwright environment variables as the other browser tests.
 
+## Play again with the same lobby
+
+After the final screen (or the completed Race/Lightning results), the host can
+choose **Spill igjen med samme spillere**. Everyone returns to the lobby with the
+same room, PIN, nicknames and participant/host credentials. The current game mode,
+team-size preference and Lightning settings stay selected; save any changes before
+starting again. Randomized teams are allocated afresh at the next start.
+
+Replay clears previous answers, scores, race attempts/winner and Lightning orders.
+It reuses the room's original quiz snapshot and extends the room expiry to six
+hours from replay. Previous results are replaced, not archived. Only the host can
+restart, and only after completion. Restart runs inside the existing room lock;
+room versions reject duplicate host requests. A persisted run counter accompanies
+all answer requests, preventing old regular, Lightning or Race submissions from
+being counted in a later game. Participant polling continues on the final screen
+so players return to the lobby automatically, without rejoining or refreshing.
+
+`php tests/replay.php` checks retained players/settings, cleared scores/progress,
+mode switches, stale requests, repeated replay and shared-host access.
+`node tests/replay-browser.cjs` exercises the same connected browser sessions
+across repeated normal games, cooperative Race and Lightning Round (fixture port
+8795 by default).
+
 ## Quiz Race
 
 In the lobby, select **Spilltype → Quiz Race**, choose individual play or randomized

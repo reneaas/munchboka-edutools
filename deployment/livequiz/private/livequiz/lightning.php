@@ -67,6 +67,7 @@ function lq_lightning_answer(PDO $db, array $input, string $token): array {
     $result=lq_transaction($db,function () use ($db,$input,$token) {
         $room=lq_room($db,$input['room'] ?? '',true);
         $player=lq_player($db,$room['id'],$token);
+        lq_require_run($room,$input);
         $room=lq_lightning_advance($db,$room);
         if ($room['phase']!=='lightning' || microtime(true)>=lq_deadline($room)) return ['closed'=>true];
         $index=$input['index'] ?? null;

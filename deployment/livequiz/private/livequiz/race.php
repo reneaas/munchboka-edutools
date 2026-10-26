@@ -53,6 +53,7 @@ function lq_race_state(array $room,?array $player,array $state,array $content): 
 function lq_race_answer(PDO $db,array $input,string $token): array {
     return lq_transaction($db,function()use($db,$input,$token){
         $room=lq_room($db,$input['room'] ?? '',true);$player=lq_player($db,$room['id'],$token);
+        lq_require_run($room,$input);
         $room=lq_advance_locked($db,$room);
         if($room['phase']!=='race')throw new DomainException('Løpet er ikke aktivt.');
         $content=json_decode($room['content'],true,32,JSON_THROW_ON_ERROR);$entry=lq_race_entry($content,$player['id']);

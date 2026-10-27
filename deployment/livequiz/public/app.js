@@ -279,7 +279,7 @@
       if(command==='next'&&state.state==='LOBBY'&&modeDirty)extra={...extra,settings:readModeSettings()};
       if(controlling)return;controlling=true;
       if(command==='next')music?.unlock();
-      try{const reply=await api('control',{room:id,version:state.version,command,...extra});if(command==='configure'||command==='next')modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
+      try{const reply=await api('control',{room:id,run:state.run,version:state.version,command,...extra});if(command==='configure'||command==='next')modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
       finally{controlling=false;requestPoll();}
     };
     function modeSettings(s) {

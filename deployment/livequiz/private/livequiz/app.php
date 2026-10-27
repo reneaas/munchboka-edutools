@@ -172,8 +172,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
     return lq_transaction($db, function () use ($db, $uid, $input, $hostToken) {
         $r = lq_room($db, $input['room'] ?? '', true);
         lq_require_host($r, $uid, $hostToken);
-        if ((int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
-        $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
+        $cmd = $input['command'] ?? '';
+        // Ending is independent of answer progress, but must target the same playthrough.
+        $currentRunFinish=$cmd==='finish' && array_key_exists('run',$input);
+        if ($currentRunFinish) lq_require_run($r,$input);
+        if (!$currentRunFinish && (int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
+        $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
         // Save the visible lobby settings and start under one lock/version check.
         if ($cmd==='next' && $phase==='lobby' && array_key_exists('settings',$input)) {

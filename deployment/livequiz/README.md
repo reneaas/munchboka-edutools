@@ -206,7 +206,11 @@ The teacher sees a progress board; active participants receive code, math and
 current-question images. YouTube videos are not replayed in this mode.
 
 There is no automatic skip for a disconnected active teammate: the team waits for
-that member to reconnect. The host can end the game. Rooms retain the existing
+that member to reconnect. The host can end an active race with **Avslutt spillet**.
+Ending accepts a slightly stale progress version but checks the run identifier, so
+ongoing answers cannot block the host and an old stop request cannot close a replay.
+The current progress is retained without inventing a winner; all players stop and
+the host can return everyone to the lobby. Rooms retain the existing
 six-hour expiry. Winning order is server processing order, not client click time.
 MySQL/InnoDB concurrent locking and classroom load require production verification;
 local tests use SQLite and a single-worker PHP server.
@@ -525,3 +529,8 @@ Lobby start regression checks: `php tests/start-settings.php` and
 with edited settings, all game/team combinations, invalid fields, replay changes,
 and explicit save immediately followed by Start. Control responses return the
 current authoritative state so Start does not depend on a later polling update.
+
+`php tests/race-finish.php` and `node tests/race-finish-browser.cjs` (fixture port
+8793) verify early termination, host authorization, rejection of subsequent
+answers and old-run stop requests, and a deliberately stale host progress view
+in individual and cooperative team races.

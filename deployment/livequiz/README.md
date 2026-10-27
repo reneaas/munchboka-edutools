@@ -144,8 +144,8 @@ with the same Playwright environment variables as the other browser tests.
 After the final screen (or the completed Race/Lightning results), the host can
 choose **Spill igjen med samme spillere**. Everyone returns to the lobby with the
 same room, PIN, nicknames and participant/host credentials. The current game mode,
-team-size preference and Lightning settings stay selected; save any changes before
-starting again. Randomized teams are allocated afresh at the next start.
+team-size preference and Lightning settings stay selected. Start automatically
+saves and applies any changed lobby settings. Randomized teams are allocated afresh at the next start.
 
 Replay clears previous answers, scores, race attempts/winner and Lightning orders.
 It reuses the room's original quiz snapshot and extends the room expiry to six
@@ -165,7 +165,8 @@ across repeated normal games, cooperative Race and Lightning Round (fixture port
 ## Quiz Race
 
 In the lobby, select **Spilltype → Quiz Race**, choose individual play or randomized
-teams, and save the settings. Regular quiz remains the default. Race replaces the
+teams, then start. Start saves changed settings atomically; the separate save
+button remains available. Regular quiz remains the default. Race replaces the
 normal question lifecycle for that session; Lightning Round and point scoring do
 not run in a race. Existing team allocation and maximum team size are unchanged.
 
@@ -518,3 +519,9 @@ bundled in `vendor/codemirror/LICENSE`, same version already used by the
 `interactive-code` directive elsewhere in this project. `code.js` wires it into
 the question editor's code field (syntax highlighting, auto-indent) and question
 display (read-only, same highlighting). Code is never executed, only displayed.
+
+Lobby start regression checks: `php tests/start-settings.php` and
+`node tests/start-settings-browser.cjs` (fixture port 8794) cover direct starts
+with edited settings, all game/team combinations, invalid fields, replay changes,
+and explicit save immediately followed by Start. Control responses return the
+current authoritative state so Start does not depend on a later polling update.

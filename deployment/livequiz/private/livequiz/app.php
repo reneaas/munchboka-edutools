@@ -161,6 +161,13 @@ function lq_player(PDO $db, string $room, string $token): array {
     $r = lq_query($db, 'SELECT * FROM lq_players WHERE room_id = ? AND token_hash = ?', [$room, hash('sha256', $token)])->fetch();
     if (!$r) throw new DomainException('Bli med i spillet først.'); return $r;
 }
+function lq_configure_content(array $content,array $settings): array {
+    $content['game']=$settings['game'] ?? lq_game($content);
+    if (!in_array($content['game'],['regular','race'],true)) throw new DomainException('Ugyldig spilltype.');
+    $content['play']=lq_validate_play($settings['mode'] ?? null,$settings['max_team_size'] ?? null);
+    $content['lightning']=lq_validate_lightning($settings['lightning'] ?? lq_lightning_settings($content));
+    return $content;
+}
 function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): array {
     return lq_transaction($db, function () use ($db, $uid, $input, $hostToken) {
         $r = lq_room($db, $input['room'] ?? '', true);
@@ -168,6 +175,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         if ((int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
         $cmd = $input['command'] ?? ''; $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+        // Save the visible lobby settings and start under one lock/version check.
+        if ($cmd==='next' && $phase==='lobby' && array_key_exists('settings',$input)) {
+            if (!is_array($input['settings'])) throw new DomainException('Ugyldige spillinnstillinger.');
+            $content=lq_configure_content($content,$input['settings']);
+            lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
+        }
         $qs = $content['questions']; $play = lq_play_settings($content);
         if ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
             unset($content['_race'],$content['_lightning']);
@@ -177,10 +190,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
             $phase='lobby';$index=-1;
         } elseif ($cmd === 'configure' && $phase === 'lobby') {
-            $content['game'] = $input['game'] ?? lq_game($content);
-            if (!in_array($content['game'], ['regular','race'], true)) throw new DomainException('Ugyldig spilltype.');
-            $content['play'] = lq_validate_play($input['mode'] ?? null, $input['max_team_size'] ?? null);
-            $content['lightning'] = lq_validate_lightning($input['lightning'] ?? lq_lightning_settings($content));
+            $content=lq_configure_content($content,$input);
             lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
         } elseif ($cmd === 'next' && $phase === 'lobby') {
             if ($play['mode'] === 'teams') {
@@ -213,7 +223,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         elseif ($cmd === 'finish' && $phase !== 'finished') { $phase = 'finished'; }
         else throw new DomainException('Denne handlingen er ikke tilgjengelig nå.');
         lq_transition($db, $r, $phase, $index, $deadline);
-        return ['ok' => true];
+        return ['ok' => true, 'state'=>lq_state_payload($db,lq_room($db,$r['id']),null,true)];
     });
 }
 function lq_transition(PDO $db, array $room, string $phase, int $index, int $deadline): array {

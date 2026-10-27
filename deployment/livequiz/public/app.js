@@ -273,13 +273,13 @@
     const heading=el('h1','Henter spill …'),connection=el('p','Kobler til …','hint'),meta=el('p',undefined,'hint'),timer=el('p',undefined,'timer'),stage=el('section',undefined,'card stage'),controls=el('div',undefined,'actions'),results=el('section');
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=true;
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
-    let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false;
+    let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
     const music=host?window.quizMusic():null;
     const control=(command, extra={})=>async()=>{
-      if(command==='next'&&modeDirty)throw new Error('Lagre spillmodus før du starter.');
+      if(command==='next'&&state.state==='LOBBY'&&modeDirty)extra={...extra,settings:readModeSettings()};
       if(controlling)return;controlling=true;
       if(command==='next')music?.unlock();
-      try{await api('control',{room:id,version:state.version,command,...extra});if(command==='configure')modeDirty=false;}
+      try{const reply=await api('control',{room:id,version:state.version,command,...extra});if(command==='configure'||command==='next')modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
       finally{controlling=false;requestPoll();}
     };
     function modeSettings(s) {
@@ -304,7 +304,11 @@
       const rules=el('p','','hint');form.insertBefore(rules,saveMode);
       const updateRules=()=>{showLightningDuration();for(const hint of form.querySelectorAll('p.hint'))hint.hidden=gameSelect.value==='race';rules.hidden=gameSelect.value!=='race';rules.textContent='Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';};
       gameSelect.onchange=()=>{modeDirty=true;updateRules();};updateRules();
-      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',{game:gameSelect.value,mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:Number(durationInput.value)}})();}catch(e){error(e);}finally{saveMode.disabled=false;}};
+      readModeSettings=()=>{
+        if(!form.reportValidity())throw new Error('Kontroller spillinnstillingene før du starter.');
+        return {game:gameSelect.value,mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:durationInput.disabled?(s.lightning?.seconds||60):Number(durationInput.value)}};
+      };
+      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',readModeSettings())();}catch(e){error(e);}finally{saveMode.disabled=false;}};
       return form;
     }
     function showTeams(s) {

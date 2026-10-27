@@ -214,26 +214,26 @@ nav{align-items:center;flex-wrap:wrap}
 
 .host-join-code{font-weight:750;color:var(--ink);font-size:clamp(14px,1.5vw,18px);padding:8px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;margin:0 0 10px;overflow-wrap:anywhere}
 
-/* Uniform teacher question scaling also enlarges code, math and answer badges.
+/* Uniform question scaling also enlarges code, math and answer badges.
    Divide viewport constraints by zoom so the entire dialog stays on screen. */
-.question-modal.teacher-modal:is(.active-question-modal,.results-modal){
+.question-modal:is(.teacher-modal,.participant-modal):is(.active-question-modal,.results-modal){
   zoom:var(--teacher-scale,1);
   max-width:calc((100vw - 32px) / var(--teacher-scale,1));
   max-height:calc((100dvh - 32px) / var(--teacher-scale,1));
 }
-.question-modal.teacher-modal:is(.active-question-modal,.results-modal) .modal-header{
+.question-modal:is(.teacher-modal,.participant-modal):is(.active-question-modal,.results-modal) .modal-header{
   max-height:calc(35dvh / var(--teacher-scale,1));
 }
-.question-modal.teacher-modal:is(.active-question-modal,.results-modal):has(.media-question-body){
+.question-modal:is(.teacher-modal,.participant-modal):is(.active-question-modal,.results-modal):has(.media-question-body){
   height:calc((100dvh - 32px) / var(--teacher-scale,1));
 }
-.question-modal.teacher-modal.active-question-modal .media-question-body .option-card{
+.question-modal:is(.teacher-modal,.participant-modal).active-question-modal .media-question-body .option-card{
   min-height:clamp(64px,calc(11dvh / var(--teacher-scale,1)),100px);
 }
-/* Host controls stay comfortable to operate without taking space from the question. */
-.question-modal.teacher-modal:is(.active-question-modal,.results-modal) .question-modal-footer{zoom:calc(1 / var(--teacher-scale,1))}
+/* Footer controls stay comfortable to operate without taking space from the question. */
+.question-modal:is(.teacher-modal,.participant-modal):is(.active-question-modal,.results-modal) .question-modal-footer{zoom:calc(1 / var(--teacher-scale,1))}
 @media(min-width:700px) and (max-height:600px){
-  .question-modal.teacher-modal.active-question-modal .media-question-body .option-card{min-height:50px}
+  .question-modal:is(.teacher-modal,.participant-modal).active-question-modal .media-question-body .option-card{min-height:50px}
   .teacher-modal:is(.active-question-modal,.results-modal) .question-modal-footer{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
   .teacher-modal:is(.active-question-modal,.results-modal) .question-modal-footer .host-join-code{flex-basis:100%;margin:0;padding:4px 8px;font-size:13px}
   .teacher-modal:is(.active-question-modal,.results-modal) .question-modal-footer .theme-toggle{margin:0}
@@ -243,3 +243,19 @@ nav{align-items:center;flex-wrap:wrap}
   .teacher-modal.results-modal .media-question-body .option-grid{gap:6px}
   .teacher-modal.results-modal .media-question-body .option-card{min-height:44px;padding:22px 6px 4px;font-size:13px;line-height:1.2}
 }
+
+/* On phones, give each participant answer the full row. Long answers can be
+   scrolled horizontally instead of soft-wrapping or being truncated. */
+@media(max-width:600px){
+  .question-modal.participant-modal:is(.active-question-modal,.results-modal) .modal-body .option-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .question-modal.participant-modal:is(.active-question-modal,.results-modal) .modal-body .option-card{min-height:52px;padding:14px 12px 14px 44px;justify-content:flex-start;text-align:left}
+  .question-modal.participant-modal .option-card .rich{min-width:0;max-width:100%;white-space:pre;overflow-wrap:normal;overflow-x:auto}
+  .question-modal.participant-modal .option-badge{top:50%;transform:translateY(-50%)}
+  .question-modal.participant-modal .correct-label{position:static;margin-left:8px;flex-shrink:0;font-size:10px}
+  .question-modal.participant-modal .media-question-body{display:block}
+  .question-modal.participant-modal .media-question-body>.question-media{display:block;overflow:visible;margin-bottom:16px}
+  .question-modal.participant-modal .media-question-body .question-image{height:auto;max-height:30dvh;width:100%;margin:0 auto}
+  .question-modal.participant-modal .media-question-body .question-media>:not(.question-image){max-height:none}
+  .question-modal.participant-modal .results-analysis{margin-top:16px}
+}
+.question-modal.participant-modal .question-answer-form .hint:empty{display:none}

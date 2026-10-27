@@ -35,7 +35,7 @@ const assert = require('node:assert/strict');
  async function modalFits(page){
 	 await page.waitForFunction(()=>{
        const modal=document.querySelector('dialog');
-       const scale=modal.matches('.teacher-modal:is(.active-question-modal,.results-modal)')?Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700)):1;
+       const scale=modal.matches(':is(.teacher-modal,.participant-modal):is(.active-question-modal,.results-modal)')?Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700)):1;
        return Math.abs(Number(getComputedStyle(modal).zoom)-scale)<.001&&Math.abs(modal.getBoundingClientRect().width-Math.min(900*scale,innerWidth-32))<.5;
      });
 	 const modal=page.getByRole('dialog'),bounds=await modal.boundingBox(),viewport=page.viewportSize();
@@ -52,9 +52,10 @@ const assert = require('node:assert/strict');
  async function gridFits(page){
 	 await modalFits(page);
 	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:parseFloat(getComputedStyle(grid).gap)*Number(getComputedStyle(grid.closest('dialog')).zoom),cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {minimum:parseFloat(getComputedStyle(card).minHeight),x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
-	 const gap=parseFloat(geometry.gap);assert.ok(gap>=12);assert.equal(geometry.cards.length,4);
+	 const gap=parseFloat(geometry.gap);assert.ok(gap>=10);assert.equal(geometry.cards.length,4);
 	 const [first,second,third,fourth]=geometry.cards;
 	 for(const card of geometry.cards){assert.ok(card.height>=card.minimum-.5);assert.ok(Math.abs(card.width-first.width)<.5);assert.ok(Math.abs(card.height-first.height)<.5);assert.ok(card.contained);}
+	 if(page!==t&&page.viewportSize().width<=600){for(let i=1;i<geometry.cards.length;i++){assert.equal(geometry.cards[i].x,first.x);assert.ok(geometry.cards[i].y>geometry.cards[i-1].y);}return;}
 	 assert.equal(first.y,second.y);assert.equal(third.y,fourth.y);assert.equal(first.x,third.x);assert.equal(second.x,fourth.x);
 	 assert.ok(Math.abs(second.x-first.x-first.width-gap)<.5);assert.ok(Math.abs(third.y-first.y-first.height-gap)<.5);
  }
@@ -131,7 +132,7 @@ const assert = require('node:assert/strict');
  await s.getByText('Ditt svar',{exact:true}).waitFor({timeout:500}).catch(()=>{});
  await s.locator('.answer-option:has(.rich:text-is("4"))').click();
  assert.ok(await s.locator('.katex').count());
- assert.equal(await s.locator('.question-image').count(),0);
+ await s.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth===2400);
  await t.waitForFunction(()=>document.querySelector('.question-image')?.naturalWidth===2400);
  const before=await s.evaluate(async()=>{const room=new URLSearchParams(location.search).get('room');return (await fetch('index.php?api=state&room='+room,{headers:{'X-Player-Token':sessionStorage.getItem('lq-room-'+room)}})).json();});
  assert.equal(before.question.correct,undefined); assert.equal(before.question.accepted,undefined);
@@ -155,7 +156,7 @@ const assert = require('node:assert/strict');
  assert.equal(await questionModal.getByRole('button',{name:'Vis fasit nå',exact:true}).isVisible(),true);
  assert.equal(await questionModal.getByRole('button',{name:'Avslutt spillet',exact:true}).isVisible(),true);
  assert.equal(await s.getByRole('dialog').evaluate(modal=>modal.matches(':modal')),true);
- assert.equal(await s.locator('.option-grid').evaluate(grid=>getComputedStyle(grid).gridTemplateColumns.split(' ').length),2);
+ assert.equal(await s.locator('.option-grid').evaluate(grid=>getComputedStyle(grid).gridTemplateColumns.split(' ').length),1);
  await t.keyboard.press('Escape');
  assert.equal(await questionModal.evaluate(modal=>modal.matches(':modal')),true);
  for(const viewport of [{width:390,height:844},{width:1280,height:720},{width:1280,height:1000},{width:1920,height:1080},{width:2560,height:1440},{width:2560,height:1080}]){
@@ -176,6 +177,15 @@ const assert = require('node:assert/strict');
 	 await t.screenshot({path:`/tmp/livequiz-host-modal-${viewport.width}x${viewport.height}.png`});
  }
  await gridFits(s);
+ await s.locator('.answer-option .rich').first().evaluate(e=>{e.dataset.original=e.textContent;e.textContent='A long answer that should remain on one line even when the phone is narrow';});
+ assert.equal(await s.locator('.answer-option .rich').first().evaluate(e=>getComputedStyle(e).whiteSpace),'pre');
+ await s.screenshot({path:'/tmp/livequiz-participant-mobile.png'});
+ await s.locator('.answer-option .rich').first().evaluate(e=>e.textContent=e.dataset.original);
+ await s.setViewportSize({width:1920,height:1080});await gridFits(s);
+ assert.ok((await s.getByRole('dialog').boundingBox()).width>1300);
+ assert.ok(await s.locator('.question-image').evaluate(e=>e.getBoundingClientRect().height>10));
+ await s.screenshot({path:'/tmp/livequiz-participant-desktop.png'});
+ await s.setViewportSize({width:390,height:844});await gridFits(s);
  await t.setViewportSize({width:390,height:844});
  await t.evaluate(()=>{
 	 const answers=[...document.querySelectorAll('.option-card .rich')];window.layoutAnswers=answers.map(answer=>answer.textContent);
@@ -324,7 +334,7 @@ const assert = require('node:assert/strict');
  const noAuth=await student.request.post(base+'/index.php?api=save',{headers:{'X-CSRF-Token':boot.csrf},data:{}});assert.equal(noAuth.status(),401);
  assert.deepEqual(participantVideoRequests,[]);
  assert.deepEqual(participantMusicRequests,[]);
- assert.deepEqual(participantImageRequests,[]);
+ assert.ok(participantImageRequests.length>0);
  assert.deepEqual(errors,[]);
  console.log('Browser flows passed: authoring/media/math/code; all answer types; host + three participants; shared question/results/leaderboard/countdown/finished states; refresh in results, leaderboard and countdown; timeout with disconnected player; late join; zero-count bars; simultaneous and duplicate answers; duplicate host progression; server countdown deadlines; final scores; CSRF and participant authorization.');
  await browser.close();

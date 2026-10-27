@@ -176,15 +176,16 @@ $i=lq_save($db,1,['content'=>['title'=>'Images','questions'=>[$withImage,$q]]]);
 rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,false,$img),'lobby hides future image');
 lq_control($db,1,['room'=>$ir['room'],'version'=>1,'command'=>'next']);expireInitialCountdown($db,$ir['room']);
 check(lq_room_media($db,$ir['room'],1,'',true,$img)['bytes']==='PNG','host current image available');
-rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,false,$img),'participant cannot download current image');
+check(lq_room_media($db,$ir['room'],0,$it,false,$img)['bytes']==='PNG','participant current image available');
 rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,true,$img),'participant cannot impersonate host for image');
 foreach (['question','reveal','leaderboard'] as $mediaPhase) {
     lq_query($db,'UPDATE lq_rooms SET phase = ? WHERE id = ?',[$mediaPhase,$ir['room']]);
     $participantState=lq_state($db,$ir['room'],0,$it,false);
-    check(!isset($participantState['question']['image'])&&!isset($participantState['question']['youtube']),'participant media omitted in '.$mediaPhase);
+    check(isset($participantState['question']['image'])&&!isset($participantState['question']['youtube']),'participant image visible and video omitted in '.$mediaPhase);
     check(isset(lq_state($db,$ir['room'],1,'',true)['question']['image']),'host image retained in '.$mediaPhase);
-    rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,false,$img),'participant image denied in '.$mediaPhase);
+    check(lq_room_media($db,$ir['room'],0,$it,false,$img)['bytes']==='PNG','participant image allowed in '.$mediaPhase);
 }
+rejects(fn()=>lq_room_media($db,$ir['room'],0,$it,false,str_repeat('f',32)),'participant cannot fetch unrelated image');
 rejects(fn()=>lq_room_media($db,$ir['room'],0,$token,false,$img),'other room cannot view media');
 rejects(fn()=>lq_room_media($db,$ir['room'],1,'',true,str_repeat('f',32)),'host cannot fetch unrelated image');
 $db->exec('UPDATE lq_rooms SET expires_at = 1');

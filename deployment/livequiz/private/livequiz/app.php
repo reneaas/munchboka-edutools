@@ -362,8 +362,8 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
         $q = $content['questions'][$index];
         if (!$revealed) unset($q['correct'], $q['accepted']);
-        // Only the host receives image metadata and the video ID, including on results.
-        if (!$host) unset($q['youtube'], $q['image']);
+        // Participants receive the current image; video playback stays on the host.
+        if (!$host) unset($q['youtube']);
         $state['question'] = $q;
     }
     if ($p) {
@@ -404,8 +404,12 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
         if (($question['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');
         return jp_media($db,lq_id($image),(int)$r['owner_id']);
     }
-    if (!$host) throw new DomainException('Bilder vises bare på lærerskjermen.');
-    lq_require_host($r, $uid, $hostToken);
+    if ($host) lq_require_host($r, $uid, $hostToken);
+    else {
+        $player=lq_player($db,$room,$token);
+        $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
+        if (in_array($player['id'],$content['_waiting'] ?? [],true)) throw new DomainException('Vent til neste spill.');
+    }
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $q = $content['questions'][(int)$r['question_index']] ?? null;
     if (!in_array($r['phase'], ['question','reveal','leaderboard'], true) || ($q['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');

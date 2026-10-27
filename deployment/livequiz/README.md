@@ -96,7 +96,7 @@ screens put the image beside the alternatives and use compact controls. Results
 reserve a separate scrollable statistics section so charts do not displace the
 image or answers. Other
 media can scroll within the media area; exceptionally long question/answer text
-retains scrolling rather than being cut off. Participant screens remain image-free.
+retains scrolling rather than being cut off. Participants see current-question images in every mode, including results. On phones their answers stack vertically; long answers scroll horizontally without soft-wrapping.
 `tests/video-fit-browser.cjs` checks video fitting and playback controls using a
 mock YouTube API. `tests/image-fit-browser.cjs` checks portrait, landscape and square images across
 projector, desktop, tablet and phone sizes.
@@ -287,9 +287,9 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
   playback is not compliant with YouTube's visible-player requirements.
   Captions are requested off, but YouTube may honor viewer preferences. YouTube no
   longer supports hiding titles, and subtitles burned into the video image cannot be removed. Code is displayed, not executed. YouTube is an external service; school
-  network and video permissions determine actual playback. Images and YouTube playback
-  are host-only; participant state omits image metadata and video IDs, and image
-  downloads require host authorization. Participant screens never create a player,
+  network and video permissions determine actual playback. YouTube playback
+  is host-only; participant state omits video IDs. Image downloads require an
+  authorized host or a participant token with access to the current question. Participant screens never create a player,
   request YouTube resources or receive the video ID, including on results.
   Students hear the host’s speakers. The timer continues during videos.
 - Separate six-digit PIN for each session, locally generated QR code, lobby,
@@ -563,5 +563,5 @@ Teacher question and answer-reveal dialogs enlarge proportionally on large displ
 using a 900 × 700 reference canvas constrained by both viewport dimensions. Text,
 code, mathematics and answer cards scale together, while media keeps its aspect
 ratio and host controls keep their normal size. Resizing the window updates the
-scale immediately; smaller screens and participant dialogs retain their responsive
+scale immediately; desktop participants use the same scaling, while smaller screens retain their responsive
 layout. Browser layout checks cover screens through 2560 × 1440 and ultrawide displays.

@@ -558,3 +558,10 @@ current authoritative state so Start does not depend on a later polling update.
 8793) verify early termination, host authorization, rejection of subsequent
 answers and old-run stop requests, and a deliberately stale host progress view
 in individual and cooperative team races.
+
+Teacher question and answer-reveal dialogs enlarge proportionally on large displays,
+using a 900 × 700 reference canvas constrained by both viewport dimensions. Text,
+code, mathematics and answer cards scale together, while media keeps its aspect
+ratio and host controls keep their normal size. Resizing the window updates the
+scale immediately; smaller screens and participant dialogs retain their responsive
+layout. Browser layout checks cover screens through 2560 × 1440 and ultrawide displays.

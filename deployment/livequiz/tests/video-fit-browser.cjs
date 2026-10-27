@@ -20,12 +20,12 @@ const assert=require('node:assert/strict');
   },null,{timeout:3000});
   const b=await page.locator('.quiz-video>button').boundingBox(),area=await page.locator('.modal-body').boundingBox();assert.ok(b.y>=area.y&&b.y+b.height<=area.y+area.height+1);
  }
- for(const size of [{width:1280,height:720},{width:1920,height:1080},{width:1024,height:768},{width:390,height:844},{width:844,height:390}]){
+ for(const size of [{width:1280,height:720},{width:1920,height:1080},{width:2560,height:1440},{width:1024,height:768},{width:390,height:844},{width:844,height:390}]){
   await page.setViewportSize(size);await fits();
   await page.screenshot({path:`/tmp/livequiz-video-fit-${size.width}x${size.height}.png`});
  }
  await page.getByRole('button',{name:'Vis fasit nå'}).click();await page.getByRole('heading',{name:'Fasit',exact:true}).waitFor();
- for(const size of [{width:1280,height:720},{width:390,height:844},{width:844,height:390}]){
+ for(const size of [{width:1280,height:720},{width:1920,height:1080},{width:2560,height:1440},{width:390,height:844},{width:844,height:390}]){
   await page.setViewportSize(size);await fits();
   await page.screenshot({path:`/tmp/livequiz-video-results-${size.width}x${size.height}.png`});
  }

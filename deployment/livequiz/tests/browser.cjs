@@ -33,7 +33,11 @@ const assert = require('node:assert/strict');
 	 return states;
  }
  async function modalFits(page){
-	 await page.waitForFunction(()=>Math.abs(document.querySelector('dialog').getBoundingClientRect().width-Math.min(900,innerWidth-32))<.5);
+	 await page.waitForFunction(()=>{
+       const modal=document.querySelector('dialog');
+       const scale=modal.matches('.teacher-modal:is(.active-question-modal,.results-modal)')?Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700)):1;
+       return Math.abs(Number(getComputedStyle(modal).zoom)-scale)<.001&&Math.abs(modal.getBoundingClientRect().width-Math.min(900*scale,innerWidth-32))<.5;
+     });
 	 const modal=page.getByRole('dialog'),bounds=await modal.boundingBox(),viewport=page.viewportSize();
 	 assert.ok(bounds&&bounds.x>=16&&bounds.y>=15.5&&bounds.x+bounds.width<=viewport.width-15.5&&bounds.y+bounds.height<=viewport.height-15.5);
 	 assert.equal(await modal.evaluate(element=>element.scrollWidth<=element.clientWidth),true);
@@ -47,8 +51,8 @@ const assert = require('node:assert/strict');
  }
  async function gridFits(page){
 	 await modalFits(page);
-	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:getComputedStyle(grid).gap,cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {minimum:parseFloat(getComputedStyle(card).minHeight),x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
-	 const gap=parseFloat(geometry.gap);assert.ok([12,16].includes(gap));assert.equal(geometry.cards.length,4);
+	 const geometry=await page.locator('.option-grid').evaluate(grid=>({gap:parseFloat(getComputedStyle(grid).gap)*Number(getComputedStyle(grid.closest('dialog')).zoom),cards:[...grid.children].map(card=>{const bounds=card.getBoundingClientRect();return {minimum:parseFloat(getComputedStyle(card).minHeight),x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height,contained:card.scrollWidth<=card.clientWidth};})}));
+	 const gap=parseFloat(geometry.gap);assert.ok(gap>=12);assert.equal(geometry.cards.length,4);
 	 const [first,second,third,fourth]=geometry.cards;
 	 for(const card of geometry.cards){assert.ok(card.height>=card.minimum-.5);assert.ok(Math.abs(card.width-first.width)<.5);assert.ok(Math.abs(card.height-first.height)<.5);assert.ok(card.contained);}
 	 assert.equal(first.y,second.y);assert.equal(third.y,fourth.y);assert.equal(first.x,third.x);assert.equal(second.x,fourth.x);
@@ -154,9 +158,12 @@ const assert = require('node:assert/strict');
  assert.equal(await s.locator('.option-grid').evaluate(grid=>getComputedStyle(grid).gridTemplateColumns.split(' ').length),2);
  await t.keyboard.press('Escape');
  assert.equal(await questionModal.evaluate(modal=>modal.matches(':modal')),true);
- for(const viewport of [{width:390,height:844},{width:1280,height:720},{width:1280,height:1000}]){
+ for(const viewport of [{width:390,height:844},{width:1280,height:720},{width:1280,height:1000},{width:1920,height:1080},{width:2560,height:1440},{width:2560,height:1080}]){
 	 await t.setViewportSize(viewport);
 	 await gridFits(t);
+     const scale=await questionModal.evaluate(modal=>Number(getComputedStyle(modal).zoom));
+     assert.ok(Math.abs(scale-Math.max(1,Math.min((viewport.width-32)/900,(viewport.height-32)/700)))<.001);
+     if(viewport.width>=1920)assert.ok(scale>1.4,'Projector text and content enlarge together');
 	 const image=await t.locator('.question-image').boundingBox(),body=await t.locator('.modal-body').boundingBox();
 	 assert.ok(image.width<=body.width);assert.ok(image.height>0);assert.equal(await t.locator('.question-image').evaluate(e=>getComputedStyle(e).objectFit),'contain');
 	 assert.equal(await t.locator('.modal-body').evaluate(body=>body.scrollHeight>body.clientHeight+1),false);

@@ -336,16 +336,24 @@
     }
     setInterval(updateClock,250);
     let overlay=null;
+    // Enlarge the teacher's question canvas uniformly, constrained by both axes.
+    // Keep the existing responsive layout on smaller screens.
+    function fitTeacherQuestion(){
+      if(!host||!overlay)return;
+      const scale=Math.max(1,Math.min((window.innerWidth-32)/900,(window.innerHeight-32)/700));
+      overlay.style.setProperty('--teacher-scale',String(scale));
+    }
+    if(host)window.addEventListener('resize',fitTeacherQuestion);
     const closePopup=()=>{if(overlay){timer.before(connection,meta);if(joinCode)timer.before(joinCode);results.before(controls);overlay.close();overlay.remove();overlay=null;}};
     function popup(build,cls=''){
-      closePopup();overlay=el('dialog',undefined,'question-modal '+cls);
+      closePopup();overlay=el('dialog',undefined,'question-modal '+cls+(host?' teacher-modal':''));
       const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body');
       overlay.append(header,body);build(header,body);
       const title=overlay.querySelector('h2,.qcard-head')||overlay.querySelector('[role=status]'),footer=el('div',undefined,'question-modal-footer'),message=el('p',undefined,'modal-notice');
       title.id='quiz-modal-title';title.tabIndex=-1;overlay.setAttribute('aria-labelledby',title.id);message.hidden=true;message.setAttribute('role','alert');
       overlay.addEventListener('cancel',event=>event.preventDefault());
       if(joinCode)footer.append(joinCode);
-      footer.append(window.quizThemeButton(),meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);overlay.showModal();title.focus();
+      footer.append(window.quizThemeButton(),meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);fitTeacherQuestion();overlay.showModal();title.focus();
     }
     function showAnswer(s,order){
       popup((header,body)=>{

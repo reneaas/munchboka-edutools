@@ -12,6 +12,10 @@ function lq_race_store(PDO $db,array $room,array $content): array {
     lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[$json,$room['id']]);
     return array_replace($room,['content'=>$json]);
 }
+function lq_race_new_entry(array $group,int $count): array {
+    return ['id'=>'r'.$group['id'],'name'=>$group['name'],'members'=>$group['members'],'attempt'=>0,'start'=>0,
+        'order'=>lq_race_order($count),'progress'=>0,'revision'=>0,'completed'=>false,'completed_at'=>null,'reset_at'=>null,'updated_at'=>microtime(true)];
+}
 function lq_race_prepare(PDO $db,array $room,array $content): array {
     $play=lq_play_settings($content);
     $players=lq_query($db,'SELECT id,nickname FROM lq_players WHERE room_id=? ORDER BY id',[$room['id']])->fetchAll();
@@ -19,9 +23,7 @@ function lq_race_prepare(PDO $db,array $room,array $content): array {
     $groups=$play['mode']==='teams' ? $play['teams'] : array_map(fn($p)=>['id'=>$p['id'],'name'=>$p['nickname'],'members'=>[$p]],$players);
     $entries=[];
     foreach($groups as $group){
-        $key='r'.$group['id'];
-        $entries[$key]=['id'=>$key,'name'=>$group['name'],'members'=>$group['members'],'attempt'=>0,'start'=>0,
-            'order'=>lq_race_order(count($content['questions'])),'progress'=>0,'revision'=>0,'completed'=>false,'completed_at'=>null,'reset_at'=>null,'updated_at'=>microtime(true)];
+        $entry=lq_race_new_entry($group,count($content['questions']));$entries[$entry['id']]=$entry;
     }
     $content['_race']=['entries'=>$entries,'winner'=>null];
     return lq_race_store($db,$room,$content);
@@ -53,7 +55,7 @@ function lq_race_state(array $room,?array $player,array $state,array $content): 
 function lq_race_answer(PDO $db,array $input,string $token): array {
     return lq_transaction($db,function()use($db,$input,$token){
         $room=lq_room($db,$input['room'] ?? '',true);$player=lq_player($db,$room['id'],$token);
-        lq_require_run($room,$input);
+        lq_require_run($room,$input);lq_require_eligible($room,$player);
         $room=lq_advance_locked($db,$room);
         if($room['phase']!=='race')throw new DomainException('Løpet er ikke aktivt.');
         $content=json_decode($room['content'],true,32,JSON_THROW_ON_ERROR);$entry=lq_race_entry($content,$player['id']);

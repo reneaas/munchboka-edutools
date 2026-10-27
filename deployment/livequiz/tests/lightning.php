@@ -14,7 +14,6 @@ function lightningFixture(PDO $db, string $mode='individual', int $n=3, string $
     $state=lq_state($db,$id,1,'',true);
     lq_control($db,1,['room'=>$id,'version'=>$state['version'],'command'=>'next']);
     check(lq_state($db,$id,1,'',true)['state']==='LIGHTNING_INTRO','enabled final leaderboard enters intro');
-    rejects(fn()=>lq_join($db,$room['pin'],'Late',bin2hex(random_bytes(32))),'new lightning participants rejected');
     $intro=lq_state($db,$id,1,'',true);
     rejects(fn()=>lq_control($db,0,['room'=>$id,'version'=>$intro['version'],'command'=>'next']),'participant cannot start lightning');
     lq_control($db,1,['room'=>$id,'version'=>$intro['version'],'command'=>'next']);

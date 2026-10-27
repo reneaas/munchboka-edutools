@@ -146,16 +146,31 @@ function lq_join(PDO $db, string $pin, string $name, string $token): array {
         if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillkoden er ugyldig eller utløpt.');
         $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
         if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
-        if (in_array($r['phase'], ['light_intro','light_count','lightning','light_done'], true)) throw new DomainException('Lynrunden er startet. Nye deltakere må vente til neste spill.');
-        $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
-        if (lq_game($content)==='race' && $r['phase']!=='lobby') throw new DomainException('Løpet er startet. Nye deltakere må vente til neste spill.');
-        $play = lq_play_settings($content);
-        if ($play['mode'] === 'teams' && $r['phase'] !== 'lobby') throw new DomainException('Lagene er allerede fordelt. Nye deltakere må vente til neste spill.');
-        if ($old || $r['phase'] === 'finished') throw new DomainException('Spillet er avsluttet. Be læreren starte et nytt spill.');
+        if ($old) throw new DomainException('Denne deltakerøkten tilhører et annet spill.');
         if ((int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
-        lq_query($db, 'INSERT INTO lq_players (id, room_id, nickname, token_hash) VALUES (?, ?, ?, ?)', [bin2hex(random_bytes(16)), $r['id'], $name, hash('sha256', $token)]);
+        $r=lq_advance_locked($db,$r);
+        $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);$play=lq_play_settings($content);
+        $player=['id'=>bin2hex(random_bytes(16)),'nickname'=>$name];
+        lq_query($db, 'INSERT INTO lq_players (id, room_id, nickname, token_hash) VALUES (?, ?, ?, ?)', [$player['id'], $r['id'], $name, hash('sha256', $token)]);
+        if (($play['mode']==='teams' && $r['phase']!=='lobby') || in_array($r['phase'],['finished','race_done','light_done'],true)) {
+            $content['_waiting'][]=$player['id'];
+        } elseif (in_array($r['phase'],['race_count','race'],true)) {
+            $entry=lq_race_new_entry(['id'=>$player['id'],'name'=>$name,'members'=>[$player]],count($content['questions']));
+            $content['_race']['entries'][$entry['id']]=$entry;
+        } elseif (in_array($r['phase'],['light_count','lightning'],true)) {
+            $content['_lightning']['orders'][$player['id']]=lq_race_order(count($content['questions']));
+        }
+        lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
         return ['room' => $r['id']];
     });
+}
+function lq_eligible_count(PDO $db,array $room): int {
+    $content=json_decode($room['content'],true,32,JSON_THROW_ON_ERROR);
+    return (int)lq_query($db,'SELECT COUNT(*) FROM lq_players WHERE room_id=?',[$room['id']])->fetchColumn()-count($content['_waiting'] ?? []);
+}
+function lq_require_eligible(array $room,array $player): void {
+    $content=json_decode($room['content'],true,32,JSON_THROW_ON_ERROR);
+    if(in_array($player['id'],$content['_waiting'] ?? [],true))throw new DomainException('Du blir med når læreren starter neste spill.');
 }
 function lq_player(PDO $db, string $room, string $token): array {
     $r = lq_query($db, 'SELECT * FROM lq_players WHERE room_id = ? AND token_hash = ?', [$room, hash('sha256', $token)])->fetch();
@@ -187,7 +202,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         }
         $qs = $content['questions']; $play = lq_play_settings($content);
         if ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
-            unset($content['_race'],$content['_lightning']);
+            unset($content['_race'],$content['_lightning'],$content['_waiting']);
             $content['_run']=($content['_run'] ?? 0)+1;
             $play['teams']=[];$content['play']=$play;
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
@@ -247,7 +262,7 @@ function lq_advance_locked(PDO $db, array $room): array {
         $room = lq_transition($db, $room, 'question', $index, (int)round((lq_deadline($room) + $questions[$index]['seconds']) * 1000));
     }
     if ($room['phase'] === 'question') {
-        $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room['id']])->fetchColumn();
+        $players = lq_eligible_count($db,$room);
         $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room['id'], (int)$room['question_index']])->fetchColumn();
         if (lq_is_done($room, $players, $answers)) $room = lq_transition($db, $room, 'reveal', (int)$room['question_index'], 0);
     }
@@ -288,7 +303,7 @@ function lq_require_run(array $room,array $input): void {
 function lq_answer(PDO $db, array $input, string $token): array {
     return lq_transaction($db, function () use ($db, $input, $token) {
         $r = lq_room($db, $input['room'] ?? '', true); $p = lq_player($db, $r['id'], $token);
-        lq_require_run($r,$input);
+        lq_require_run($r,$input);lq_require_eligible($r,$p);
         $index = $input['index'] ?? null;
         if (!is_int($index) || $index < 0) throw new DomainException('Ugyldig spørsmål.');
         // Retries return the original acknowledgement, without leaking points before reveal.
@@ -321,7 +336,7 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     $room = $r['id'];
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $index = (int)$r['question_index'];
-    $players = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$room])->fetchColumn();
+    $players = lq_eligible_count($db,$r);
     $answers = (int)lq_query($db, 'SELECT COUNT(*) FROM lq_answers WHERE room_id = ? AND question_index = ?', [$room, $index])->fetchColumn();
     $revealed = in_array($r['phase'], ['reveal', 'leaderboard', 'countdown', 'finished'], true);
     $states = ['lobby' => 'LOBBY', 'teams' => 'TEAM_OVERVIEW', 'question' => 'QUESTION_ACTIVE', 'reveal' => 'QUESTION_RESULTS', 'leaderboard' => 'LEADERBOARD', 'countdown' => 'COUNTDOWN', 'finished' => 'QUIZ_FINISHED', 'race_count'=>'RACE_COUNTDOWN','race'=>'RACE_ACTIVE','race_done'=>'RACE_FINISHED', 'light_intro'=>'LIGHTNING_INTRO', 'light_count'=>'LIGHTNING_COUNTDOWN', 'lightning'=>'LIGHTNING_ACTIVE', 'light_done'=>'LIGHTNING_FINISHED'];
@@ -340,6 +355,8 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     $state['game'] = lq_game($content);
     $state['lightning'] = lq_lightning_settings($content);
     if ($host) $state['pin'] = $r['pin'];
+    $state['waiting_count']=count($content['_waiting'] ?? []);
+    if ($p && in_array($p['id'],$content['_waiting'] ?? [],true)) return array_replace($state,['state'=>'WAITING_LOBBY','index'=>-1]);
     if (isset($content['_race']) && in_array($r['phase'],['race_count','race','race_done','finished'],true)) return lq_race_state($r,$p,$state,$content);
     if (in_array($r['phase'], ['light_intro','light_count','lightning','light_done'], true)) return lq_lightning_state($db,$r,$p,$state,$content);
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {

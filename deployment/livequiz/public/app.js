@@ -272,6 +272,7 @@
     const query={room:id,...(host?{host:'1'}:{})};
     const heading=el('h1','Henter spill …'),connection=el('p','Kobler til …','hint'),meta=el('p',undefined,'hint'),timer=el('p',undefined,'timer'),stage=el('section',undefined,'card stage'),controls=el('div',undefined,'actions'),results=el('section');
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=true;
+    const joinCode=host?el('p','','host-join-code'):null;if(joinCode)timer.before(joinCode);
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
     const music=host?window.quizMusic():null;
@@ -300,7 +301,7 @@
       const lightningDuration=field('Varighet på lynrunde (sekunder)',s.lightning?.seconds||60,()=>{modeDirty=true;},'number'),durationInput=lightningDuration.querySelector('input');durationInput.min=5;durationInput.max=600;durationInput.step=1;durationInput.required=true;
       const showLightningDuration=()=>{const race=gameSelect.value==='race';lightningLabel.hidden=race;lightningToggle.disabled=race;lightningDuration.hidden=race||!lightningToggle.checked;durationInput.disabled=race||!lightningToggle.checked;};showLightningDuration();lightningToggle.onchange=()=>{modeDirty=true;showLightningDuration();};
       const saveMode=el('button','Lagre spillmodus');saveMode.type='submit';
-      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere kan ikke bli med etter lagfordelingen.','hint'),saveMode);
+      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere venter i lobbyen til neste spill etter lagfordelingen.','hint'),saveMode);
       const rules=el('p','','hint');form.insertBefore(rules,saveMode);
       const updateRules=()=>{showLightningDuration();for(const hint of form.querySelectorAll('p.hint'))hint.hidden=gameSelect.value==='race';rules.hidden=gameSelect.value!=='race';rules.textContent='Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';};
       gameSelect.onchange=()=>{modeDirty=true;updateRules();};updateRules();
@@ -335,7 +336,7 @@
     }
     setInterval(updateClock,250);
     let overlay=null;
-    const closePopup=()=>{if(overlay){timer.before(connection,meta);results.before(controls);overlay.close();overlay.remove();overlay=null;}};
+    const closePopup=()=>{if(overlay){timer.before(connection,meta);if(joinCode)timer.before(joinCode);results.before(controls);overlay.close();overlay.remove();overlay=null;}};
     function popup(build,cls=''){
       closePopup();overlay=el('dialog',undefined,'question-modal '+cls);
       const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body');
@@ -343,6 +344,7 @@
       const title=overlay.querySelector('h2,.qcard-head')||overlay.querySelector('[role=status]'),footer=el('div',undefined,'question-modal-footer'),message=el('p',undefined,'modal-notice');
       title.id='quiz-modal-title';title.tabIndex=-1;overlay.setAttribute('aria-labelledby',title.id);message.hidden=true;message.setAttribute('role','alert');
       overlay.addEventListener('cancel',event=>event.preventDefault());
+      if(joinCode)footer.append(joinCode);
       footer.append(window.quizThemeButton(),meta,connection,message,controls);overlay.append(footer);document.body.append(overlay);overlay.showModal();title.focus();
     }
     function showAnswer(s,order){
@@ -402,17 +404,19 @@
       if(state&&s.version<state.version)return;
       if(state&&s.version===state.version&&s.state==='LIGHTNING_ACTIVE'&&(s.progress??0)<(state.progress??0))return;
       if(state&&s.version===state.version&&!['LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)&&state.submitted)s.submitted=true;
-      state=s;heading.textContent=s.title;meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
+      state=s;if(joinCode)joinCode.textContent=`Bli med: quiz.munchboka.no · Spillkode ${s.pin}`;heading.textContent=s.title;meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(!host&&s.state==='QUESTION_RESULTS')meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+`Spørsmål ${s.index+1} av ${s.total}`;
       if(s.game==='race')meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+'Quiz Race';
       if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
+      if(host&&s.waiting_count)meta.textContent+=` · ${s.waiting_count} venter på neste spill`;
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
       const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
       if(rendered===renderKey){if(host&&s.state==='RACE_ACTIVE')overlay.querySelector('.race-board').replaceWith(raceBoard(s));if(['LEADERBOARD','LIGHTNING_FINISHED'].includes(s.state))overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=renderKey;closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
       if(host&&['QUIZ_FINISHED','RACE_FINISHED','LIGHTNING_FINISHED'].includes(s.state))controls.append(button('Spill igjen med samme spillere',control('restart'),'secondary'));
       if(host&&s.state!=='QUIZ_FINISHED')controls.append(button('Avslutt spillet',control('finish'),'quiet'));
-      if(s.state==='LOBBY'){
+      if(s.state==='WAITING_LOBBY'){stage.append(el('h2','Du er i lobbyen'),el('p','Spillet er i gang eller avsluttet. Du blir med automatisk når læreren starter neste spill.'));}
+      else if(s.state==='LOBBY'){
         stage.append(el('p', s.game==='race'?'Quiz Race: Først til alle riktige uten feil vinner.':s.scoring === 'speed' ? 'Raske riktige svar: 0–1000 poeng. Jo raskere du svarer riktig, desto flere poeng. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir 0.' : 'Faste poeng: 1000 for riktig svar, 0 for feil svar.', 'hint'));
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Elevene skanner koden eller åpner lenken og skriver spillkoden.':'Vent på at læreren starter første spørsmål.'));
         if(host){stage.append(modeSettings(s));const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);stage.append(el('div',s.pin,'pin'));const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a);controls.append(button(s.mode==='teams'?'Fordel lag og start':s.game==='race'?'Start Quiz Race':'Start første spørsmål',control('next')));}

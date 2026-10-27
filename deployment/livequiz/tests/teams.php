@@ -63,7 +63,7 @@ check($overview['state']==='TEAM_OVERVIEW' && $overview['index']===-1,'overview 
 check(array_map(fn($team)=>count($team['members']),$teams)===[3,2],'persisted balanced teams');
 rejects(fn()=>lq_control($db,1,['room'=>$ridTeam,'version'=>$startVersion,'command'=>'next']),'duplicate start cannot reshuffle');
 rejects(fn()=>$controlTeam('configure',['mode'=>'individual','max_team_size'=>3]),'settings frozen after start');
-rejects(fn()=>lq_join($db,$newRoom['pin'],'Late',bin2hex(random_bytes(32))),'team game rejects new arrivals');
+$lateToken=bin2hex(random_bytes(32));lq_join($db,$newRoom['pin'],'Late',$lateToken);check(lq_state($db,$newRoom['room'],0,$lateToken,false)['state']==='WAITING_LOBBY','team late arrival waits for next game');
 foreach($tokens as $token){
     $s=lq_state($db,$ridTeam,0,$token,false);
     check($s['teams']===$teams && $s['my_team']!==null,'all clients agree on team assignments');

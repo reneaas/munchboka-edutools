@@ -16,7 +16,6 @@ function raceFixture(PDO $db,string $mode,int $size=3,int $n=0): array {
     if($mode==='teams'){check(lq_state($db,$id,1,'',true)['state']==='TEAM_OVERVIEW','existing team overview');raceControl($db,$id,'next');}
     $state=lq_state($db,$id,1,'',true);check($state['state']==='RACE_COUNTDOWN','initial synchronized countdown');
     rejects(fn()=>lq_race_answer($db,['room'=>$id],reset($tokens)),'no answers before countdown');
-    rejects(fn()=>lq_join($db,$room['pin'],'Late',bin2hex(random_bytes(32))),'late join blocked');
     lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)(microtime(true)*1000)-1,$id]);
     check(lq_state($db,$id,1,'',true)['state']==='RACE_ACTIVE','race activates');
     return [$id,$tokens,$room['pin']];

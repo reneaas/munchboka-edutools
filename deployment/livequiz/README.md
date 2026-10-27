@@ -22,10 +22,11 @@ participant opens the final leaderboard; only the host can finish the game.
 
 Implementation:
 
-- `lightning.php` handles configuration, frozen participant membership, independent
+- `lightning.php` handles configuration, eligible participant membership, independent
   Fisher–Yates question orders, progress, answering and completion. Orders are
-  stored once in the existing room JSON at countdown start. Late new joins are
-  refused; existing participant tokens can reconnect. Every original question is
+  stored in the existing room JSON at countdown start. Late individual entrants
+  receive a fresh order with the same remaining deadline; late team entrants wait
+  for the next game. Existing participant tokens can reconnect. Every original question is
   included once per participant, including typed/multiple-answer questions.
 - Phases `light_intro`, `light_count`, `lightning`, `light_done` map to explicit
   `LIGHTNING_*` client states and fit the existing phase column. The active
@@ -139,6 +140,29 @@ Validation: `php tests/sharing.php` extends the backend checks; run
 `node tests/sharing-browser.cjs` against a disposable `prepare-local.py` fixture
 with the same Playwright environment variables as the other browser tests.
 
+## Late arrivals and the teacher game code
+
+The teacher sees **Bli med: quiz.munchboka.no · Spillkode …** in every game
+window, including questions, countdowns, race progress, results and the final
+screen. Students can enter the code on the quiz homepage.
+
+Late individual players join the current regular question immediately, start a
+fresh independent Race attempt, or receive their own Lightning order with only
+the existing time remaining. Joining does not extend timers or reset anyone's
+progress. Late team players wait on a dedicated lobby screen until the next game;
+existing teams and cyclic turn orders never change mid-game. Waiting players
+cannot answer and do not count toward completion or current leaderboards.
+Joining after a game has ended also places the player in the waiting lobby.
+
+Waiting membership is stored in the existing room JSON. **Spill igjen med samme
+spillere** admits everyone back into the lobby; the next start includes waiting
+players in the normal team allocation. Reconnection is idempotent, and the existing
+60-player room limit includes waiting players. No schema migration is required.
+
+`php tests/late-join.php` and `node tests/late-join-browser.cjs` (fixture port 8792)
+cover individual/team behavior across regular quiz, Race and Lightning, completion
+counts, unchanged timers/teams, reconnects, visible teacher codes and replay entry.
+
 ## Play again with the same lobby
 
 After the final screen (or the completed Race/Lightning results), the host can
@@ -200,8 +224,8 @@ Submission responses include immediate updated state and the next question when
 it is still that participant's turn. Other teammates and the teacher synchronize
 through existing polling. Client rendering uses the competitor's revision, so
 other competitors cannot erase a partially entered answer. Refreshing restores the
-same attempt and turn. New players cannot join after a race starts, but existing
-player tokens can reconnect. Shared-link hosts can also run races without accounts.
+same attempt and turn. Late individual racers start their own attempt immediately. Late team players
+wait for the next game; existing player tokens can reconnect. Shared-link hosts can also run races without accounts.
 The teacher sees a progress board; active participants receive code, math and
 current-question images. YouTube videos are not replayed in this mode.
 
@@ -297,7 +321,7 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
 
 In the host lobby, select **Individuelt spill** (default) or **Tilfeldige lag**,
 set **Maks antall spillere per lag** (default 3, integer 2–60), then click
-**Lagre spillmodus**. Unsaved settings block starting. Individual rooms follow
+**Lagre spillmodus**, or start directly to save and apply the selected settings. Individual rooms follow
 exactly the existing question/results/leaderboard/countdown flow.
 
 For team rooms, **Fordel lag og start** locks the room and reads the current lobby
@@ -318,8 +342,8 @@ from the overview into the synchronized three-second `COUNTDOWN`, then question 
 Individual games also start with the same synchronized countdown before question 0.
 The answer deadline and scoring timer begin after that countdown.
 Subsequent lifecycle transitions are unchanged. Only the host may configure or
-advance a room. Settings lock once assignments are made. Team games reject new
-participants after that point; existing browser tokens reconnect to the same team.
+advance a room. Settings lock once assignments are made. New team participants wait for the next game after that point; existing browser
+tokens reconnect to the same team.
 Individual games still allow late joins. Disconnected players remain eligible,
 but the question deadline always closes the question, so nobody blocks it forever.
 
@@ -438,8 +462,8 @@ question with its deadline anchored to the countdown end. If all clients go away
 reconnecting catches up to that deadline, not a restarted timer. Observed state
 changes are subject to network/polling latency, not frame-perfect broadcasts.
 
-All registered room participants are eligible, including late joins during an
-active question. Disconnected players stay in the roster and retain scores; they
+All active room participants are eligible, including late individual joins during
+an active question. Team arrivals waiting for the next game are not eligible. Disconnected players stay in the roster and retain scores; they
 can delay all-answered completion only until the existing question deadline
 (5–600 seconds). There is no heartbeat-based removal or connection-based scoring.
 

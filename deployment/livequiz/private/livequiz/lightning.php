@@ -14,6 +14,7 @@ function lq_validate_lightning(mixed $settings): array {
 function lq_lightning_prepare(PDO $db, array $room, array $content): array {
     $players = lq_query($db,'SELECT id FROM lq_players WHERE room_id = ? ORDER BY id',[$room['id']])->fetchAll(PDO::FETCH_COLUMN);
     if (!$players) throw new DomainException('Lynrunden trenger minst én deltaker.');
+    $players=array_values(array_diff($players,$content['_waiting'] ?? []));
     $orders = [];
     foreach ($players as $player) {
         $order = range(0,count($content['questions'])-1);
@@ -67,7 +68,7 @@ function lq_lightning_answer(PDO $db, array $input, string $token): array {
     $result=lq_transaction($db,function () use ($db,$input,$token) {
         $room=lq_room($db,$input['room'] ?? '',true);
         $player=lq_player($db,$room['id'],$token);
-        lq_require_run($room,$input);
+        lq_require_run($room,$input);lq_require_eligible($room,$player);
         $room=lq_lightning_advance($db,$room);
         if ($room['phase']!=='lightning' || microtime(true)>=lq_deadline($room)) return ['closed'=>true];
         $index=$input['index'] ?? null;
@@ -90,6 +91,7 @@ function lq_lightning_answer(PDO $db, array $input, string $token): array {
 }
 function lq_leaderboard(PDO $db,string $room,array $content): array {
     $rows=lq_query($db,'SELECT p.id, p.nickname, COALESCE(SUM(a.points), 0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id = p.id AND a.room_id = p.room_id WHERE p.room_id = ? GROUP BY p.id, p.nickname ORDER BY score DESC, p.nickname, p.id LIMIT 60',[$room])->fetchAll();
+    $rows=array_values(array_filter($rows,fn($row)=>!in_array($row['id'],$content['_waiting'] ?? [],true)));
     $play=lq_play_settings($content);
     return $play['mode']==='teams' ? lq_team_leaderboard($play['teams'],$rows) : $rows;
 }

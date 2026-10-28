@@ -25,7 +25,7 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','logout','delete','share','shared-start','organize','lightning-answer','race-answer'];
+        $mutations = ['save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','organize','lightning-answer','race-answer'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
         if (in_array($action, ['join','shared-start'], true)) {
@@ -33,12 +33,20 @@ if ($action !== null) {
             $_SESSION['lq_join_after'] = time() + 2;
         }
         // Release PHP's session lock before polling queries, uploads or room locks.
-        if (!in_array($action, ['send','verify','logout'], true)) session_write_close();
-        if ($action === 'bootstrap') lq_response(['uid'=>$uid, 'csrf'=>$csrf, 'pending'=>isset($_SESSION['email_pending'])]);
-        $teacherActions = ['library','quiz','save','create','upload','delete','share','organize'];
-        if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
+        if (!in_array($action, ['send','verify','password-login','set-password','logout'], true)) session_write_close();
         require getenv('LIVEQUIZ_PRIVATE') ?: '/home/zebfxvix/jeopardy-private/livequiz/app.php';
         $db = jp_db();
+        if ($uid) {
+            lq_credentials_prepare($db);
+            if (lq_credentials_version($db,$uid)!==(int)($_SESSION['credential_version'] ?? 0)) {
+                $uid=0;
+                if (session_status()===PHP_SESSION_ACTIVE) $_SESSION=['csrf'=>$csrf];
+            }
+        }
+        if ($action === 'bootstrap') lq_response(['uid'=>$uid, 'csrf'=>$csrf, 'pending'=>isset($_SESSION['email_pending']), 'can_set_password'=>$uid && time()-(int)($_SESSION['email_verified_at'] ?? 0)<=600]);
+        $teacherActions = ['library','quiz','save','create','upload','delete','share','organize'];
+        if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
+
         $input = [];
         if ($post && $action !== 'upload') {
             $raw = file_get_contents('php://input', false, null, 0, 1100001);
@@ -53,6 +61,8 @@ if ($action !== null) {
         $room = $_GET['room'] ?? ''; $host = ($_GET['host'] ?? '') === '1';
         if (!is_string($room)) throw new DomainException('Ugyldig spill.');
         switch ($action) {
+            case 'password-login': lq_password_login($db, jp_text($input['email'] ?? '',254), $input['password'] ?? null, $_SERVER['REMOTE_ADDR'] ?? 'unknown'); lq_response(['ok'=>true]);
+            case 'set-password': if (!$uid) lq_response(['error'=>'Logg inn igjen.'],401); lq_set_password($db,$input['password'] ?? null); lq_response(['ok'=>true]);
             case 'send': lq_send_code($db, jp_text($input['email'] ?? '', 254)); lq_response(['ok'=>true]);
             case 'verify': lq_verify($db, jp_text($input['code'] ?? '', 8)); lq_response(['ok'=>true]);
             case 'logout':

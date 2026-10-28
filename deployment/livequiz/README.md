@@ -565,3 +565,35 @@ code, mathematics and answer cards scale together, while media keeps its aspect
 ratio and host controls keep their normal size. Resizing the window updates the
 scale immediately; desktop participants use the same scaling, while smaller screens retain their responsive
 layout. Browser layout checks cover screens through 2560 × 1440 and ultrawide displays.
+
+
+## Optional password accounts
+
+The login page offers email one-time codes and reusable email/password login.
+Registration and forgotten-password recovery both verify an email code first,
+then allow setting a password within ten minutes. Existing verified accounts can
+set a password from **Min konto**. Both methods resolve to the same `jp_users.id`,
+so quizzes, folders and ownership remain intact. The existing `@osloskolen.no`
+restriction remains. Jeopardy's login flow is unchanged.
+
+Passwords are never stored as plaintext or reversible encryption. PHP uses
+Argon2id when available and its default bcrypt implementation otherwise, with
+random salts, verification through `password_verify`, and rehashing on login.
+New passwords require at least 15 characters, with a 1024-byte input limit;
+bcrypt-only hosts additionally enforce 72 bytes rather than silently truncating.
+Emails remain in the existing shared account records for lookup and delivery;
+this change does not encrypt or replace those records.
+
+New `lq_credentials` and `lq_auth_limits` tables are created lazily in the existing
+database, following the library's additive migration pattern. No manual migration
+or extra database is required. Credential versions revoke previous Quiz sessions
+when a password is set or reset. Email verification is required again for another
+password change. Login attempts are limited to ten per email and fifty per source
+IP per fifteen minutes, across browser sessions; invalid credentials use a generic
+error. Existing CSRF, secure session cookies and email-code limits remain in force.
+
+Validation: `php deployment/livequiz/tests/passwords.php` covers hashing, fresh
+email proof, ownership, password replacement, OTP compatibility and throttling.
+`tests/accounts-browser.cjs` runs against a disposable `prepare-local.py` fixture;
+it stubs email delivery via a local-only helper and exercises the real verification,
+registration, login and recovery endpoints. It does not test actual mail delivery.

@@ -3,6 +3,7 @@
   'use strict';
   const app = document.querySelector('#app'), notice = document.querySelector('#notice');
   const params = new URLSearchParams(location.search);
+  let canSetPassword=false, accountSetup=params.has('setup');
   let csrf = '', uid = 0, pending = false, dirty = false, uploads = 0;
   const el = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
   function error(e) { const target = document.querySelector('.question-modal .modal-notice') || notice; target.textContent = e.message || String(e); target.hidden = false; }
@@ -106,19 +107,39 @@
     };
     app.append(form, el('p', 'Læreren styrer tempoet. Læreren velger faste poeng eller poeng for raske riktige svar.', 'hint'));
   }
-  function login() {
-    app.replaceChildren(el('p', 'DIN QUIZKONTO', 'eyebrow'), el('h1', uid ? 'Du er logget inn' : 'Logg inn med e-post'));
-    if (uid) { app.append(link('Mine quizer', '?teacher=1'), button('Logg ut', async () => {await api('logout', {}); location.href='./';}, 'quiet')); return; }
-    app.append(el('p', 'Bruk din @osloskolen.no-adresse. Vi sender en engangskode. Du logger inn separat her og på Jeopardy.', 'intro'));
-    const form=el('form',undefined,'card join');let value='';
-    const label=field(pending?'Engangskode':'E-post i Osloskolen','',v=>value=v,pending?'text':'email');
-    const input=label.querySelector('input');input.required=true;
+  function login(mode='code') {
+    if(pending&&accountSetup)mode='verify-email';
+    app.replaceChildren(el('p','DIN QUIZKONTO','eyebrow'),el('h1',uid&&mode!=='verify-email'?'Min konto':accountSetup?'Opprett konto eller sett nytt passord':'Logg inn'));
+    const startSetup=()=>{accountSetup=true;pending=false;history.replaceState(null,'','?login=1&setup=1');login('verify-email');};
+    if(uid&&mode!=='verify-email'){
+      if(params.has('saved'))app.append(el('p','Passordet er lagret. Andre innlogginger er avsluttet.','result'));
+      app.append(group(link('Mine quizer','?teacher=1'),button('Logg ut',async()=>{await api('logout',{});location.href='./';},'quiet')));
+      if(!canSetPassword){app.append(el('p','Du kan bruke engangskode eller passord for den samme kontoen. Bekreft e-posten med en ny kode for å opprette eller endre passord.','intro'),button('Opprett eller endre passord',startSetup));return;}
+      app.append(el('p','Velg et passord på minst 15 tegn. Du kan fortsatt logge inn med engangskode.','intro'));
+      const form=el('form',undefined,'card join');let password='',confirmation='';
+      for(const [label,update] of [['Nytt passord',v=>password=v],['Gjenta passord',v=>confirmation=v]]){const f=field(label,'',update,'password'),i=f.querySelector('input');i.required=true;i.minLength=15;i.autocomplete='new-password';form.append(f);}
+      const save=el('button','Lagre passord');save.type='submit';form.append(save);
+      form.onsubmit=async e=>{e.preventDefault();clearError();if(password!==confirmation){error(new Error('Passordene er ikke like.'));return;}save.disabled=true;try{await api('set-password',{password});location.href='?login=1&saved=1';}catch(err){error(err);save.disabled=false;}};
+      app.append(form);return;
+    }
+    app.append(el('p','Bruk din @osloskolen.no-adresse. Engangskode og passord gir tilgang til de samme quizene.','intro'));
+    if(!pending&&!accountSetup)app.append(group(button('Engangskode på e-post',()=>login('code'),'secondary'),button('Logg inn med passord',()=>login('password'),'secondary')));
+    if(accountSetup)app.append(el('p','Bekreft e-posten med en engangskode. Deretter velger du passord. Dette gjelder også hvis du har glemt passordet.','hint'));
+    const form=el('form',undefined,'card join');let value='',password='';
+    const label=field(pending?'Engangskode':'E-post i Osloskolen','',v=>value=v,pending?'text':'email'),input=label.querySelector('input');input.required=true;
     if(pending){input.inputMode='numeric';input.pattern='[0-9]{8}';input.maxLength=8;input.autocomplete='one-time-code';}
-    else {input.maxLength=254;input.autocomplete='email';}
-    const submit=el('button',pending?'Logg inn':'Send kode');submit.type='submit';form.append(label,submit);
-    form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;clearError();try{await api(pending?'verify':'send',pending?{code:value}:{email:value});if(pending)location.href='?teacher=1';else{pending=true;login();}}catch(err){error(err);submit.disabled=false;}};
+    else{input.maxLength=254;input.autocomplete=mode==='password'?'username':'email';}
+    form.append(label);
+    if(mode==='password'&&!pending){const f=field('Passord','',v=>password=v,'password');f.querySelector('input').required=true;f.querySelector('input').autocomplete='current-password';form.append(f);}
+    const submit=el('button',pending||mode==='password'?'Logg inn':'Send kode');submit.type='submit';form.append(submit);
+    form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;clearError();try{
+      if(pending){await api('verify',{code:value});location.href=accountSetup?'?login=1':'?teacher=1';}
+      else if(mode==='password'){await api('password-login',{email:value,password});location.href='?teacher=1';}
+      else{await api('send',{email:value});pending=true;login(uid?'verify-email':'code');}
+    }catch(err){error(err);submit.disabled=false;}};
     app.append(form);
-    if(pending)app.append(el('p','Koden gjelder i ti minutter. Sjekk også søppelpost.','hint'),button('Be om en ny kode',()=>{pending=false;login();},'quiet'));
+    if(pending)app.append(el('p','Koden gjelder i ti minutter. Sjekk også søppelpost.','hint'),button('Be om en ny kode',()=>{pending=false;login(uid?'verify-email':'code');},'quiet'));
+    app.append(group(button('Opprett konto med passord',startSetup,'quiet'),button('Glemt passord?',startSetup,'quiet'),link('Tilbake til innlogging','?login=1')));
   }
   function organizationDialog(title,fields,save) {
     const dialog=el('dialog',undefined,'organization-dialog'),form=el('form'),message=el('p','','modal-notice');message.setAttribute('role','alert');
@@ -507,5 +528,5 @@
     await poll();
   }
   window.addEventListener('beforeunload',e=>{if(dirty||uploads){e.preventDefault();e.returnValue='';}});
-  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('share'))await sharedQuiz();else if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
+  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;canSetPassword=init.can_set_password;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('share'))await sharedQuiz();else if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
 })();

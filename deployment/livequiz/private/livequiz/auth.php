@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/passwords.php';
 // Separate challenges, shared users and global mail budget. Uses the existing verified sender.
 function lq_send_code(PDO $db, string $email): void
 {
@@ -56,6 +57,7 @@ function lq_verify(PDO $db, string $code): void
     if (!is_string($email) || !jp_allowed_email($email) || !is_string($challenge) || strlen($challenge) !== 64) {
         throw new DomainException('Be om en ny kode først.');
     }
+    lq_credentials_prepare($db);
     $db->beginTransaction();
     try {
         $stmt = $db->prepare('SELECT * FROM lq_login WHERE email = ? FOR UPDATE');
@@ -75,10 +77,9 @@ function lq_verify(PDO $db, string $code): void
         $stmt = $db->prepare('SELECT id FROM jp_users WHERE email = ?');
         $stmt->execute([$email]);
         $uid = (int) $stmt->fetchColumn();
+        $version=lq_credentials_version($db,$uid);
         $db->commit();
-        session_regenerate_id(true);
-        $_SESSION = ['uid' => $uid, 'email' => $email, 'authenticated_at' => time(),
-            'csrf' => bin2hex(random_bytes(32)), 'flash' => 'Du er logget inn.'];
+        lq_auth_session($uid,$email,$version,true);
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
         throw $e;

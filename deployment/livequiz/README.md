@@ -646,3 +646,31 @@ Tests: `tests/discovery.php` covers filtering, metadata, pagination, privacy,
 revocation, ownership and guest tokens; `tests/discovery-browser.cjs` covers editor
 defaults and toggles, signed-in/anonymous search, guest hosting, refresh, CSRF and
 continuing games after a quiz becomes private.
+
+
+## Editable quiz copies
+
+Public quiz pages and shared-link pages offer **Lag en redigerbar kopi** for
+signed-in users. Visitors without an account can log in with a one-time code or
+password and return to the source page, including its share key when applicable.
+Saving/editing copies requires an account; guest hosting still needs no account.
+The existing Osloskolen account restriction is unchanged.
+
+Copies appear in the new owner's library and open immediately in the editor.
+They have a new ID, revision 1, a `(kopi)` title suffix and the usual public default.
+Questions, correct answers, scoring, code, mathematics, images and YouTube IDs are
+preserved. Share keys and internal metadata are discarded. Source editing,
+privatization or deletion never changes an existing copy.
+
+Image ownership is enforced by copying each distinct image into the recipient's
+existing media storage, once per copied quiz. Copies within the same account reuse
+its image records. Cross-account copies count toward the same 50 MB image quota
+as uploads; quiz and media inserts are atomic, with the same account lock used by
+uploads. No source bytes or ownership identifiers are accepted from the client.
+A private source, a revoked shared link or a deleted source cannot create a new
+copy; permissions are checked again under the source quiz lock at copy time.
+
+Validation: `tests/copy.php` covers ownership, source isolation, image duplication,
+quota rollback, source privacy/deletion and sharing revocation.
+`tests/copy-browser.cjs` covers anonymous login-return navigation, public and shared
+copying, editable persisted copies, image loading and CSRF protection.

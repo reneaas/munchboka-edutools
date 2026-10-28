@@ -107,6 +107,12 @@
     };
     app.append(form, el('p', 'Læreren styrer tempoet. Læreren velger faste poeng eller poeng for raske riktige svar.', 'hint'));
   }
+  function copyDestination(){
+    try{const source=JSON.parse(sessionStorage.getItem('lq-copy-source'));if(!source||! /^[a-f0-9]{32}$/.test(source.id))return null;
+      if(source.source==='public')return '?public='+source.id;
+      if(source.source==='shared'&&/^[a-f0-9]{64}$/.test(source.key))return '?share='+source.id+'#key='+source.key;
+    }catch(_){}return null;
+  }
   function login(mode='code') {
     if(pending&&accountSetup)mode='verify-email';
     app.replaceChildren(el('p','DIN QUIZKONTO','eyebrow'),el('h1',uid&&mode!=='verify-email'?'Min konto':accountSetup?'Opprett konto eller sett nytt passord':'Logg inn'));
@@ -119,7 +125,7 @@
       const form=el('form',undefined,'card join');let password='',confirmation='';
       for(const [label,update] of [['Nytt passord',v=>password=v],['Gjenta passord',v=>confirmation=v]]){const f=field(label,'',update,'password'),i=f.querySelector('input');i.required=true;i.minLength=15;i.autocomplete='new-password';form.append(f);}
       const save=el('button','Lagre passord');save.type='submit';form.append(save);
-      form.onsubmit=async e=>{e.preventDefault();clearError();if(password!==confirmation){error(new Error('Passordene er ikke like.'));return;}save.disabled=true;try{await api('set-password',{password});location.href='?login=1&saved=1';}catch(err){error(err);save.disabled=false;}};
+      form.onsubmit=async e=>{e.preventDefault();clearError();if(password!==confirmation){error(new Error('Passordene er ikke like.'));return;}save.disabled=true;try{await api('set-password',{password});location.href=copyDestination()||'?login=1&saved=1';}catch(err){error(err);save.disabled=false;}};
       app.append(form);return;
     }
     app.append(el('p','Bruk din @osloskolen.no-adresse. Engangskode og passord gir tilgang til de samme quizene.','intro'));
@@ -133,8 +139,8 @@
     if(mode==='password'&&!pending){const f=field('Passord','',v=>password=v,'password');f.querySelector('input').required=true;f.querySelector('input').autocomplete='current-password';form.append(f);}
     const submit=el('button',pending||mode==='password'?'Logg inn':'Send kode');submit.type='submit';form.append(submit);
     form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;clearError();try{
-      if(pending){await api('verify',{code:value});location.href=accountSetup?'?login=1':'?teacher=1';}
-      else if(mode==='password'){await api('password-login',{email:value,password});location.href='?teacher=1';}
+      if(pending){await api('verify',{code:value});location.href=accountSetup?'?login=1':copyDestination()||'?teacher=1';}
+      else if(mode==='password'){await api('password-login',{email:value,password});location.href=copyDestination()||'?teacher=1';}
       else{await api('send',{email:value});pending=true;login(uid?'verify-email':'code');}
     }catch(err){error(err);submit.disabled=false;}};
     app.append(form);
@@ -200,7 +206,7 @@
     const url=new URL('./',location.href);url.searchParams.set('share',q.id);url.hash=new URLSearchParams({key:data.key});
     const label=field('Delingslenke',url.href,()=>{}),input=label.querySelector('input');input.readOnly=true;input.onclick=()=>input.select();
     const status=el('p','','hint');status.setAttribute('role','status');
-    panel.append(el('p','Alle med lenken kan starte et eget spill uten konto. De kan ikke redigere quizen din. Lenken bruker siste lagrede versjon.','hint'),label,
+    panel.append(el('p','Alle med lenken kan starte et eget spill uten konto. De kan lage en redigerbar kopi når de logger inn. Originalen din blir ikke endret. Lenken bruker siste lagrede versjon.','hint'),label,
       group(button('Kopier lenke',async()=>{try{await navigator.clipboard.writeText(url.href);status.textContent='Lenken er kopiert.';}catch(_){input.focus();input.select();status.textContent='Kopier den markerte lenken.';}}),
         button('Slå av deling',async()=>{await api('share',{id:q.id,enabled:false});panel.replaceChildren(el('p','Deling er slått av. Gamle lenker kan ikke starte nye spill. Spill som allerede er startet, fortsetter.','hint'));},'quiet')),status);
     card.append(panel);input.focus();input.select();
@@ -218,6 +224,7 @@
   }
   async function sharedQuiz(publicQuiz=false) {
     const id=params.get(publicQuiz?'public':'share'),key=new URLSearchParams(location.hash.slice(1)).get('key')||'';
+    if(uid)sessionStorage.removeItem('lq-copy-source');
     const quiz=await api(publicQuiz?'public-quiz':'shared',undefined,{id});
     app.replaceChildren(el('p',publicQuiz?'OFFENTLIG QUIZ':'DELT QUIZ','eyebrow'),el('h1',quiz.title),el('p',`${quiz.total} spørsmål · Du trenger ingen konto.`,'intro'),
       el('p','Start et eget spill for klassen din. Du styrer spørsmålene og får en egen spillkode til elevene. Hold denne fanen åpen; den gir deg tilgang til å styre spillet.'),
@@ -228,6 +235,12 @@
         const room=await api(publicQuiz?'public-start':'shared-start',{id,key,host_token:hostToken});
         sessionStorage.setItem('lq-host-'+room.room,hostToken);location.href='?host='+room.room;
       }));
+    app.append(el('p','Lag din egen kopi for å endre spørsmål og svar. Originalen blir ikke endret. Du må være logget inn for å lagre kopien.','hint'),
+      button(uid?'Lag en redigerbar kopi':'Logg inn for å lage en kopi',async()=>{
+        const source={id,source:publicQuiz?'public':'shared',key};
+        if(!uid){sessionStorage.setItem('lq-copy-source',JSON.stringify(source));location.href='?login=1';return;}
+        const copy=await api('copy',source);location.href='?edit='+copy.id;
+      },'secondary'));
   }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {

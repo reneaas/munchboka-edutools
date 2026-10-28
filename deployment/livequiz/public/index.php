@@ -25,7 +25,7 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','public-start','organize','lightning-answer','race-answer'];
+        $mutations = ['copy','save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','public-start','organize','lightning-answer','race-answer'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
         if (in_array($action, ['join','shared-start','public-start'], true)) {
@@ -44,7 +44,7 @@ if ($action !== null) {
             }
         }
         if ($action === 'bootstrap') lq_response(['uid'=>$uid, 'csrf'=>$csrf, 'pending'=>isset($_SESSION['email_pending']), 'can_set_password'=>$uid && time()-(int)($_SESSION['email_verified_at'] ?? 0)<=600]);
-        $teacherActions = ['library','quiz','save','create','upload','delete','share','organize'];
+        $teacherActions = ['library','quiz','copy','save','create','upload','delete','share','organize'];
         if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
 
         $input = [];
@@ -69,6 +69,7 @@ if ($action !== null) {
                 $_SESSION = []; session_destroy();
                 setcookie(session_name(), '', ['expires'=>time()-3600, 'path'=>'/', 'secure'=>!$local, 'httponly'=>true, 'samesite'=>'Lax']);
                 lq_response(['ok'=>true]);
+            case 'copy': lq_response(lq_copy_quiz($db,$uid,jp_text($input['id'] ?? '',32),jp_text($input['source'] ?? '',10),jp_text($input['key'] ?? '',64)));
             case 'discover': lq_response(lq_discover($db,jp_text($_GET['q'] ?? '',180),(int)($_GET['page'] ?? 0)));
             case 'public-quiz':
                 $public=lq_public_quiz($db,jp_text($_GET['id'] ?? '',32));

@@ -7,6 +7,7 @@ require_once __DIR__ . '/lightning.php';
 require_once __DIR__ . '/race.php';
 require_once __DIR__ . '/history.php';
 require_once __DIR__ . '/discovery.php';
+require_once __DIR__ . '/copy.php';
 function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
     $s = $db->prepare($sql); $s->execute($args); return $s;
 }

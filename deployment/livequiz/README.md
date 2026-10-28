@@ -597,3 +597,23 @@ email proof, ownership, password replacement, OTP compatibility and throttling.
 `tests/accounts-browser.cjs` runs against a disposable `prepare-local.py` fixture;
 it stubs email delivery via a local-only helper and exercises the real verification,
 registration, login and recovery endpoints. It does not test actual mail delivery.
+
+
+## Game history retention
+
+Automatic cleanup retains the five most recently completed game rooms per quiz
+owner, across regular quiz, Quiz Race, Lightning Round and shared-link hosting.
+Older rooms and their participant/answer records are deleted together in a
+transaction. Unfinished rooms are deleted only once their six-hour lifetime has
+expired. Saved quizzes, accounts, folders, uploaded images and music are untouched.
+
+The existing deployment cron runs `private/livequiz/cleanup.php` after deploying
+and on every subsequent run even when no new commit exists. Creating an ordinary
+hosted room also prunes that owner's history. Cleanup therefore does not depend on
+teachers visiting the site, and may lag completion until the next cron run.
+Recent finished lobbies retain replay support until their normal expiry; keeping
+a history record does not extend the game code's lifetime or add a history viewer.
+Replays reuse the same room rather than accumulating separate history records.
+Legacy rooms are ordered by their expiry-derived age; new completions record their
+actual completion time. `tests/history.php` verifies retention, owner isolation,
+expired rooms, unchanged quizzes/media and transactional rollback.

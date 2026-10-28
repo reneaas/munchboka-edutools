@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pull-based deploy for Jeopardy and Livequiz, run by a cPanel cron job.
-# Copies application files; only obsolete quiz audio files are removed.
+# Copies application files, removes obsolete quiz audio, and prunes game history.
 set -euo pipefail
 
 main() {
@@ -19,6 +19,7 @@ main() {
   commit=$(git rev-parse FETCH_HEAD)
 
   if [ "$(cat "$marker" 2>/dev/null || true)" = "$commit" ] && [ -z "${FORCE:-}" ]; then
+    php "$HOME/jeopardy-private/livequiz/cleanup.php"
     exit 0
   fi
 
@@ -40,6 +41,7 @@ main() {
   done
   copy deployment/livequiz/private/livequiz "$HOME/jeopardy-private/livequiz"
 
+  php "$HOME/jeopardy-private/livequiz/cleanup.php"
   echo "$commit" > "$marker"
   echo "$(date '+%F %T') deployed $commit"
 }

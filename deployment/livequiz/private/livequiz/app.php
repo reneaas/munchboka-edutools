@@ -5,6 +5,7 @@ if (!function_exists('jp_db')) require __DIR__ . '/../app.php';
 require_once __DIR__ . '/teams.php';
 require_once __DIR__ . '/lightning.php';
 require_once __DIR__ . '/race.php';
+require_once __DIR__ . '/history.php';
 function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
     $s = $db->prepare($sql); $s->execute($args); return $s;
 }
@@ -119,6 +120,8 @@ function lq_create_room(PDO $db, int $uid, string $id): array {
     return lq_insert_room($db, $uid, $content);
 }
 function lq_insert_room(PDO $db, int $uid, array $content): array {
+    // Shared-link creation already holds a quiz transaction; cron handles its cleanup.
+    if (!$db->inTransaction()) lq_prune_history($db,$uid);
     unset($content['_share']);
     $content['play'] = lq_validate_play('individual', 3);
     $content['lightning'] = ['enabled'=>false,'seconds'=>60];
@@ -202,7 +205,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         }
         $qs = $content['questions']; $play = lq_play_settings($content);
         if ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
-            unset($content['_race'],$content['_lightning'],$content['_waiting']);
+            unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
             $play['teams']=[];$content['play']=$play;
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
@@ -246,6 +249,13 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
     });
 }
 function lq_transition(PDO $db, array $room, string $phase, int $index, int $deadline): array {
+    if (in_array($phase,['finished','race_done','light_done'],true) && !in_array($room['phase'],['finished','race_done','light_done'],true)) {
+        // Read the latest snapshot: Race and Lightning may have just persisted it.
+        $content=json_decode(lq_query($db,'SELECT content FROM lq_rooms WHERE id = ?',[$room['id']])->fetchColumn(),true,32,JSON_THROW_ON_ERROR);
+        $content['_finished_at']=microtime(true);
+        $room['content']=json_encode($content,JSON_THROW_ON_ERROR);
+        lq_query($db,'UPDATE lq_rooms SET content = ? WHERE id = ?',[$room['content'],$room['id']]);
+    }
     lq_query($db, 'UPDATE lq_rooms SET phase = ?, question_index = ?, deadline = ?, version = version + 1 WHERE id = ?', [$phase, $index, $deadline, $room['id']]);
     return array_replace($room, ['phase' => $phase, 'question_index' => $index, 'deadline' => $deadline, 'version' => (int)$room['version'] + 1]);
 }

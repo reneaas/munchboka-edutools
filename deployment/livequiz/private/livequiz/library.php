@@ -31,8 +31,10 @@ function lq_folder_id(array $data, mixed $id): ?string {
 function lq_library(PDO $db, int $uid): array {
     lq_library_prepare($db, $uid);
     $data = lq_library_data($db, $uid);
-    $quizzes = lq_query($db,'SELECT id, title, revision FROM lq_quizzes WHERE owner_id = ? ORDER BY updated_at DESC',[$uid])->fetchAll();
+    $quizzes = lq_query($db,'SELECT id, title, revision, content FROM lq_quizzes WHERE owner_id = ? ORDER BY updated_at DESC',[$uid])->fetchAll();
     foreach ($quizzes as &$quiz) {
+        $quiz['private']=lq_is_private(json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR));
+        unset($quiz['content']);
         $folder = $data['quiz_folders'][$quiz['id']] ?? null;
         $quiz['folder'] = isset($data['folders'][$folder ?? '']) ? $folder : null;
     }

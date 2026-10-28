@@ -617,3 +617,32 @@ Replays reuse the same room rather than accumulating separate history records.
 Legacy rooms are ordered by their expiry-derived age; new completions record their
 actual completion time. `tests/history.php` verifies retention, owner isolation,
 expired rooms, unchanged quizzes/media and transactional rollback.
+
+
+## Public quiz search and privacy
+
+**Finn quizer** opens a title search for public quizzes without requiring login.
+Search returns only quiz ID, title and question count, with twenty results per page.
+Visitors can open a quiz and host their own game using the existing session-scoped
+host-token mechanism. Signed-in visitors can use the same flow. Quiz authors keep
+ownership; guest hosting does not grant permission to edit or delete the original.
+
+Quizzes are public by default, including existing quizzes without a visibility
+field. The editor's **Privat – bare jeg kan starte nye spill** checkbox takes effect
+on save. Private quizzes disappear from search and reject public detail/start
+requests. Saving a quiz as private also revokes its explicit sharing link; sharing
+cannot be enabled until the quiz is public again. Republishing does not restore
+old share keys. Previously started games keep their independent snapshots and
+continue working. **Mine quizer** displays each quiz's visibility.
+
+Visibility is stored in existing quiz JSON, so no schema migration is needed.
+Old editor clients that omit the new flag cannot silently make an already private
+quiz public. Public room creation rechecks visibility while locking the quiz,
+uses CSRF protection and the existing guest-start cooldown, and never publishes
+owner emails, sharing keys or the answer set in search results. Public quizzes
+can naturally be viewed by starting a game as its host.
+
+Tests: `tests/discovery.php` covers filtering, metadata, pagination, privacy,
+revocation, ownership and guest tokens; `tests/discovery-browser.cjs` covers editor
+defaults and toggles, signed-in/anonymous search, guest hosting, refresh, CSRF and
+continuing games after a quiz becomes private.

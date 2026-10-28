@@ -185,7 +185,7 @@
     if(!children.length&&!quizzes.length)app.append(el('p',current?'Denne mappen er tom. Lag en quiz eller flytt en quiz hit.':'Lag en quiz eller en mappe for å komme i gang.','hint'));
     const grid=el('div',undefined,'library');
     for(const q of quizzes){
-      const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p','Versjon '+q.revision),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
+      const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p',(q.private?'Privat':'Offentlig')+' · Versjon '+q.revision),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
         button('Start spill',async()=>{const r=await api('create',{id:q.id});location.href='?host='+r.room;}),button('Del quiz',()=>shareQuiz(q,card),'secondary'),
         button('Flytt',()=>{const target=destination(q.folder);organizationDialog('Flytt «'+q.title+'»',[target.label],()=>api('organize',{command:'move-quiz',id:q.id,parent:target.value()}));},'quiet'),
         button('Slett',async()=>{if(!confirm('Slette «'+q.title+'»? Dette kan ikke angres.'))return;await api('delete',{id:q.id});await library();},'quiet')));grid.append(card);
@@ -205,16 +205,27 @@
         button('Slå av deling',async()=>{await api('share',{id:q.id,enabled:false});panel.replaceChildren(el('p','Deling er slått av. Gamle lenker kan ikke starte nye spill. Spill som allerede er startet, fortsetter.','hint'));},'quiet')),status);
     card.append(panel);input.focus();input.select();
   }
-  async function sharedQuiz() {
-    const id=params.get('share'),key=new URLSearchParams(location.hash.slice(1)).get('key')||'';
-    const quiz=await api('shared',undefined,{id});
-    app.replaceChildren(el('p','DELT QUIZ','eyebrow'),el('h1',quiz.title),el('p',`${quiz.total} spørsmål · Du trenger ingen konto.`,'intro'),
+  async function discover() {
+    const search=params.get('q')||'',page=Math.max(0,Number(params.get('page'))||0);
+    app.replaceChildren(el('p','OFFENTLIGE QUIZER','eyebrow'),el('h1','Finn en quiz'),el('p','Søk og start et spill for klassen din. Du trenger ingen konto.','intro'));
+    const form=el('form'),label=field('Søk etter tittel',search,()=>{}),input=label.querySelector('input'),submit=el('button','Søk');input.maxLength=180;submit.type='submit';form.append(label,submit);
+    form.onsubmit=e=>{e.preventDefault();location.href='?search=1&q='+encodeURIComponent(input.value);};app.append(form);
+    const data=await api('discover',undefined,{q:search,page});
+    const grid=el('div',undefined,'library');
+    for(const quiz of data.quizzes){const card=el('article',undefined,'card');card.append(el('h2',quiz.title),el('p',quiz.total+' spørsmål'),link('Åpne quiz','?public='+quiz.id));grid.append(card);}
+    app.append(grid);if(!data.quizzes.length)app.append(el('p','Ingen offentlige quizer funnet.','hint'));
+    const pages=group();if(page)pages.append(link('Forrige','?search=1&q='+encodeURIComponent(search)+'&page='+(page-1)));if(data.more)pages.append(link('Neste','?search=1&q='+encodeURIComponent(search)+'&page='+(page+1)));app.append(pages);
+  }
+  async function sharedQuiz(publicQuiz=false) {
+    const id=params.get(publicQuiz?'public':'share'),key=new URLSearchParams(location.hash.slice(1)).get('key')||'';
+    const quiz=await api(publicQuiz?'public-quiz':'shared',undefined,{id});
+    app.replaceChildren(el('p',publicQuiz?'OFFENTLIG QUIZ':'DELT QUIZ','eyebrow'),el('h1',quiz.title),el('p',`${quiz.total} spørsmål · Du trenger ingen konto.`,'intro'),
       el('p','Start et eget spill for klassen din. Du styrer spørsmålene og får en egen spillkode til elevene. Hold denne fanen åpen; den gir deg tilgang til å styre spillet.'),
       button('Start spill for min klasse',async()=>{
         const hostToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
         // Verify storage works before creating a room whose controls depend on it.
         sessionStorage.setItem('lq-storage-check','1');sessionStorage.removeItem('lq-storage-check');
-        const room=await api('shared-start',{id,key,host_token:hostToken});
+        const room=await api(publicQuiz?'public-start':'shared-start',{id,key,host_token:hostToken});
         sessionStorage.setItem('lq-host-'+room.room,hostToken);location.href='?host='+room.room;
       }));
   }
@@ -222,7 +233,7 @@
   async function editor() {
     if (!uid) return library();
     let saved = params.has('edit') ? await api('quiz', undefined, {id:params.get('edit')}) : {id:'',revision:0,content:{title:'',questions:[blankQuestion()]}};
-    saved.content.scoring ??= 'fixed';
+    saved.content.scoring ??= 'fixed';saved.content.private ??= false;
     let model = saved.content, baseline = JSON.stringify(model), saving = false;
     const status = el('p', '', 'hint');
     function changed() { dirty = JSON.stringify(model) !== baseline; status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ulagrede endringer' : saved.id ? 'Lagret · versjon ' + saved.revision : 'Ikke lagret ennå'; }
@@ -236,12 +247,13 @@
       if (dirty || !saved.id || uploads || saving) throw new Error('Lagre quizen før du starter et spill.');
       const r = await api('create', {id:saved.id}); location.href = '?host=' + r.room;
     }, 'secondary');
+    const privacyLabel=el('label'),privacy=el('input');privacy.type='checkbox';privacy.checked=model.private;privacy.onchange=()=>{model.private=privacy.checked;changed();};privacyLabel.append(privacy,document.createTextNode(' Privat – bare jeg kan starte nye spill'));
     const scoringLabel = el('label', 'Poengstil'), scoringSelect = el('select');
     for (const [value, label] of [['fixed','Faste poeng'], ['speed','Raske riktige svar']]) { const option = el('option', label); option.value = value; scoringSelect.append(option); }
     scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
     app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status,
-      field('Quizens tittel', model.title, v => {model.title=v; changed();}), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
+      field('Quizens tittel', model.title, v => {model.title=v; changed();}), privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     function renderQuestions() {
       list.replaceChildren();
       model.questions.forEach((q,index) => {
@@ -528,5 +540,5 @@
     await poll();
   }
   window.addEventListener('beforeunload',e=>{if(dirty||uploads){e.preventDefault();e.returnValue='';}});
-  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;canSetPassword=init.can_set_password;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('share'))await sharedQuiz();else if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
+  (async()=>{const init=await api('bootstrap');csrf=init.csrf;uid=init.uid;pending=init.pending;canSetPassword=init.can_set_password;document.querySelector('#account-link').textContent=uid?'Min konto':'Logg inn';if(params.has('search'))await discover();else if(params.has('public'))await sharedQuiz(true);else if(params.has('share'))await sharedQuiz();else if(params.has('login'))login();else if(params.has('host'))await room(true);else if(params.has('room'))await room(false);else if(params.has('edit')||params.has('new'))await editor();else if(params.has('teacher'))await library();else home();})().catch(error);
 })();

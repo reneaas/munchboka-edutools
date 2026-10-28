@@ -6,6 +6,7 @@ require_once __DIR__ . '/teams.php';
 require_once __DIR__ . '/lightning.php';
 require_once __DIR__ . '/race.php';
 require_once __DIR__ . '/history.php';
+require_once __DIR__ . '/discovery.php';
 function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
     $s = $db->prepare($sql); $s->execute($args); return $s;
 }
@@ -42,7 +43,8 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
     if ($title === '' || !is_array($questions) || !array_is_list($questions) || count($questions) < 1 || count($questions) > 50) throw new DomainException('Gi quizen en tittel og 1–50 spørsmål.');
     $scoring = $data['scoring'] ?? 'fixed';
     if (!in_array($scoring, ['fixed', 'speed'], true)) throw new DomainException('Ugyldig poengstil.');
-    $out = ['title' => $title, 'scoring' => $scoring, 'questions' => []];
+    if (!is_bool($data['private'] ?? false)) throw new DomainException('Ugyldig synlighet.');
+    $out = ['private' => $data['private'] ?? false, 'title' => $title, 'scoring' => $scoring, 'questions' => []];
     foreach ($questions as $q) {
         if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text'], true)) throw new DomainException('Ugyldig spørsmålstype.');
         $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => lq_code($q['code'] ?? ''),
@@ -95,7 +97,9 @@ function lq_save(PDO $db, int $uid, array $input): array {
             if ($r === false || (int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
             $rev = (int)$r['revision'] + 1;
             $previous = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
-            if (isset($previous['_share'])) $content['_share'] = $previous['_share'];
+            // Old editor tabs must not silently publish an already private quiz.
+            if (!array_key_exists('private',$input['content'])) $content['private']=$previous['private'] ?? false;
+            if (!$content['private'] && isset($previous['_share'])) $content['_share'] = $previous['_share'];
             $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             lq_query($db, 'UPDATE lq_quizzes SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$content['title'], $json, $rev, $id]);
         }

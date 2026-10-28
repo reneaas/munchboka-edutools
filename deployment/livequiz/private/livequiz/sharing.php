@@ -8,6 +8,7 @@ function lq_share(PDO $db, int $uid, string $id, bool $enabled): array {
         $quiz = lq_query($db, 'SELECT * FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetch();
         if (!$quiz) throw new DomainException('Quizen finnes ikke på din konto.');
         $content = json_decode($quiz['content'], true, 32, JSON_THROW_ON_ERROR);
+        if ($enabled && lq_is_private($content)) throw new DomainException('Gjør quizen offentlig før du deler den.');
         if ($enabled) $content['_share'] ??= bin2hex(random_bytes(32));
         else unset($content['_share']);
         lq_query($db, 'UPDATE lq_quizzes SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $id]);
@@ -18,7 +19,7 @@ function lq_shared_quiz(PDO $db, string $id, string $key, bool $lock = false): a
     if (!preg_match('/^[a-f0-9]{64}$/D', $key)) throw new DomainException('Delingslenken er ugyldig eller slått av.');
     $quiz = lq_query($db, 'SELECT * FROM lq_quizzes WHERE id = ?'.($lock ? ' FOR UPDATE' : ''), [lq_id($id)])->fetch();
     $content = $quiz ? json_decode($quiz['content'], true, 32, JSON_THROW_ON_ERROR) : [];
-    if (!isset($content['_share']) || !hash_equals($content['_share'], $key)) throw new DomainException('Delingslenken er ugyldig eller slått av.');
+    if (lq_is_private($content) || !isset($content['_share']) || !hash_equals($content['_share'], $key)) throw new DomainException('Delingslenken er ugyldig eller slått av.');
     return $quiz;
 }
 function lq_shared_start(PDO $db, string $id, string $key, string $hostToken): array {

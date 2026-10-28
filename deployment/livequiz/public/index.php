@@ -25,10 +25,10 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','organize','lightning-answer','race-answer'];
+        $mutations = ['save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','public-start','organize','lightning-answer','race-answer'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
-        if (in_array($action, ['join','shared-start'], true)) {
+        if (in_array($action, ['join','shared-start','public-start'], true)) {
             if (time() < ($_SESSION['lq_join_after'] ?? 0)) lq_response(['error'=>'Vent to sekunder og prøv igjen.'], 429);
             $_SESSION['lq_join_after'] = time() + 2;
         }
@@ -69,6 +69,11 @@ if ($action !== null) {
                 $_SESSION = []; session_destroy();
                 setcookie(session_name(), '', ['expires'=>time()-3600, 'path'=>'/', 'secure'=>!$local, 'httponly'=>true, 'samesite'=>'Lax']);
                 lq_response(['ok'=>true]);
+            case 'discover': lq_response(lq_discover($db,jp_text($_GET['q'] ?? '',180),(int)($_GET['page'] ?? 0)));
+            case 'public-quiz':
+                $public=lq_public_quiz($db,jp_text($_GET['id'] ?? '',32));
+                lq_response(['title'=>$public['title'],'total'=>count(json_decode($public['content'],true,32,JSON_THROW_ON_ERROR)['questions'])]);
+            case 'public-start': lq_response(lq_public_start($db,jp_text($input['id'] ?? '',32),jp_text($input['host_token'] ?? '',64)));
             case 'library': lq_response(lq_library($db, $uid));
             case 'organize': lq_response(lq_organize($db, $uid, $input));
             case 'quiz': $q = lq_quiz($db, $uid, jp_text($_GET['id'] ?? '', 32)); lq_response(['id'=>$q['id'], 'revision'=>(int)$q['revision'], 'content'=>json_decode($q['content'], true, 32, JSON_THROW_ON_ERROR)]);
@@ -110,5 +115,5 @@ $musicTracks = lq_music_tracks(__DIR__.'/music');
 <script src="theme.js?v=<?= filemtime(__DIR__.'/theme.js') ?>"></script>
 <link rel="stylesheet" href="vendor/katex/katex.min.css"><link rel="stylesheet" href="vendor/codemirror/lib/codemirror.min.css"><link rel="stylesheet" href="app.css?v=<?= filemtime(__DIR__.'/app.css') ?>">
 <script defer src="vendor/katex/katex.min.js"></script><script defer src="math.js"></script><script defer src="vendor/qrcode.js"></script><script defer src="vendor/codemirror/lib/codemirror.min.js"></script><script defer src="vendor/codemirror/mode/python/python.min.js"></script><script defer src="code.js?v=<?= filemtime(__DIR__.'/code.js') ?>"></script><script defer src="youtube.js?v=<?= filemtime(__DIR__.'/youtube.js') ?>"></script><script defer src="music.js?v=<?= filemtime(__DIR__.'/music.js') ?>"></script><script defer src="app.js?v=<?= filemtime(__DIR__.'/app.js') ?>"></script></head>
-<body data-music-tracks="<?= htmlspecialchars(json_encode($musicTracks, JSON_THROW_ON_ERROR), ENT_QUOTES, 'UTF-8') ?>"><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>
+<body data-music-tracks="<?= htmlspecialchars(json_encode($musicTracks, JSON_THROW_ON_ERROR), ENT_QUOTES, 'UTF-8') ?>"><header><a class="brand" href="./">Munchboka <strong>Livequiz</strong></a><span class="badge">Utprøving</span><nav><a href="?search=1">Finn quizer</a><a href="?teacher=1">Lag en quiz</a><a id="account-link" href="?login=1">Logg inn</a></nav></header>
 <main><div id="notice" role="alert" hidden></div><div id="app"><p>Laster …</p></div></main><footer>Spørsmål, samtale og læring · En klasse om gangen</footer></body></html>

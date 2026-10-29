@@ -270,11 +270,21 @@
     }
     previous.onclick=()=>{if(index>0){index--;render();}};next.onclick=()=>{if(index<quiz.questions.length-1){index++;render();}};
     jump.onchange=()=>{index=Number(jump.value);render();};reveal.onchange=renderAnswers;
+    previous.setAttribute('aria-keyshortcuts','ArrowLeft');next.setAttribute('aria-keyshortcuts','ArrowRight');
+    previous.title='Forrige spørsmål (←)';next.title='Neste spørsmål (→)';
+    const navigate=event=>{
+      if(!dialog.open||event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.isComposing)return;
+      if(event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))return;
+      if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+      event.preventDefault();(event.key==='ArrowLeft'?previous:next).click();
+    };
+    document.addEventListener('keydown',navigate);
+
     const fit=()=>dialog.style.setProperty('--teacher-scale',String(Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700))));
     footer.append(el('p','Forhåndsvisning · '+(quiz.title||'Uten tittel'),'hint'),group(previous,jumpLabel,next,revealLabel,button('Lukk forhåndsvisning',()=>dialog.close(),'quiet')));
     dialog.append(header,body,footer);document.body.append(dialog);fit();dialog.showModal();render();
     window.addEventListener('resize',fit);
-    dialog.addEventListener('close',()=>{window.removeEventListener('resize',fit);dialog.remove();opener?.focus();},{once:true});
+    dialog.addEventListener('close',()=>{document.removeEventListener('keydown',navigate);window.removeEventListener('resize',fit);dialog.remove();opener?.focus();},{once:true});
   }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {

@@ -707,3 +707,15 @@ Shared Jeopardy/Livequiz uploads now apply lossless PNG compression before the 5
 Repeated identical optimized uploads by the same account reuse the existing image ID. Cross-account ownership remains separate. Existing duplicate records are retained because saved quizzes, revisions and active games may reference them.
 
 The deployment cron runs private `optimize-images.php`, processing up to ten existing PNGs per invocation. It keeps original image IDs, updates byte size/MIME together and logs bytes saved. Progress is stored in `.image-optimization-v1` beside the private application; a file lock prevents overlapping runs. Remove that cursor file to deliberately rescan. This reduces stored image bytes but does not necessarily shrink the physical MySQL tablespace or hosting usage immediately. No image records or originals' question references are deleted.
+
+### Quizlet-like team mode
+
+Choose **Quizlet-like** under **Spilltype** in the host lobby. This mode forces randomized teams and uses the existing team allocation algorithm. It supports quizzes containing only single-correct-answer choice questions. Maximum team size cannot exceed the smallest choice count in the quiz (for four alternatives, at most four members).
+
+Each team advances independently through a randomized question order. All teammates see the same current question and image, but each receives only their assigned alternatives. Alternatives are partitioned randomly and evenly: every choice appears once across the team and every member gets at least one. The distribution is persisted for the current question and reshuffled after each accepted answer; polling and reconnecting do not change it. Select a choice and press Enter or **Send svar**.
+
+Correct answers advance the team's shared progress; an incorrect choice resets the team to zero with a new question order and new choice distribution. The first team through all questions wins. The host sees team progress bars and can end the game or restart with the same lobby. Late arrivals wait until the next game. No timed scoring, lightning phase or rotating answerer applies.
+
+The server returns only the requesting member's choices, maps local indices back to persisted assignments, and validates room/run/attempt/question/revision under the existing room lock. Duplicate or simultaneous stale teammate submissions cannot advance/reset the same turn twice. Uses the existing race lifecycle and HTTP polling without schema changes.
+
+Validation: `php deployment/livequiz/tests/quizlet.php` and `tests/quizlet-browser.cjs` cover allocation, hidden choices, progress/reset, stale requests, media access, late joining, replay, team-only setup, mobile selection and Enter submission.

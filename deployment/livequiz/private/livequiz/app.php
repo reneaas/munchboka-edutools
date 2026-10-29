@@ -186,8 +186,14 @@ function lq_player(PDO $db, string $room, string $token): array {
 }
 function lq_configure_content(array $content,array $settings): array {
     $content['game']=$settings['game'] ?? lq_game($content);
-    if (!in_array($content['game'],['regular','race'],true)) throw new DomainException('Ugyldig spilltype.');
+    if (!in_array($content['game'],['regular','race','quizlet'],true)) throw new DomainException('Ugyldig spilltype.');
     $content['play']=lq_validate_play($settings['mode'] ?? null,$settings['max_team_size'] ?? null);
+    if($content['game']==='quizlet'){
+        $limit=lq_quizlet_limit($content);
+        if(!$limit)throw new DomainException('Quizlet-like krever spørsmål med ett riktig alternativ.');
+        if($content['play']['mode']!=='teams')throw new DomainException('Quizlet-like spilles bare med tilfeldige lag.');
+        if($content['play']['max_team_size']>$limit)throw new DomainException('Maks lagstørrelse kan ikke overstige '.$limit.' svaralternativer.');
+    }
     $content['lightning']=lq_validate_lightning($settings['lightning'] ?? lq_lightning_settings($content));
     return $content;
 }
@@ -227,12 +233,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
                 lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
                 $phase = 'teams';
             } else {
-                $phase = lq_game($content)==='race' ? 'race_count' : 'countdown';
+                $phase = lq_is_race($content) ? 'race_count' : 'countdown';
                 if ($phase==='race_count') $r=lq_race_prepare($db,$r,$content);
                 $deadline = (int)ceil(microtime(true) * 1000) + 3000;
             }
         } elseif ($cmd === 'next' && $phase === 'teams') {
-            $phase = lq_game($content)==='race' ? 'race_count' : 'countdown';
+            $phase = lq_is_race($content) ? 'race_count' : 'countdown';
             if ($phase==='race_count') $r=lq_race_prepare($db,$r,$content);
             $deadline = (int)ceil(microtime(true) * 1000) + 3000;
         } elseif ($cmd === 'reveal' && $phase === 'question') { $phase = 'reveal'; }
@@ -368,6 +374,7 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     }
     $state['run'] = $content['_run'] ?? 0;
     $state['game'] = lq_game($content);
+    if($host)$state['quizlet_max_team_size']=lq_quizlet_limit($content);
     $state['lightning'] = lq_lightning_settings($content);
     if ($host) $state['pin'] = $r['pin'];
     $state['waiting_count']=count($content['_waiting'] ?? []);
@@ -408,7 +415,7 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
         $player=lq_player($db,$room,$token);$content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
         $entry=lq_race_entry($content,$player['id']);
         $q=$content['questions'][$entry['order'][$entry['progress']]];
-        if (lq_race_active($entry)['id']!==$player['id'] || ($q['image']['id'] ?? '')!==$image) throw new DomainException('Bildet er ikke tilgjengelig.');
+        if ((lq_game($content)!=='quizlet' && lq_race_active($entry)['id']!==$player['id']) || ($q['image']['id'] ?? '')!==$image) throw new DomainException('Bildet er ikke tilgjengelig.');
         return jp_media($db,lq_id($image),(int)$r['owner_id']);
     }
     if (!$host && $r['phase']==='lightning' && microtime(true)<lq_deadline($r)) {

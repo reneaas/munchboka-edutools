@@ -418,11 +418,11 @@
         maximum.hidden=selected!=='teams';input.disabled=selected!=='teams';
         showLightningDuration();for(const hint of form.querySelectorAll('p.hint'))hint.hidden=racing;
         rules.hidden=!racing;
-        rules.textContent=quizlet?'Quizlet-like: Laget ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Den som har riktig svar, sender det inn. Feil svar nullstiller lagets fremdrift. Første lag gjennom alle spørsmål vinner. Krever ett riktig alternativ per spørsmål og minst ett alternativ per medlem. Nye deltakere venter til neste spill.':'Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';
+        rules.textContent=quizlet?'Quizlet-like: Laget ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Den som har riktig svar, sender det inn. Feil svar nullstiller lagets fremdrift. Første lag gjennom alle spørsmål vinner. Ved flere riktige svar må alle sendes inn før laget går videre. Hvert medlem får minst ett alternativ. Nye deltakere venter til neste spill.':'Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';
       };
       gameSelect.onchange=()=>{modeDirty=true;updateRules();};updateRules();
       readModeSettings=()=>{
-        if(gameSelect.value==='quizlet'&&!s.quizlet_max_team_size)throw new Error('Quizlet-like krever spørsmål med ett riktig alternativ.');
+        if(gameSelect.value==='quizlet'&&!s.quizlet_max_team_size)throw new Error('Quizlet-like krever spørsmål med svaralternativer (ett eller flere riktige svar).');
         if(!form.reportValidity())throw new Error('Kontroller spillinnstillingene før du starter.');
         return {game:gameSelect.value,mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:durationInput.disabled?(s.lightning?.seconds||60):Number(durationInput.value)}};
       };
@@ -449,7 +449,7 @@
       const txt=racing?`${state.progress??0} / ${state.total} riktige`:active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
-      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer);
+      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&(state.confirmed||[]).length===state.question.options.length);
     }
     setInterval(updateClock,250);
     let overlay=null;
@@ -493,10 +493,10 @@
       if(q.image||(host&&q.youtube))body.classList.add('media-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='RACE_ACTIVE'?`${s.game==='quizlet'?'Quizlet-like':'Quiz Race'} · Forsøk ${s.race.attempt+1}`:s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:true,autoplay:s.state==='QUESTION_ACTIVE'},header);
-      if(!host&&s.game==='quizlet')header.append(el('p','Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
+      if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p','Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
       if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)){
         if(q.type==='multi'){
-          const notice=el('p','Flere riktige svar – velg alle som passer.','multiple-answer-notice');
+          const notice=el('p',s.game==='quizlet'?'Flere riktige svar – samarbeid! Alle riktige svar må sendes inn av dem som har dem.':'Flere riktige svar – velg alle som passer.','multiple-answer-notice');
           notice.setAttribute('role','note');header.append(notice);
         }
         body.append(answerForm(s,order));
@@ -511,12 +511,13 @@
         const grid=el('div',undefined,'option-grid');
         order.forEach((original,position)=>{
           const label=el('label',undefined,'answer-option option-card'),input=el('input');input.type=s.question.type==='single'?'radio':'checkbox';input.name='answer';input.checked=selection.includes(original);
+          if(s.game==='quizlet'&&(s.confirmed||[]).includes(original)){input.dataset.confirmed='true';input.disabled=true;input.checked=true;label.append(el('span','Sendt ✓','hint'));}
           input.onchange=()=>{selection=s.question.type==='single'?[original]:input.checked?[...selection,original]:selection.filter(value=>value!==original);};
           label.append(input,el('span',String(position+1),'option-badge'),rich(s.question.options[original]));grid.append(label);
         });
         form.append(grid);
       }
-      submit=el('button','Send svar');submit.type='submit';ack=el('p',s.submitted?'Svaret er mottatt. Vent på læreren.':'','hint');ack.setAttribute('role','status');form.append(submit,ack);
+      submit=el('button','Send svar');submit.type='submit';ack=el('p',s.game==='quizlet'&&s.confirmed?.length?'Riktig! Svaret er registrert. Laget må sende inn resten av de riktige svarene.':s.submitted?'Svaret er mottatt. Vent på læreren.':'','hint');ack.setAttribute('role','status');form.append(submit,ack);
       const acknowledgement=ack,submitButton=submit;
       form.onsubmit=async event=>{
         event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input').forEach(input=>input.disabled=true);
@@ -526,7 +527,7 @@
           if(lightning||race){lastPoll=Date.now();online=true;render(reply.state);renderResults(reply.state);}
           else {if(state.run===s.run&&state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
         }
-        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=false);}
+        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=input.dataset.confirmed==='true');}
         finally{submitting=false;updateClock();requestPoll();}
       };
       if(s.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=true);
@@ -542,7 +543,7 @@
       if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`Lag ${s.my_team} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
       if(host&&s.waiting_count)meta.textContent+=` · ${s.waiting_count} venter på neste spill`;
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
-      const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
+      const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}:${(s.confirmed||[]).join(',')}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
       if(rendered===renderKey){if(host&&s.state==='RACE_ACTIVE')overlay.querySelector('.race-board').replaceWith(raceBoard(s));if(['LEADERBOARD','LIGHTNING_FINISHED'].includes(s.state))overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=renderKey;closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
       if(host&&['QUIZ_FINISHED','RACE_FINISHED','LIGHTNING_FINISHED'].includes(s.state))controls.append(button('Spill igjen med samme spillere',control('restart'),'secondary'));

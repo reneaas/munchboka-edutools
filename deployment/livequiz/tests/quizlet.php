@@ -9,7 +9,8 @@ $base=['title'=>'Quizlet-like','questions'=>$questions];
 $settings=['game'=>'quizlet','mode'=>'teams','max_team_size'=>3];
 rejects(fn()=>lq_configure_content($base,array_replace($settings,['mode'=>'individual'])),'teams required');
 rejects(fn()=>lq_configure_content($base,array_replace($settings,['max_team_size'=>5])),'no member without choices');
-foreach([$multi,$typed] as $bad)rejects(fn()=>lq_configure_content(['questions'=>[$bad]],$settings),'only single answer questions');
+rejects(fn()=>lq_configure_content(['questions'=>[$typed]],$settings),'typed questions unsupported');
+check(lq_configure_content(['questions'=>[$multi]],$settings)['game']==='quizlet','multiple correct questions supported');
 foreach([2,3,4] as $size){
  $saved=lq_save($db,1,['content'=>$base]);$room=lq_create_room($db,1,$saved['id']);$id=$room['room'];
  qc($db,$id,'configure',array_replace($settings,['max_team_size'=>$size]));$tokens=[];

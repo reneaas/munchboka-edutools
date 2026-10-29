@@ -4,19 +4,23 @@ declare(strict_types=1);
 function lq_game(array $content): string { return $content['game'] ?? 'regular'; }
 function lq_is_race(array $content): bool { return in_array(lq_game($content),['race','quizlet'],true); }
 function lq_quizlet_limit(array $content): int {
-    foreach($content['questions'] as $q) if($q['type']!=='single') return 0;
+    foreach($content['questions'] as $q) if(!in_array($q['type'],['single','multi'],true)) return 0;
     return min(array_map(fn($q)=>count($q['options']),$content['questions']));
 }
 function lq_quizlet_deal(array $entry,array $content): array {
-    $entry['choices']=[];
+    $entry['choices']=[];$entry['confirmed']=[];
     if($entry['completed'])return $entry;
     $members=lq_race_order(count($entry['members']));
     $q=$content['questions'][$entry['order'][$entry['progress']]];
     if(count($members)>count($q['options']))throw new DomainException('Laget har flere medlemmer enn svaralternativer.');
-    foreach(lq_race_order(count($q['options'])) as $i=>$option){
+    // Spread correct choices across different members before distributing the rest.
+    $options=lq_race_order(count($q['options']));
+    $options=array_merge(array_values(array_filter($options,fn($i)=>in_array($i,$q['correct'],true))),array_values(array_filter($options,fn($i)=>!in_array($i,$q['correct'],true))));
+    foreach($options as $i=>$option){
         $player=$entry['members'][$members[$i%count($members)]]['id'];
         $entry['choices'][$player][]=$option;
     }
+    foreach($entry['choices'] as &$choices){$original=$choices;$choices=array_map(fn($i)=>$original[$i],lq_race_order(count($original)));}unset($choices);
     return $entry;
 }
 function lq_race_order(int $count): array {
@@ -68,6 +72,7 @@ function lq_race_state(array $room,?array $player,array $state,array $content): 
         $state['index']=$entry['order'][$entry['progress']];
         $question=$content['questions'][$state['index']];unset($question['correct'],$question['accepted'],$question['youtube']);
         if(lq_game($content)==='quizlet'){
+            $state['confirmed']=array_keys(array_filter($entry['choices'][$player['id']],fn($i)=>in_array($i,$entry['confirmed'] ?? [],true)));
             $question['options']=array_map(fn($i)=>$question['options'][$i],$entry['choices'][$player['id']]);
         }
         $state['question']=$question;
@@ -86,24 +91,41 @@ function lq_race_answer(PDO $db,array $input,string $token): array {
         if(($input['attempt'] ?? null)!==$entry['attempt'] || ($input['race_revision'] ?? null)!==$entry['revision']
             || ($input['index'] ?? null)!==$entry['order'][$entry['progress']])throw new DomainException('Dette svaret tilhører en tidligere tur.');
         $answer=$input['answer'] ?? null;
-        if(lq_game($content)==='quizlet'){
-            // Client indices refer only to this player's assigned subset, never the full question.
-            if(!is_array($answer)||!array_is_list($answer)||count($answer)!==1||!is_int($answer[0])||!isset($entry['choices'][$player['id']][$answer[0]]))throw new DomainException('Velg ett av dine svaralternativer.');
-            $answer=[$entry['choices'][$player['id']][$answer[0]]];
+        $quizlet=lq_game($content)==='quizlet';$complete=true;
+        if($quizlet){
+            // Local indices refer only to this member's choices. Several teammates may
+            // submit against the same question revision while correct choices accumulate.
+            $own=$entry['choices'][$player['id']];
+            if(!is_array($answer)||!array_is_list($answer)||!count($answer)||count($answer)>count($own))throw new DomainException('Velg dine riktige svaralternativer.');
+            $mapped=[];
+            foreach($answer as $local){
+                if(!is_int($local)||!isset($own[$local])||in_array($own[$local],$mapped,true)||in_array($own[$local],$entry['confirmed'] ?? [],true))throw new DomainException('Svaret er allerede sendt eller ikke tilgjengelig.');
+                $mapped[]=$own[$local];
+            }
+            $solution=$content['questions'][$input['index']]['correct'];
+            $correct=!array_diff($mapped,$solution);
+            if($correct){
+                $entry['confirmed']=array_merge($entry['confirmed'] ?? [],$mapped);
+                $complete=!array_diff($solution,$entry['confirmed']);
+            }
+        }else{
+            [, $points]=lq_grade($content['questions'][$input['index']],$answer);
+            $correct=$points>0;
         }
-        [, $points]=lq_grade($content['questions'][$input['index']],$answer);
-        $correct=$points>0;
-        if($correct){
+        if($correct && $complete){
             $entry['progress']++;
             if($entry['progress']===count($entry['order'])){
                 $entry['completed']=true;$entry['completed_at']=microtime(true);$content['_race']['winner']=$entry['id'];
             }
-        }else{
+        }elseif(!$correct){
             $entry['reset_at']=microtime(true);$entry['progress']=0;$entry['attempt']++;$entry['start']=($entry['start']+1)%count($entry['members']);
             $entry['order']=lq_race_order(count($content['questions']));
         }
-        if(lq_game($content)==='quizlet')$entry=lq_quizlet_deal($entry,$content);
-        $entry['revision']++;$entry['updated_at']=microtime(true);$content['_race']['entries'][$entry['id']]=$entry;
+        if(!$correct || $complete){
+            if($quizlet)$entry=lq_quizlet_deal($entry,$content);
+            $entry['revision']++;
+        }
+        $entry['updated_at']=microtime(true);$content['_race']['entries'][$entry['id']]=$entry;
         $room=lq_race_store($db,$room,$content);
         // The room lock serializes winning submissions and makes resets/retries atomic.
         $room=lq_transition($db,$room,$entry['completed']?'race_done':'race',-1,0);

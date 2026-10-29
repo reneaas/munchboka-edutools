@@ -418,11 +418,11 @@
         maximum.hidden=selected!=='teams';input.disabled=selected!=='teams';
         showLightningDuration();for(const hint of form.querySelectorAll('p.hint'))hint.hidden=racing;
         rules.hidden=!racing;
-        rules.textContent=quizlet?'Quizlet-like: Laget ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Den som har riktig svar, sender det inn. Feil svar nullstiller lagets fremdrift. Første lag gjennom alle spørsmål vinner. Ved flere riktige svar må alle sendes inn før laget går videre. Hvert medlem får minst ett alternativ. Nye deltakere venter til neste spill.':'Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';
+        rules.textContent=quizlet?'Quizlet-like: Laget ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Den som har riktig svar, sender det inn. Feil svar nullstiller lagets fremdrift. Første lag gjennom alle spørsmål vinner. Ved flere riktige svar må alle sendes inn før laget går videre. På tekstspørsmål kan alle skrive, og første riktige svar tar laget videre. På valgspørsmål får hvert medlem minst ett alternativ. Nye deltakere venter til neste spill.':'Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';
       };
       gameSelect.onchange=()=>{modeDirty=true;updateRules();};updateRules();
       readModeSettings=()=>{
-        if(gameSelect.value==='quizlet'&&!s.quizlet_max_team_size)throw new Error('Quizlet-like krever spørsmål med svaralternativer (ett eller flere riktige svar).');
+        if(gameSelect.value==='quizlet'&&!s.quizlet_max_team_size)throw new Error('Quizen inneholder en spørsmålstype som ikke støttes.');
         if(!form.reportValidity())throw new Error('Kontroller spillinnstillingene før du starter.');
         return {game:gameSelect.value,mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:durationInput.disabled?(s.lightning?.seconds||60):Number(durationInput.value)}};
       };
@@ -449,7 +449,7 @@
       const txt=racing?`${state.progress??0} / ${state.total} riktige`:active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
-      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&(state.confirmed||[]).length===state.question.options.length);
+      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&state.question.type!=='text'&&(state.confirmed||[]).length===state.question.options.length);
     }
     setInterval(updateClock,250);
     let overlay=null;
@@ -493,7 +493,7 @@
       if(q.image||(host&&q.youtube))body.classList.add('media-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='RACE_ACTIVE'?`${s.game==='quizlet'?'Quizlet-like':'Quiz Race'} · Forsøk ${s.race.attempt+1}`:s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:true,autoplay:s.state==='QUESTION_ACTIVE'},header);
-      if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p','Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
+      if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p',q.type==='text'?'Alle på laget kan skrive. Første riktige svar tar laget videre. Feil svar nullstiller laget.':'Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
       if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)){
         if(q.type==='multi'){
           const notice=el('p',s.game==='quizlet'?'Flere riktige svar – samarbeid! Alle riktige svar må sendes inn av dem som har dem.':'Flere riktige svar – velg alle som passer.','multiple-answer-notice');

@@ -4,14 +4,21 @@ declare(strict_types=1);
 function lq_game(array $content): string { return $content['game'] ?? 'regular'; }
 function lq_is_race(array $content): bool { return in_array(lq_game($content),['race','quizlet'],true); }
 function lq_quizlet_limit(array $content): int {
-    foreach($content['questions'] as $q) if(!in_array($q['type'],['single','multi'],true)) return 0;
-    return min(array_map(fn($q)=>count($q['options']),$content['questions']));
+    // Text questions give every member an input, so only choice questions limit team size.
+    $limits=[60];
+    foreach($content['questions'] as $q){
+        if($q['type']==='text')continue;
+        if(!in_array($q['type'],['single','multi'],true))return 0;
+        $limits[]=count($q['options']);
+    }
+    return min($limits);
 }
 function lq_quizlet_deal(array $entry,array $content): array {
     $entry['choices']=[];$entry['confirmed']=[];
     if($entry['completed'])return $entry;
     $members=lq_race_order(count($entry['members']));
     $q=$content['questions'][$entry['order'][$entry['progress']]];
+    if($q['type']==='text')return $entry;
     if(count($members)>count($q['options']))throw new DomainException('Laget har flere medlemmer enn svaralternativer.');
     // Spread correct choices across different members before distributing the rest.
     $options=lq_race_order(count($q['options']));
@@ -71,7 +78,7 @@ function lq_race_state(array $room,?array $player,array $state,array $content): 
     if($state['can_answer']){
         $state['index']=$entry['order'][$entry['progress']];
         $question=$content['questions'][$state['index']];unset($question['correct'],$question['accepted'],$question['youtube']);
-        if(lq_game($content)==='quizlet'){
+        if(lq_game($content)==='quizlet'&&$question['type']!=='text'){
             $state['confirmed']=array_keys(array_filter($entry['choices'][$player['id']],fn($i)=>in_array($i,$entry['confirmed'] ?? [],true)));
             $question['options']=array_map(fn($i)=>$question['options'][$i],$entry['choices'][$player['id']]);
         }
@@ -92,7 +99,7 @@ function lq_race_answer(PDO $db,array $input,string $token): array {
             || ($input['index'] ?? null)!==$entry['order'][$entry['progress']])throw new DomainException('Dette svaret tilhører en tidligere tur.');
         $answer=$input['answer'] ?? null;
         $quizlet=lq_game($content)==='quizlet';$complete=true;
-        if($quizlet){
+        if($quizlet && $content['questions'][$input['index']]['type']!=='text'){
             // Local indices refer only to this member's choices. Several teammates may
             // submit against the same question revision while correct choices accumulate.
             $own=$entry['choices'][$player['id']];

@@ -190,7 +190,7 @@ function lq_configure_content(array $content,array $settings): array {
     $content['play']=lq_validate_play($settings['mode'] ?? null,$settings['max_team_size'] ?? null);
     if($content['game']==='quizlet'){
         $limit=lq_quizlet_limit($content);
-        if(!$limit)throw new DomainException('Quizlet-like krever spørsmål med svaralternativer (ett eller flere riktige svar).');
+        if(!$limit)throw new DomainException('Quizen inneholder en spørsmålstype som ikke støttes.');
         if($content['play']['mode']!=='teams')throw new DomainException('Quizlet-like spilles bare med tilfeldige lag.');
         if($content['play']['max_team_size']>$limit)throw new DomainException('Maks lagstørrelse kan ikke overstige '.$limit.' svaralternativer.');
     }

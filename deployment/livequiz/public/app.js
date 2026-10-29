@@ -472,7 +472,13 @@
       if(q.image||(host&&q.youtube))body.classList.add('media-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='RACE_ACTIVE'?`Quiz Race · Forsøk ${s.race.attempt+1}`:s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:true,autoplay:s.state==='QUESTION_ACTIVE'},header);
-      if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state))body.append(answerForm(s,order));
+      if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)){
+        if(q.type==='multi'){
+          const notice=el('p','Flere riktige svar – velg alle som passer.','multiple-answer-notice');
+          notice.setAttribute('role','note');header.append(notice);
+        }
+        body.append(answerForm(s,order));
+      }
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
       else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));
     }

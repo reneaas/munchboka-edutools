@@ -28,6 +28,18 @@ const assert=require('node:assert/strict');
  // Restore the draft before leaving, then preview the saved quiz from the library.
  await page.getByLabel('Spørsmål',{exact:true}).first().fill('First $2+2$');await page.goto(base+'/?teacher=1');const card=page.locator('article').filter({has:page.locator('a[href="?edit='+quiz.id+'"]')});await card.getByRole('button',{name:'Forhåndsvis',exact:true}).click();await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();assert.match(await modal.locator('.modal-header').innerText(),/First/);
  const saved=await page.evaluate(async id=>(await(await fetch('index.php?api=quiz&id='+id)).json()),quiz.id);assert.equal(saved.revision,1);assert.equal(saved.content.questions[0].prompt,'First $2+2$');assert.deepEqual(gameplay,[]);assert.deepEqual(errors,[]);
+ // Public previews work in a fresh anonymous session, including protected image storage.
+ const guestContext=await browser.newContext();await require('./youtube-stub.cjs')(guestContext);
+ const guest=await guestContext.newPage();guest.on('pageerror',e=>errors.push(e.message));
+ guest.on('request',r=>{if(/[?&]api=(create|public-start|join|control|state|answer)(?:&|$)/.test(r.url()))gameplay.push(r.url());});
+ await guest.goto(base+'/?public='+quiz.id);await guest.getByRole('button',{name:'Forhåndsvis',exact:true}).click();
+ const publicModal=guest.locator('.quiz-preview-modal');
+ await guest.waitForFunction(()=>document.querySelector('.quiz-preview-modal img')?.naturalWidth===500);
+ assert.ok(await publicModal.locator('.katex').count());assert.ok(await publicModal.locator('.CodeMirror').count());
+ await publicModal.getByRole('button',{name:'Neste',exact:true}).click();await publicModal.locator('iframe').waitFor({state:'attached'});
+ await publicModal.getByLabel('Gå til spørsmål').selectOption('2');await publicModal.getByLabel('Vis fasit').check();await publicModal.getByText('Godkjente svar: four · 4').waitFor();
+ await publicModal.getByRole('button',{name:'Lukk forhåndsvisning',exact:true}).click();await publicModal.waitFor({state:'detached'});
+ assert.deepEqual(gameplay,[]);assert.deepEqual(errors,[]);await guestContext.close();
  console.log('Whole-quiz preview passed: unsaved and saved versions, all answer types, math/code/images/video, manual navigation, answer reveal, mobile/desktop sizing, close/reopen and zero gameplay requests.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

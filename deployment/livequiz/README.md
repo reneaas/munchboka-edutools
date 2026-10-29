@@ -697,3 +697,5 @@ room, polling game state, running a countdown or changing the saved quiz. Videos
 start only when explicitly played and are removed when leaving the question.
 Close the preview or press Escape to return to editing. Browser coverage is in
 `tests/preview-browser.cjs`, including zero gameplay requests and unchanged drafts.
+
+Public quiz pages also offer **Forhåndsvis** without login or creating a game. Images are scoped to the public quiz; making the quiz private or deleting it blocks subsequent preview and image requests.

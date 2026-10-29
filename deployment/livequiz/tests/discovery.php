@@ -29,4 +29,22 @@ $first=lq_discover($db,'Pagination fixture',0);$second=lq_discover($db,'Paginati
 check(count($first['quizzes'])===20 && $first['more'],'first page is bounded');check(count($second['quizzes'])===2 && !$second['more'],'last page correct');
 check(!array_intersect(array_column($first['quizzes'],'id'),array_column($second['quizzes'],'id')),'pagination has no duplicate rows');
 lq_delete($db,1,['id'=>$public['id']]);rejects(fn()=>lq_public_start($db,$public['id'],$token),'deleted quiz cannot be hosted');
+// Anonymous previews expose only authored content and quiz-scoped images.
+$preview=lq_save($db,1,['content'=>['title'=>'Public preview','questions'=>[$withImage,$q]]]);
+lq_share($db,1,$preview['id'],true);
+$before=(int)$db->query('SELECT COUNT(*) FROM lq_rooms')->fetchColumn();
+$view=lq_public_preview($db,$preview['id']);
+check(array_keys($view)===['title','questions'],'preview omits internal metadata and sharing credentials');
+check(count($view['questions'])===2,'preview includes all questions');
+check(lq_public_media($db,$preview['id'],$img)['bytes']==='PNG','public preview image available');
+$other=lq_save($db,1,['content'=>$base]);
+rejects(fn()=>lq_public_media($db,$other['id'],$img),'image must belong to the requested quiz');
+rejects(fn()=>lq_public_preview($db,$private['id']),'private preview denied');
+lq_save($db,1,['id'=>$preview['id'],'revision'=>1,'content'=>['title'=>'Now private','private'=>true,'questions'=>[$withImage]]]);
+rejects(fn()=>lq_public_preview($db,$preview['id']),'stale preview denied after privacy change');
+rejects(fn()=>lq_public_media($db,$preview['id'],$img),'stale image denied after privacy change');
+lq_delete($db,1,['id'=>$preview['id']]);
+rejects(fn()=>lq_public_preview($db,$preview['id']),'deleted preview denied');
+rejects(fn()=>lq_public_media($db,$preview['id'],$img),'deleted preview image denied');
+check((int)$db->query('SELECT COUNT(*) FROM lq_rooms')->fetchColumn()===$before,'preview creates no game rooms');
 echo "$checks checks including public discovery passed\n";

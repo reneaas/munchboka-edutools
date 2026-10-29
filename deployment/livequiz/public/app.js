@@ -235,6 +235,7 @@
         const room=await api(publicQuiz?'public-start':'shared-start',{id,key,host_token:hostToken});
         sessionStorage.setItem('lq-host-'+room.room,hostToken);location.href='?host='+room.room;
       }));
+    if(publicQuiz)app.append(button('Forhåndsvis',async()=>previewQuiz(await api('public-preview',undefined,{id}),{public_quiz:id}),'secondary'));
     app.append(el('p','Lag din egen kopi for å endre spørsmål og svar. Originalen blir ikke endret. Du må være logget inn for å lagre kopien.','hint'),
       button(uid?'Lag en redigerbar kopi':'Logg inn for å lage en kopi',async()=>{
         const source={id,source:publicQuiz?'public':'shared',key};
@@ -242,7 +243,7 @@
         const copy=await api('copy',source);location.href='?edit='+copy.id;
       },'secondary'));
   }
-  function previewQuiz(contentModel){
+  function previewQuiz(contentModel,mediaQuery={}){
     const quiz=JSON.parse(JSON.stringify(contentModel));
     if(!quiz.questions.length)return;
     const opener=document.activeElement,dialog=el('dialog',undefined,'question-modal teacher-modal active-question-modal quiz-preview-modal');
@@ -260,7 +261,7 @@
       previous.disabled=index===0;next.disabled=index===quiz.questions.length-1;jump.value=String(index);
       // Editing may contain a pasted URL that has not been normalized by saving yet.
       if(q.youtube){try{const u=new URL(q.youtube);q.youtube=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){} }
-      void content(q,media,{showVideo:false},header).then(()=>{
+      void content(q,media,{showVideo:false,query:mediaQuery},header).then(()=>{
         if(!media.isConnected||!q.youtube)return;
         if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false);
         else media.append(el('p','Kontroller YouTube-lenken i redigeringen.','hint'));

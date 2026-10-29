@@ -6,6 +6,20 @@ function lq_public_quiz(PDO $db,string $id,bool $lock=false): array {
     if (!$quiz || lq_is_private(json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR))) throw new DomainException('Quizen er ikke offentlig eller finnes ikke.');
     return $quiz;
 }
+// Only authored preview fields are public; never expose sharing or host credentials.
+function lq_public_preview(PDO $db,string $id): array {
+    $quiz=lq_public_quiz($db,$id);
+    $content=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
+    return ['title'=>$quiz['title'],'questions'=>$content['questions']];
+}
+function lq_public_media(PDO $db,string $quizId,string $image): array {
+    $quiz=lq_public_quiz($db,$quizId);
+    $content=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
+    foreach ($content['questions'] as $question) {
+        if (($question['image']['id'] ?? null)===$image) return jp_media($db,lq_id($image),(int)$quiz['owner_id']);
+    }
+    throw new DomainException('Ingen tilgang.');
+}
 function lq_discover(PDO $db,string $search,int $page=0): array {
     if ($page<0 || $page>500) throw new DomainException('Ugyldig side.');
     $search=jp_text($search,180);

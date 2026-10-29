@@ -71,6 +71,7 @@ if ($action !== null) {
                 lq_response(['ok'=>true]);
             case 'copy': lq_response(lq_copy_quiz($db,$uid,jp_text($input['id'] ?? '',32),jp_text($input['source'] ?? '',10),jp_text($input['key'] ?? '',64)));
             case 'discover': lq_response(lq_discover($db,jp_text($_GET['q'] ?? '',180),(int)($_GET['page'] ?? 0)));
+            case 'public-preview': lq_response(lq_public_preview($db,jp_text($_GET['id'] ?? '',32)));
             case 'public-quiz':
                 $public=lq_public_quiz($db,jp_text($_GET['id'] ?? '',32));
                 lq_response(['title'=>$public['title'],'total'=>count(json_decode($public['content'],true,32,JSON_THROW_ON_ERROR)['questions'])]);
@@ -99,6 +100,7 @@ if ($action !== null) {
             case 'media':
                 $image = lq_id($_GET['image'] ?? null);
                 if ($room !== '') $m = lq_room_media($db, $room, $uid, $token, $host, $image, $hostToken);
+                elseif (isset($_GET['public_quiz'])) $m = lq_public_media($db,jp_text($_GET['public_quiz'],32),$image);
                 elseif ($uid) $m = jp_media($db, $image, $uid);
                 else throw new DomainException('Ingen tilgang.');
                 header('Content-Type: '.$m['mime']); header('Content-Length: '.strlen($m['bytes'])); echo $m['bytes']; exit;

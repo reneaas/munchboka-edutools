@@ -10,6 +10,8 @@ const assert=require('node:assert/strict');
   const b=await(await fetch('index.php?api=bootstrap')).json(),headers={'X-CSRF-Token':b.csrf};
   const canvas=document.createElement('canvas');canvas.width=500;canvas.height=200;canvas.getContext('2d').fillRect(0,0,500,200);const form=new FormData();form.append('image',await new Promise(r=>canvas.toBlob(r)),'preview.png');
   const image=(await(await fetch('index.php?api=upload',{method:'POST',headers,body:form})).json()).image;
+  const repeated=(await(await fetch('index.php?api=upload',{method:'POST',headers,body:form})).json()).image;
+  if(repeated.id!==image.id)throw new Error('Repeated upload should reuse its image ID');
   const q={type:'single',prompt:'First $2+2$',code:'print(4)\n\n',youtube:'',image,seconds:30,options:['1','2','3','4'],correct:[3],accepted:[]};
   return(await(await fetch('index.php?api=save',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({content:{title:'Whole quiz preview fixture',questions:[q,{...q,type:'multi',prompt:'Second',code:'',image:null,youtube:'dQw4w9WgXcQ',correct:[1,3]},{...q,type:'text',prompt:'Third',image:null,code:'',options:[],correct:[],accepted:['four','4']}]}})})).json());
  });

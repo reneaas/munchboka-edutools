@@ -20,6 +20,7 @@ main() {
 
   if [ "$(cat "$marker" 2>/dev/null || true)" = "$commit" ] && [ -z "${FORCE:-}" ]; then
     php "$HOME/jeopardy-private/livequiz/cleanup.php"
+    php "$HOME/jeopardy-private/optimize-images.php"
     exit 0
   fi
 
@@ -42,6 +43,7 @@ main() {
   copy deployment/livequiz/private/livequiz "$HOME/jeopardy-private/livequiz"
 
   php "$HOME/jeopardy-private/livequiz/cleanup.php"
+  php "$HOME/jeopardy-private/optimize-images.php"
   echo "$commit" > "$marker"
   echo "$(date '+%F %T') deployed $commit"
 }

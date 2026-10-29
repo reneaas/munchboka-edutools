@@ -699,3 +699,11 @@ Close the preview or press Escape to return to editing. Browser coverage is in
 `tests/preview-browser.cjs`, including zero gameplay requests and unchanged drafts.
 
 Public quiz pages also offer **Forhåndsvis** without login or creating a game. Images are scoped to the public quiz; making the quiz private or deleting it blocks subsequent preview and image requests.
+
+### Image storage optimization
+
+Shared Jeopardy/Livequiz uploads now apply lossless PNG compression before the 50 MB account quota is checked. Opaque 8-bit PNGs without metadata can become lossless WebP when GD supports it; other PNGs retain transparency and metadata through lossless PNG recompression. Only smaller results are stored. Dimensions stay unchanged; JPEG, WebP and animated PNG uploads are preserved. Large images skip expensive conversion (4 megapixels for GD, 32 MB decompression bound). Without GD/WebP, PNG recompression still works.
+
+Repeated identical optimized uploads by the same account reuse the existing image ID. Cross-account ownership remains separate. Existing duplicate records are retained because saved quizzes, revisions and active games may reference them.
+
+The deployment cron runs private `optimize-images.php`, processing up to ten existing PNGs per invocation. It keeps original image IDs, updates byte size/MIME together and logs bytes saved. Progress is stored in `.image-optimization-v1` beside the private application; a file lock prevents overlapping runs. Remove that cursor file to deliberately rescan. This reduces stored image bytes but does not necessarily shrink the physical MySQL tablespace or hosting usage immediately. No image records or originals' question references are deleted.

@@ -324,13 +324,72 @@ function jp_image_info(string $bytes): array
     return ['mime' => $mime, 'width' => $info[0], 'height' => $info[1]];
 }
 
+// Lossless only: preserve diagram resolution, animation and colour metadata.
+function jp_optimize_image(string $bytes): string
+{
+    $info = jp_image_info($bytes);
+    if ($info['mime'] !== 'image/png') return $bytes;
+    $chunks = []; $compressed = ''; $webpSafe = true;
+    for ($offset = 8; $offset + 12 <= strlen($bytes);) {
+        $length = unpack('N', substr($bytes, $offset, 4))[1];
+        if ($length > strlen($bytes) - $offset - 12) return $bytes;
+        $type = substr($bytes, $offset + 4, 4);
+        $data = substr($bytes, $offset + 8, $length);
+        $chunks[] = [$type, substr($bytes, $offset, $length + 12)];
+        if ($type === 'IDAT') $compressed .= $data;
+        if ($type === 'acTL') return $bytes; // Never flatten animated PNGs.
+        if ($type === 'IHDR' && ($length !== 13 || ord($data[8]) !== 8 || !in_array(ord($data[9]), [0,2,3], true))) $webpSafe = false;
+        if (!in_array($type, ['IHDR','PLTE','IDAT','IEND'], true)) $webpSafe = false;
+        $offset += $length + 12;
+        if ($type === 'IEND') break;
+    }
+    if ($offset !== strlen($bytes) || !$chunks || end($chunks)[0] !== 'IEND') return $bytes;
+    $best = $bytes;
+    // Preserve every non-IDAT chunk, including full precision alpha and profiles.
+    $raw = @gzuncompress($compressed, 32 * 1024 * 1024);
+    if ($raw !== false) {
+        $packed = gzcompress($raw, 9); unset($raw);
+        if ($packed !== false && strlen($packed) < strlen($compressed)) {
+            $candidate = substr($bytes, 0, 8); $written = false;
+            foreach ($chunks as [$type,$chunk]) {
+                if ($type !== 'IDAT') { $candidate .= $chunk; continue; }
+                if (!$written) { $candidate .= pack('N',strlen($packed)).'IDAT'.$packed.pack('N',crc32('IDAT'.$packed)); $written = true; }
+            }
+            if (strlen($candidate) < strlen($best)) $best = $candidate;
+        }
+    }
+    // GD reduces alpha precision; use lossless WebP only for opaque, unprofiled 8-bit PNGs.
+    if ($webpSafe && $info['width'] * $info['height'] <= 4000000 && function_exists('imagewebp') && defined('IMG_WEBP_LOSSLESS')) {
+        $image = @imagecreatefromstring($bytes);
+        if ($image !== false) {
+            if (!imageistruecolor($image)) imagepalettetotruecolor($image);
+            ob_start();
+            try { $ok = imagewebp($image, null, IMG_WEBP_LOSSLESS); $candidate = ob_get_contents(); }
+            finally { ob_end_clean(); }
+            unset($image);
+            if ($ok && is_string($candidate) && $candidate !== '' && strlen($candidate) < strlen($best)) $best = $candidate;
+        }
+    }
+    $check = jp_image_info($best);
+    return $check['width'] === $info['width'] && $check['height'] === $info['height'] ? $best : $bytes;
+}
+
+// Called while holding the account lock, before quota checks.
+function jp_duplicate_image(PDO $db, int $uid, string $bytes): ?string
+{
+    $stmt = $db->prepare('SELECT id, bytes FROM jp_media WHERE owner_id = ? AND size = ?');
+    $stmt->execute([$uid, strlen($bytes)]);
+    while ($row = $stmt->fetch()) if ($row['bytes'] === $bytes) return $row['id'];
+    return null;
+}
+
 function jp_upload(PDO $db, int $uid, array $file): array
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
         throw new DomainException('Opplastingen mislyktes. Velg et bilde under 2 MB og prøv igjen.');
     }
     if (filesize($file['tmp_name']) > 2 * 1024 * 1024) throw new DomainException('Bildet må være mindre enn 2 MB.');
-    $bytes = file_get_contents($file['tmp_name']);
+    $bytes = jp_optimize_image(file_get_contents($file['tmp_name']));
     $info = jp_image_info($bytes);
     $id = bin2hex(random_bytes(16));
     $db->beginTransaction();
@@ -339,6 +398,8 @@ function jp_upload(PDO $db, int $uid, array $file): array
         $lock = $db->prepare('SELECT id FROM jp_users WHERE id = ? FOR UPDATE');
         $lock->execute([$uid]);
         if (!$lock->fetchColumn()) throw new DomainException('Logg inn på nytt.');
+        $existing = jp_duplicate_image($db, $uid, $bytes);
+        if ($existing !== null) { $db->commit(); return ['id'=>$existing, 'alt'=>'']; }
         $sum = $db->prepare('SELECT COALESCE(SUM(size), 0) FROM jp_media WHERE owner_id = ?');
         $sum->execute([$uid]);
         if ((int) $sum->fetchColumn() + strlen($bytes) > 50 * 1024 * 1024) throw new DomainException('Bildelageret ditt er fullt (50 MB).');

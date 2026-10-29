@@ -16,7 +16,20 @@ const assert=require('node:assert/strict');
  const cards=page.locator('.question-editor');await cards.nth(2).waitFor();
  // Preserve an unsaved edit while moving first to last, then last to first.
  await cards.nth(0).getByLabel('Spørsmål',{exact:true}).fill('Edited first');
+ await cards.nth(0).getByRole('button',{name:'Skjul detaljer for spørsmål 1',exact:true}).click();
+ assert.equal(await cards.nth(0).locator('.question-editor-summary').innerText(),'Edited first');
+ assert.equal(await cards.nth(0).getByLabel('Alternativ 1',{exact:true}).isVisible(),false);
+ assert.equal(await cards.nth(0).locator('.CodeMirror').isVisible(),false);
+ assert.equal(await cards.nth(0).getByRole('button',{name:'Utvid spørsmål 1',exact:true}).getAttribute('aria-expanded'),'false');
+ await page.screenshot({path:'/tmp/livequiz-collapsed-editor.png'});
+ // The focused toggle is keyboard-operable, and CodeMirror refreshes on opening.
+ await page.keyboard.press('Enter');
+ assert.equal(await cards.nth(0).getByLabel('Spørsmål',{exact:true}).inputValue(),'Edited first');
+ assert.ok((await cards.nth(0).locator('.CodeMirror').boundingBox()).height>20);
+ await cards.nth(1).getByRole('button',{name:'Skjul detaljer for spørsmål 2',exact:true}).click();
  await cards.nth(0).getByLabel('Flytt til plass',{exact:true}).selectOption({value:'2'});await cards.nth(0).getByRole('button',{name:'Flytt spørsmål',exact:true}).click();
+ assert.equal(await cards.nth(0).getByRole('button',{name:'Utvid spørsmål 1',exact:true}).getAttribute('aria-expanded'),'false');
+ assert.equal(await cards.nth(0).locator('.question-editor-summary').innerText(),'Second');
  assert.deepEqual(await Promise.all([0,1,2].map(i=>cards.nth(i).getByLabel('Spørsmål',{exact:true}).inputValue())),['Second','Third','Edited first']);
  await cards.nth(1).getByLabel('Flytt til plass',{exact:true}).selectOption({value:'0'});await cards.nth(1).getByRole('button',{name:'Flytt spørsmål',exact:true}).click();
  await page.getByRole('button',{name:'Lagre quiz',exact:true}).click();await page.getByText('Lagret · versjon 2',{exact:true}).waitFor();

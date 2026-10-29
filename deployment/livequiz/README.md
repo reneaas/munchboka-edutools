@@ -674,3 +674,13 @@ Validation: `tests/copy.php` covers ownership, source isolation, image duplicati
 quota rollback, source privacy/deletion and sharing revocation.
 `tests/copy-browser.cjs` covers anonymous login-return navigation, public and shared
 copying, editable persisted copies, image loading and CSRF protection.
+
+
+Question editor cards can be collapsed with **Skjul detaljer** and reopened with
+**Utvid**. Collapsed cards retain the full question text (including rendered math)
+and question number, while hiding answer options, media, code and editing controls.
+New questions start expanded. Collapsed state follows a question when reordered
+and survives editor redraws within the page, without changing saved quiz content.
+The keyboard-accessible buttons expose their expanded state; code editors refresh
+when reopened. `tests/reorder-browser.cjs` checks collapse, keyboard expansion,
+unsaved text preservation and collapsed-state preservation during reordering.

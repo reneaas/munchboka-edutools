@@ -192,7 +192,7 @@
     const grid=el('div',undefined,'library');
     for(const q of quizzes){
       const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p',(q.private?'Privat':'Offentlig')+' · Versjon '+q.revision),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
-        button('Start spill',async()=>{const r=await api('create',{id:q.id});location.href='?host='+r.room;}),button('Del quiz',()=>shareQuiz(q,card),'secondary'),
+        button('Start spill',async()=>{const r=await api('create',{id:q.id});location.href='?host='+r.room;}),button('Forhåndsvis',async()=>{const quiz=await api('quiz',undefined,{id:q.id});previewQuiz(quiz.content);},'secondary'),button('Del quiz',()=>shareQuiz(q,card),'secondary'),
         button('Flytt',()=>{const target=destination(q.folder);organizationDialog('Flytt «'+q.title+'»',[target.label],()=>api('organize',{command:'move-quiz',id:q.id,parent:target.value()}));},'quiet'),
         button('Slett',async()=>{if(!confirm('Slette «'+q.title+'»? Dette kan ikke angres.'))return;await api('delete',{id:q.id});await library();},'quiet')));grid.append(card);
     }
@@ -242,6 +242,39 @@
         const copy=await api('copy',source);location.href='?edit='+copy.id;
       },'secondary'));
   }
+  function previewQuiz(contentModel){
+    const quiz=JSON.parse(JSON.stringify(contentModel));
+    if(!quiz.questions.length)return;
+    const opener=document.activeElement,dialog=el('dialog',undefined,'question-modal teacher-modal active-question-modal quiz-preview-modal');
+    const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body'),footer=el('div',undefined,'question-modal-footer');
+    const previous=el('button','Forrige','secondary'),next=el('button','Neste','secondary'),jumpLabel=el('label','Gå til spørsmål'),jump=el('select');
+    const revealLabel=el('label'),reveal=el('input');reveal.type='checkbox';revealLabel.append(reveal,document.createTextNode(' Vis fasit'));
+    let index=0;
+    for(let i=0;i<quiz.questions.length;i++){const option=el('option','Spørsmål '+(i+1));option.value=String(i);jump.append(option);}jumpLabel.append(jump);
+    const answers=el('div',undefined,'preview-answers');
+    function renderAnswers(){const q=quiz.questions[index];answers.replaceChildren(q.type==='text'?el('p',reveal.checked?'Godkjente svar: '+q.accepted.join(' · '):'Deltakerne skriver inn svaret.','qcard-note'):optionCards(q,q.options.map((_,i)=>i),reveal.checked));}
+    function render(){
+      const q={...quiz.questions[index]},media=el('div',undefined,'question-media'),title=el('h2','Spørsmål '+(index+1)+' av '+quiz.questions.length,'modal-title');
+      title.id='quiz-preview-title';header.replaceChildren(title);dialog.setAttribute('aria-labelledby',title.id);
+      body.classList.toggle('media-question-body',!!(q.image||q.youtube));body.replaceChildren(media,answers);renderAnswers();
+      previous.disabled=index===0;next.disabled=index===quiz.questions.length-1;jump.value=String(index);
+      // Editing may contain a pasted URL that has not been normalized by saving yet.
+      if(q.youtube){try{const u=new URL(q.youtube);q.youtube=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){} }
+      void content(q,media,{showVideo:false},header).then(()=>{
+        if(!media.isConnected||!q.youtube)return;
+        if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false);
+        else media.append(el('p','Kontroller YouTube-lenken i redigeringen.','hint'));
+      });
+      body.scrollTop=0;header.scrollTop=0;
+    }
+    previous.onclick=()=>{if(index>0){index--;render();}};next.onclick=()=>{if(index<quiz.questions.length-1){index++;render();}};
+    jump.onchange=()=>{index=Number(jump.value);render();};reveal.onchange=renderAnswers;
+    const fit=()=>dialog.style.setProperty('--teacher-scale',String(Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700))));
+    footer.append(el('p','Forhåndsvisning · '+(quiz.title||'Uten tittel'),'hint'),group(previous,jumpLabel,next,revealLabel,button('Lukk forhåndsvisning',()=>dialog.close(),'quiet')));
+    dialog.append(header,body,footer);document.body.append(dialog);fit();dialog.showModal();render();
+    window.addEventListener('resize',fit);
+    dialog.addEventListener('close',()=>{window.removeEventListener('resize',fit);dialog.remove();opener?.focus();},{once:true});
+  }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {
     if (!uid) return library();
@@ -265,7 +298,7 @@
     for (const [value, label] of [['fixed','Faste poeng'], ['speed','Raske riktige svar']]) { const option = el('option', label); option.value = value; scoringSelect.append(option); }
     scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status,
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status,
       field('Quizens tittel', model.title, v => {model.title=v; changed();}), privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {

@@ -684,3 +684,16 @@ and survives editor redraws within the page, without changing saved quiz content
 The keyboard-accessible buttons expose their expanded state; code editors refresh
 when reopened. `tests/reorder-browser.cjs` checks collapse, keyboard expansion,
 unsaved text preservation and collapsed-state preservation during reordering.
+
+
+## Whole-quiz preview
+
+Use **Forhåndsvis hele quizen** in the editor to browse a snapshot of the current
+quiz, including unsaved edits. **Forhåndsvis** in Mine quizer opens the saved version.
+Previous/next buttons and a question selector provide manual navigation; **Vis
+fasit** optionally reveals correct choices or accepted typed answers. Preview
+uses the normal question, code, math, image and video renderers without creating a
+room, polling game state, running a countdown or changing the saved quiz. Videos
+start only when explicitly played and are removed when leaving the question.
+Close the preview or press Escape to return to editing. Browser coverage is in
+`tests/preview-browser.cjs`, including zero gameplay requests and unchanged drafts.

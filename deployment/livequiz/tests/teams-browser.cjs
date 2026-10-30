@@ -40,7 +40,7 @@ const assert=require('node:assert/strict');
   assert.equal(await t.locator('.team-card').count(),2);
   for(const [i,page] of students.entries()){
     assert.equal(await page.locator('.team-card').count(),1);
-    assert.equal(await page.locator('.team-card h3').innerText(),'Lag '+snapshots[i+1].my_team);
+    assert.equal(await page.locator('.team-card h3').innerText(),snapshots[i+1].teams.find(team=>team.id===snapshots[i+1].my_team).name);
     assert.equal(await page.getByRole('button',{name:'Start første spørsmål',exact:true}).count(),0);
     assert.equal(await page.locator('dialog').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
   }

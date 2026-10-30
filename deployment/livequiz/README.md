@@ -142,9 +142,10 @@ with the same Playwright environment variables as the other browser tests.
 
 ## Late arrivals and the teacher game code
 
-The teacher sees **Bli med: quiz.munchboka.no · Spillkode …** in every game
+The teacher sees a prominent **Gå til quiz.munchboka.no** link and **Spillkode …** banner in every game
 window, including questions, countdowns, race progress, results and the final
-screen. Students can enter the code on the quiz homepage.
+screen. Students can enter the code on the quiz homepage. The lobby shows the
+joining code and QR code before the game settings.
 
 Late individual players join the current regular question immediately, start a
 fresh independent Race attempt, or receive their own Lightning order with only
@@ -328,6 +329,9 @@ For team rooms, **Fordel lag og start** locks the room and reads the current lob
 roster. `teams.php` computes `K = ceil(N / M)` and rejects an empty roster or
 `floor(N / K) < M - 1`, leaving the lobby and settings intact. It uses an unbiased
 Fisher–Yates shuffle (`random_int`) and deals players round-robin into K teams.
+Teams receive random names from the 16 teams in [The Finals](https://www.thefinals.wiki/wiki/Gameplay#Teams), without repeats until the pool is exhausted.
+Additional teams use numbered suffixes (for example, “The Retros 2”) to keep names unique.
+Names are saved with the teams and shown in participant status, team overviews and leaderboards.
 For N=13, M=3, the correct sizes are **[3,3,3,2,2]**; [3,2,2,2,2] totals only 11.
 
 Settings and assignments live in the room's existing `content` JSON under `play`.

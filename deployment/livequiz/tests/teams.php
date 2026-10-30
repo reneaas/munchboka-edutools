@@ -18,11 +18,20 @@ for ($maximum=2;$maximum<=60;$maximum++) for ($n=1;$n<=60;$n++) {
     $k=(int)ceil($n/$maximum);$valid=intdiv($n,$k)>=$maximum-1;
     if (!$valid) { rejects(fn()=>lq_assign_teams(range(1,$n),$maximum),'invalid distribution rejected'); continue; }
     $source=range(1,$n);$teams=lq_assign_teams($source,$maximum);
+    check(count(array_unique(array_column($teams,'name')))===$k,'team names remain unique even beyond the name pool');
     $sizes=array_map(fn($team)=>count($team['members']),$teams);
     $members=array_merge(...array_column($teams,'members'));sort($members);
     check($members===$source && count($teams)===$k,'every participant exactly once and minimal team count');
     check(max($sizes)<=$maximum && min($sizes)>=$maximum-1 && max($sizes)-min($sizes)<=1,'balanced permitted sizes');
 }
+$names=lq_team_names();
+check(count($names)===16 && count(array_unique($names))===16,'sixteen distinct Finals team names');
+$namedTeams=lq_assign_teams(range(1,32),2);
+$assignedNames=array_column($namedTeams,'name');sort($assignedNames);sort($names);
+check($assignedNames===$names,'sixteen teams use every Finals name exactly once');
+$nameDraws=[];
+for($i=0;$i<20;$i++)$nameDraws[]=lq_assign_teams([1,2],2)[0]['name'];
+check(count(array_unique($nameDraws))>1,'team names are randomly selected even for one team');
 $compositions=[];
 for($i=0;$i<10;$i++)$compositions[]=json_encode(lq_assign_teams(range(1,12),3));
 check(count(array_unique($compositions))>1,'different shuffles produce different compositions');

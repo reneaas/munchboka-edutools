@@ -9,6 +9,15 @@ function lq_validate_play(mixed $mode, mixed $maximum): array {
     if (!is_int($maximum) || $maximum < 2 || $maximum > 60) throw new DomainException('Maks antall spillere per lag må være et heltall fra 2 til 60.');
     return ['mode' => $mode, 'max_team_size' => $maximum, 'teams' => []];
 }
+// Team names from https://www.thefinals.wiki/wiki/Gameplay#Teams.
+function lq_team_names(): array {
+    return [
+        'The Big Splash', 'The Boundless', 'The High Notes', 'The Jet Setters',
+        'The Kingfish', 'The Live Wires', 'The Mighty', 'The Powerhouses',
+        'The Overdogs', 'The Retros', 'The Socialites', 'The Shock and Awe',
+        'The Steamrollers', 'The Tough Shells', 'The Ultra-Rares', 'The Vogues',
+    ];
+}
 // Pure allocation: no database, transport or client state. Each item is one player.
 function lq_assign_teams(array $players, int $maximum): array {
     lq_validate_play('teams', $maximum);
@@ -25,7 +34,16 @@ function lq_assign_teams(array $players, int $maximum): array {
         [$shuffled[$i], $shuffled[$j]] = [$shuffled[$j], $shuffled[$i]];
     }
     $teams = [];
-    for ($i = 0; $i < $k; $i++) $teams[] = ['id' => $i + 1, 'name' => 'Lag ' . ($i + 1), 'members' => []];
+    $names = lq_team_names();
+    $nameCount = count($names);
+    for ($i = $nameCount - 1; $i > 0; $i--) {
+        $j = random_int(0, $i);
+        [$names[$i], $names[$j]] = [$names[$j], $names[$i]];
+    }
+    for ($i = 0; $i < $k; $i++) {
+        $suffix = $i < $nameCount ? '' : ' ' . (intdiv($i, $nameCount) + 1);
+        $teams[] = ['id' => $i + 1, 'name' => $names[$i % $nameCount] . $suffix, 'members' => []];
+    }
     foreach ($shuffled as $i => $player) $teams[$i % $k]['members'][] = $player;
     return $teams;
 }

@@ -249,7 +249,7 @@ nav{align-items:center;flex-wrap:wrap}
   .teacher-modal.results-modal .modal-title{padding:6px 16px;font-size:20px}
   .teacher-modal.results-modal .media-question-body{gap:8px}
   .teacher-modal.results-modal .media-question-body .option-grid{gap:6px}
-  .teacher-modal.results-modal .media-question-body .option-card{min-height:44px;padding:22px 6px 4px;font-size:13px;line-height:1.2}
+  .teacher-modal.results-modal .media-question-body .option-card{min-height:40px;padding:20px 6px 2px;font-size:12px;line-height:1.2}
 }
 
 /* On phones, give each participant answer the full row. Long answers can be
@@ -262,7 +262,7 @@ nav{align-items:center;flex-wrap:wrap}
   .question-modal.participant-modal .correct-label{position:static;margin-left:8px;flex-shrink:0;font-size:10px}
   .question-modal.participant-modal .media-question-body{display:block}
   .question-modal.participant-modal .media-question-body>.question-media{display:block;overflow:visible;margin-bottom:16px}
-  .question-modal.participant-modal .media-question-body .question-image{height:auto;max-height:30dvh;width:100%;margin:0 auto}
+  .question-modal.participant-modal .media-question-body .question-image{height:48dvh;max-height:48dvh;width:100%;margin:0 auto}
   .question-modal.participant-modal .media-question-body .question-media>:not(.question-image){max-height:none}
   .question-modal.participant-modal .results-analysis{margin-top:16px}
 }
@@ -280,3 +280,25 @@ nav{align-items:center;flex-wrap:wrap}
 .quiz-preview-modal .media-question-body .preview-answers .option-card{min-height:64px}
 
 .question-modal .multiple-answer-notice{margin:0;padding:8px 20px;background:var(--paper);color:var(--ink);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px;font-weight:700;line-height:1.4}
+
+/* Image questions use the viewport width, with answers alongside on wide screens. */
+.question-modal:is(.active-question-modal,.results-modal):has(.question-image){
+  width:calc((100vw - 32px) / var(--teacher-scale,1));
+}
+@media(min-width:900px){
+  .teacher-modal:has(.question-image) .question-modal-footer{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:8px 24px}
+  .teacher-modal:has(.question-image) .question-modal-footer .host-join-code{flex-basis:100%;margin:0;padding:4px 12px}
+  .teacher-modal:has(.question-image) .question-modal-footer .theme-toggle{margin:0 0 0 auto}
+  .teacher-modal:has(.question-image) .question-modal-footer .actions{flex-basis:100%;margin:0}
+  .teacher-modal:has(.question-image) .question-modal-footer .music-controls{width:auto;margin-left:auto}
+  .question-modal.active-question-modal:has(.question-image) .media-question-body{
+    grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr);
+  }
+  .question-modal.active-question-modal:has(.question-image) .media-question-body>:not(.question-media){
+    align-self:center;max-height:100%;overflow:auto;
+  }
+  .question-modal.results-modal:has(.question-image) .media-question-body{
+    grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+  }
+}

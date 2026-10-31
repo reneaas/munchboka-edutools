@@ -30,7 +30,7 @@ const assert=require('node:assert/strict');
  await page.getByRole('button',{name:'Vis fasit nå'}).click();await page.getByRole('heading',{name:'Fasit',exact:true}).waitFor();
  await page.screenshot({path:'/tmp/livequiz-dark-results.png'});
  await page.goto(base+'/?edit='+room.quiz);await page.locator('.CodeMirror').waitFor();
- assert.equal(await page.locator('.CodeMirror').first().evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(20, 33, 30)');
+ assert.equal(await page.locator('.CodeMirror').first().evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(15, 23, 42)');
  await page.screenshot({path:'/tmp/livequiz-dark-editor.png'});
  await page.setViewportSize({width:390,height:844});await page.goto(base);
  await page.getByRole('heading',{name:'Klar for neste spørsmål?'}).waitFor();

@@ -18,6 +18,14 @@ const assert=require('node:assert/strict');
    const body=document.querySelector('.modal-body'),img=body.querySelector('.quiz-video-screen iframe'),b=body.getBoundingClientRect(),i=img.getBoundingClientRect();
    return i.height>10&&Math.abs(i.width/i.height-16/9)<.02&&body.scrollHeight<=body.clientHeight+1&&i.top>=b.top&&i.bottom<=b.bottom+1&&[...body.querySelectorAll('.option-card')].every(e=>{const r=e.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom+1;});
   },null,{timeout:3000});
+  if(page.viewportSize().width>=900){
+   const layout=await page.locator('.question-modal').evaluate(dialog=>{
+    const media=dialog.querySelector('.question-media').getBoundingClientRect(),answers=dialog.querySelector('.option-grid').getBoundingClientRect();
+    return {width:dialog.getBoundingClientRect().width,viewport:innerWidth,mediaRight:media.right,answersLeft:answers.left};
+   });
+   assert.ok(Math.abs(layout.width-(layout.viewport-32))<2,'video dialog uses the same viewport width as images');
+   assert.ok(layout.answersLeft>=layout.mediaRight,'answers sit beside the video on desktop');
+  }
   const b=await page.locator('.quiz-video>button').boundingBox(),area=await page.locator('.modal-body').boundingBox();assert.ok(b.y>=area.y&&b.y+b.height<=area.y+area.height+1);
  }
  for(const size of [{width:1280,height:720},{width:1920,height:1080},{width:2560,height:1440},{width:1024,height:768},{width:390,height:844},{width:844,height:390}]){

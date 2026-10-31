@@ -502,7 +502,7 @@
       if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p',q.type==='text'?'Alle på laget kan skrive. Første riktige svar tar laget videre. Feil svar nullstiller laget.':'Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
       if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)){
         if(q.type==='multi'){
-          const notice=el('p',s.game==='quizlet'?'Flere riktige svar – samarbeid! Alle riktige svar må sendes inn av dem som har dem.':'Flere riktige svar – velg alle som passer.','multiple-answer-notice');
+          const notice=el('p',s.game==='quizlet'?'Flere riktige svar – samarbeid! Alle riktige svar må sendes inn av dem som har dem.':'Flere riktige svar – velg alle som passer.','multiple-answer-notice multiple-answer-warning');
           notice.setAttribute('role','note');header.append(notice);
         }
         body.append(answerForm(s,order));

@@ -280,6 +280,8 @@ nav{align-items:center;flex-wrap:wrap}
 .quiz-preview-modal .media-question-body .preview-answers .option-card{min-height:64px}
 
 .question-modal .multiple-answer-notice{margin:0;padding:8px 20px;background:var(--paper);color:var(--ink);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px;font-weight:700;line-height:1.4}
+.question-modal .multiple-answer-warning{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+:root[data-theme=dark] .question-modal .multiple-answer-warning{background:#431407;color:#fed7aa;border-color:#c2410c}
 
 /* Image questions use the viewport width, with answers alongside on wide screens. */
 .question-modal:is(.active-question-modal,.results-modal):has(.question-image){

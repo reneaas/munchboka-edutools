@@ -21,7 +21,7 @@ const assert=require('node:assert/strict');
   await host.goto(base+'/?host='+created.room);await host.locator('.pin').waitFor();assert.equal(await host.getByLabel('Aktiver lynrunde',{exact:true}).isChecked(),false);
   await host.getByLabel('Aktiver lynrunde',{exact:true}).check();await host.getByLabel('Varighet på lynrunde (sekunder)').fill('60');
   if(mode==='teams'){await host.getByLabel('Tilfeldige lag',{exact:true}).check();await host.getByLabel('Maks antall spillere per lag').fill('2');}
-  await host.getByRole('button',{name:'Lagre spillmodus'}).click();await host.waitForFunction(()=>!document.querySelector('.mode-settings button').disabled);
+  await host.locator('.mode-settings[data-save-state="saved"]').waitFor();
   for(const [i,p] of [a,b].entries()){await p.goto(base+'/?pin='+created.pin);await p.getByLabel('Kallenavn').fill('Elev '+i);await p.getByRole('button',{name:'Bli med',exact:true}).click();await wait(p,'LOBBY');}
   await host.getByRole('button',{name:mode==='teams'?'Fordel lag og start':'Start første spørsmål'}).click();
   if(mode==='teams'){await wait(host,'TEAM_OVERVIEW');await host.getByRole('button',{name:'Start første spørsmål'}).click();}

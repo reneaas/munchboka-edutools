@@ -15,8 +15,8 @@ const assert=require('node:assert/strict');
  const tokens=await Promise.all([a,b].map(p=>p.evaluate(room=>sessionStorage.getItem('lq-room-'+room),created.room)));
  async function submit(p){await p.locator('.answer-option:has(.rich:text-is("4")) input').check();await p.getByRole('button',{name:'Send svar',exact:true}).click();}
  for(let run=0;run<4;run++){
-  if(run===2){await host.getByLabel('Spilltype',{exact:true}).selectOption('race');await host.getByLabel('Tilfeldige lag',{exact:true}).check();await host.getByLabel('Maks antall spillere per lag').fill('2');await host.getByRole('button',{name:'Lagre spillmodus'}).click();await host.waitForFunction(()=>!document.querySelector('.mode-settings button').disabled);}
-  if(run===3){await host.getByLabel('Spilltype',{exact:true}).selectOption('regular');await host.getByLabel('Individuelt spill',{exact:true}).check();await host.getByLabel('Aktiver lynrunde',{exact:true}).check();await host.getByRole('button',{name:'Lagre spillmodus'}).click();await host.getByRole('button',{name:'Start første spørsmål',exact:true}).waitFor();}
+  if(run===2){await host.getByLabel('Spilltype',{exact:true}).selectOption('race');await host.getByLabel('Tilfeldige lag',{exact:true}).check();await host.getByLabel('Maks antall spillere per lag').fill('2');await host.locator('.mode-settings[data-save-state="saved"]').waitFor();}
+  if(run===3){await host.getByLabel('Spilltype',{exact:true}).selectOption('regular');await host.getByLabel('Individuelt spill',{exact:true}).check();await host.getByLabel('Aktiver lynrunde',{exact:true}).check();await host.locator('.mode-settings[data-save-state="saved"]').waitFor();await host.getByRole('button',{name:'Start første spørsmål',exact:true}).waitFor();}
   await host.getByRole('button',{name:run===2?'Fordel lag og start':'Start første spørsmål',exact:true}).click();
   if(run===2){await all('TEAM_OVERVIEW');await host.getByRole('button',{name:'Start Quiz Race',exact:true}).click();await all('RACE_ACTIVE');const active=(await state(a)).can_answer?a:b;await submit(active);await all('RACE_FINISHED');}
   else{

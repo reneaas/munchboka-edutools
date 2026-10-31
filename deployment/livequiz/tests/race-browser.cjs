@@ -28,7 +28,7 @@ const assert=require('node:assert/strict');
   await host.goto(base+'/?host='+created.room);await host.locator('.pin').waitFor();
   assert.equal(await host.getByLabel('Spilltype',{exact:true}).inputValue(),'regular');await host.getByLabel('Spilltype',{exact:true}).selectOption('race');assert.equal(await host.getByLabel('Aktiver lynrunde',{exact:true}).isVisible(),false);
   if(mode==='teams'){await host.getByLabel('Tilfeldige lag',{exact:true}).check();await host.getByLabel('Maks antall spillere per lag').fill('2');}
-  await host.getByRole('button',{name:'Lagre spillmodus'}).click();await host.getByRole('button',{name:mode==='teams'?'Fordel lag og start':'Start Quiz Race',exact:true}).waitFor();
+  await host.locator('.mode-settings[data-save-state="saved"]').waitFor();await host.getByRole('button',{name:mode==='teams'?'Fordel lag og start':'Start Quiz Race',exact:true}).waitFor();
   for(const [i,p] of [a,b].entries()){await p.goto(base+'/?pin='+created.pin);await p.getByLabel('Kallenavn').fill('Elev '+i);await p.getByRole('button',{name:'Bli med',exact:true}).click();await wait(p,'LOBBY');}
   await host.getByRole('button',{name:mode==='teams'?'Fordel lag og start':'Start Quiz Race',exact:true}).click();
   if(mode==='teams'){await wait(host,'TEAM_OVERVIEW');await host.getByRole('button',{name:'Start Quiz Race',exact:true}).click();}

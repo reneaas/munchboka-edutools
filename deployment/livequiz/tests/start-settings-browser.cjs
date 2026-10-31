@@ -8,6 +8,14 @@ const assert=require('node:assert/strict');
  // Separate participant sessions avoid the existing two-second join rate limit.
  for(let i=0;i<2;i++){const player=await browser.newPage();await player.goto(base+'/?pin='+room.pin);await player.getByLabel('Kallenavn').fill('P'+i);await player.getByRole('button',{name:'Bli med',exact:true}).click();await player.locator('#app[data-state="LOBBY"]').waitFor();}
  await p.goto(base+'/?host='+room.room);await p.locator('.mode-settings').waitFor();
+ // A slower save must not replace selections made while its request is pending.
+ let releaseSave;const held=new Promise(resolve=>releaseSave=resolve);
+ await p.route('**/*api=control',async route=>{if(route.request().postDataJSON().command==='configure')await held;await route.continue();});
+ const saving=p.waitForRequest(r=>r.url().includes('api=control')&&r.postDataJSON().command==='configure');
+ await p.getByLabel('Spilltype',{exact:true}).selectOption('race');await saving;
+ await p.getByLabel('Spilltype',{exact:true}).selectOption('regular');await p.getByLabel('Tilfeldige lag',{exact:true}).check();
+ releaseSave();await p.locator('.mode-settings[data-save-state="saved"]').waitFor();await p.unroute('**/*api=control');
+ await p.reload();await p.locator('.mode-settings').waitFor();assert.equal(await p.getByLabel('Spilltype',{exact:true}).inputValue(),'regular');assert.equal(await p.getByLabel('Tilfeldige lag',{exact:true}).isChecked(),true);
  for(const [game,mode] of [['race','individual'],['regular','teams'],['race','teams'],['regular','individual']]){
   await p.getByLabel('Spilltype',{exact:true}).selectOption(game);await p.getByLabel(mode==='teams'?'Tilfeldige lag':'Individuelt spill',{exact:true}).check();
   if(mode==='teams')await p.getByLabel('Maks antall spillere per lag').fill('2');
@@ -20,10 +28,11 @@ const assert=require('node:assert/strict');
  }
  // Invalid visible fields must block Start without sending a mutation.
  await p.getByLabel('Tilfeldige lag',{exact:true}).check();await p.getByLabel('Maks antall spillere per lag').fill('1');
- await p.getByRole('button',{name:'Start første spørsmål',exact:true}).click();assert.equal(await p.locator('#app').getAttribute('data-state'),'LOBBY');assert.match(await p.locator('#notice').textContent(),/Kontroller spillinnstillingene/);
- // Explicit Save also updates the version before Start is available again.
+ await p.getByRole('button',{name:'Fordel lag og start',exact:true}).click();assert.equal(await p.locator('#app').getAttribute('data-state'),'LOBBY');assert.match(await p.locator('#notice').textContent(),/Kontroller spillinnstillingene/);
+ assert.equal(await p.getByRole('button',{name:'Lagre spillmodus',exact:true}).count(),0);
+ // Autosave persists mode changes without a save button.
  await p.getByLabel('Maks antall spillere per lag').fill('2');await p.getByLabel('Spilltype',{exact:true}).selectOption('race');
- await p.getByRole('button',{name:'Lagre spillmodus',exact:true}).click();await p.getByRole('button',{name:'Fordel lag og start',exact:true}).click();await p.locator('#app[data-state="TEAM_OVERVIEW"]').waitFor();
- assert.deepEqual(errors,[]);console.log('Direct Start passed for regular/race and individual/team modes, replay mode changes, Lightning settings, invalid fields and explicit save followed immediately by start.');
+ await p.locator('.mode-settings[data-save-state="saved"]').waitFor();await p.reload();await p.locator('.mode-settings').waitFor();assert.equal(await p.getByLabel('Spilltype',{exact:true}).inputValue(),'race');assert.equal(await p.getByLabel('Tilfeldige lag',{exact:true}).isChecked(),true);await p.getByRole('button',{name:'Fordel lag og start',exact:true}).click();await p.locator('#app[data-state="TEAM_OVERVIEW"]').waitFor();
+ assert.deepEqual(errors,[]);console.log('Direct Start passed for regular/race and individual/team modes, replay mode changes, Lightning settings, invalid fields and automatic save followed immediately by start.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

@@ -24,13 +24,13 @@ const assert=require('node:assert/strict');
   await t.getByLabel('Maks antall spillere per lag').fill('2.5');
   assert.equal(await t.getByLabel('Maks antall spillere per lag').evaluate(e=>e.checkValidity()),false);
   await t.getByLabel('Maks antall spillere per lag').fill('4');
-  await t.getByRole('button',{name:'Lagre spillmodus',exact:true}).click();
+  await t.locator('.mode-settings[data-save-state="saved"]').waitFor();
   await t.getByRole('button',{name:'Fordel lag og start',exact:true}).waitFor();
   for(const [i,page] of students.entries()){await page.goto(base+'/?pin='+created.body.pin);await page.getByLabel('Kallenavn').fill('Elev '+i);await page.getByRole('button',{name:'Bli med',exact:true}).click();await wait(page,'LOBBY');}
   await t.getByRole('button',{name:'Fordel lag og start',exact:true}).click();
   await t.getByText(/5 deltakere kan ikke fordeles/).waitFor();
   assert.equal((await state(t)).state,'LOBBY');
-  await t.getByLabel('Maks antall spillere per lag').fill('3');await t.getByRole('button',{name:'Lagre spillmodus',exact:true}).click();
+  await t.getByLabel('Maks antall spillere per lag').fill('3');await t.locator('.mode-settings[data-save-state="saved"]').waitFor();
   await t.waitForFunction(()=>document.querySelector('#notice').hidden&&document.querySelector('.mode-settings input[type=number]').value==='3');
   // Wait for the saved server version rather than relying on a render timing race.
   await t.waitForFunction(async()=>{const id=new URLSearchParams(location.search).get('host');return (await(await fetch('index.php?api=state&host=1&room='+id)).json()).max_team_size===3;});

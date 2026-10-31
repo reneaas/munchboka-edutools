@@ -13,7 +13,7 @@ const assert=require('node:assert/strict');
   await host.goto(base+'/?host='+room.room);await host.getByLabel('Spilltype',{exact:true}).selectOption('race');
   if(mode==='teams'){await host.getByLabel('Tilfeldige lag',{exact:true}).check();await host.getByLabel('Maks antall spillere per lag').fill('2');}
   for(const [i,p] of [a,b].entries()){await p.goto(base+'/?pin='+room.pin);await p.getByLabel('Kallenavn').fill('P'+i);await p.getByRole('button',{name:'Bli med',exact:true}).click();await wait(p,'LOBBY');}
-  await host.getByRole('button',{name:'Start første spørsmål',exact:true}).click();
+  await host.getByRole('button',{name:mode==='teams'?'Fordel lag og start':'Start Quiz Race',exact:true}).click();
   if(mode==='teams'){await wait(host,'TEAM_OVERVIEW');await host.getByRole('button',{name:'Start Quiz Race',exact:true}).click();}
   await Promise.all(pages.map(p=>wait(p,'RACE_ACTIVE')));
   const frozen=await state(host),pattern='**/index.php?api=state*';

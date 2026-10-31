@@ -386,11 +386,14 @@
     }
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
+    let modeSaveTimer=null, modeSavePromise=null, modeRevision=0;
     const music=host?window.quizMusic():null;
     const control=(command, extra={})=>async()=>{
+      if(command==='next')music?.unlock();
+      clearTimeout(modeSaveTimer);
+      if(modeSavePromise)await modeSavePromise;
       if(command==='next'&&state.state==='LOBBY'&&modeDirty)extra={...extra,settings:readModeSettings()};
       if(controlling)return;controlling=true;
-      if(command==='next')music?.unlock();
       try{const reply=await api('control',{room:id,run:state.run,version:state.version,command,...extra});if(command==='configure'||command==='next')modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
       finally{controlling=false;requestPoll();}
     };
@@ -411,9 +414,9 @@
       const lightningLabel=el('label','Aktiver lynrunde'),lightningToggle=el('input');lightningToggle.type='checkbox';lightningToggle.checked=s.lightning?.enabled||false;lightningLabel.prepend(lightningToggle);
       const lightningDuration=field('Varighet på lynrunde (sekunder)',s.lightning?.seconds||60,()=>{modeDirty=true;},'number'),durationInput=lightningDuration.querySelector('input');durationInput.min=5;durationInput.max=600;durationInput.step=1;durationInput.required=true;
       const showLightningDuration=()=>{const race=gameSelect.value!=='regular';lightningLabel.hidden=race;lightningToggle.disabled=race;lightningDuration.hidden=race||!lightningToggle.checked;durationInput.disabled=race||!lightningToggle.checked;};showLightningDuration();lightningToggle.onchange=()=>{modeDirty=true;showLightningDuration();};
-      const saveMode=el('button','Lagre spillmodus');saveMode.type='submit';
-      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere venter i lobbyen til neste spill etter lagfordelingen.','hint'),saveMode);
-      const rules=el('p','','hint');form.insertBefore(rules,saveMode);
+      const saveStatus=el('p','Innstillingene lagres automatisk.','hint mode-save-status');saveStatus.setAttribute('role','status');
+      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere venter i lobbyen til neste spill etter lagfordelingen.','hint'),saveStatus);
+      const rules=el('p','','hint');form.insertBefore(rules,saveStatus);
       const updateRules=()=>{
         const quizlet=gameSelect.value==='quizlet',racing=gameSelect.value!=='regular';
         if(quizlet)selected='teams';
@@ -421,7 +424,7 @@
         input.max=quizlet?Math.max(2,s.quizlet_max_team_size||2):60;
         if(quizlet&&Number(input.value)>Number(input.max))input.value=input.max;
         maximum.hidden=selected!=='teams';input.disabled=selected!=='teams';
-        showLightningDuration();for(const hint of form.querySelectorAll('p.hint'))hint.hidden=racing;
+        showLightningDuration();for(const hint of form.querySelectorAll('p.hint:not(.mode-save-status)'))hint.hidden=racing;
         rules.hidden=!racing;
         rules.textContent=quizlet?'Quizlet-like: Laget ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Den som har riktig svar, sender det inn. Feil svar nullstiller lagets fremdrift. Første lag gjennom alle spørsmål vinner. Ved flere riktige svar må alle sendes inn før laget går videre. På tekstspørsmål kan alle skrive, og første riktige svar tar laget videre. På valgspørsmål får hvert medlem minst ett alternativ. Nye deltakere venter til neste spill.':'Svar riktig på alle spørsmål uten feil. Feil svar starter et nytt forsøk. I lag spiller dere på tur; første spiller byttes etter hvert mislykkede forsøk. Første deltaker eller lag i mål vinner. Ingen poeng eller tidsfrist.';
       };
@@ -431,7 +434,33 @@
         if(!form.reportValidity())throw new Error('Kontroller spillinnstillingene før du starter.');
         return {game:gameSelect.value,mode:selected,max_team_size:selected==='teams'?Number(input.value):s.max_team_size||3,lightning:{enabled:lightningToggle.checked,seconds:durationInput.disabled?(s.lightning?.seconds||60):Number(durationInput.value)}};
       };
-      form.onsubmit=async event=>{event.preventDefault();saveMode.disabled=true;clearError();try{await control('configure',readModeSettings())();}catch(e){error(e);}finally{saveMode.disabled=false;}};
+      const saveAutomatically=async()=>{
+        if(!form.isConnected||state.state!=='LOBBY'||!modeDirty)return;
+        if(modeSavePromise||controlling){modeSaveTimer=setTimeout(saveAutomatically,150);return;}
+        if(!form.checkValidity()){saveStatus.textContent='Kontroller spillinnstillingene.';form.dataset.saveState='invalid';return;}
+        const revision=modeRevision;
+        saveStatus.textContent='Lagrer …';form.dataset.saveState='saving';clearError();
+        modeSavePromise=(async()=>{
+          try{
+            const settings=readModeSettings();
+            const reply=await api('control',{room:id,run:state.run,version:state.version,command:'configure',...settings});
+            if(revision===modeRevision)modeDirty=false;
+            if(reply.state){render(reply.state);renderResults(reply.state);}
+            saveStatus.textContent=modeDirty?'Lagrer …':'Lagret';form.dataset.saveState=modeDirty?'saving':'saved';
+          }catch(e){saveStatus.textContent='Kunne ikke lagre. Endre innstillingen for å prøve igjen, eller start spillet.';form.dataset.saveState='error';error(e);}
+        })();
+        await modeSavePromise;modeSavePromise=null;requestPoll();
+        if(modeDirty&&revision!==modeRevision)modeSaveTimer=setTimeout(saveAutomatically,0);
+      };
+      const scheduleSave=()=>{
+        modeDirty=true;modeRevision++;clearTimeout(modeSaveTimer);
+        saveStatus.textContent='Lagrer …';form.dataset.saveState='saving';
+        const start=controls.querySelector('[data-start-game]');
+        if(start)start.textContent=selected==='teams'?'Fordel lag og start':gameSelect.value==='race'?'Start Quiz Race':'Start første spørsmål';
+        modeSaveTimer=setTimeout(saveAutomatically,300);
+      };
+      form.addEventListener('input',scheduleSave);form.addEventListener('change',scheduleSave);
+      form.onsubmit=event=>{event.preventDefault();clearTimeout(modeSaveTimer);void saveAutomatically();};
       return form;
     }
     const myTeamName=s=>s.teams?.find(team=>team.id===s.my_team)?.name||`Lag ${s.my_team}`;
@@ -550,6 +579,8 @@
       if(host&&s.waiting_count)meta.textContent+=` · ${s.waiting_count} venter på neste spill`;
       if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
       const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}:${(s.confirmed||[]).join(',')}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
+      // Keep in-progress lobby edits and focus intact while autosave updates the version.
+      if(host&&s.state==='LOBBY'&&stage.querySelector('.mode-settings')&&(modeDirty||modeSavePromise)){rendered=renderKey;updateClock();return;}
       if(rendered===renderKey){if(host&&s.state==='RACE_ACTIVE')overlay.querySelector('.race-board').replaceWith(raceBoard(s));if(['LEADERBOARD','LIGHTNING_FINISHED'].includes(s.state))overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=renderKey;closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
       if(host&&['QUIZ_FINISHED','RACE_FINISHED','LIGHTNING_FINISHED'].includes(s.state))controls.append(button('Spill igjen med samme spillere',control('restart'),'secondary'));
@@ -612,6 +643,7 @@
           showAnswer(s,order);
         }
       }
+      if(host&&s.state==='LOBBY'){const start=[...controls.querySelectorAll('button')].find(b=>/^(Start|Fordel lag)/.test(b.textContent));if(start)start.dataset.startGame='';}
       if(music)controls.append(music.controls);
       updateClock();
     }

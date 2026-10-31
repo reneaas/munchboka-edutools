@@ -321,8 +321,10 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
 ## Randomized team play
 
 In the host lobby, select **Individuelt spill** (default) or **Tilfeldige lag**,
-set **Maks antall spillere per lag** (default 3, integer 2–60), then click
-**Lagre spillmodus**, or start directly to save and apply the selected settings. Individual rooms follow
+and set **Maks antall spillere per lag** (default 3, integer 2–60). Game type,
+individual/team mode, team size and lightning settings save automatically after a
+short pause. A status message confirms saving; Start also applies any pending
+valid changes. Individual rooms follow
 exactly the existing question/results/leaderboard/countdown flow.
 
 For team rooms, **Fordel lag og start** locks the room and reads the current lobby
@@ -555,7 +557,8 @@ display (read-only, same highlighting). Code is never executed, only displayed.
 Lobby start regression checks: `php tests/start-settings.php` and
 `node tests/start-settings-browser.cjs` (fixture port 8794) cover direct starts
 with edited settings, all game/team combinations, invalid fields, replay changes,
-and explicit save immediately followed by Start. Control responses return the
+autosave persistence after reload, changes during a pending save,
+and automatic save immediately followed by Start. Control responses return the
 current authoritative state so Start does not depend on a later polling update.
 
 `php tests/race-finish.php` and `node tests/race-finish-browser.cjs` (fixture port

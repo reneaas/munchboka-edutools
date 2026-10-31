@@ -23,7 +23,7 @@ const assert=require('node:assert/strict');
   assert.equal(await host.getByLabel('Individuelt spill',{exact:true}).isDisabled(),true);
   assert.equal(await host.getByLabel('Maks antall spillere per lag').getAttribute('max'),'60');
   for(const [i,p] of players.entries()){await p.goto(base+'/?pin='+room.pin);await p.getByLabel('Kallenavn').fill('Member '+i);await p.getByRole('button',{name:'Bli med',exact:true}).click();await wait(p,'LOBBY');}
-  await host.getByRole('button',{name:'Start første spørsmål',exact:true}).click();await wait(host,'TEAM_OVERVIEW');
+  await host.getByRole('button',{name:'Fordel lag og start',exact:true}).click();await wait(host,'TEAM_OVERVIEW');
   await host.getByRole('button',{name:'Start Quizlet-like',exact:true}).click();await Promise.all(players.map(p=>wait(p,'RACE_ACTIVE')));
   await host.locator('.race-board progress').waitFor();assert.equal(await host.locator('.race-board progress').count(),1);
   const notice='Alle på laget kan skrive. Første riktige svar tar laget videre. Feil svar nullstiller laget.';

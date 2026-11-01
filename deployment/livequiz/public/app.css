@@ -323,9 +323,8 @@ nav{align-items:center;flex-wrap:wrap}
 .sorting-editor-row>label{flex:1;min-width:0}
 @media(max-width:600px){.sorting-list li{gap:6px;padding:8px}}
 
-.sorting-list li{cursor:grab}
-.sorting-handle{touch-action:none;cursor:grab;min-width:36px;min-height:44px;padding:6px;font-size:24px;user-select:none}
-.sorting-handle:disabled{cursor:default}
+.sorting-list li{touch-action:none;cursor:grab;min-height:52px;user-select:none}
+.sorting-list li[aria-disabled=true]{cursor:default}
 .sorting-list .sorting-dragging{opacity:.35}
 .sorting-list .sorting-drop-before{box-shadow:0 -4px 0 var(--accent)}
 .sorting-list .sorting-drop-after{box-shadow:0 4px 0 var(--accent)}

@@ -497,7 +497,7 @@
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
       if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&['single','multi'].includes(state.question.type)&&(state.confirmed||[]).length===state.question.options.length);
-      overlay?.querySelectorAll('[data-sort-control]').forEach(b=>b.disabled=!!submit?.disabled);
+      overlay?.querySelectorAll('.sorting-list li').forEach(row=>row.setAttribute('aria-disabled',String(!!submit?.disabled)));
     }
     setInterval(updateClock,250);
     let overlay=null;
@@ -557,12 +557,12 @@
       if(s.question.type==='text')form.append(field('Ditt svar',selection,value=>selection=value));
       else if(s.question.type==='sort'){
         selection=s.answer?[...s.answer]:[...order];
-        form.append(el('p','Sorter alternativene fra øverst til nederst. Dra alternativene med håndtaket. Trykk Send svar når rekkefølgen er riktig.','hint'));
+        form.append(el('p','Sorter alternativene fra øverst til nederst. Dra alternativene til riktig plass. Trykk Send svar når rekkefølgen er riktig.','hint'));
         const list=el('ol',undefined,'sorting-list');list.setAttribute('aria-label','Din rekkefølge');
         const renderOrder=()=>{
           list.replaceChildren();
           selection.forEach((original,position)=>{
-            const row=el('li');row.dataset.option=String(original);const handle=el('button','⠿','sorting-handle secondary');handle.type='button';handle.dataset.sortControl='';handle.disabled=!!s.submitted;handle.setAttribute('aria-label','Dra alternativ '+(position+1)+' for å flytte');handle.setAttribute('tabindex','-1');row.append(handle,el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
+            const row=el('li');row.dataset.option=String(original);row.tabIndex=-1;row.setAttribute('aria-disabled',String(!!s.submitted));row.append(el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
             list.append(row);
           });
         };
@@ -574,7 +574,7 @@
           list.querySelectorAll('.sorting-drop-before,.sorting-drop-after').forEach(row=>row.classList.remove('sorting-drop-before','sorting-drop-after'));
           if(list.hasPointerCapture(current.pointer))list.releasePointerCapture(current.pointer);
           if(commit&&current.ghost&&canDrag()&&current.inside){
-            const remaining=selection.filter(i=>i!==current.original);remaining.splice(current.target,0,current.original);selection=remaining;renderOrder();list.children[current.target].querySelector('.sorting-handle').focus({preventScroll:true});
+            const remaining=selection.filter(i=>i!==current.original);remaining.splice(current.target,0,current.original);selection=remaining;renderOrder();list.children[current.target].focus({preventScroll:true});
           }
         };
         const placeDrag=()=>{
@@ -597,9 +597,7 @@
         list.addEventListener('pointerdown',event=>{
           const row=event.target.closest('li');
           if(!row||drag||!event.isPrimary||event.button!==0||!canDrag())return;
-          // A dedicated touch handle leaves the answer text available for normal scrolling.
-          if(event.pointerType!=='mouse'&&!event.target.closest('.sorting-handle'))return;
-          event.preventDefault();row.querySelector('.sorting-handle').focus({preventScroll:true});const bounds=row.getBoundingClientRect();
+          event.preventDefault();row.focus({preventScroll:true});const bounds=row.getBoundingClientRect();
           let scroller=list.parentElement;
           while(scroller.parentElement&&!(scroller.scrollHeight>scroller.clientHeight&&/auto|scroll/.test(getComputedStyle(scroller).overflowY)))scroller=scroller.parentElement;
           drag={row,original:Number(row.dataset.option),pointer:event.pointerId,x:event.clientX,y:event.clientY,startY:event.clientY,offset:event.clientY-bounds.top,scroller};
@@ -640,17 +638,17 @@
       submit=el('button','Send svar');submit.type='submit';ack=el('p',s.game==='quizlet'&&s.confirmed?.length?'Riktig! Svaret er registrert. Laget må sende inn resten av de riktige svarene.':s.submitted?'Svaret er mottatt. Vent på læreren.':'','hint');ack.setAttribute('role','status');form.append(submit,ack);
       const acknowledgement=ack,submitButton=submit;
       form.onsubmit=async event=>{
-        event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=true);
+        event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input').forEach(input=>input.disabled=true);
         try{
           const lightning=s.state==='LIGHTNING_ACTIVE',race=s.state==='RACE_ACTIVE';
           const reply=await api(race?'race-answer':lightning?'lightning-answer':'answer',{room:id,run:s.run,index:s.index,answer:selection,...(race?{attempt:s.race.attempt,race_revision:s.race.revision}:{})},{},token);
           if(lightning||race){lastPoll=Date.now();online=true;render(reply.state);renderResults(reply.state);}
           else {if(state.run===s.run&&state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
         }
-        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=input.dataset.confirmed==='true');}
+        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=input.dataset.confirmed==='true');}
         finally{submitting=false;updateClock();requestPoll();}
       };
-      if(s.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=true);
+      if(s.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=true);
       return form;
     }
     function render(s){
@@ -662,7 +660,7 @@
       if(['race','quizlet'].includes(s.game))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(s.game==='quizlet'?'Quizlet-like':'Quiz Race');
       if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
       if(host&&s.waiting_count)meta.textContent+=` · ${s.waiting_count} venter på neste spill`;
-      if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input,[data-sort-control]').forEach(input=>input.disabled=true);}
+      if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
       const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}:${(s.confirmed||[]).join(',')}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
       // Keep in-progress lobby edits and focus intact while autosave updates the version.
       if(host&&s.state==='LOBBY'&&stage.querySelector('.mode-settings')&&(modeDirty||modeSavePromise)){rendered=renderKey;updateClock();return;}

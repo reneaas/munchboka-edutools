@@ -22,22 +22,23 @@ const assert=require('node:assert/strict');
  await host.getByRole('button',{name:'Start spill',exact:true}).click();await host.locator('.pin').waitFor();const pin=await host.locator('.pin').textContent();
  await player.goto(base+'/?pin='+pin);await player.getByLabel('Kallenavn').fill('Sorter');await player.getByRole('button',{name:'Bli med',exact:true}).click();await player.locator('#app[data-state="LOBBY"]').waitFor();
  await host.getByRole('button',{name:'Start første spørsmål',exact:true}).click();await player.locator('.sorting-list').waitFor();
+ assert.equal(await player.locator('.sorting-handle').count(),0);
  const labels=()=>player.locator('.sorting-list .rich').allTextContents();
  // Mouse dragging moves a whole alternative and keeps its underlying answer index.
  await player.setViewportSize({width:1920,height:1080});
- const before=await labels(),first=await player.locator('.sorting-handle').first().boundingBox(),last=await player.locator('.sorting-list li').last().boundingBox();
+ const before=await labels(),first=await player.locator('.sorting-list li').first().boundingBox(),last=await player.locator('.sorting-list li').last().boundingBox();
  await player.mouse.move(first.x+first.width/2,first.y+first.height/2);await player.mouse.down();await player.mouse.move(last.x+last.width/2,last.y+last.height-8,{steps:12});
  await player.locator('.sorting-ghost').waitFor();const ghost=await player.locator('.sorting-ghost').boundingBox();const source=await player.locator('.sorting-list li').first().boundingBox();assert.ok(Math.abs(ghost.width-source.width)<2,'drag preview preserves width on zoomed desktop');await player.screenshot({path:'/tmp/livequiz-sorting-drag.png'});await player.mouse.up();
  assert.deepEqual(await labels(),[...before.slice(1),before[0]]);assert.equal(await player.locator('.sorting-ghost').count(),0);
  await player.setViewportSize({width:390,height:844});
- // Native touch events exercise the same pointer path and touch-action handle.
- const cdp=await player.context().newCDPSession(player),touchStart=await player.locator('.sorting-handle').last().boundingBox(),touchEnd=await player.locator('.sorting-list li').first().boundingBox();
+ // Native touch events exercise the same pointer path and touch-action on the whole card.
+ const cdp=await player.context().newCDPSession(player),touchStart=await player.locator('.sorting-list li').last().boundingBox(),touchEnd=await player.locator('.sorting-list li').first().boundingBox();
  const x=touchStart.x+touchStart.width/2,y=touchStart.y+touchStart.height/2;
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
  for(let step=1;step<=10;step++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y+(touchEnd.y+8-y)*step/10}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.deepEqual(await labels(),before);
  // Cancelling a drag leaves the answer unchanged.
- const cancel=await player.locator('.sorting-handle').first().boundingBox();
+ const cancel=await player.locator('.sorting-list li').first().boundingBox();
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:cancel.x+10,y:cancel.y+10}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:cancel.x+10,y:cancel.y+70}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});assert.deepEqual(await labels(),before);assert.equal(await player.locator('.sorting-ghost').count(),0);
@@ -45,13 +46,13 @@ const assert=require('node:assert/strict');
  for(const [position,value] of ['En','To','Tre'].entries()){
   let index=(await labels()).indexOf(value);
   if(index>position){
-   const from=await player.locator('.sorting-handle').nth(index).boundingBox(),to=await player.locator('.sorting-list li').nth(position).boundingBox();
+   const from=await player.locator('.sorting-list li').nth(index).boundingBox(),to=await player.locator('.sorting-list li').nth(position).boundingBox();
    await player.mouse.move(from.x+from.width/2,from.y+from.height/2);await player.mouse.down();await player.mouse.move(to.x+to.width/2,to.y+5,{steps:10});await player.mouse.up();
   }
  }
  assert.deepEqual(await labels(),['En','To','Tre']);
  assert.equal(await player.getByRole('button',{name:/Flytt alternativ/}).count(),0);
- const ordered=await labels();await player.locator('.sorting-handle').first().focus();await player.keyboard.press('ArrowDown');assert.deepEqual(await labels(),ordered);
+ const ordered=await labels();await player.locator('.sorting-list li').first().focus();await player.keyboard.press('ArrowDown');assert.deepEqual(await labels(),ordered);
  assert.equal(await player.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await player.screenshot({path:'/tmp/livequiz-sorting-mobile.png'});
  await player.getByRole('button',{name:'Send svar',exact:true}).click();await player.getByRole('heading',{name:'Fasit',exact:true}).waitFor();

@@ -557,20 +557,80 @@
       if(s.question.type==='text')form.append(field('Ditt svar',selection,value=>selection=value));
       else if(s.question.type==='sort'){
         selection=s.answer?[...s.answer]:[...order];
-        form.append(el('p','Sorter alternativene fra øverst til nederst. Bruk pilene, og trykk Send svar når rekkefølgen er riktig.','hint'));
+        form.append(el('p','Sorter alternativene fra øverst til nederst. Dra alternativene med håndtaket eller bruk pilene. Trykk Send svar når rekkefølgen er riktig.','hint'));
         const list=el('ol',undefined,'sorting-list');list.setAttribute('aria-label','Din rekkefølge');
         const renderOrder=()=>{
           list.replaceChildren();
           selection.forEach((original,position)=>{
-            const row=el('li');row.append(el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
+            const row=el('li');row.dataset.option=String(original);const handle=el('button','⠿','sorting-handle secondary');handle.type='button';handle.dataset.sortControl='';handle.disabled=!!s.submitted;handle.setAttribute('aria-label','Dra alternativ '+(position+1)+' for å flytte');handle.setAttribute('tabindex','-1');row.append(handle,el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
             const moves=el('div',undefined,'sorting-controls');
             for(const [delta,label] of [[-1,'opp'],[1,'ned']]){
               const b=el('button',delta<0?'↑':'↓','secondary');b.type='button';b.dataset.sortControl='';b.dataset.boundary=String(position+delta<0||position+delta>=selection.length);b.disabled=s.submitted||b.dataset.boundary==='true';b.setAttribute('aria-label','Flytt alternativ '+(position+1)+' '+label);
-              b.onclick=()=>{if(b.disabled||submitting||state.submitted)return;const target=position+delta;[selection[position],selection[target]]=[selection[target],selection[position]];renderOrder();const buttons=list.children[target].querySelectorAll('button');(buttons[delta<0?0:1].disabled?buttons[delta<0?1:0]:buttons[delta<0?0:1]).focus();};moves.append(b);
+              b.onclick=()=>{if(b.disabled||submitting||state.submitted)return;const target=position+delta;[selection[position],selection[target]]=[selection[target],selection[position]];renderOrder();const buttons=list.children[target].querySelectorAll('.sorting-controls button');(buttons[delta<0?0:1].disabled?buttons[delta<0?1:0]:buttons[delta<0?0:1]).focus();};moves.append(b);
             }
             row.append(moves);list.append(row);
           });
-        };renderOrder();form.append(list);
+        };
+        let drag=null,dragFrame=null;
+        const canDrag=()=>list.isConnected&&!submitting&&!state.submitted&&submit&&!submit.disabled;
+        const finishDrag=commit=>{
+          if(!drag)return;
+          const current=drag;drag=null;cancelAnimationFrame(dragFrame);current.ghost?.remove();current.row.classList.remove('sorting-dragging');
+          list.querySelectorAll('.sorting-drop-before,.sorting-drop-after').forEach(row=>row.classList.remove('sorting-drop-before','sorting-drop-after'));
+          if(list.hasPointerCapture(current.pointer))list.releasePointerCapture(current.pointer);
+          if(commit&&current.ghost&&canDrag()&&current.inside){
+            const remaining=selection.filter(i=>i!==current.original);remaining.splice(current.target,0,current.original);selection=remaining;renderOrder();list.children[current.target].querySelector('.sorting-handle').focus({preventScroll:true});
+          }
+        };
+        const placeDrag=()=>{
+          if(!drag?.ghost)return;
+          const bounds=list.getBoundingClientRect();drag.inside=drag.x>=bounds.left-24&&drag.x<=bounds.right+24&&drag.y>=bounds.top-48&&drag.y<=bounds.bottom+48;
+          drag.ghost.style.top=(drag.y-drag.offset)+'px';
+          const rows=[...list.children].filter(row=>row!==drag.row);
+          drag.target=rows.filter(row=>{const r=row.getBoundingClientRect();return drag.y>r.top+r.height/2;}).length;
+          for(const row of list.children)row.classList.remove('sorting-drop-before','sorting-drop-after');
+          if(drag.inside){const target=rows[drag.target]||rows.at(-1);target?.classList.add(drag.target<rows.length?'sorting-drop-before':'sorting-drop-after');}
+        };
+        const scrollDrag=()=>{
+          if(!drag)return;
+          if(!canDrag()){finishDrag(false);return;}
+          const scroller=drag.scroller,box=scroller.getBoundingClientRect();
+          if(drag.y<box.top+48)scroller.scrollTop-=10;
+          else if(drag.y>box.bottom-48)scroller.scrollTop+=10;
+          placeDrag();dragFrame=requestAnimationFrame(scrollDrag);
+        };
+        list.addEventListener('pointerdown',event=>{
+          const row=event.target.closest('li');
+          if(!row||drag||!event.isPrimary||event.button!==0||!canDrag()||event.target.closest('.sorting-controls'))return;
+          // A dedicated touch handle leaves the answer text available for normal scrolling.
+          if(event.pointerType!=='mouse'&&!event.target.closest('.sorting-handle'))return;
+          event.preventDefault();row.querySelector('.sorting-handle').focus({preventScroll:true});const bounds=row.getBoundingClientRect();
+          let scroller=list.parentElement;
+          while(scroller.parentElement&&!(scroller.scrollHeight>scroller.clientHeight&&/auto|scroll/.test(getComputedStyle(scroller).overflowY)))scroller=scroller.parentElement;
+          drag={row,original:Number(row.dataset.option),pointer:event.pointerId,x:event.clientX,y:event.clientY,startY:event.clientY,offset:event.clientY-bounds.top,scroller};
+          list.setPointerCapture(event.pointerId);
+        });
+        list.addEventListener('pointermove',event=>{
+          if(!drag||event.pointerId!==drag.pointer)return;
+          if(!canDrag()){finishDrag(false);return;}
+          drag.x=event.clientX;drag.y=event.clientY;
+          if(!drag.ghost&&Math.abs(drag.y-drag.startY)>=5){
+            const bounds=drag.row.getBoundingClientRect();drag.ghost=drag.row.cloneNode(true);drag.ghost.className='sorting-ghost';drag.ghost.setAttribute('aria-hidden','true');drag.ghost.inert=true;
+            drag.ghost.style.width=bounds.width+'px';drag.ghost.style.left=bounds.left+'px';
+            // Keep the clone inside the modal's top layer and inherited theme.
+            list.closest('dialog').append(drag.ghost);drag.row.classList.add('sorting-dragging');
+            // Dialog zoom also applies to fixed children; compensate for its coordinate scale.
+            const zoom=Number.parseFloat(getComputedStyle(list.closest('dialog')).zoom)||1;
+            drag.ghost.style.zoom=String(1/zoom);
+            scrollDrag();
+          }
+          placeDrag();
+        });
+        list.addEventListener('pointerup',event=>{if(drag?.pointer===event.pointerId)finishDrag(true);});
+        list.addEventListener('pointercancel',()=>finishDrag(false));
+        list.addEventListener('lostpointercapture',()=>finishDrag(false));
+        list.addEventListener('keydown',event=>{if(event.key==='Escape'&&drag){event.preventDefault();finishDrag(false);}});
+        renderOrder();form.append(list);
       }
       else{
         const grid=el('div',undefined,'option-grid');

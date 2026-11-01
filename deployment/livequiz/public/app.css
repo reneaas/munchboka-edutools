@@ -316,7 +316,7 @@ nav{align-items:center;flex-wrap:wrap}
 /* Sorting uses a numbered vertical sequence in both questions and solutions. */
 .question-modal .option-grid.sorting-options{grid-template-columns:minmax(0,1fr);gap:8px}
 .question-modal .sorting-options .option-card{min-height:52px;padding:14px 12px 14px 44px;text-align:left;justify-content:flex-start}
-.sorting-list{list-style:none;padding:6px;margin:0;display:grid;gap:8px}
+.sorting-list{position:relative;list-style:none;padding:6px;margin:0;display:grid;gap:8px}
 .sorting-list li{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
 .sorting-list .rich{flex:1;min-width:0;overflow-wrap:anywhere}
 .sorting-editor-row{display:flex;align-items:center;gap:12px}
@@ -325,8 +325,14 @@ nav{align-items:center;flex-wrap:wrap}
 
 .sorting-list li{touch-action:none;cursor:grab;min-height:52px;user-select:none}
 .sorting-list li[aria-disabled=true]{cursor:default}
-.sorting-list .sorting-dragging{opacity:.35}
-.sorting-list .sorting-drop-before{box-shadow:0 -4px 0 var(--accent)}
-.sorting-list .sorting-drop-after{box-shadow:0 4px 0 var(--accent)}
-.sorting-ghost{position:fixed;z-index:10;display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--accent);border-radius:8px;background:var(--paper);color:var(--ink);box-shadow:0 8px 24px #0004;pointer-events:none;list-style:none;cursor:grabbing}
+.sorting-list .sorting-placeholder{justify-content:center;border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);font-weight:750;text-align:center}
+.sorting-list .sorting-drop-invalid{opacity:.5}
+.sorting-list .sorting-placed{outline:3px solid var(--accent);outline-offset:2px;background:color-mix(in srgb,var(--accent) 14%,var(--surface));animation:sorting-land .3s ease-out}
+@keyframes sorting-land{from{transform:scale(1.025)}to{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.sorting-list .sorting-placed{animation:none}}
+.sorting-ghost{opacity:.85;transform:translateX(12px);position:fixed;z-index:10;display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--accent);border-radius:8px;background:var(--paper);color:var(--ink);box-shadow:0 8px 24px #0004;pointer-events:none;list-style:none;cursor:grabbing}
 .sorting-ghost .rich{flex:1;min-width:0}
+
+@media(prefers-reduced-motion:reduce){.sorting-ghost{transform:none}}
+
+.sorting-drag-label{position:absolute;right:10px;bottom:calc(100% + 6px);padding:5px 12px;border-radius:6px;background:var(--accent);color:var(--button-ink);font-size:14px;font-weight:750;white-space:nowrap;box-shadow:0 2px 6px #0002}

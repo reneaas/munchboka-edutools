@@ -568,23 +568,43 @@
         };
         let drag=null,dragFrame=null;
         const canDrag=()=>list.isConnected&&!submitting&&!state.submitted&&submit&&!submit.disabled;
+        const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
         const finishDrag=commit=>{
           if(!drag)return;
-          const current=drag;drag=null;cancelAnimationFrame(dragFrame);current.ghost?.remove();current.row.classList.remove('sorting-dragging');
-          list.querySelectorAll('.sorting-drop-before,.sorting-drop-after').forEach(row=>row.classList.remove('sorting-drop-before','sorting-drop-after'));
+          const current=drag;drag=null;cancelAnimationFrame(dragFrame);current.ghost?.remove();
           if(list.hasPointerCapture(current.pointer))list.releasePointerCapture(current.pointer);
-          if(commit&&current.ghost&&canDrag()&&current.inside){
-            const remaining=selection.filter(i=>i!==current.original);remaining.splice(current.target,0,current.original);selection=remaining;renderOrder();list.children[current.target].focus({preventScroll:true});
+          const accepted=commit&&current.ghost&&canDrag()&&current.inside;
+          if(accepted){
+            const remaining=selection.filter(i=>i!==current.original);remaining.splice(current.target,0,current.original);selection=remaining;
+          }
+          if(current.ghost){
+            renderOrder();const placed=list.children[selection.indexOf(current.original)];placed.focus({preventScroll:true});
+            if(accepted){placed.classList.add('sorting-placed');setTimeout(()=>placed.classList.remove('sorting-placed'),600);}
           }
         };
         const placeDrag=()=>{
           if(!drag?.ghost)return;
-          const bounds=list.getBoundingClientRect();drag.inside=drag.x>=bounds.left-24&&drag.x<=bounds.right+24&&drag.y>=bounds.top-48&&drag.y<=bounds.bottom+48;
+          const bounds=list.getBoundingClientRect(),scale=bounds.width/list.offsetWidth;
+          drag.inside=drag.x>=bounds.left-24&&drag.x<=bounds.right+24&&drag.y>=bounds.top-48&&drag.y<=bounds.bottom+48;
           drag.ghost.style.top=(drag.y-drag.offset)+'px';
           const rows=[...list.children].filter(row=>row!==drag.row);
-          drag.target=rows.filter(row=>{const r=row.getBoundingClientRect();return drag.y>r.top+r.height/2;}).length;
-          for(const row of list.children)row.classList.remove('sorting-drop-before','sorting-drop-after');
-          if(drag.inside){const target=rows[drag.target]||rows.at(-1);target?.classList.add(drag.target<rows.length?'sorting-drop-before':'sorting-drop-after');}
+          // Use layout positions, not animated transforms, to keep the target stable.
+          const target=rows.filter(row=>drag.y>bounds.top+(row.offsetTop+row.offsetHeight/2)*scale).length;
+          drag.row.classList.toggle('sorting-drop-invalid',!drag.inside);
+          if(!drag.inside){drag.row.textContent='Flytt tilbake til listen';drag.ghost.querySelector('.sorting-drag-label').textContent='Flytt tilbake til listen';return;}
+          drag.row.textContent='Slipp her · plass '+(target+1);
+          drag.ghost.querySelector('.sorting-drag-label').textContent='Slipp på plass '+(target+1);
+          drag.ghost.querySelector('.option-badge').textContent=String(target+1);
+          if(target===drag.target)return;
+          drag.target=target;
+          const before=new Map(rows.map(row=>[row,row.getBoundingClientRect().top]));
+          list.insertBefore(drag.row,rows[target]||null);
+          [...list.children].forEach((row,index)=>{const badge=row.querySelector('.option-badge');if(badge)badge.textContent=String(index+1);});
+          for(const row of rows){
+            row.getAnimations().forEach(animation=>animation.cancel());
+            const delta=(before.get(row)-row.getBoundingClientRect().top)/scale;
+            if(delta&&!reducedMotion())row.animate([{transform:`translateY(${delta}px)`},{transform:'translateY(0)'}],{duration:180,easing:'ease-out'});
+          }
         };
         const scrollDrag=()=>{
           if(!drag)return;
@@ -609,9 +629,11 @@
           drag.x=event.clientX;drag.y=event.clientY;
           if(!drag.ghost&&Math.abs(drag.y-drag.startY)>=5){
             const bounds=drag.row.getBoundingClientRect();drag.ghost=drag.row.cloneNode(true);drag.ghost.className='sorting-ghost';drag.ghost.setAttribute('aria-hidden','true');drag.ghost.inert=true;
+            drag.ghost.append(el('span','','sorting-drag-label'));
             drag.ghost.style.width=bounds.width+'px';drag.ghost.style.left=bounds.left+'px';
             // Keep the clone inside the modal's top layer and inherited theme.
-            list.closest('dialog').append(drag.ghost);drag.row.classList.add('sorting-dragging');
+            list.closest('dialog').append(drag.ghost);
+            drag.row.style.height=drag.row.offsetHeight+'px';drag.row.classList.add('sorting-placeholder');drag.row.setAttribute('aria-hidden','true');drag.row.replaceChildren();
             // Dialog zoom also applies to fixed children; compensate for its coordinate scale.
             const zoom=Number.parseFloat(getComputedStyle(list.closest('dialog')).zoom)||1;
             drag.ghost.style.zoom=String(1/zoom);

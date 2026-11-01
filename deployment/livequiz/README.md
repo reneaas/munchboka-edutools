@@ -735,7 +735,9 @@ Typed-answer validation: `php deployment/livequiz/tests/quizlet-text.php` covers
 Select **Sorter alternativene** under **Svartype**. Add 2–6 alternatives and use
 **Flytt alternativ … opp/ned** to set their correct order from top to bottom.
 Participants see a shuffled, numbered list and can drag alternatives into place
-by dragging anywhere on a card with a mouse or touch. A drop marker shows the destination, and long
+by dragging anywhere on a card with a mouse or touch. A numbered drop placeholder opens at the destination while surrounding cards
+slide aside. A brief highlight confirms placement; reduced-motion preferences
+disable movement animations. Long
 lists scroll while dragging near the edge. Participant ordering uses drag-and-drop
 only. Choose **Send svar** to submit the order. The complete order must match; there is
 no partial credit. Fixed/speed scoring follows the normal quiz rules.

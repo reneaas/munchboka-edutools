@@ -47,7 +47,7 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
     if (!is_bool($data['private'] ?? false)) throw new DomainException('Ugyldig synlighet.');
     $out = ['private' => $data['private'] ?? false, 'title' => $title, 'scoring' => $scoring, 'questions' => []];
     foreach ($questions as $q) {
-        if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text'], true)) throw new DomainException('Ugyldig spørsmålstype.');
+        if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text', 'sort'], true)) throw new DomainException('Ugyldig spørsmålstype.');
         $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => lq_code($q['code'] ?? ''),
             'youtube' => lq_youtube(jp_text($q['youtube'] ?? '', 500)), 'image' => null];
         $seconds = $q['seconds'] ?? 30;
@@ -70,7 +70,10 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
             if (!is_array($opts) || !array_is_list($opts) || count($opts) < 2 || count($opts) > 6 || !is_array($correct) || !array_is_list($correct) || !$correct) throw new DomainException('Legg til 2–6 alternativer og marker fasit.');
             foreach ($opts as $v) { $v = jp_text($v, 1000); if ($v === '') throw new DomainException('Svaralternativer kan ikke være tomme.'); $c['options'][] = $v; }
             foreach ($correct as $v) if (!is_int($v) || $v < 0 || $v >= count($opts)) throw new DomainException('Ugyldig fasit.');
-            $c['correct'] = array_values(array_unique($correct)); sort($c['correct']);
+            $c['correct'] = array_values(array_unique($correct));
+            if ($c['type'] === 'sort') {
+                if (count($correct) !== count($opts) || count($c['correct']) !== count($opts)) throw new DomainException('Sorter alle alternativene nøyaktig én gang.');
+            } else sort($c['correct']);
             if ($c['type'] === 'single' && count($c['correct']) !== 1) throw new DomainException('Velg nøyaktig ett riktig alternativ.');
         }
         $out['questions'][] = $c;
@@ -304,6 +307,10 @@ function lq_grade(array $q, mixed $answer): array {
     }
     if (!is_array($answer) || !array_is_list($answer) || !$answer || count($answer) > 6) throw new DomainException('Velg et svar.');
     foreach ($answer as $v) if (!is_int($v) || $v < 0 || $v >= count($q['options'])) throw new DomainException('Ugyldig svaralternativ.');
+    if ($q['type'] === 'sort') {
+        if (count($answer) !== count($q['options']) || count(array_unique($answer)) !== count($answer)) throw new DomainException('Sorter alle alternativene nøyaktig én gang.');
+        return [$answer, $answer === $q['correct'] ? 1000 : 0];
+    }
     $answer = array_values(array_unique($answer)); sort($answer);
     if ($q['type'] === 'single' && count($answer) !== 1) throw new DomainException('Velg ett alternativ.');
     return [$answer, $answer === $q['correct'] ? 1000 : 0];
@@ -402,7 +409,7 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
         foreach ($rows as $row) {
             $submitted = json_decode($row['answer'], true, 8, JSON_THROW_ON_ERROR);
             if (lq_grade($cq, $submitted)[1] > 0) $correct++;
-            if ($cq['type'] === 'text') continue;
+            if (in_array($cq['type'], ['text', 'sort'], true)) continue;
             foreach ($submitted as $i) if (isset($counts[$i])) $counts[$i]++;
         }
         $state['distribution'] = ['counts' => $counts, 'correct' => $correct, 'answered' => count($rows)];

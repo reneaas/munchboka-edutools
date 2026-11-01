@@ -273,7 +273,7 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
   Open `/?login=1`; students can join a session without accounts.
 - Quiz library, creation, editing, explicit online saves and revision conflict
   checks. One to fifty questions, two to six choices, 5–600 second answer windows.
-- One correct choice, multiple correct choices (exact set), or typed accepted
+- One correct choice, multiple correct choices (exact set), sorting alternatives (exact order), or typed accepted
   answers (lowercase, all whitespace removed, and comma/dot decimal separators
   treated equally for numeric answers; no algebraic equivalence or tolerance).
 - Text, safe LaTeX via existing local KaTeX assets, literal code blocks, uploaded
@@ -728,3 +728,24 @@ The server returns only the requesting member's choices, maps local indices back
 Validation: `php deployment/livequiz/tests/quizlet-multi.php`, `tests/quizlet-browser.cjs` and `tests/quizlet-multi-browser.cjs` cover allocation, hidden choices, progress/reset, stale requests, media access, late joining, replay, team-only setup, mobile selection and Enter submission.
 
 Typed-answer validation: `php deployment/livequiz/tests/quizlet-text.php` covers mixed and text-only quizzes, resets, shared progression, normalization, media access and stale submissions; `tests/quizlet-text-browser.cjs` exercises all teammates’ inputs, Enter submission, refresh and replay.
+
+
+## Sorting alternatives
+
+Select **Sorter alternativene** under **Svartype**. Add 2–6 alternatives and use
+**Flytt alternativ … opp/ned** to set their correct order from top to bottom.
+Participants see a shuffled, numbered list and use the same accessible move
+buttons before choosing **Send svar**. The complete order must match; there is
+no partial credit. Fixed/speed scoring follows the normal quiz rules.
+
+Sorting works in regular individual/team games, lightning rounds, Quiz Race,
+and Quizlet-like mode. In Quizlet-like mode each teammate receives the full list;
+the first accepted correct ordering advances the team, and a wrong ordering
+resets it. Sorting questions do not limit team size by their number of items.
+Solutions show the correct numbered order, and host statistics count complete
+correct/incorrect submissions rather than selections of individual alternatives.
+
+Validation: `php tests/sorting.php` covers exact-order validation and scoring,
+solution secrecy, persisted answers, regular/race/Quizlet/lightning integration,
+and stale submissions. `node tests/sorting-browser.cjs` covers editor ordering,
+save/reload, mobile keyboard controls, submission and results.

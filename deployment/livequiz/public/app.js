@@ -42,22 +42,23 @@
     return order;
   }
   function optionCards(q, order, revealed) {
-    const grid = el('div', undefined, 'option-grid');
+    const grid = el('div', undefined, 'option-grid'+(q.type==='sort'?' sorting-options':''));
+    if(q.type==='sort'&&revealed)order=q.correct;
     order.forEach((orig, pos) => {
       const card = el('div', undefined, 'option-card' + (revealed ? (q.correct.includes(orig) ? ' correct' : ' wrong') : ''));
       card.append(el('span', String(pos + 1), 'option-badge'), rich(q.options[orig]));
-      if (revealed && q.correct.includes(orig)) card.append(el('span', 'Riktig svar', 'correct-label'));
+      if (revealed && q.type!=='sort' && q.correct.includes(orig)) card.append(el('span', 'Riktig svar', 'correct-label'));
       grid.append(card);
     });
     return grid;
   }
   function answerChart(s, order) {
-    const q = s.question, d = s.distribution || {counts: [], correct: 0, answered: 0}, wrap = el('div'), text = q.type === 'text';
+    const q = s.question, d = s.distribution || {counts: [], correct: 0, answered: 0}, wrap = el('div'), text = ['text','sort'].includes(q.type);
     const rows = text
       ? [{label: 'Riktig', count: d.correct, ok: true}, {label: 'Feil', count: d.answered - d.correct}, {label: 'Ikke svart', count: Math.max(0, s.players - d.answered)}]
       : order.map((orig, pos) => ({label: q.options[orig], badge: pos + 1, count: d.counts[orig] || 0, ok: q.correct.includes(orig)}));
     const base = Math.max(1, text ? s.players : d.answered), chart = el('div', undefined, 'chart');
-    if (text) wrap.append(el('p', 'Riktig svar: ' + q.accepted.join(' · '), 'hint'));
+    if (q.type==='text') wrap.append(el('p', 'Riktig svar: ' + q.accepted.join(' · '), 'hint'));
     for (const r of rows) {
       const row = el('div', undefined, 'chart-row' + (r.ok ? ' correct' : '')), label = el('div', undefined, 'chart-label');
       if (r.badge) label.append(el('span', String(r.badge), 'option-badge'), rich(r.label)); else label.append(el('span', r.label));
@@ -253,7 +254,7 @@
     let index=0;
     for(let i=0;i<quiz.questions.length;i++){const option=el('option','Spørsmål '+(i+1));option.value=String(i);jump.append(option);}jumpLabel.append(jump);
     const answers=el('div',undefined,'preview-answers');
-    function renderAnswers(){const q=quiz.questions[index];answers.replaceChildren(q.type==='text'?el('p',reveal.checked?'Godkjente svar: '+q.accepted.join(' · '):'Deltakerne skriver inn svaret.','qcard-note'):optionCards(q,q.options.map((_,i)=>i),reveal.checked));}
+    function renderAnswers(){const q=quiz.questions[index];answers.replaceChildren(q.type==='text'?el('p',reveal.checked?'Godkjente svar: '+q.accepted.join(' · '):'Deltakerne skriver inn svaret.','qcard-note'):optionCards(q,q.type==='sort'?optionOrder(q.options.length,'preview:'+index):q.options.map((_,i)=>i),reveal.checked));}
     function render(){
       const q={...quiz.questions[index]},media=el('div',undefined,'question-media'),title=el('h2','Spørsmål '+(index+1)+' av '+quiz.questions.length,'modal-title');
       title.id='quiz-preview-title';header.replaceChildren(title);dialog.setAttribute('aria-labelledby',title.id);
@@ -346,8 +347,8 @@
         const ordering=group(positionLabel,move);ordering.classList.add('question-order');card.append(ordering);
 
         const typeLabel = el('label','Svartype'), select = el('select');
-        for (const [value,label] of [['single','Ett riktig alternativ'],['multi','Flere riktige alternativer'],['text','Skriv svaret']]) { const o = el('option',label); o.value=value; select.append(o); }
-        select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; changed(); renderQuestions();}; typeLabel.append(select);
+        for (const [value,label] of [['single','Ett riktig alternativ'],['multi','Flere riktige alternativer'],['text','Skriv svaret'],['sort','Sorter alternativene']]) { const o = el('option',label); o.value=value; select.append(o); }
+        select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; if(q.type==='sort'){while(q.options.length<2)q.options.push('');q.correct=q.options.map((_,i)=>i);} changed(); renderQuestions();}; typeLabel.append(select);
         const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
         card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
@@ -355,6 +356,17 @@
         imageLabel.append(upload);card.append(imageLabel);
         if(q.image)card.append(button('Fjern bilde',()=>{q.image=null;changed();renderQuestions();},'quiet'));
         if(q.type==='text') card.append(field('Godkjente svar – ett per linje',q.accepted.join('\n'),v=>{q.accepted=v.split('\n').filter(x=>x.trim());changed();},'textarea'),el('p','Store/små bokstaver og alle mellomrom ignoreres. Desimaltall godtas med både komma og punktum (0,25 = 0.25). Ingen algebraisk eller numerisk tilnærming.','hint'));
+        else if(q.type==='sort'){
+          card.append(el('p','Legg alternativene i riktig rekkefølge, fra øverst til nederst. Deltakerne får dem i tilfeldig rekkefølge. Hele rekkefølgen må være riktig.','hint'));
+          q.correct.forEach((original,position)=>{
+            const row=el('div',undefined,'sorting-editor-row');
+            const move=delta=>{const other=position+delta;[q.correct[position],q.correct[other]]=[q.correct[other],q.correct[position]];changed();renderQuestions();const row=list.children[index].querySelectorAll('.sorting-editor-row')[other];const buttons=row.querySelectorAll('button');(buttons[delta<0?0:1].disabled?buttons[delta<0?1:0]:buttons[delta<0?0:1]).focus();};
+            const up=button('↑',()=>move(-1),'secondary'),down=button('↓',()=>move(1),'secondary');
+            up.setAttribute('aria-label','Flytt alternativ '+(position+1)+' opp');down.setAttribute('aria-label','Flytt alternativ '+(position+1)+' ned');up.disabled=position===0;down.disabled=position===q.correct.length-1;
+            row.append(field('Plass '+(position+1),q.options[original],v=>{q.options[original]=v;changed();}),group(up,down));card.append(row);
+          });
+          card.append(group(button('＋ Alternativ',()=>{if(q.options.length<6){q.correct.push(q.options.length);q.options.push('');changed();renderQuestions();}},'quiet'),button('Fjern siste alternativ',()=>{if(q.options.length>2){const removed=q.correct.pop();q.options.splice(removed,1);q.correct=q.correct.map(i=>i>removed?i-1:i);changed();renderQuestions();}},'quiet')));
+        }
         else {
           card.append(el('p','Marker riktig(e) alternativ(er). Flere riktige krever hele det riktige settet.','hint'));
           q.options.forEach((value,i)=>{
@@ -484,7 +496,8 @@
       const txt=racing?`${state.progress??0} / ${state.total} riktige`:active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
-      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&state.question.type!=='text'&&(state.confirmed||[]).length===state.question.options.length);
+      if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&['single','multi'].includes(state.question.type)&&(state.confirmed||[]).length===state.question.options.length);
+      overlay?.querySelectorAll('[data-sort-control]').forEach(b=>b.disabled=!!submit?.disabled||b.dataset.boundary==='true');
     }
     setInterval(updateClock,250);
     let overlay=null;
@@ -528,7 +541,7 @@
       if(q.image||(host&&q.youtube))body.classList.add('media-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='RACE_ACTIVE'?`${s.game==='quizlet'?'Quizlet-like':'Quiz Race'} · Forsøk ${s.race.attempt+1}`:s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:true,autoplay:s.state==='QUESTION_ACTIVE'},header);
-      if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p',q.type==='text'?'Alle på laget kan skrive. Første riktige svar tar laget videre. Feil svar nullstiller laget.':'Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
+      if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p',['text','sort'].includes(q.type)?'Alle på laget kan svare. Første riktige svar tar laget videre. Feil svar nullstiller laget.':'Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
       if(!host&&['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)){
         if(q.type==='multi'){
           const notice=el('p',s.game==='quizlet'?'Flere riktige svar – samarbeid! Alle riktige svar må sendes inn av dem som har dem.':'Flere riktige svar – velg alle som passer.','multiple-answer-notice multiple-answer-warning');
@@ -542,6 +555,23 @@
     function answerForm(s,order){
       const form=el('form',undefined,'question-answer-form');selection=s.answer??(s.question.type==='text'?'':[]);
       if(s.question.type==='text')form.append(field('Ditt svar',selection,value=>selection=value));
+      else if(s.question.type==='sort'){
+        selection=s.answer?[...s.answer]:[...order];
+        form.append(el('p','Sorter alternativene fra øverst til nederst. Bruk pilene, og trykk Send svar når rekkefølgen er riktig.','hint'));
+        const list=el('ol',undefined,'sorting-list');list.setAttribute('aria-label','Din rekkefølge');
+        const renderOrder=()=>{
+          list.replaceChildren();
+          selection.forEach((original,position)=>{
+            const row=el('li');row.append(el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
+            const moves=el('div',undefined,'sorting-controls');
+            for(const [delta,label] of [[-1,'opp'],[1,'ned']]){
+              const b=el('button',delta<0?'↑':'↓','secondary');b.type='button';b.dataset.sortControl='';b.dataset.boundary=String(position+delta<0||position+delta>=selection.length);b.disabled=s.submitted||b.dataset.boundary==='true';b.setAttribute('aria-label','Flytt alternativ '+(position+1)+' '+label);
+              b.onclick=()=>{if(b.disabled||submitting||state.submitted)return;const target=position+delta;[selection[position],selection[target]]=[selection[target],selection[position]];renderOrder();const buttons=list.children[target].querySelectorAll('button');(buttons[delta<0?0:1].disabled?buttons[delta<0?1:0]:buttons[delta<0?0:1]).focus();};moves.append(b);
+            }
+            row.append(moves);list.append(row);
+          });
+        };renderOrder();form.append(list);
+      }
       else{
         const grid=el('div',undefined,'option-grid');
         order.forEach((original,position)=>{
@@ -555,17 +585,17 @@
       submit=el('button','Send svar');submit.type='submit';ack=el('p',s.game==='quizlet'&&s.confirmed?.length?'Riktig! Svaret er registrert. Laget må sende inn resten av de riktige svarene.':s.submitted?'Svaret er mottatt. Vent på læreren.':'','hint');ack.setAttribute('role','status');form.append(submit,ack);
       const acknowledgement=ack,submitButton=submit;
       form.onsubmit=async event=>{
-        event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input').forEach(input=>input.disabled=true);
+        event.preventDefault();if(submitButton.disabled)return;submitButton.disabled=true;submitting=true;clearError();form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=true);
         try{
           const lightning=s.state==='LIGHTNING_ACTIVE',race=s.state==='RACE_ACTIVE';
           const reply=await api(race?'race-answer':lightning?'lightning-answer':'answer',{room:id,run:s.run,index:s.index,answer:selection,...(race?{attempt:s.race.attempt,race_revision:s.race.revision}:{})},{},token);
           if(lightning||race){lastPoll=Date.now();online=true;render(reply.state);renderResults(reply.state);}
           else {if(state.run===s.run&&state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
         }
-        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=input.dataset.confirmed==='true');}
+        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=input.dataset.confirmed==='true'||input.dataset.boundary==='true');}
         finally{submitting=false;updateClock();requestPoll();}
       };
-      if(s.submitted)form.querySelectorAll('input').forEach(input=>input.disabled=true);
+      if(s.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=true);
       return form;
     }
     function render(s){
@@ -577,7 +607,7 @@
       if(['race','quizlet'].includes(s.game))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(s.game==='quizlet'?'Quizlet-like':'Quiz Race');
       if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
       if(host&&s.waiting_count)meta.textContent+=` · ${s.waiting_count} venter på neste spill`;
-      if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input').forEach(input=>input.disabled=true);}
+      if(ack&&s.submitted){ack.textContent='Svaret er mottatt. Vent på læreren.';overlay?.querySelectorAll('form input,[data-sort-control]').forEach(input=>input.disabled=true);}
       const renderKey=s.state==='RACE_ACTIVE'?(host?`race:${s.run}:host`:`race:${s.run}:${s.race.revision}:${(s.confirmed||[]).join(',')}`):String(s.version)+(s.state==='LIGHTNING_ACTIVE'?':'+(s.progress??'host'):'');
       // Keep in-progress lobby edits and focus intact while autosave updates the version.
       if(host&&s.state==='LOBBY'&&stage.querySelector('.mode-settings')&&(modeDirty||modeSavePromise)){rendered=renderKey;updateClock();return;}

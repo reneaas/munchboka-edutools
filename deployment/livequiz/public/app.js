@@ -497,7 +497,7 @@
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
       if(submit)submit.disabled=submitting||!active||!online||Date.now()-lastPoll>5000||left<=0||state.submitted||(racing&&!state.can_answer)||(state.game==='quizlet'&&state.question&&['single','multi'].includes(state.question.type)&&(state.confirmed||[]).length===state.question.options.length);
-      overlay?.querySelectorAll('[data-sort-control]').forEach(b=>b.disabled=!!submit?.disabled||b.dataset.boundary==='true');
+      overlay?.querySelectorAll('[data-sort-control]').forEach(b=>b.disabled=!!submit?.disabled);
     }
     setInterval(updateClock,250);
     let overlay=null;
@@ -557,18 +557,13 @@
       if(s.question.type==='text')form.append(field('Ditt svar',selection,value=>selection=value));
       else if(s.question.type==='sort'){
         selection=s.answer?[...s.answer]:[...order];
-        form.append(el('p','Sorter alternativene fra øverst til nederst. Dra alternativene med håndtaket eller bruk pilene. Trykk Send svar når rekkefølgen er riktig.','hint'));
+        form.append(el('p','Sorter alternativene fra øverst til nederst. Dra alternativene med håndtaket. Trykk Send svar når rekkefølgen er riktig.','hint'));
         const list=el('ol',undefined,'sorting-list');list.setAttribute('aria-label','Din rekkefølge');
         const renderOrder=()=>{
           list.replaceChildren();
           selection.forEach((original,position)=>{
             const row=el('li');row.dataset.option=String(original);const handle=el('button','⠿','sorting-handle secondary');handle.type='button';handle.dataset.sortControl='';handle.disabled=!!s.submitted;handle.setAttribute('aria-label','Dra alternativ '+(position+1)+' for å flytte');handle.setAttribute('tabindex','-1');row.append(handle,el('span',String(position+1),'option-badge'),rich(s.question.options[original]));
-            const moves=el('div',undefined,'sorting-controls');
-            for(const [delta,label] of [[-1,'opp'],[1,'ned']]){
-              const b=el('button',delta<0?'↑':'↓','secondary');b.type='button';b.dataset.sortControl='';b.dataset.boundary=String(position+delta<0||position+delta>=selection.length);b.disabled=s.submitted||b.dataset.boundary==='true';b.setAttribute('aria-label','Flytt alternativ '+(position+1)+' '+label);
-              b.onclick=()=>{if(b.disabled||submitting||state.submitted)return;const target=position+delta;[selection[position],selection[target]]=[selection[target],selection[position]];renderOrder();const buttons=list.children[target].querySelectorAll('.sorting-controls button');(buttons[delta<0?0:1].disabled?buttons[delta<0?1:0]:buttons[delta<0?0:1]).focus();};moves.append(b);
-            }
-            row.append(moves);list.append(row);
+            list.append(row);
           });
         };
         let drag=null,dragFrame=null;
@@ -601,7 +596,7 @@
         };
         list.addEventListener('pointerdown',event=>{
           const row=event.target.closest('li');
-          if(!row||drag||!event.isPrimary||event.button!==0||!canDrag()||event.target.closest('.sorting-controls'))return;
+          if(!row||drag||!event.isPrimary||event.button!==0||!canDrag())return;
           // A dedicated touch handle leaves the answer text available for normal scrolling.
           if(event.pointerType!=='mouse'&&!event.target.closest('.sorting-handle'))return;
           event.preventDefault();row.querySelector('.sorting-handle').focus({preventScroll:true});const bounds=row.getBoundingClientRect();
@@ -652,7 +647,7 @@
           if(lightning||race){lastPoll=Date.now();online=true;render(reply.state);renderResults(reply.state);}
           else {if(state.run===s.run&&state.index===s.index)state.submitted=true;acknowledgement.textContent='Svaret er mottatt. Vent på læreren.';}
         }
-        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=input.dataset.confirmed==='true'||input.dataset.boundary==='true');}
+        catch(err){error(err);if(state.index===s.index&&!state.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=input.dataset.confirmed==='true');}
         finally{submitting=false;updateClock();requestPoll();}
       };
       if(s.submitted)form.querySelectorAll('input,[data-sort-control]').forEach(input=>input.disabled=true);

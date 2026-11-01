@@ -319,11 +319,9 @@ nav{align-items:center;flex-wrap:wrap}
 .sorting-list{list-style:none;padding:6px;margin:0;display:grid;gap:8px}
 .sorting-list li{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
 .sorting-list .rich{flex:1;min-width:0;overflow-wrap:anywhere}
-.sorting-controls{display:flex;gap:6px;flex-shrink:0}
-.sorting-controls button{min-width:44px;min-height:44px;padding:8px;font-size:20px}
 .sorting-editor-row{display:flex;align-items:center;gap:12px}
 .sorting-editor-row>label{flex:1;min-width:0}
-@media(max-width:600px){.sorting-list li{gap:6px;padding:8px}.sorting-controls{flex-direction:column}}
+@media(max-width:600px){.sorting-list li{gap:6px;padding:8px}}
 
 .sorting-list li{cursor:grab}
 .sorting-handle{touch-action:none;cursor:grab;min-width:36px;min-height:44px;padding:6px;font-size:24px;user-select:none}

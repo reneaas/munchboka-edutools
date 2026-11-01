@@ -736,8 +736,8 @@ Select **Sorter alternativene** under **Svartype**. Add 2–6 alternatives and u
 **Flytt alternativ … opp/ned** to set their correct order from top to bottom.
 Participants see a shuffled, numbered list and can drag alternatives into place
 with a mouse or the touch handles. A drop marker shows the destination, and long
-lists scroll while dragging near the edge. The move buttons remain available for
-keyboard access. Choose **Send svar** to submit the order. The complete order must match; there is
+lists scroll while dragging near the edge. Participant ordering uses drag-and-drop
+only. Choose **Send svar** to submit the order. The complete order must match; there is
 no partial credit. Fixed/speed scoring follows the normal quiz rules.
 
 Sorting works in regular individual/team games, lightning rounds, Quiz Race,
@@ -750,4 +750,4 @@ correct/incorrect submissions rather than selections of individual alternatives.
 Validation: `php tests/sorting.php` covers exact-order validation and scoring,
 solution secrecy, persisted answers, regular/race/Quizlet/lightning integration,
 and stale submissions. `node tests/sorting-browser.cjs` covers editor ordering,
-save/reload, mouse/touch dragging, cancellation, mobile keyboard controls, submission and results.
+save/reload, mouse/touch dragging, cancellation, drag-only participant ordering, submission and results.

@@ -44,16 +44,20 @@ const assert=require('node:assert/strict');
 
  for(const [position,value] of ['En','To','Tre'].entries()){
   let index=(await labels()).indexOf(value);
-  while(index>position){await player.getByRole('button',{name:'Flytt alternativ '+(index+1)+' opp',exact:true}).press('Enter');index--;}
+  if(index>position){
+   const from=await player.locator('.sorting-handle').nth(index).boundingBox(),to=await player.locator('.sorting-list li').nth(position).boundingBox();
+   await player.mouse.move(from.x+from.width/2,from.y+from.height/2);await player.mouse.down();await player.mouse.move(to.x+to.width/2,to.y+5,{steps:10});await player.mouse.up();
+  }
  }
  assert.deepEqual(await labels(),['En','To','Tre']);
- assert.equal(await player.getByRole('button',{name:'Flytt alternativ 1 opp',exact:true}).isDisabled(),true);
+ assert.equal(await player.getByRole('button',{name:/Flytt alternativ/}).count(),0);
+ const ordered=await labels();await player.locator('.sorting-handle').first().focus();await player.keyboard.press('ArrowDown');assert.deepEqual(await labels(),ordered);
  assert.equal(await player.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await player.screenshot({path:'/tmp/livequiz-sorting-mobile.png'});
  await player.getByRole('button',{name:'Send svar',exact:true}).click();await player.getByRole('heading',{name:'Fasit',exact:true}).waitFor();
  assert.deepEqual(await player.locator('.sorting-options .rich').allTextContents(),['En','To','Tre']);await player.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();
  await host.getByRole('heading',{name:'Fasit',exact:true}).waitFor();assert.equal(await host.locator('.chart-row').count(),3);
  await player.reload();await player.getByText('Du fikk 1000 poeng.',{exact:true}).waitFor();assert.deepEqual(await player.locator('.sorting-options .rich').allTextContents(),['En','To','Tre']);
- assert.deepEqual(errors,[]);console.log('Sorting browser passed: editing, reordering, saving, mouse/touch dragging, drag cancellation, mobile keyboard movement, grading, results and reload.');
+ assert.deepEqual(errors,[]);console.log('Sorting browser passed: editing, reordering, saving, mouse/touch dragging, drag cancellation, drag-only ordering, grading, results and reload.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

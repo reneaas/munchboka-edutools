@@ -218,7 +218,21 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
         }
         $qs = $content['questions']; $play = lq_play_settings($content);
-        if ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
+        if ($cmd === 'switch-quiz' && in_array($phase,['lobby','finished','race_done','light_done'],true)) {
+            lq_require_run($r,$input);
+            // Room media is authorized against the room owner; only that owner can
+            // replace its snapshot, and only with one of their own saved quizzes.
+            if (!$uid || $uid !== (int)$r['owner_id']) throw new DomainException('Bare eieren kan bytte quiz i denne lobbyen.');
+            $quiz=lq_quiz($db,$uid,lq_id($input['quiz'] ?? null));
+            $next=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
+            unset($next['_share'],$next['_host_hash'],$next['_race'],$next['_lightning'],$next['_waiting'],$next['_finished_at']);
+            $next['_run']=($content['_run'] ?? 0)+1;
+            $next['play']=lq_validate_play('individual',3);
+            $next['game']='regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
+            lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
+            lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($next,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
+            $phase='lobby';$index=-1;
+        } elseif ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
             unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
             $play['teams']=[];$content['play']=$play;
@@ -259,7 +273,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         elseif ($cmd === 'finish' && $phase !== 'finished') { $phase = 'finished'; }
         else throw new DomainException('Denne handlingen er ikke tilgjengelig nå.');
         lq_transition($db, $r, $phase, $index, $deadline);
-        return ['ok' => true, 'state'=>lq_state_payload($db,lq_room($db,$r['id']),null,true)];
+        return ['ok' => true, 'state'=>lq_state_payload($db,lq_room($db,$r['id']),null,true)+['can_switch_quiz'=>$uid>0&&$uid===(int)$r['owner_id']]];
     });
 }
 function lq_transition(PDO $db, array $room, string $phase, int $index, int $deadline): array {
@@ -357,7 +371,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host, st
     if ($host) lq_require_host($r, $uid, $hostToken);
     $p = $host ? null : lq_player($db, $room, $token);
     $r = lq_advance_locked($db, $r);
-    return lq_state_payload($db, $r, $p, $host);
+    return lq_state_payload($db, $r, $p, $host)+($host?['can_switch_quiz'=>$uid>0&&$uid===(int)$r['owner_id']]:[]);
     });
 }
 function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {

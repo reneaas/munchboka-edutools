@@ -406,9 +406,30 @@
       if(modeSavePromise)await modeSavePromise;
       if(command==='next'&&state.state==='LOBBY'&&modeDirty)extra={...extra,settings:readModeSettings()};
       if(controlling)return;controlling=true;
-      try{const reply=await api('control',{room:id,run:state.run,version:state.version,command,...extra});if(command==='configure'||command==='next')modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
+      try{const reply=await api('control',{room:id,run:state.run,version:state.version,command,...extra});if(['configure','next','switch-quiz'].includes(command))modeDirty=false;if(reply.state){render(reply.state);renderResults(reply.state);}}
       finally{controlling=false;requestPoll();}
     };
+    async function chooseNextQuiz(){
+      const run=state.run,data=await api('library');
+      const dialog=el('dialog',undefined,'organization-dialog'),title=el('h2','Bytt quiz, behold lobbyen'),form=el('form');
+      title.id='switch-quiz-title';dialog.setAttribute('aria-labelledby',title.id);
+      const label=el('label','Velg neste quiz'),select=el('select');select.required=true;select.setAttribute('aria-label','Velg neste quiz');
+      const placeholder=el('option','Velg en quiz …');placeholder.value='';select.append(placeholder);
+      const folders=new Map(data.folders.map(folder=>[folder.id,folder]));
+      for(const quiz of data.quizzes){const folder=folders.get(quiz.folder);const option=el('option',quiz.title+(folder?' — '+folder.name:''));option.value=quiz.id;select.append(option);}label.append(select);
+      const message=el('p','','modal-notice');message.setAttribute('role','alert');
+      const change=el('button','Bytt quiz');change.type='submit';change.disabled=!data.quizzes.length;
+      form.append(el('p','Spillerne og spillkoden beholdes. Alle kommer tilbake til lobbyen. Poeng, lag og spillinnstillinger nullstilles.'),label);
+      if(!data.quizzes.length)form.append(el('p','Du har ingen lagrede quizer å velge mellom.','hint'));
+      form.append(message,group(change,button('Avbryt',()=>dialog.close(),'secondary')));
+      form.onsubmit=async event=>{
+        event.preventDefault();change.disabled=true;message.textContent='';
+        try{if(controlling)throw new Error('Vent til forrige endring er ferdig.');await control('switch-quiz',{quiz:select.value,run})();dialog.close();}
+        catch(e){message.textContent=e.message;}
+        finally{change.disabled=!data.quizzes.length;}
+      };
+      dialog.append(title,form);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();select.focus();
+    }
     function modeSettings(s) {
       modeDirty=false;
       const gameLabel=el('label','Spilltype'),gameSelect=el('select');gameSelect.setAttribute('aria-label','Spilltype');
@@ -688,6 +709,7 @@
       if(host&&s.state==='LOBBY'&&stage.querySelector('.mode-settings')&&(modeDirty||modeSavePromise)){rendered=renderKey;updateClock();return;}
       if(rendered===renderKey){if(host&&s.state==='RACE_ACTIVE')overlay.querySelector('.race-board').replaceWith(raceBoard(s));if(['LEADERBOARD','LIGHTNING_FINISHED'].includes(s.state))overlay.querySelector('.leaderboard-entries').replaceChildren(leaderboardList(s.leaderboard||[]));updateClock();return;}rendered=renderKey;closePopup();stage.replaceChildren();stage.classList.remove('stage-flush');controls.replaceChildren();results.replaceChildren();submit=null;ack=null;hostClock=null;countdown=null;
       app.dataset.state=s.state;
+      if(host&&s.can_switch_quiz&&['LOBBY','QUIZ_FINISHED','RACE_FINISHED','LIGHTNING_FINISHED'].includes(s.state))controls.append(button('Bytt quiz, behold lobbyen',chooseNextQuiz,'secondary'));
       if(host&&['QUIZ_FINISHED','RACE_FINISHED','LIGHTNING_FINISHED'].includes(s.state))controls.append(button('Spill igjen med samme spillere',control('restart'),'secondary'));
       if(host&&s.state!=='QUIZ_FINISHED')controls.append(button('Avslutt spillet',control('finish'),'quiet'));
       if(s.state==='WAITING_LOBBY'){stage.append(el('h2','Du er i lobbyen'),el('p','Spillet er i gang eller avsluttet. Du blir med automatisk når læreren starter neste spill.'));}

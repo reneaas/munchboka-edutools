@@ -753,3 +753,25 @@ Validation: `php tests/sorting.php` covers exact-order validation and scoring,
 solution secrecy, persisted answers, regular/race/Quizlet/lightning integration,
 and stale submissions. `node tests/sorting-browser.cjs` covers editor ordering,
 save/reload, mouse/touch dragging, cancellation, drag-only participant ordering, submission and results.
+
+## Switch quiz while keeping the lobby
+
+The room owner can choose **Bytt quiz, behold lobbyen** in the lobby or on the
+finished-game screen, then select a saved quiz from their library. To switch
+mid-game, first use **Avslutt spillet**. The room URL, PIN, QR destination, player
+names and participant tokens stay unchanged; connected players automatically
+return to the lobby and can continue without joining again.
+
+The selected quiz is copied into a fresh room snapshot. Previous answers, scores,
+team assignments, waiting status and game-mode settings are reset. The next quiz
+starts as a regular individual game, with its saved scoring style; the host can
+change the settings before starting. Switching extends the room lifetime by six
+hours and increments the run ID so old submissions cannot affect the next quiz.
+Only the room owner can switch, and only to a quiz in their own library. Guest
+host links do not grant access to the owner's saved quizzes.
+
+Validation: `php tests/switch-quiz.php` covers allowed phases, ownership, missing
+quizzes, transactional failure, player/token/PIN retention, score reset, stale
+requests and new-quiz media access. `node tests/switch-quiz-browser.cjs` covers
+cancellation, switching from a finished game or lobby, connected participants,
+refresh and playing the next quiz.

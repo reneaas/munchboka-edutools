@@ -35,16 +35,18 @@ check(count(array_unique($nameDraws))>1,'team names are randomly selected even f
 $compositions=[];
 for($i=0;$i<10;$i++)$compositions[]=json_encode(lq_assign_teams(range(1,12),3));
 check(count(array_unique($compositions))>1,'different shuffles produce different compositions');
-check(lq_team_average([1000,0,500])===500.0,'team aggregation averages all members');
+check(lq_team_average([1000,0,500])===500,'team aggregation averages all members');
 check(lq_team_average([1000,1000,1000])===lq_team_average([1000,1000,1000,1000]),'three and four equally scoring members tie');
-check(lq_team_average([1000,0,0,0])===250.0,'nonresponders stay in denominator');
-check(lq_team_average([])===0.0,'empty teams have zero score');
-check(abs(lq_team_average([1000,1000,0])-2000/3)<0.000001,'fractional averages retain ranking precision');
+check(lq_team_average([1000,0,0,0])===250,'nonresponders stay in denominator');
+check(lq_team_average([])===0,'empty teams have zero score');
+check(lq_team_average([1000,1000,0])===667,'fractional averages round up to whole points');
+check(lq_team_average([1000,0,0])===333,'fractional averages round down to whole points');
+check(lq_team_average([1,0])===1,'half points round up');
 $normalized=lq_team_leaderboard([
  ['id'=>1,'members'=>[['id'=>'a'],['id'=>'b'],['id'=>'c']]],
  ['id'=>2,'members'=>[['id'=>'d'],['id'=>'e'],['id'=>'f'],['id'=>'g']]]
 ],array_map(fn($id)=>['id'=>$id,'score'=>in_array($id,['a','b','c'],true)?900:800],range('a','g')));
-check($normalized[0]['id']===1&&$normalized[0]['score']===900.0,'higher average wins despite lower team sum');
+check($normalized[0]['id']===1&&$normalized[0]['score']===900,'higher average wins despite lower team sum');
 $ties=lq_team_leaderboard([['id'=>2,'name'=>'Lag 2','members'=>[]],['id'=>1,'name'=>'Lag 1','members'=>[]]],[]);
 check(array_column($ties,'id')===[1,2],'ties use stable team number');
 
@@ -113,10 +115,10 @@ check($results['state']==='QUESTION_RESULTS' && $results['distribution']['counts
 check($results['distribution']['correct']===3 && $results['answers']===4,'individual correct and submission counts');
 rejects(fn()=>lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[1]],$tokens[4]),'disconnected player cannot submit late');
 $correctIds=[];foreach([0,1,3] as $i)$correctIds[]=lq_player($db,$ridTeam,$tokens[$i])['id'];
-foreach($results['leaderboard'] as $team)check(abs($team['score']-1000*count(array_intersect(array_column($team['members'],'id'),$correctIds))/count($team['members']))<0.000001,'team average matches individual scores');
+foreach($results['leaderboard'] as $team)check($team['score']===(int)round(1000*count(array_intersect(array_column($team['members'],'id'),$correctIds))/count($team['members'])),'team average matches individual scores');
 check((int)lq_query($db,'SELECT SUM(points) FROM lq_answers WHERE room_id=?',[$ridTeam])->fetchColumn()===3000,'no duplicate individual points');
 $teamScores=array_column($results['leaderboard'],'score','id');
-check(abs($teamScores[1]-2000/3)<0.000001 && $teamScores[2]===500.0,'teammates can disagree and each earns their own points');
+check($teamScores[1]===667 && $teamScores[2]===500,'teammates can disagree and each earns their own points');
 foreach([1000,1000,0,1000,0] as $i=>$expected)check((lq_state($db,$ridTeam,0,$tokens[$i],false)['points']??0)===$expected,'personal result independent of teammates');
 $controlTeam('leaderboard');check(lq_state($db,$ridTeam,0,$tokens[0],false)['leaderboard']===$results['leaderboard'],'participant and host see same leaderboard');
 $controlTeam('next');
@@ -132,7 +134,7 @@ foreach([2000,2000,1000,2000,1000] as $i=>$expected){
     check($total===$expected,'individual total accumulates independently across questions');
 }
 $teamScores=array_column($results['leaderboard'],'score','id');
-check(abs($teamScores[1]-5000/3)<0.000001 && $teamScores[2]===1500.0,'team cumulative score averages cumulative individual totals');
+check($teamScores[1]===1667 && $teamScores[2]===1500,'team cumulative score averages cumulative individual totals');
 $controlTeam('leaderboard');$controlTeam('next');
 $final=lq_state($db,$ridTeam,0,$tokens[0],false);
 check($final['state']==='QUIZ_FINISHED' && $final['teams']===$teams,'teams stable through entire lifecycle');

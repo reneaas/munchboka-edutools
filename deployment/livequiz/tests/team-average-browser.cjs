@@ -18,8 +18,8 @@ const assert=require('node:assert/strict');
  const correctNames=new Set(teams.flatMap(t=>t.members.slice(0,t.members.length-1).map(m=>m.nickname)));
  await host.getByRole('button',{name:'Start første spørsmål',exact:true}).click();
  for(const [i,p] of players.entries()){await p.locator('#app[data-state="QUESTION_ACTIVE"]').waitFor();await p.locator('.answer-option').filter({hasText:correctNames.has('P'+i)?'Correct':'Wrong'}).locator('input').check();await p.getByRole('button',{name:'Send svar',exact:true}).click();}
- await host.locator('#app[data-state="QUESTION_RESULTS"]').waitFor();const results=await state();assert.equal(results.leaderboard[0].members.length,4);assert.equal(results.leaderboard[0].score,750);assert.ok(Math.abs(results.leaderboard[1].score-2000/3)<1e-9);
- await host.getByRole('button',{name:'Vis leaderboard',exact:true}).click();await host.getByText('666,67 poeng',{exact:true}).waitFor();await host.getByText('750 poeng',{exact:true}).waitFor();await players[0].getByText('666,67 poeng',{exact:true}).waitFor();
- await host.reload();await host.getByText('666,67 poeng',{exact:true}).waitFor();console.log('Team averages passed: 3/4 member teams, exact server averages, ranking, localized fractional display, participant view and reload.');
+ await host.locator('#app[data-state="QUESTION_RESULTS"]').waitFor();const results=await state();assert.equal(results.leaderboard[0].members.length,4);assert.equal(results.leaderboard[0].score,750);assert.equal(results.leaderboard[1].score,667);
+ await host.getByRole('button',{name:'Vis leaderboard',exact:true}).click();await host.getByText('667 poeng',{exact:true}).waitFor();await host.getByText('750 poeng',{exact:true}).waitFor();await players[0].getByText('667 poeng',{exact:true}).waitFor();
+ await host.reload();await host.getByText('667 poeng',{exact:true}).waitFor();console.log('Team averages passed: 3/4 member teams, rounded server averages, ranking, whole-point display, participant view and reload.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

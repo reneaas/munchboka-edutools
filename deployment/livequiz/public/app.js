@@ -76,7 +76,7 @@
     rows.forEach((p, i) => {
       const li = el('li'), name = el('span', p.name || p.nickname, 'name');
       if (p.members) name.append(el('small', p.members.map(member => member.nickname).join(' · '), 'team-members'));
-      li.append(el('span', String(i + 1), 'rank'), name, el('strong', (p.members?new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).format(p.score):p.score) + ' poeng')); list.append(li);
+      li.append(el('span', String(i + 1), 'rank'), name, el('strong', (p.members?new Intl.NumberFormat('nb-NO',{maximumFractionDigits:0}).format(p.score):p.score) + ' poeng')); list.append(li);
     });
     return list;
   }

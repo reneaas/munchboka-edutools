@@ -47,10 +47,10 @@ function lq_assign_teams(array $players, int $maximum): array {
     foreach ($shuffled as $i => $player) $teams[$i % $k]['members'][] = $player;
     return $teams;
 }
-// Average all assigned members, including nonresponders. Keep full precision
-// for ranking; round only when presenting the score.
-function lq_team_average(array $memberScores): float {
-    return $memberScores ? array_sum($memberScores) / count($memberScores) : 0.0;
+// Average cumulative scores across all assigned members, including nonresponders,
+// then round once to whole points for both ranking and display.
+function lq_team_average(array $memberScores): int {
+    return $memberScores ? (int)round(array_sum($memberScores) / count($memberScores)) : 0;
 }
 function lq_team_leaderboard(array $teams, array $individuals): array {
     $scores = [];

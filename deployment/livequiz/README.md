@@ -361,8 +361,8 @@ it does not maintain a separate counter that retries could increment twice.
 Scores accumulate across questions. Ties use team number ascending for a stable
 order. All assigned members count in the average, including those who do not
 answer or disconnect; late arrivals waiting for the next game do not count.
-Equal average performance earns equal points regardless of team size. Ranking
-uses full precision; the UI displays up to two decimal places. Team identities, members and personal membership are consistent
+Equal average performance earns equal points regardless of team size. Cumulative averages are rounded once to the nearest whole point (halves round
+up), and both ranking and display use that integer score. Team identities, members and personal membership are consistent
 across polling and refreshes. Refresh existing tabs after deployment.
 
 Team-specific tests: `php tests/teams.php` (also runs `core.php`) and

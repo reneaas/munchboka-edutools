@@ -401,13 +401,15 @@
     const heading=el('h1','Henter spill …'),connection=el('p','Kobler til …','hint'),meta=el('p',undefined,'hint'),timer=el('p',undefined,'timer'),stage=el('section',undefined,'card stage'),controls=el('div',undefined,'actions'),results=el('section');
     app.replaceChildren(el('p',host?'LÆRERSKJERM':'DU ER MED','eyebrow'),heading,connection,meta,timer,stage,controls,results);timer.hidden=true;
     const joinCode=host?el('div',undefined,'host-join-code'):null,joinPin=host?el('strong','','host-join-pin'):null;
+    const joinQr=host?el('img',undefined,'qr'):null;
     const lobbyCount=host?el('div',undefined,'lobby-player-count'):null;
     const lobbyCountValue=host?el('strong','0'):null,lobbyCountLabel=host?el('span','deltakere har blitt med'):null;
     if(lobbyCount){lobbyCount.setAttribute('role','status');lobbyCount.setAttribute('aria-atomic','true');lobbyCount.append(lobbyCountValue,lobbyCountLabel);}
     if(joinCode){
       const website=link('quiz.munchboka.no','https://quiz.munchboka.no/');website.className='host-join-site';website.target='_blank';website.rel='noopener';
       const address=el('div'),code=el('div');address.append(el('span','Gå til ','host-join-label'),website);code.append(el('span','Spillkode ','host-join-label'),joinPin);
-      joinCode.append(address,code);timer.before(joinCode);
+      const codeGroup=el('div',undefined,'host-join-code-group');joinQr.alt='QR-kode for å bli med i spillet';codeGroup.append(code,joinQr);
+      joinCode.append(address,codeGroup);timer.before(joinCode);
     }
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
@@ -756,7 +758,7 @@
       if(state&&s.version===state.version&&s.state==='LIGHTNING_ACTIVE'&&(s.progress??0)<(state.progress??0))return;
       if(state&&s.version===state.version&&!['LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(s.state)&&state.submitted)s.submitted=true;
       if(lobbyCount){const count=String(s.players),label=s.players===1?'deltaker har blitt med':'deltakere har blitt med';if(lobbyCountValue.textContent!==count)lobbyCountValue.textContent=count;if(lobbyCountLabel.textContent!==label)lobbyCountLabel.textContent=label;}
-      state=s;if(joinPin)joinPin.textContent=s.pin;heading.textContent=s.title;meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
+      state=s;if(joinPin&&joinPin.textContent!==s.pin){joinPin.textContent=s.pin;const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);const qr=qrcode(0,'M');qr.addData(url.href);qr.make();joinQr.src=qr.createDataURL(6,24);}heading.textContent=s.title;meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+`${s.players} deltakere · ${s.answers} svar`+(s.index>=0&&!host?` · Spørsmål ${Math.min(s.index+1,s.total)} av ${s.total}`:'');
       if(!host&&s.state==='QUESTION_RESULTS')meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+`Spørsmål ${s.index+1} av ${s.total}`;
       if(['race','quizlet'].includes(s.game))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(s.game==='quizlet'?'Quizlet-like':'Quiz Race');
       if(s.state.startsWith('LIGHTNING_'))meta.textContent=(s.my_team?`${myTeamName(s)} · `:'')+(host?`${s.players} deltakere`:'Lynrunde');
@@ -787,7 +789,7 @@
           ['Feil svar:', '0 poeng.']
         ]));
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Gå til quiz.munchboka.no og skriv spillkoden, eller skann QR-koden.':'Vent på at læreren starter første spørsmål.'));
-        if(host){const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);const codeSummary=el('div',undefined,'lobby-code-summary');const joinDetails=el('div',undefined,'lobby-join-details'),codeRow=el('div',undefined,'lobby-code-row');codeRow.append(el('div',s.pin,'pin'),lobbyCount);const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';joinDetails.append(codeRow,a);codeSummary.append(joinDetails,img);stage.append(codeSummary,modeSettings(s));controls.append(button(s.mode==='teams'?(s.keep_teams?'Start med samme lag':'Fordel lag og start'):s.game==='quizlet'?'Start Quizlet-like':s.game==='race'?'Start Quiz Race':'Start første spørsmål',control('next')));}
+        if(host){const codeSummary=el('div',undefined,'lobby-code-summary');codeSummary.append(el('div',s.pin,'pin'),lobbyCount);stage.append(codeSummary,modeSettings(s));controls.append(button(s.mode==='teams'?(s.keep_teams?'Start med samme lag':'Fordel lag og start'):s.game==='quizlet'?'Start Quizlet-like':s.game==='race'?'Start Quiz Race':'Start første spørsmål',control('next')));}
       } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Det var det!'));if(!host&&s.lightning_result)stage.append(personalLightningResult(s));}
       else if(s.state==='LEADERBOARD'){
         if(host)controls.prepend(button(s.index+1>=s.total?(s.lightning?.enabled?'Start lynrunde':'Vis sluttresultat'):'Neste spørsmål',control('next')));

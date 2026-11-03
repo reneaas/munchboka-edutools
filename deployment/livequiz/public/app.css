@@ -336,3 +336,10 @@ nav{align-items:center;flex-wrap:wrap}
 @media(prefers-reduced-motion:reduce){.sorting-ghost{transform:none}}
 
 .sorting-drag-label{position:absolute;right:10px;bottom:calc(100% + 6px);padding:5px 12px;border-radius:6px;background:var(--accent);color:var(--button-ink);font-size:14px;font-weight:750;white-space:nowrap;box-shadow:0 2px 6px #0002}
+
+
+.lobby-code-summary{display:flex;align-items:center;flex-wrap:wrap;gap:16px 32px;margin:20px 0}
+.lobby-code-summary .pin{margin:0}
+.lobby-player-count{display:flex;align-items:center;gap:12px;padding:12px 18px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+.lobby-player-count strong{font-size:clamp(32px,4vw,48px);line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.lobby-player-count span{max-width:140px;font-size:16px;font-weight:650;line-height:1.35}

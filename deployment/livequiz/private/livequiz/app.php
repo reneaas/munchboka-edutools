@@ -463,7 +463,10 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
         $a = lq_query($db, 'SELECT answer, points FROM lq_answers WHERE room_id = ? AND player_id = ? AND question_index = ?', [$room, $p['id'], $index])->fetch();
         $state['submitted'] = (bool)$a;
         if ($a) $state['answer'] = json_decode($a['answer'], true, 8, JSON_THROW_ON_ERROR);
-        if ($a && $revealed) $state['points'] = (int)$a['points'];
+        if ($a && $revealed) {
+            $state['points'] = (int)$a['points'];
+            $state['answer_correct'] = lq_grade($content['questions'][$index], $state['answer'])[1] > 0;
+        }
     }
     if ($host && $r['phase'] === 'lobby') {
         $state['lobby_players']=lq_query($db,'SELECT id, nickname FROM lq_players WHERE room_id=? ORDER BY nickname, id',[$room])->fetchAll();

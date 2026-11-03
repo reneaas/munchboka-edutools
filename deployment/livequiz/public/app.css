@@ -366,3 +366,10 @@ nav{align-items:center;flex-wrap:wrap}
 .mode-rules li+li{margin-top:8px}
 .mode-rules li::marker{color:var(--accent)}
 .mode-rules strong{color:var(--ink);font-weight:750}
+
+.personal-answer-result{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.personal-answer-result.correct{background:var(--answer-correct);color:var(--answer-correct-ink);border-color:var(--answer-correct-ink)}
+.personal-answer-result.wrong{background:var(--answer-wrong);color:var(--answer-wrong-ink);border-color:var(--answer-wrong-ink)}
+.personal-answer-result .result{margin:0 0 12px}
+.personal-answer-result .hint{color:inherit;margin-bottom:0}
+.personal-answer-result ul,.personal-answer-result ol{padding-left:24px;margin:8px 0}

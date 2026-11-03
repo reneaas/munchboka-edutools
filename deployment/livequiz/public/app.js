@@ -46,13 +46,18 @@
     for (let i = n - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     return order;
   }
-  function optionCards(q, order, revealed) {
+  function optionCards(q, order, revealed, answer = []) {
     const grid = el('div', undefined, 'option-grid'+(q.type==='sort'?' sorting-options':''));
     if(q.type==='sort'&&revealed)order=q.correct;
     order.forEach((orig, pos) => {
       const card = el('div', undefined, 'option-card' + (revealed ? (q.correct.includes(orig) ? ' correct' : ' wrong') : ''));
       card.append(el('span', String(pos + 1), 'option-badge'), rich(q.options[orig]));
-      if (revealed && q.type!=='sort' && q.correct.includes(orig)) card.append(el('span', 'Riktig svar', 'correct-label'));
+      if (revealed && q.type!=='sort') {
+        const labels=[];
+        if(answer.includes(orig))labels.push('Ditt valg');
+        if(q.correct.includes(orig))labels.push('Riktig svar');
+        if(labels.length)card.append(el('span',labels.join(' · '),'correct-label'));
+      }
       grid.append(card);
     });
     return grid;
@@ -578,13 +583,25 @@
     }
     function showAnswer(s,order){
       popup((header,body)=>{
-        header.append(el('h2','Fasit','modal-title'));questionCard(s,order,header,body);
+        header.append(el('h2',host?'Svarfordeling':'Fasit','modal-title'));
+        if(host){body.append(answerChart(s,order));return;}
+        questionCard(s,order,header,body);
         const analysis=el('section',undefined,'results-analysis');
-        if(host)analysis.append(answerChart(s,order));
-        else {
-          if(s.question.type==='text')analysis.append(el('p','Riktig svar: '+s.question.accepted.join(' · ')));
-          analysis.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du fikk 0 poeng. Du svarte ikke på dette spørsmålet.','result'));
+        const feedback=el('div',undefined,'personal-answer-result'+(s.submitted?(s.answer_correct?' correct':' wrong'):''));
+        feedback.append(el('p',s.submitted?(s.answer_correct?'Riktig svar!':'Feil svar'):'Ikke svart','result'));
+        if(s.submitted){
+          feedback.append(el('strong',s.question.type==='sort'?'Din rekkefølge:':'Ditt svar:'));
+          if(s.question.type==='text')feedback.append(el('p',s.answer));
+          else{
+            const answers=el(s.question.type==='sort'?'ol':'ul');
+            for(const index of s.answer){const item=el('li');item.append(rich(s.question.options[index]));answers.append(item);}
+            feedback.append(answers);
+          }
         }
+        feedback.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du fikk 0 poeng. Du svarte ikke på dette spørsmålet.','hint'));
+        analysis.append(feedback);
+        if(s.question.type==='text')analysis.append(el('p','Riktig svar: '+s.question.accepted.join(' · ')));
+        if(s.question.type==='sort')header.append(el('p','Fasit viser riktig rekkefølge.','hint'));
         body.append(analysis);
       },'results-modal');
     }
@@ -611,7 +628,7 @@
         body.append(answerForm(s,order));
       }
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
-      else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS'));
+      else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS',!host&&Array.isArray(s.answer)?s.answer:[]));
     }
     function answerForm(s,order){
       const form=el('form',undefined,'question-answer-form');selection=s.answer??(s.question.type==='text'?'':[]);

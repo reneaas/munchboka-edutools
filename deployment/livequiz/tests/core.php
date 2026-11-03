@@ -249,6 +249,7 @@ foreach ([$q,$multi,$typed] as $question) {
     lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)+(empty($question['youtube'])?300:298))*1000),$sr]);
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$correctAnswer,'points'=>1000,'elapsed'=>0],$slow);
     check(!isset(lq_state($db,$sr,0,$slow,false)['points']),'speed score hidden until reveal');
+    check(!isset(lq_state($db,$sr,0,$slow,false)['answer_correct']),'correctness hidden until reveal');
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$slow);
     lq_answer($db,['room'=>$sr,'index'=>0,'answer'=>$wrongAnswer],$wrong);
     $fastState=lq_state($db,$sr,0,$fast,false);$slowState=lq_state($db,$sr,0,$slow,false);
@@ -261,5 +262,8 @@ foreach ([$q,$multi,$typed] as $question) {
     // must use the stored answer, including for typed-answer result charts.
     lq_query($db,'UPDATE lq_answers SET points = 0 WHERE room_id = ?',[$sr]);
     check(lq_state($db,$sr,1,'',true)['distribution']['correct']===2,'zero-point correct answers remain correct');
+    check(lq_state($db,$sr,0,$slow,false)['answer_correct']===true,'private result marks zero-point correct answer correct');
+    check(lq_state($db,$sr,0,$wrong,false)['answer_correct']===false,'private result marks wrong answer wrong');
+    check(!isset(lq_state($db,$sr,1,'',true)['answer_correct']),'host has no personal correctness result');
 }
 echo "$checks backend checks passed\n";

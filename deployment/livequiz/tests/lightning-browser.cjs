@@ -47,7 +47,7 @@ const assert=require('node:assert/strict');
   assert.ok(reply.every(r=>r.accepted&&r.state.progress===2));await a.getByText('Du har svart på alle spørsmålene!',{exact:true}).waitFor();
   const before=await state(b);await submit(b);await b.getByText('LYNRUNDE · 2 av 2',{exact:true}).waitFor();assert.notEqual((await state(b)).index,before.index);await submit(b);
   await Promise.all([host,a,b].map(p=>wait(p,'LIGHTNING_FINISHED')));const done=await state(host);
-  assert.deepEqual(done.leaderboard.map(p=>Number(p.score)),mode==='teams'?[8000]:[4000,4000]);
+  assert.deepEqual(done.leaderboard.map(p=>Number(p.score)),mode==='teams'?[4000]:[4000,4000]);
   await host.getByRole('button',{name:'Vis sluttresultat'}).click();await Promise.all([host,a,b].map(p=>wait(p,'QUIZ_FINISHED')));
  }
  // A separate short round verifies automatic expiry in all connected views.

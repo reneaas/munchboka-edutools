@@ -76,7 +76,7 @@
     rows.forEach((p, i) => {
       const li = el('li'), name = el('span', p.name || p.nickname, 'name');
       if (p.members) name.append(el('small', p.members.map(member => member.nickname).join(' · '), 'team-members'));
-      li.append(el('span', String(i + 1), 'rank'), name, el('strong', p.score + ' poeng')); list.append(li);
+      li.append(el('span', String(i + 1), 'rank'), name, el('strong', (p.members?new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).format(p.score):p.score) + ' poeng')); list.append(li);
     });
     return list;
   }
@@ -451,7 +451,7 @@
       const lightningDuration=field('Varighet på lynrunde (sekunder)',s.lightning?.seconds||60,()=>{modeDirty=true;},'number'),durationInput=lightningDuration.querySelector('input');durationInput.min=5;durationInput.max=600;durationInput.step=1;durationInput.required=true;
       const showLightningDuration=()=>{const race=gameSelect.value!=='regular';lightningLabel.hidden=race;lightningToggle.disabled=race;lightningDuration.hidden=race||!lightningToggle.checked;durationInput.disabled=race||!lightningToggle.checked;};showLightningDuration();lightningToggle.onchange=()=>{modeDirty=true;showLightningDuration();};
       const saveStatus=el('p','Innstillingene lagres automatisk.','hint mode-save-status');saveStatus.setAttribute('role','status');
-      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er summen av medlemmenes poeng. Nye deltakere venter i lobbyen til neste spill etter lagfordelingen.','hint'),saveStatus);
+      form.append(gameLabel,modes,maximum,lightningLabel,lightningDuration,el('p','Lynrunden gjentar spørsmålene i tilfeldig rekkefølge for hver deltaker. Riktig svar gir 1000 poeng, feil svar gir 0.','hint'),el('p','Lagene fordeles tilfeldig når du starter. Alle svarer individuelt, og lagets poeng er gjennomsnittet av alle medlemmenes poeng, også de som ikke svarer. Nye deltakere venter i lobbyen til neste spill etter lagfordelingen.','hint'),saveStatus);
       const rules=el('p','','hint');form.insertBefore(rules,saveStatus);
       const updateRules=()=>{
         const quizlet=gameSelect.value==='quizlet',racing=gameSelect.value!=='regular';

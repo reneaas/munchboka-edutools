@@ -55,7 +55,7 @@ foreach(['individual','teams'] as $mode){
  }
  $final=lq_state($db,$lr,1,'',true);check($final['state']==='LIGHTNING_FINISHED','everyone done ends round');
  check($final['teams']===$teamBefore,'team assignments unchanged');
- foreach($final['leaderboard'] as $row)check((int)$row['score']===($mode==='teams'?12000:4000),'normal and fixed lightning points accumulated');
+ foreach($final['leaderboard'] as $row)check((int)$row['score']===4000,'normal and fixed lightning points accumulated');
  rejects(fn()=>lq_lightning_answer($db,['room'=>$lr,'index'=>0,'answer'=>[1]],$tokens[0]),'finished rejects answers');
  lq_control($db,1,['room'=>$lr,'version'=>$final['version'],'command'=>'next']);check(lq_state($db,$lr,1,'',true)['state']==='QUIZ_FINISHED','teacher finishes lightning leaderboard');
 }

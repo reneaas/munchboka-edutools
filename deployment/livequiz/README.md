@@ -41,7 +41,7 @@ Implementation:
 - Correct Lightning Round answers earn 1,000 points and incorrect answers zero,
   using the existing correctness grader. There is no speed bonus in this round.
   The normal optional speed-scoring mode remains unchanged. Existing leaderboard
-  sums include both sets of answers, and team totals remain sums of individual
+  sums include both sets of answers, and team scores are averages of individual
   totals with unchanged assignments. No additional Lightning Round table or
   database migration is required.
 - Participant images are an explicit exception to normal host-only media during
@@ -356,11 +356,13 @@ but the question deadline always closes the question, so nobody blocks it foreve
 Answers and points remain individual, including the optional speed-scoring mode
 and video grace period already supported by the app. No new timing-based scoring
 is introduced by teams. Charts still count each individual answer. The team
-leaderboard sums authoritative stored member scores through `lq_team_total`;
+leaderboard averages authoritative cumulative member scores through `lq_team_average`;
 it does not maintain a separate counter that retries could increment twice.
 Scores accumulate across questions. Ties use team number ascending for a stable
-order. Sum scoring intentionally gives larger teams more potential points than
-smaller ones. Team identities, members and personal membership are consistent
+order. All assigned members count in the average, including those who do not
+answer or disconnect; late arrivals waiting for the next game do not count.
+Equal average performance earns equal points regardless of team size. Ranking
+uses full precision; the UI displays up to two decimal places. Team identities, members and personal membership are consistent
 across polling and refreshes. Refresh existing tabs after deployment.
 
 Team-specific tests: `php tests/teams.php` (also runs `core.php`) and

@@ -47,16 +47,17 @@ function lq_assign_teams(array $players, int $maximum): array {
     foreach ($shuffled as $i => $player) $teams[$i % $k]['members'][] = $player;
     return $teams;
 }
-// Keep aggregation independent so a future average can be implemented here.
-function lq_team_total(array $memberScores): int {
-    return (int)array_sum($memberScores);
+// Average all assigned members, including nonresponders. Keep full precision
+// for ranking; round only when presenting the score.
+function lq_team_average(array $memberScores): float {
+    return $memberScores ? array_sum($memberScores) / count($memberScores) : 0.0;
 }
 function lq_team_leaderboard(array $teams, array $individuals): array {
     $scores = [];
     foreach ($individuals as $player) $scores[$player['id']] = (int)$player['score'];
     $rows = [];
     foreach ($teams as $team) {
-        $team['score'] = lq_team_total(array_map(fn($member) => $scores[$member['id']] ?? 0, $team['members']));
+        $team['score'] = lq_team_average(array_map(fn($member) => $scores[$member['id']] ?? 0, $team['members']));
         $rows[] = $team;
     }
     usort($rows, fn($a, $b) => ($b['score'] <=> $a['score']) ?: ($a['id'] <=> $b['id']));

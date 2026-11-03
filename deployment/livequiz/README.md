@@ -765,8 +765,10 @@ names and participant tokens stay unchanged; connected players automatically
 return to the lobby and can continue without joining again.
 
 The selected quiz is copied into a fresh room snapshot. Previous answers, scores,
-team assignments, waiting status and game-mode settings are reset. The next quiz
-starts as a regular individual game, with its saved scoring style; the host can
+waiting status and game-mode settings are reset. Team assignments are also reset
+unless **Behold eksisterende lag** is selected. The next quiz
+starts as a regular game (team mode when retaining teams, otherwise individual),
+with its saved scoring style; the host can
 change the settings before starting. Switching extends the room lifetime by six
 hours and increments the run ID so old submissions cannot affect the next quiz.
 Only the room owner can switch, and only to a quiz in their own library. Guest
@@ -831,3 +833,30 @@ Validation: `php tests/lightning-personal.php` covers different personal outcome
 timeout/nonresponses, individual/team play, privacy, refresh, final results and
 replay. `node tests/lightning-browser.cjs` checks participant-only display across
 round completion, refresh and final results.
+
+
+## Keep teams between games
+
+After a team game finishes, **Spill igjen med samme lag** returns everyone to the
+lobby with the same team IDs, names and members, while clearing scores. The
+existing **Spill igjen med samme spillere** action still resets assignments.
+When switching quizzes, **Behold eksisterende lag** is offered and selected by
+default if teams exist. Uncheck it to start the new quiz without those teams.
+
+In the lobby, **Behold eksisterende lag** controls reuse at the next start.
+Changing between regular quiz, Quiz Race and Quizlet-like preserves these
+assignments when reuse is selected. Temporarily selecting individual play does
+not discard the saved teams. **Start med samme lag** opens the team overview
+without reshuffling existing members. Disconnected players keep their place;
+kicked players are removed. New lobby arrivals fill the smallest team with room,
+or form a new team if necessary. Existing players never move to balance teams.
+Empty teams are dropped; preserved teams may therefore be smaller than the
+minimum used for a fresh random allocation.
+
+If an existing team exceeds the selected maximum or Quizlet-like choice limit,
+the change is rejected. Increase the maximum, choose a compatible mode/quiz, or
+uncheck retention to create new teams. No score or answer history carries over.
+
+Validation: `php tests/retain-teams.php` and `node tests/retain-teams-browser.cjs`
+cover preserved identities/membership, replay, quiz/mode changes, refresh,
+new/kicked players, incompatible size limits and opting out of retention.

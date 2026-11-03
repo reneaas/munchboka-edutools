@@ -192,7 +192,19 @@ function lq_player(PDO $db, string $room, string $token): array {
 function lq_configure_content(array $content,array $settings): array {
     $content['game']=$settings['game'] ?? lq_game($content);
     if (!in_array($content['game'],['regular','race','quizlet'],true)) throw new DomainException('Ugyldig spilltype.');
+    $previous=lq_play_settings($content);
+    $keep=$settings['keep_teams'] ?? ($previous['keep_teams'] ?? false);
+    if(!is_bool($keep))throw new DomainException('Ugyldig valg for å beholde lag.');
+    $retained=$content['_retained_teams'] ?? $previous['teams'];
     $content['play']=lq_validate_play($settings['mode'] ?? null,$settings['max_team_size'] ?? null);
+    $content['play']['keep_teams']=$keep;
+    if($keep){
+        $content['_retained_teams']=$retained;
+        if($content['play']['mode']==='teams'){
+            foreach($retained as $team)if(count($team['members'])>$content['play']['max_team_size'])throw new DomainException('Et eksisterende lag er større enn maks lagstørrelse. Øk grensen eller slå av «Behold eksisterende lag».');
+            $content['play']['teams']=$retained;
+        }
+    }elseif($retained){$content['_retained_teams']=$retained;}
     if($content['game']==='quizlet'){
         $limit=lq_quizlet_limit($content);
         if(!$limit)throw new DomainException('Quizen inneholder en spørsmålstype som ikke støttes.');
@@ -220,12 +232,20 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
         }
         $qs = $content['questions']; $play = lq_play_settings($content);
+        $keepTeams=$input['keep_teams'] ?? false;
+        if(!is_bool($keepTeams))throw new DomainException('Ugyldig valg for å beholde lag.');
         if ($cmd === 'kick' && $phase === 'lobby') {
             lq_require_run($r,$input);
             $player=lq_query($db,'SELECT id, token_hash FROM lq_players WHERE room_id=? AND id=?',[$r['id'],lq_id($input['player'] ?? null)])->fetch();
             if(!$player)throw new DomainException('Deltakeren finnes ikke i denne lobbyen.');
             $content['_kicked'][]=$player['token_hash'];
             $content['_waiting']=array_values(array_diff($content['_waiting'] ?? [],[$player['id']]));
+            foreach(['play','_retained_teams'] as $key){
+                $teams=$key==='play'?$content['play']['teams']:$content['_retained_teams'] ?? [];
+                foreach($teams as &$team)$team['members']=array_values(array_filter($team['members'],fn($m)=>$m['id']!==$player['id']));unset($team);
+                $teams=array_values(array_filter($teams,fn($t)=>count($t['members'])>0));
+                if($key==='play')$content['play']['teams']=$teams;elseif(isset($content[$key]))$content[$key]=$teams;
+            }
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=? AND player_id=?',[$r['id'],$player['id']]);
             lq_query($db,'DELETE FROM lq_players WHERE room_id=? AND id=?',[$r['id'],$player['id']]);
             lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
@@ -240,6 +260,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             $next['_kicked']=$content['_kicked'] ?? [];
             $next['_run']=($content['_run'] ?? 0)+1;
             $next['play']=lq_validate_play('individual',3);
+            if($keepTeams){
+                $teams=$content['_retained_teams'] ?? $play['teams'];
+                if(!$teams)throw new DomainException('Det finnes ingen lag å beholde.');
+                $next['play']=['mode'=>'teams','max_team_size'=>$play['max_team_size'],'teams'=>$teams,'keep_teams'=>true];
+                $next['_retained_teams']=$teams;
+            }
             $next['game']='regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($next,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
@@ -247,7 +273,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         } elseif ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
             unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
-            $play['teams']=[];$content['play']=$play;
+            if($keepTeams){
+                $teams=$content['_retained_teams'] ?? $play['teams'];
+                if(!$teams)throw new DomainException('Det finnes ingen lag å beholde.');
+                $play['mode']='teams';$play['teams']=$teams;$content['_retained_teams']=$teams;
+            }else{$play['teams']=[];unset($content['_retained_teams']);}
+            $play['keep_teams']=$keepTeams;$content['play']=$play;
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
             $phase='lobby';$index=-1;
@@ -257,7 +288,8 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         } elseif ($cmd === 'next' && $phase === 'lobby') {
             if ($play['mode'] === 'teams') {
                 $roster = lq_query($db, 'SELECT id, nickname FROM lq_players WHERE room_id = ? ORDER BY id', [$r['id']])->fetchAll();
-                $play['teams'] = lq_assign_teams($roster, $play['max_team_size']);
+                $play['teams'] = ($play['keep_teams'] ?? false)?lq_retain_teams($content['_retained_teams'] ?? $play['teams'],$roster,$play['max_team_size']):lq_assign_teams($roster, $play['max_team_size']);
+                $content['_retained_teams']=$play['teams'];
                 $content['play'] = $play;
                 lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
                 $phase = 'teams';
@@ -402,6 +434,8 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
         'players' => $players, 'answers' => $answers];
     $play = lq_play_settings($content);
     $state['mode'] = $play['mode']; $state['max_team_size'] = $play['max_team_size'];
+    $state['keep_teams']=$play['keep_teams'] ?? false;
+    $state['has_retained_teams']=!empty($content['_retained_teams']);
     $state['teams'] = $play['teams']; $state['my_team'] = null;
     if ($p) foreach ($play['teams'] as $team) {
         if (in_array($p['id'], array_column($team['members'], 'id'), true)) $state['my_team'] = $team['id'];

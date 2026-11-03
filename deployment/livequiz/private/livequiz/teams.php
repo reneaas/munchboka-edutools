@@ -63,3 +63,29 @@ function lq_team_leaderboard(array $teams, array $individuals): array {
     usort($rows, fn($a, $b) => ($b['score'] <=> $a['score']) ?: ($a['id'] <=> $b['id']));
     return $rows;
 }
+
+// Reuse assignments while reconciling the current lobby; never move existing members.
+function lq_retain_teams(array $teams, array $players, int $maximum): array {
+    if (!$players) throw new DomainException('Vent til deltakerne har blitt med før du lager lag.');
+    $roster=array_column($players,null,'id');$assigned=[];$result=[];$nextId=1;
+    foreach($teams as $team){
+        $nextId=max($nextId,$team['id']+1);
+        $team['members']=array_values(array_filter(array_map(fn($member)=>$roster[$member['id']] ?? null,$team['members'])));
+        if(count($team['members'])>$maximum)throw new DomainException('Et eksisterende lag er større enn maks lagstørrelse. Øk grensen eller slå av «Behold eksisterende lag».');
+        if(!$team['members'])continue;
+        foreach($team['members'] as $member)$assigned[$member['id']]=true;
+        $result[]=$team;
+    }
+    foreach($players as $player){
+        if(isset($assigned[$player['id']]))continue;
+        $target=null;
+        foreach($result as $i=>$team)if(count($team['members'])<$maximum&&($target===null||count($team['members'])<count($result[$target]['members'])))$target=$i;
+        if($target===null){
+            $names=lq_team_names();$name=$names[($nextId-1)%count($names)];$used=array_column($result,'name');$base=$name;$suffix=2;
+            while(in_array($name,$used,true))$name=$base.' '.$suffix++;
+            $result[]=['id'=>$nextId++,'name'=>$name,'members'=>[]];$target=count($result)-1;
+        }
+        $result[$target]['members'][]=$player;
+    }
+    return $result;
+}

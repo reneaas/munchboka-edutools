@@ -401,11 +401,11 @@
     }
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
-    let modeSaveTimer=null, modeSavePromise=null, modeRevision=0;
-    const music=host?window.quizMusic():null;
+    let modeSaveTimer=null, modeSavePromise=null, modeRevision=0, removed=false, rosterRendered=null;
+    const music=host?window.quizMusic():null,lobbyMusic=host?window.quizMusic({lobby:true}):null;
     const control=(command, extra={})=>async()=>{
-      if(command==='next')music?.unlock();
-      clearTimeout(modeSaveTimer);
+      if(command==='next'){lobbyMusic?.update(false);music?.unlock();}
+      if(command!=='kick')clearTimeout(modeSaveTimer);
       if(modeSavePromise)await modeSavePromise;
       if(command==='next'&&state.state==='LOBBY'&&modeDirty)extra={...extra,settings:readModeSettings()};
       if(controlling)return;controlling=true;
@@ -516,6 +516,7 @@
     function updateClock(){
       if(!state)return;
       const now=Date.now()/1000+offset,racing=state.state==='RACE_ACTIVE',left=racing?Infinity:Math.max(0,state.deadline-now),active=['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(state.state);
+      lobbyMusic?.update(state.state==='LOBBY'&&online&&Date.now()-lastPoll<=5000);
       music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube,`${state.run}:`+(racing?'race':state.state==='LIGHTNING_ACTIVE'?'lightning':state.index));
       const txt=racing?`${state.progress??0} / ${state.total} riktige`:active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
@@ -556,7 +557,12 @@
         body.append(analysis);
       },'results-modal');
     }
-    function showBoard(s){popup((header,body)=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));header.append(el('h2',s.mode==='teams'?'Lagresultater':'Leaderboard','modal-title'));body.append(entries);},'leaderboard-modal');}
+    function personalLightningResult(s){
+      const result=s.lightning_result,card=el('section',undefined,'lightning-personal-result');
+      card.append(el('h3','Ditt resultat i lynrunden'),el('p',`Du fikk ${result.correct} av ${result.total} riktige.`,'result'),el('p',`${result.wrong} feil · ${result.unanswered} ubesvart`,'hint'),el('p','Dette resultatet vises bare til deg.','hint'));
+      return card;
+    }
+    function showBoard(s){popup((header,body)=>{const entries=el('div',undefined,'leaderboard-entries');entries.append(leaderboardList(s.leaderboard||[]));header.append(el('h2',s.mode==='teams'?'Lagresultater':'Leaderboard','modal-title'));if(!host&&s.lightning_result)body.append(personalLightningResult(s));body.append(entries);},'leaderboard-modal');}
     function showCountdown(){
       popup((header,body)=>{countdown=el('div','','countdown');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','assertive');body.append(countdown);},'countdown-modal');
     }
@@ -721,7 +727,7 @@
         stage.append(el('p', s.game==='quizlet'?'Quizlet-like: Samarbeid om svarene. Første lag til alle riktige uten feil vinner.':s.game==='race'?'Quiz Race: Først til alle riktige uten feil vinner.':s.scoring === 'speed' ? 'Raske riktige svar: 0–1000 poeng. Jo raskere du svarer riktig, desto flere poeng. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir 0.' : 'Faste poeng: 1000 for riktig svar, 0 for feil svar.', 'hint'));
         stage.append(el('h2',host?'Samle klassen':'Du er med!'),el('p',host?'Gå til quiz.munchboka.no og skriv spillkoden, eller skann QR-koden.':'Vent på at læreren starter første spørsmål.'));
         if(host){const url=new URL('./',location.href);url.searchParams.set('pin',s.pin);const codeSummary=el('div',undefined,'lobby-code-summary');codeSummary.append(el('div',s.pin,'pin'),lobbyCount);stage.append(codeSummary);const qr=qrcode(0,'M');qr.addData(url.href);qr.make();const img=el('img',undefined,'qr');img.src=qr.createDataURL(6,24);img.alt='QR-kode for å bli med i spillet';const a=link(url.href,url.href);a.target='_blank';a.rel='noopener';stage.append(img,a,modeSettings(s));controls.append(button(s.mode==='teams'?'Fordel lag og start':s.game==='quizlet'?'Start Quizlet-like':s.game==='race'?'Start Quiz Race':'Start første spørsmål',control('next')));}
-      } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Det var det!'));}
+      } else if(s.state==='QUIZ_FINISHED'){stage.append(el('h2','Det var det!'));if(!host&&s.lightning_result)stage.append(personalLightningResult(s));}
       else if(s.state==='LEADERBOARD'){
         if(host)controls.prepend(button(s.index+1>=s.total?(s.lightning?.enabled?'Start lynrunde':'Vis sluttresultat'):'Neste spørsmål',control('next')));
         showBoard(s);
@@ -775,6 +781,7 @@
         }
       }
       if(host&&s.state==='LOBBY'){const start=[...controls.querySelectorAll('button')].find(b=>/^(Start|Fordel lag)/.test(b.textContent));if(start)start.dataset.startGame='';}
+      if(lobbyMusic&&s.state==='LOBBY')controls.append(lobbyMusic.controls);
       if(music)controls.append(music.controls);
       updateClock();
     }
@@ -787,16 +794,27 @@
     }
     function renderResults(s){
       if(state&&s.version<state.version)return;
-      results.replaceChildren();
-      if(host&&s.roster){results.append(el('h2','I lobbyen'),el('p',s.roster.join(' · ')||'Venter på første deltaker …'));}
+      const rosterKey=host&&s.lobby_players?JSON.stringify(s.lobby_players):null;
+      if(rosterKey!==null&&rosterKey===rosterRendered&&results.querySelector('.lobby-player-grid'))return;
+      rosterRendered=rosterKey;results.replaceChildren();
+      if(host&&s.lobby_players){
+        results.append(el('h2','I lobbyen'));
+        const grid=el('div',undefined,'lobby-player-grid');
+        for(const player of s.lobby_players){
+          const card=button('',async()=>{if(confirm('Fjerne «'+player.nickname+'» fra lobbyen?'))await control('kick',{player:player.id,run:s.run})();},'lobby-player-card secondary');
+          card.setAttribute('aria-label','Fjern '+player.nickname+' fra lobbyen');card.append(el('strong',player.nickname),el('span','Klikk for å fjerne','hint'));grid.append(card);
+        }
+        if(!s.lobby_players.length)grid.append(el('p','Venter på første deltaker …','hint'));
+        results.append(grid);
+      }
       if(s.state==='QUIZ_FINISHED')results.append(el('h2','Resultater'),['race','quizlet'].includes(s.game)?raceBoard(s):leaderboardList(s.leaderboard||[]));
     }
     function requestPoll(){clearTimeout(pollTimer);if(polling)pollAgain=true;else void poll();}
     async function poll(){
       if(polling)return;polling=true;
-      try{const started=Date.now(),s=await api('state',undefined,query,token);online=true;failures=0;lastPoll=Date.now();offset=s.now-(started+lastPoll)/2000;connection.textContent='Tilkoblet';render(s);renderResults(s);}
+      try{const started=Date.now(),s=await api('state',undefined,query,token);if(!host&&s.state==='REMOVED'){removed=true;state=null;online=false;closePopup();app.replaceChildren(el('h1','Du er fjernet fra spillet'),el('p','Læreren har fjernet deg fra lobbyen.'),link('Til forsiden','./'));return;}online=true;failures=0;lastPoll=Date.now();offset=s.now-(started+lastPoll)/2000;connection.textContent='Tilkoblet';render(s);renderResults(s);}
       catch(e){online=false;failures++;connection.textContent='Mistet kontakt: '+e.message+' Kobler til igjen …';updateClock();}
-      finally{polling=false;const interval=['COUNTDOWN','LIGHTNING_COUNTDOWN','RACE_COUNTDOWN'].includes(state?.state)?200:1000;pollTimer=setTimeout(poll,pollAgain?0:Math.min(10000,interval*2**Math.min(failures,3)));pollAgain=false;}
+      finally{polling=false;const interval=['COUNTDOWN','LIGHTNING_COUNTDOWN','RACE_COUNTDOWN'].includes(state?.state)?200:1000;if(!removed)pollTimer=setTimeout(poll,pollAgain?0:Math.min(10000,interval*2**Math.min(failures,3)));pollAgain=false;}
     }
     await poll();
   }

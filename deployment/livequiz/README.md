@@ -777,3 +777,57 @@ quizzes, transactional failure, player/token/PIN retention, score reset, stale
 requests and new-quiz media access. `node tests/switch-quiz-browser.cjs` covers
 cancellation, switching from a finished game or lobby, connected participants,
 refresh and playing the next quiz.
+
+## Lobby music
+
+The host lobby has a separate **Lobbymusikk: av/på** toggle and volume slider.
+It starts **off** on each page load. Enabling it plays a random audio file from
+`public/lobby_music/`; whenever a track ends, another is selected randomly,
+avoiding an immediate repeat when more than one track is available. A single
+track repeats. Supported formats are MP3, M4A, OGG and WAV, discovered when the
+page loads, just like the question-music catalog.
+
+Lobby audio pauses outside the lobby and while disconnected. Its enabled state
+is retained when returning to the lobby in the same page (including replay and
+switching quizzes), but reload starts with it off again. Question music and
+its volume/toggle remain independent. Audio plays on the host device only.
+The normal deployment archive includes the lobby music folder automatically.
+
+Validation: `node tests/music.cjs` covers both players' lifecycle and random
+selection. `node tests/lobby-music-browser.cjs` verifies actual audio playback,
+track transitions, default-off behavior, controls and lobby/game transitions.
+
+## Lobby player cards and removal
+
+The host's **I lobbyen** section displays a responsive grid of compact player
+cards. Clicking a card asks for confirmation before removing that specific
+player; duplicate nicknames are distinguished internally by player ID. The grid
+is kept stable during unchanged polling so focus and clicks are not interrupted.
+The player counter and roster update immediately after removal.
+
+Removal is host-only and lobby-only, under the room lock and run/version checks.
+The removed session sees **Du er fjernet fra spillet** and stops polling. Its
+old token cannot access questions, submit answers, or rejoin the same room;
+this also persists through replay and switching quizzes. This is session
+removal, not an identity ban: someone using a new session can join again with
+the public PIN. No database migration is needed.
+
+Validation: `php tests/kick-player.php` covers authorization, room isolation,
+duplicate names, stale requests, token revocation and quiz switching.
+`node tests/kick-player-browser.cjs` checks the grid, confirmation/cancellation,
+count updates, removal messaging/reload and continued play by remaining players.
+
+## Private lightning-round results
+
+After the lightning round ends, each participating player sees **Ditt resultat i
+lynrunden** on their own screen: correct answers out of the round's total, plus
+wrong and unanswered counts. The summary counts only that player's lightning
+answers, not their regular-round points or their team's results. It remains
+visible after refresh and when the host advances to final results, and clears
+when a new game begins. The authenticated participant receives only their own
+summary; host responses do not include it. Existing leaderboards remain unchanged.
+
+Validation: `php tests/lightning-personal.php` covers different personal outcomes,
+timeout/nonresponses, individual/team play, privacy, refresh, final results and
+replay. `node tests/lightning-browser.cjs` checks participant-only display across
+round completion, refresh and final results.

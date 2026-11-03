@@ -1,0 +1,15 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});try{
+ const base=process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8831',host=await browser.newPage(),a=await browser.newPage(),b=await browser.newPage();
+ await host.goto(base+'/_test_login.php');const room=await host.evaluate(async()=>{const boot=await(await fetch('index.php?api=bootstrap')).json();const post=async(api,data)=>(await(await fetch('index.php?api='+api,{method:'POST',headers:{'X-CSRF-Token':boot.csrf,'Content-Type':'application/json'},body:JSON.stringify(data)})).json());const q=await post('save',{content:{title:'Player cards',questions:[{type:'single',prompt:'Q',code:'',youtube:'',image:null,seconds:30,options:['A','B'],correct:[0],accepted:[]}]}});return post('create',{id:q.id});});
+ await host.goto(base+'/?host='+room.room);await host.locator('.lobby-player-grid').waitFor();
+ for(const [p,name] of [[a,'Alice'],[b,'Bob']]){await p.goto(base+'/?pin='+room.pin);await p.getByLabel('Kallenavn').fill(name);await p.getByRole('button',{name:'Bli med',exact:true}).click();await p.locator('#app[data-state="LOBBY"]').waitFor();}
+ const alice=host.getByRole('button',{name:'Fjern Alice fra lobbyen',exact:true});await alice.waitFor();await host.getByRole('button',{name:'Fjern Bob fra lobbyen',exact:true}).waitFor();assert.equal(await host.locator('.lobby-player-grid').evaluate(e=>getComputedStyle(e).display),'grid');
+ await alice.evaluate(e=>e.dataset.pollMarker='preserved');await host.waitForResponse(r=>r.url().includes('api=state'));assert.equal(await alice.getAttribute('data-poll-marker'),'preserved');
+ host.once('dialog',dialog=>dialog.dismiss());await alice.click();assert.equal(await host.locator('.lobby-player-card').count(),2);
+ host.once('dialog',dialog=>dialog.accept());await alice.click();await alice.waitFor({state:'detached'});await host.waitForFunction(()=>document.querySelector('.lobby-player-count strong').textContent==='1');
+ await a.getByRole('heading',{name:'Du er fjernet fra spillet',exact:true}).waitFor();await a.reload();await a.getByRole('heading',{name:'Du er fjernet fra spillet',exact:true}).waitFor();assert.equal(await b.locator('#app').getAttribute('data-state'),'LOBBY');
+ await host.setViewportSize({width:390,height:844});await host.locator('.lobby-player-grid').scrollIntoViewIfNeeded();assert.equal(await host.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await host.locator('.lobby-player-grid').screenshot({path:'/tmp/livequiz-player-cards.png'});
+ await host.getByRole('button',{name:'Start første spørsmål',exact:true}).click();await b.locator('#app[data-state="QUESTION_ACTIVE"]').waitFor();assert.equal(await host.locator('.lobby-player-grid').count(),0);
+ console.log('Player cards passed: grid, stable polling, cancel/confirm removal, live counter, removed screen and reload, remaining player and mobile layout.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

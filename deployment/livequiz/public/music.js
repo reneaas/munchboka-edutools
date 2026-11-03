@@ -1,32 +1,45 @@
 /* One host-only player, retained across questions and modal replacements. */
-window.quizMusic = function () {
-  const tracks = JSON.parse(document.body.dataset.musicTracks || '[]');
+window.quizMusic = function ({lobby = false} = {}) {
+  const tracks = JSON.parse((lobby ? document.body.dataset.lobbyMusicTracks : document.body.dataset.musicTracks) || '[]');
   const audio = new Audio(tracks[0] || undefined);
-  audio.loop = true;
+  audio.loop = !lobby;
   audio.preload = 'none';
   audio.volume = 0;
-  let enabled = true, active = false, pending = false, blocked = false, volume = .25;
-  let currentQuestion = null;
+  let enabled = !lobby, active = false, pending = false, blocked = false, volume = .25;
+  let currentQuestion = null, currentTrack = null;
   const controls = document.createElement('div');
-  controls.className = 'music-controls';
+  controls.className = 'music-controls'+(lobby?' lobby-music-controls':'');
   const toggle = document.createElement('button');
   toggle.type = 'button';
   toggle.className = 'quiet';
   const label = document.createElement('label');
-  label.textContent = 'Musikkvolum';
+  label.textContent = lobby ? 'Lobbymusikkvolum' : 'Musikkvolum';
   const slider = document.createElement('input');
   slider.type = 'range'; slider.min = 0; slider.max = 100; slider.value = 25;
   label.append(slider); controls.append(toggle, label);
   function describe() {
     toggle.disabled = tracks.length === 0;
     slider.disabled = tracks.length === 0;
-    toggle.textContent = !tracks.length ? 'Ingen musikk tilgjengelig' : blocked && enabled ? 'Spill musikk' : enabled ? 'Musikk: på' : 'Musikk: av';
+    const name = lobby ? 'Lobbymusikk' : 'Musikk';
+    toggle.textContent = !tracks.length ? (lobby ? 'Ingen lobbymusikk tilgjengelig' : 'Ingen musikk tilgjengelig') : blocked && enabled ? (lobby ? 'Spill lobbymusikk' : 'Spill musikk') : name + (enabled ? ': på' : ': av');
     toggle.setAttribute('aria-pressed', String(enabled));
   }
   function wanted() { return tracks.length > 0 && enabled && active; }
   function stop() { audio.pause(); audio.volume = 0; }
+  function nextLobbyTrack() {
+    const choices = tracks.length > 1 ? tracks.filter(track => track !== currentTrack) : tracks;
+    currentTrack = choices[Math.floor(Math.random() * choices.length)];
+    audio.src = currentTrack;
+    audio.currentTime = 0;
+  }
+  audio.onended = () => {
+    if (!lobby || !wanted()) return;
+    nextLobbyTrack();
+    play();
+  };
   function play(prime = false) {
     if (!tracks.length || pending || blocked || !enabled || (!prime && !active)) return;
+    if (lobby && currentTrack === null) nextLobbyTrack();
     pending = true;
     // Called directly from Start/Next to unlock this element during a user gesture.
     audio.play().then(() => {
@@ -55,7 +68,7 @@ window.quizMusic = function () {
     controls,
     unlock() { blocked = false; describe(); play(true); },
     update(shouldPlay, question = 0) {
-      if (tracks.length && shouldPlay && question !== currentQuestion) {
+      if (!lobby && tracks.length && shouldPlay && question !== currentQuestion) {
         stop();
         currentQuestion = question;
         audio.src = tracks[Math.floor(Math.random() * tracks.length)];

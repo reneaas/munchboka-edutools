@@ -46,6 +46,11 @@ function lq_lightning_advance(PDO $db, array $room): array {
     }
     return $room;
 }
+function lq_lightning_result(PDO $db, array $room, string $player, int $total): array {
+    $row=lq_query($db,'SELECT COUNT(*) AS answered, COALESCE(SUM(CASE WHEN points > 0 THEN 1 ELSE 0 END),0) AS correct FROM lq_answers WHERE room_id=? AND player_id=? AND question_index<0',[$room['id'],$player])->fetch();
+    $answered=(int)$row['answered'];$correct=(int)$row['correct'];
+    return ['correct'=>$correct,'answered'=>$answered,'total'=>$total,'wrong'=>$answered-$correct,'unanswered'=>max(0,$total-$answered)];
+}
 function lq_lightning_state(PDO $db, array $room, ?array $player, array $state, array $content): array {
     $state['lightning']=lq_lightning_settings($content);
     if ($room['phase']==='light_done') {

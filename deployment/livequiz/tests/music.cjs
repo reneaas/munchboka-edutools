@@ -34,5 +34,21 @@ document.body.dataset.musicTracks='[]';
 const empty=window.quizMusic();empty.unlock();empty.update(true,0);await settle();
 assert.equal(audio.calls,0);assert.equal(audio.src,undefined);assert.equal(empty.controls.children[0].disabled,true);
 assert.equal(empty.controls.children[0].textContent,'Ingen musikk tilgjengelig');
-console.log('Random selection and music lifecycle, volume, toggle, autoplay retry and pending transition checks passed.');
+// Lobby music is independent, opt-in, and advances on ended instead of looping one track.
+document.body.dataset.lobbyMusicTracks=JSON.stringify(['lobby_music/one.mp3','lobby_music/two.mp3','lobby_music/three.mp3']);
+const lobby=window.quizMusic({lobby:true}),lobbyToggle=lobby.controls.children[0];
+assert.equal(lobbyToggle.textContent,'Lobbymusikk: av');assert.equal(audio.loop,false);
+lobby.update(true);await settle();assert.equal(audio.calls,0);
+lobbyToggle.onclick();await settle();assert.equal(audio.paused,false);assert.equal(lobbyToggle.textContent,'Lobbymusikk: på');
+for(let i=0;i<8;i++){const previous=audio.src;audio.onended();await settle();assert.notEqual(audio.src,previous);assert.ok(audio.src.startsWith('lobby_music/'));assert.equal(audio.paused,false);}
+const lobbyTrack=audio.src,lobbyCalls=audio.calls;
+lobby.update(true);await settle();assert.equal(audio.src,lobbyTrack);assert.equal(audio.calls,lobbyCalls);
+lobby.update(false);assert.equal(audio.paused,true);audio.onended();await settle();assert.equal(audio.calls,lobbyCalls);
+lobby.update(true);await settle();assert.equal(audio.paused,false);assert.equal(audio.src,lobbyTrack);
+lobbyToggle.onclick();assert.equal(audio.paused,true);audio.onended();lobby.update(true);await settle();assert.equal(audio.paused,true);
+lobbyToggle.onclick();lobby.update(false);await settle();assert.equal(audio.paused,true);
+document.body.dataset.lobbyMusicTracks=JSON.stringify(['lobby_music/only.mp3']);
+const singleLobby=window.quizMusic({lobby:true});singleLobby.update(true);singleLobby.controls.children[0].onclick();await settle();audio.onended();await settle();assert.equal(audio.src,'lobby_music/only.mp3');assert.equal(audio.calls,2);
+document.body.dataset.lobbyMusicTracks='[]';const emptyLobby=window.quizMusic({lobby:true});emptyLobby.update(true);await settle();assert.equal(audio.calls,0);assert.equal(emptyLobby.controls.children[0].disabled,true);
+console.log('Question and lobby music passed: default-off lobby, random tracks, no immediate repeats, end-of-song advance, pause/resume, independent toggles, missing/single tracks and pending transitions.');
 })();

@@ -47,8 +47,11 @@ const assert=require('node:assert/strict');
   assert.ok(reply.every(r=>r.accepted&&r.state.progress===2));await a.getByText('Du har svart på alle spørsmålene!',{exact:true}).waitFor();
   const before=await state(b);await submit(b);await b.getByText('LYNRUNDE · 2 av 2',{exact:true}).waitFor();assert.notEqual((await state(b)).index,before.index);await submit(b);
   await Promise.all([host,a,b].map(p=>wait(p,'LIGHTNING_FINISHED')));const done=await state(host);
+  assert.equal(done.lightning_result,undefined);assert.equal(await host.locator('.lightning-personal-result').count(),0);
+  for(const page of [a,b]){await page.getByText('Du fikk 2 av 2 riktige.',{exact:true}).waitFor();assert.deepEqual((await state(page)).lightning_result,{correct:2,answered:2,total:2,wrong:0,unanswered:0});}
+  await a.reload();await a.getByText('Du fikk 2 av 2 riktige.',{exact:true}).waitFor();
   assert.deepEqual(done.leaderboard.map(p=>Number(p.score)),mode==='teams'?[4000]:[4000,4000]);
-  await host.getByRole('button',{name:'Vis sluttresultat'}).click();await Promise.all([host,a,b].map(p=>wait(p,'QUIZ_FINISHED')));
+  await host.getByRole('button',{name:'Vis sluttresultat'}).click();await Promise.all([host,a,b].map(p=>wait(p,'QUIZ_FINISHED')));await a.getByText('Du fikk 2 av 2 riktige.',{exact:true}).waitFor();
  }
  // A separate short round verifies automatic expiry in all connected views.
  const timed=await host.evaluate(async()=>{

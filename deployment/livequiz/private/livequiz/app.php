@@ -155,6 +155,8 @@ function lq_join(PDO $db, string $pin, string $name, string $token): array {
     return lq_transaction($db, function () use ($db, $pin, $name, $token) {
         $r = lq_query($db, 'SELECT * FROM lq_rooms WHERE pin = ? FOR UPDATE', [$pin])->fetch();
         if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillkoden er ugyldig eller utløpt.');
+        $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
+        if(in_array(hash('sha256',$token),$content['_kicked'] ?? [],true))throw new DomainException('Du er fjernet fra dette spillet av læreren.');
         $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
         if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
         if ($old) throw new DomainException('Denne deltakerøkten tilhører et annet spill.');
@@ -218,7 +220,16 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
         }
         $qs = $content['questions']; $play = lq_play_settings($content);
-        if ($cmd === 'switch-quiz' && in_array($phase,['lobby','finished','race_done','light_done'],true)) {
+        if ($cmd === 'kick' && $phase === 'lobby') {
+            lq_require_run($r,$input);
+            $player=lq_query($db,'SELECT id, token_hash FROM lq_players WHERE room_id=? AND id=?',[$r['id'],lq_id($input['player'] ?? null)])->fetch();
+            if(!$player)throw new DomainException('Deltakeren finnes ikke i denne lobbyen.');
+            $content['_kicked'][]=$player['token_hash'];
+            $content['_waiting']=array_values(array_diff($content['_waiting'] ?? [],[$player['id']]));
+            lq_query($db,'DELETE FROM lq_answers WHERE room_id=? AND player_id=?',[$r['id'],$player['id']]);
+            lq_query($db,'DELETE FROM lq_players WHERE room_id=? AND id=?',[$r['id'],$player['id']]);
+            lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
+        } elseif ($cmd === 'switch-quiz' && in_array($phase,['lobby','finished','race_done','light_done'],true)) {
             lq_require_run($r,$input);
             // Room media is authorized against the room owner; only that owner can
             // replace its snapshot, and only with one of their own saved quizzes.
@@ -226,6 +237,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             $quiz=lq_quiz($db,$uid,lq_id($input['quiz'] ?? null));
             $next=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
             unset($next['_share'],$next['_host_hash'],$next['_race'],$next['_lightning'],$next['_waiting'],$next['_finished_at']);
+            $next['_kicked']=$content['_kicked'] ?? [];
             $next['_run']=($content['_run'] ?? 0)+1;
             $next['play']=lq_validate_play('individual',3);
             $next['game']='regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
@@ -369,6 +381,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host, st
     return lq_transaction($db, function () use ($db, $room, $uid, $token, $host, $hostToken) {
     $r = lq_room($db, $room, true);
     if ($host) lq_require_host($r, $uid, $hostToken);
+    if(!$host&&in_array(hash('sha256',$token),json_decode($r['content'],true,32,JSON_THROW_ON_ERROR)['_kicked'] ?? [],true))return ['state'=>'REMOVED'];
     $p = $host ? null : lq_player($db, $room, $token);
     $r = lq_advance_locked($db, $r);
     return lq_state_payload($db, $r, $p, $host)+($host?['can_switch_quiz'=>$uid>0&&$uid===(int)$r['owner_id']]:[]);
@@ -400,6 +413,9 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
     if ($host) $state['pin'] = $r['pin'];
     $state['waiting_count']=count($content['_waiting'] ?? []);
     if ($p && in_array($p['id'],$content['_waiting'] ?? [],true)) return array_replace($state,['state'=>'WAITING_LOBBY','index'=>-1]);
+    if(!$host&&$p&&in_array($r['phase'],['light_done','finished'],true)&&isset($content['_lightning']['orders'][$p['id']])){
+        $state['lightning_result']=lq_lightning_result($db,$r,$p['id'],count($content['_lightning']['orders'][$p['id']]));
+    }
     if (isset($content['_race']) && in_array($r['phase'],['race_count','race','race_done','finished'],true)) return lq_race_state($r,$p,$state,$content);
     if (in_array($r['phase'], ['light_intro','light_count','lightning','light_done'], true)) return lq_lightning_state($db,$r,$p,$state,$content);
     if (isset($content['questions'][$index]) && $r['phase'] !== 'finished') {
@@ -415,7 +431,10 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
         if ($a) $state['answer'] = json_decode($a['answer'], true, 8, JSON_THROW_ON_ERROR);
         if ($a && $revealed) $state['points'] = (int)$a['points'];
     }
-    if ($host && $r['phase'] === 'lobby') $state['roster'] = lq_query($db, 'SELECT nickname FROM lq_players WHERE room_id = ? ORDER BY nickname', [$room])->fetchAll(PDO::FETCH_COLUMN);
+    if ($host && $r['phase'] === 'lobby') {
+        $state['lobby_players']=lq_query($db,'SELECT id, nickname FROM lq_players WHERE room_id=? ORDER BY nickname, id',[$room])->fetchAll();
+        $state['roster']=array_column($state['lobby_players'],'nickname');
+    }
     if ($revealed) $state['leaderboard'] = lq_leaderboard($db, $room, $content);
     if ($host && $r['phase'] === 'reveal' && isset($content['questions'][$index])) {
         $cq = $content['questions'][$index]; $counts = array_fill(0, count($cq['options']), 0); $correct = 0;

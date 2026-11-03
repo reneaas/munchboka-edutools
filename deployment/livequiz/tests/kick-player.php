@@ -1,0 +1,26 @@
+<?php
+require __DIR__.'/core.php';
+$saved=lq_save($db,1,['content'=>['title'=>'Kick test','questions'=>[$q]]]);
+$room=lq_create_room($db,1,$saved['id']);$id=$room['room'];$tokens=[bin2hex(random_bytes(32)),bin2hex(random_bytes(32))];
+foreach($tokens as $t)lq_join($db,$room['pin'],'Same name',$t);
+$host=lq_state($db,$id,1,'',true);$player=lq_player($db,$id,$tokens[0]);$survivor=lq_player($db,$id,$tokens[1]);
+check(count($host['lobby_players'])===2&&count($host['roster'])===2,'host roster exposes IDs alongside names');
+check(!isset(lq_state($db,$id,0,$tokens[0],false)['lobby_players']),'participant does not receive moderation roster');
+foreach($host['lobby_players'] as $entry)check(array_keys($entry)===['id','nickname'],'roster excludes session hashes');
+$input=['room'=>$id,'run'=>0,'version'=>$host['version'],'command'=>'kick','player'=>$player['id']];
+rejects(fn()=>lq_control($db,0,$input),'participant cannot kick');rejects(fn()=>lq_control($db,2,$input),'unrelated host cannot kick');
+$otherRoom=lq_create_room($db,1,$saved['id']);$otherToken=bin2hex(random_bytes(32));lq_join($db,$otherRoom['pin'],'Other',$otherToken);$other=lq_player($db,$otherRoom['room'],$otherToken);
+rejects(fn()=>lq_control($db,1,array_replace($input,['player'=>$other['id']])),'cannot kick player in another room');
+$reply=lq_control($db,1,$input);check($reply['state']['players']===1&&$reply['state']['lobby_players'][0]['id']===$survivor['id'],'correct duplicate-name player removed and count updated');
+check(lq_state($db,$id,0,$tokens[0],false)['state']==='REMOVED','kicked player sees removal state');
+rejects(fn()=>lq_player($db,$id,$tokens[0]),'removed token cannot authenticate');
+rejects(fn()=>lq_join($db,$room['pin'],'New name',$tokens[0]),'removed session cannot rejoin using same token');
+rejects(fn()=>lq_answer($db,['room'=>$id,'run'=>0,'index'=>0,'answer'=>[1]],$tokens[0]),'removed session cannot answer');
+rejects(fn()=>lq_control($db,1,$input),'duplicate/stale kick rejected');
+$s=$reply['state'];$reply=lq_control($db,1,['room'=>$id,'run'=>0,'version'=>$s['version'],'command'=>'switch-quiz','quiz'=>$saved['id']]);
+check(lq_state($db,$id,0,$tokens[0],false)['state']==='REMOVED','removal persists across quiz switches');
+$s=$reply['state'];rejects(fn()=>lq_control($db,1,array_replace($input,['version'=>$s['version'],'player'=>$survivor['id']])),'old-run kick cannot remove player in new quiz');
+$reply=lq_control($db,1,['room'=>$id,'run'=>1,'version'=>$s['version'],'command'=>'next']);
+rejects(fn()=>lq_control($db,1,['room'=>$id,'run'=>1,'version'=>$reply['state']['version'],'command'=>'kick','player'=>$survivor['id']]),'kick only allowed in lobby');
+check(lq_player($db,$id,$tokens[1])['id']===$survivor['id'],'other player remains connected');
+echo "$checks checks including lobby removal passed\n";

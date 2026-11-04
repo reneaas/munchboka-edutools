@@ -222,6 +222,11 @@
         button('Slå av deling',async()=>{await api('share',{id:q.id,enabled:false});panel.replaceChildren(el('p','Deling er slått av. Gamle lenker kan ikke starte nye spill. Spill som allerede er startet, fortsetter.','hint'));},'quiet')),status);
     card.append(panel);input.focus();input.select();
   }
+  function questionCount(total) {
+    const count=el('p',undefined,'quiz-question-count');
+    count.append(el('strong',String(total)),document.createTextNode(' spørsmål'));
+    return count;
+  }
   async function discover() {
     const search=params.get('q')||'',page=Math.max(0,Number(params.get('page'))||0);
     app.replaceChildren(el('p','OFFENTLIGE QUIZER','eyebrow'),el('h1','Finn en quiz'),el('p','Søk og start et spill for klassen din. Du trenger ingen konto.','intro'));
@@ -229,7 +234,7 @@
     form.onsubmit=e=>{e.preventDefault();location.href='?search=1&q='+encodeURIComponent(input.value);};app.append(form);
     const data=await api('discover',undefined,{q:search,page});
     const grid=el('div',undefined,'library');
-    for(const quiz of data.quizzes){const card=el('article',undefined,'card');card.append(el('h2',quiz.title),el('p',quiz.total+' spørsmål'),link('Åpne quiz','?public='+quiz.id));grid.append(card);}
+    for(const quiz of data.quizzes){const card=el('article',undefined,'card');card.append(el('h2',quiz.title),questionCount(quiz.total),link('Åpne quiz','?public='+quiz.id));grid.append(card);}
     app.append(grid);if(!data.quizzes.length)app.append(el('p','Ingen offentlige quizer funnet.','hint'));
     const pages=group();if(page)pages.append(link('Forrige','?search=1&q='+encodeURIComponent(search)+'&page='+(page-1)));if(data.more)pages.append(link('Neste','?search=1&q='+encodeURIComponent(search)+'&page='+(page+1)));app.append(pages);
   }
@@ -237,7 +242,7 @@
     const id=params.get(publicQuiz?'public':'share'),key=new URLSearchParams(location.hash.slice(1)).get('key')||'';
     if(uid)sessionStorage.removeItem('lq-copy-source');
     const quiz=await api(publicQuiz?'public-quiz':'shared',undefined,{id});
-    app.replaceChildren(el('p',publicQuiz?'OFFENTLIG QUIZ':'DELT QUIZ','eyebrow'),el('h1',quiz.title),el('p',`${quiz.total} spørsmål · Du trenger ingen konto.`,'intro'),
+    app.replaceChildren(el('p',publicQuiz?'OFFENTLIG QUIZ':'DELT QUIZ','eyebrow'),el('h1',quiz.title),questionCount(quiz.total),el('p','Du trenger ingen konto.','intro'),
       el('p','Start et eget spill for klassen din. Du styrer spørsmålene og får en egen spillkode til elevene. Hold denne fanen åpen; den gir deg tilgang til å styre spillet.'),
       button('Start spill for min klasse',async()=>{
         const hostToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');

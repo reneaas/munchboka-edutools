@@ -371,3 +371,6 @@ nav{align-items:center;flex-wrap:wrap}
 .personal-answer-result .result{margin:0 0 12px}
 .personal-answer-result .hint{color:inherit;margin-bottom:0}
 .personal-answer-result ul,.personal-answer-result ol{padding-left:24px;margin:8px 0}
+
+.quiz-question-count{display:flex;align-items:baseline;gap:6px;width:fit-content;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.4}
+.quiz-question-count strong{font-size:20px;color:var(--accent);font-variant-numeric:tabular-nums}

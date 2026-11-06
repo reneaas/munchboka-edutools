@@ -8,6 +8,12 @@ const publicDir=path.join(__dirname,'../public');
  try{
   const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   let saves=[],failNext=false,holdNext=false,release;
+  async function waitSaved(revision){
+   const deadline=Date.now()+10000;
+   while(saves.length<revision-1&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,20));
+   assert.ok(saves.length>=revision-1,'expected save completed');
+   await page.getByText('Lagret på nett',{exact:true}).waitFor();
+  }
   const tile=value=>({value,question:'',answer:'',questionImage:null,answerImage:null});
   const initial={title:'Draft',categories:[{name:'A',tiles:[100,200,300,400,500].map(tile)},{name:'B',tiles:[100,300,500].map(tile)}]};
   await page.route('http://jeopardy.test/**',async route=>{
@@ -25,26 +31,26 @@ const publicDir=path.join(__dirname,'../public');
   await page.addScriptTag({path:path.join(publicDir,'editor.js')});
   await page.getByLabel('Velg kategori').selectOption('1');
   await page.getByLabel('Rad 2',{exact:true}).fill('400');
-  await page.getByText('Lagret på nett · versjon 2',{exact:true}).waitFor();
+  await waitSaved(2);
   assert.deepEqual(saves[0].categories[0].tiles.map(t=>t.value),[100,200,300,400,500]);
   assert.deepEqual(saves[0].categories[1].tiles.map(t=>t.value),[100,400,500]);
   await page.getByRole('button',{name:'Fjern rad 2',exact:true}).click();
   await page.getByRole('button',{name:'Legg til rad',exact:true}).click();
-  await page.getByText('Lagret på nett · versjon 3',{exact:true}).waitFor();
+  await waitSaved(3);
   assert.deepEqual(saves[1].categories[1].tiles.map(t=>t.value),[100,500,600]);
   holdNext=true;await page.getByLabel('Spillets tittel').fill('First snapshot');
   await page.getByText('Lagrer …',{exact:true}).waitFor();
   while(!release)await new Promise(r=>setTimeout(r,20));
   await page.getByLabel('Spillets tittel').fill('Edit during save');release();
-  await page.getByText('Lagret på nett · versjon 5',{exact:true}).waitFor();
+  await waitSaved(5);
   assert.equal(saves[2].title,'First snapshot');assert.equal(saves[3].title,'Edit during save');
   failNext=true;await page.getByLabel('Spillets tittel').fill('Retain failed edit');
   await page.getByText('Test save failure',{exact:true}).waitFor();assert.equal(await page.getByLabel('Spillets tittel').inputValue(),'Retain failed edit');
   await page.getByRole('button',{name:'Lagre på nett',exact:true}).click();
-  await page.getByText('Lagret på nett · versjon 6',{exact:true}).waitFor();
+  await waitSaved(6);
   await page.clock.install();
   for(let i=0;i<16;i++){await page.getByLabel('Spillets tittel').fill('Continuous edit '+i);await page.clock.runFor(1000);}
-  await page.waitForFunction(()=>document.querySelector('.save-status').textContent.includes('versjon 7'));
+  await waitSaved(7);
   assert.ok(saves.length>=6,'periodic autosave runs while typing continuously');
   await page.clock.resume();
   await page.getByRole('button',{name:'Lagre på nett',exact:true}).click();

@@ -165,7 +165,7 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=4"></script><link rel="stylesheet" href="/pilot.css?v=5">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script defer src="/vendor/katex/katex.min.js"></script><script defer src="/math.js?v=2"></script>
 <script defer src="/library.js?v=<?= filemtime(__DIR__ . '/library.js') ?>"></script>
-<?php if ($editing && $game): ?><script defer src="/editor.js?v=8"></script><?php endif; ?>
+<?php if ($editing && $game): ?><script defer src="/editor.js?v=9"></script><?php endif; ?>
 <?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css?v=4"><script defer src="/jeopardy.js?v=4"></script><?php endif; ?>
 </head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a></header>
 <main>
@@ -247,6 +247,6 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php else: ?>
 <p class="eyebrow">DINE UNDERVISNINGSQUIZER</p><h1>Mine quizer</h1><p>Quizene er knyttet til kontoen din og lagret på nett.</p><a class="button" href="/?new=1">Opprett quiz</a>
 <?php if (!$games): ?><section class="card"><h2>Plass til din første undervisningsquiz</h2><p>Lag kategorier, fyll inn spørsmål og svar, og lagre quizen til neste time.</p></section><?php endif; ?>
-<div class="library"><?php foreach ($games as $item): ?><article class="card"><h2><?= h($item['title']) ?></h2><p class="hint">Versjon <?= (int) $item['revision'] ?> · <?= $item['share_token'] ? 'Delt med lenke' : 'Privat' ?></p><div class="actions"><a href="/?edit=<?= h($item['id']) ?>">Rediger</a><a href="/?play=<?= h($item['id']) ?>">Start quiz</a><form method="post" action="/" class="delete-game" data-title="<?= h($item['title']) ?>"><?php csrf(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= h($item['id']) ?>"><button type="submit" class="quiet" disabled>Slett</button></form></div></article><?php endforeach; ?></div>
+<div class="library"><?php foreach ($games as $item): ?><article class="card"><h2><?= h($item['title']) ?></h2><p class="hint"><?= $item['share_token'] ? 'Delt med lenke' : 'Privat' ?></p><div class="actions"><a href="/?edit=<?= h($item['id']) ?>">Rediger</a><a href="/?play=<?= h($item['id']) ?>">Start quiz</a><form method="post" action="/" class="delete-game" data-title="<?= h($item['title']) ?>"><?php csrf(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= h($item['id']) ?>"><button type="submit" class="quiet" disabled>Slett</button></form></div></article><?php endforeach; ?></div>
 <?php endif; endif; ?>
 </main><footer>Munchboka · Digitale læringsressurser · <a href="/?about=1">Om undervisningsverktøyet</a></footer></body></html>

@@ -42,7 +42,7 @@
   function changed(schedule = true) {
     const dirty = JSON.stringify(game) !== baseline;
     if(schedule){autosaveBlocked=false;clearTimeout(autosaveTimer);if(dirty)autosaveTimer=setTimeout(autosave,1500);}
-    status.textContent = uploading ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? (autosaveBlocked ? 'Ikke lagret · prøv «Lagre på nett» igjen' : game.title.trim() ? 'Ulagrede endringer · lagres automatisk' : 'Skriv en tittel for å lagre automatisk') : id ? `Lagret på nett · versjon ${revision}` : 'Ikke lagret ennå';
+    status.textContent = uploading ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? (autosaveBlocked ? 'Ikke lagret · prøv «Lagre på nett» igjen' : game.title.trim() ? 'Ulagrede endringer · lagres automatisk' : 'Skriv en tittel for å lagre automatisk') : id ? 'Lagret på nett' : 'Ikke lagret ennå';
     save.disabled = uploading > 0 || saving || sharing;
     play.hidden = !id || !game.categories.length;
     play.href = id ? '/?play=' + id : '#';
@@ -52,7 +52,7 @@
     stopButton.hidden = copyButton.hidden = openLink.hidden = linkLabel.hidden = !share;
     shareLink.value = share ? location.origin + '/?share=' + share.token : '';
     openLink.href = shareLink.value || '#';
-    shareStatus.textContent = sharing ? 'Oppdaterer deling …' : share ? `Versjon ${share.revision} er delt.${dirty || revision !== share.revision ? ' Lagre endringene og oppdater delingen når de er klare.' : ''}` : id && !dirty ? 'Spillet er privat. Velg «Del spill» for å lage en lenke.' : 'Lagre spillet før du deler det.';
+    shareStatus.textContent = sharing ? 'Oppdaterer deling …' : share ? `Spillet er delt med lenke.${dirty || revision !== share.revision ? ' Lagre endringene og oppdater delingen når de er klare.' : ''}` : id && !dirty ? 'Spillet er privat. Velg «Del spill» for å lage en lenke.' : 'Lagre spillet før du deler det.';
   }
   function fail(message) { error.textContent = message; error.hidden = false; }
   function field(label, value, oninput, multiline = false) {

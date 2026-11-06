@@ -206,7 +206,9 @@
       if (category.tiles.length >= 8) return;
       let value = Math.min(10000, Math.max(...category.tiles.map(t => t.value)) + 100);
       if(category.tiles.some(t=>t.value===value)){value=1;while(category.tiles.some(t=>t.value===value))value++;}
-      category.tiles.push(emptyTile(value)); render(); changed();
+      const tile = emptyTile(value);
+      expandedTiles.set(tile, true);
+      category.tiles.push(tile); render(); changed();
     });
     addRow.disabled = category.tiles.length >= 8;
     const actions = el('div', undefined, 'actions'); actions.append(addRow); rows.append(actions); form.append(rows);

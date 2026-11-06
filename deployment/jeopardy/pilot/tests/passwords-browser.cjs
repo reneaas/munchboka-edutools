@@ -1,0 +1,15 @@
+// Run against a disposable local PHP fixture with _test_code.php; never production.
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});try{
+ const page=await browser.newPage({viewport:{width:390,height:844}}),base=process.env.JEOPARDY_BASE||'http://127.0.0.1:8841';
+ await page.goto(base);await page.getByLabel('E-post i Osloskolen',{exact:true}).first().fill('browser@osloskolen.no');await page.getByLabel('Passord',{exact:true}).fill('wrong');await page.getByRole('button',{name:'Logg inn med passord',exact:true}).click();await page.getByText('Feil e-post eller passord.',{exact:true}).waitFor();
+ await page.getByLabel('E-post i Osloskolen',{exact:true}).first().fill('browser@osloskolen.no');await page.getByLabel('Passord',{exact:true}).fill('Original browser password');await page.getByRole('button',{name:'Logg inn med passord',exact:true}).click();await page.getByRole('heading',{name:'Mine quizer',exact:true}).waitFor();
+ await page.getByRole('link',{name:'Min konto',exact:true}).click();assert.equal(await page.getByLabel('Nytt passord',{exact:true}).count(),0);
+ await page.goto(base+'/_test_code.php');await page.getByLabel('Engangskode',{exact:true}).fill('12345678');await page.getByRole('button',{name:'Bekreft e-post',exact:true}).click();
+ await page.getByLabel('Nytt passord',{exact:true}).fill('Changed browser password');await page.getByLabel('Gjenta passordet',{exact:true}).fill('Mismatched browser password');await page.getByRole('button',{name:'Lagre passord',exact:true}).click();await page.getByText('Passordene er ikke like.',{exact:true}).waitFor();
+ await page.getByLabel('Nytt passord',{exact:true}).fill('Changed browser password');await page.getByLabel('Gjenta passordet',{exact:true}).fill('Changed browser password');await page.getByRole('button',{name:'Lagre passord',exact:true}).click();await page.getByText('Passordet er lagret. Det samme passordet brukes i Jeopardy og Livequiz.',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Logg ut',exact:true}).click();await page.getByLabel('E-post i Osloskolen',{exact:true}).first().fill('browser@osloskolen.no');await page.getByLabel('Passord',{exact:true}).fill('Changed browser password');await page.getByRole('button',{name:'Logg inn med passord',exact:true}).click();await page.getByRole('heading',{name:'Mine quizer',exact:true}).waitFor();
+ const denied=await page.evaluate(async()=>{const data=new FormData();data.set('action','set-password');data.set('password','Unauthorized new password');data.set('password_confirmation','Unauthorized new password');return (await fetch('/',{method:'POST',body:data})).text();});assert.ok(denied.includes('Siden er utløpt.'));
+ console.log('Jeopardy password browser passed: wrong/correct login, email-code recovery, password confirmation, logout, new password and CSRF rejection.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

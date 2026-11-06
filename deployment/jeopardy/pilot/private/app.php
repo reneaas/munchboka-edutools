@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/passwords.php';
 
 // Private application code. database.php lives beside this file, never in Git.
 const JP_ORIGIN = 'https://jeopardy.munchboka.no';
@@ -123,6 +124,7 @@ function jp_verify(PDO $db, string $code): void
     if (!is_string($email) || !jp_allowed_email($email) || !is_string($challenge) || strlen($challenge) !== 64) {
         throw new DomainException('Be om en ny kode først.');
     }
+    jp_credentials_prepare($db);
     $db->beginTransaction();
     try {
         $stmt = $db->prepare('SELECT * FROM jp_login WHERE email = ? FOR UPDATE');
@@ -142,10 +144,10 @@ function jp_verify(PDO $db, string $code): void
         $stmt = $db->prepare('SELECT id FROM jp_users WHERE email = ?');
         $stmt->execute([$email]);
         $uid = (int) $stmt->fetchColumn();
+        $version=jp_credentials_version($db,$uid);
         $db->commit();
-        session_regenerate_id(true);
-        $_SESSION = ['uid' => $uid, 'email' => $email, 'authenticated_at' => time(),
-            'csrf' => bin2hex(random_bytes(32)), 'flash' => 'Du er logget inn.'];
+        jp_auth_session($uid,$email,$version,true);
+        $_SESSION['flash']='Du er logget inn.';
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
         throw $e;

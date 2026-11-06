@@ -23,6 +23,7 @@ function jp_db(): PDO {
 }
 '''
 (out / 'private/app.php').write_text(app)
+shutil.copy(legacy / 'private/passwords.php', out / 'private/passwords.php')
 sql = (root / 'private/livequiz/schema.sql').read_text()
 sql = re.sub(r' CHARACTER SET ascii| COLLATE ascii_bin| ENGINE=InnoDB DEFAULT CHARSET=utf8mb4', '', sql)
 sql = re.sub(r',\s*INDEX [^\n]+', '', sql)

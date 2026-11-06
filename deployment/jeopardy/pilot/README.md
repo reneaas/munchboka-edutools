@@ -31,7 +31,7 @@ The directory name `pilot` is retained for deployment continuity. Registration i
 
 ## Deployment layout
 
-- `private/app.php` and `private/schema.sql` → `/home/zebfxvix/jeopardy-private/`
+- `private/app.php`, `private/passwords.php` and `private/schema.sql` → `/home/zebfxvix/jeopardy-private/`
 - `public/*`, including `.htaccess` and `vendor/` → `/home/zebfxvix/public_html/jeopardy/`
 - Existing `jeopardy-private/database.php` remains private and is never included
   in a source archive or overwritten during deployment.
@@ -48,6 +48,24 @@ A locked per-account check enforces a 50 MiB quota. Removed/replaced images rema
 stored to keep old revisions intact; media cleanup/library management is future work.
 
 ## Authentication
+
+Password login uses the Osloskolen email address as the username and the same
+`lq_credentials` and `lq_auth_limits` tables as Livequiz in the shared database.
+Existing Livequiz passwords work immediately; sessions remain separate per site.
+“Min konto” allows password setup/reset after email-code verification within the
+last ten minutes. Passwords require at least 15 characters and use Argon2id where
+available. Changing a password invalidates older sessions in both applications.
+Email-code login remains available. Credentials tables are created additively if
+missing; no account or quiz migration is needed. Deploy `private/passwords.php`
+with `private/app.php` (Livequiz also loads this shared Jeopardy app file).
+
+Validation: `php tests/passwords.php` checks password setup, recovery, throttling,
+credential versions, and cross-application password compatibility.
+For the browser flow, run `python3 tests/prepare-local.py` with a fresh
+`/private/tmp/jeopardy-auth` directory, then `php /private/tmp/jeopardy-auth/setup.php`
+and `php -S 127.0.0.1:8841 -t /private/tmp/jeopardy-auth/public`.
+Run `node tests/passwords-browser.cjs` with Playwright available. The fixture's
+email-code helper is local test infrastructure and must never be deployed.
 
 Email uses PHP `mail()` and `noreply@jeopardy.munchboka.no`. SPF and DKIM were
 valid in cPanel; delivery to the pilot account was verified. Domain-wide

@@ -40,6 +40,7 @@ try {
     require '/home/zebfxvix/jeopardy-private/app.php';
     $db = jp_db();
     jp_schema($db);
+    jp_check_credentials($db);
     if (isset($_GET['media'])) {
         if (!is_string($_GET['media']) || !preg_match('/^[a-f0-9]{32}$/D', $_GET['media'])) {
             http_response_code(404); exit;
@@ -62,10 +63,18 @@ try {
         $action = jp_input('action', 20);
         if ($action === 'send') {
             jp_send_code($db, jp_input('email', 254));
-            jp_redirect();
+            jp_redirect(isset($_SESSION['uid'])?'?account=1':'');
         } elseif ($action === 'verify') {
             jp_verify($db, jp_input('code', 40));
+            jp_redirect('?account=1');
+        } elseif ($action === 'password-login') {
+            jp_password_login($db,jp_input('email',254),$_POST['password'] ?? null,$_SERVER['REMOTE_ADDR'] ?? 'unknown');
             jp_redirect();
+        } elseif ($action === 'set-password') {
+            if (($_POST['password'] ?? null) !== ($_POST['password_confirmation'] ?? null)) throw new DomainException('Passordene er ikke like.');
+            jp_set_password($db,$_POST['password'] ?? null);
+            $_SESSION['flash']='Passordet er lagret. Det samme passordet brukes i Jeopardy og Livequiz.';
+            jp_redirect('?account=1');
         } elseif ($action === 'logout') {
             $_SESSION = [];
             session_destroy();
@@ -184,7 +193,12 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php elseif (!$uid): ?>
 <section class="intro"><p class="eyebrow">FAGLIG REPETISJON OG SAMARBEID</p><h1>Jeopardy</h1>
 <p>Lag egne spørsmål og svar til faglig repetisjon, begrepstrening og samarbeid. Organiser oppgavene i et Jeopardy-brett med kategorier, og bruk tekst, matematiske formler og bilder i undervisningen.</p><p>Lærere og elever kan lagre quizene på nett og dele en valgt versjon med klassen. <a href="/?about=1">Les om undervisningsverktøyet</a>.</p></section>
-<section class="card login"><h2>Logg inn eller opprett konto</h2><p>For lærere og elever med @osloskolen.no. Du får en engangskode på e-post og trenger ikke et eget passord.</p>
+<section class="card login"><h2>Logg inn eller opprett konto</h2><p>For lærere og elever med @osloskolen.no. Bruk samme e-post og passord som i Livequiz, eller logg inn med en engangskode.</p>
+<form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="password-login">
+<label for="login-email">E-post i Osloskolen</label><input id="login-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="navn@osloskolen.no">
+<label for="login-password">Passord</label><input id="login-password" name="password" type="password" autocomplete="current-password" required>
+<button>Logg inn med passord</button></form>
+<h3>Ny konto eller glemt passord?</h3><p>Bekreft e-posten med en engangskode for å opprette eller endre passord.</p>
 <?php if (isset($_SESSION['challenge'])): ?>
 <form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="verify">
 <label for="code">Kode sendt til <?= h($_SESSION['email_pending']) ?></label>
@@ -198,8 +212,25 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php if (isset($_SESSION['challenge'])): ?></details><?php endif; ?>
 <p class="hint">Kontoen opprettes når du bekrefter e-postadressen første gang. E-postadressen brukes til innlogging og eierskap. Quizer og bilder er private til du velger å dele en quiz med en lenke.</p></section>
 <?php else: ?>
-<nav><a href="/">Mine quizer</a><span><?= h($_SESSION['email']) ?></span><form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="logout"><button class="quiet">Logg ut</button></form></nav>
-<?php if ($playing && $game && $content && !$content['categories']): ?>
+<nav><a href="/">Mine quizer</a><a href="/?account=1">Min konto</a><span><?= h($_SESSION['email']) ?></span><form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="logout"><button class="quiet">Logg ut</button></form></nav>
+<?php if (isset($_GET['account'])): ?>
+<h1>Min konto</h1><section class="card login"><h2>Opprett eller endre passord</h2>
+<p>Passordet gjelder både Jeopardy og Livequiz. Bruk e-postadressen din som brukernavn.</p>
+<?php if (time()-(int)($_SESSION['email_verified_at'] ?? 0)<=600): ?>
+<form method="post" action="/?account=1"><?php csrf(); ?><input type="hidden" name="action" value="set-password">
+<input type="hidden" name="username" autocomplete="username" value="<?= h($_SESSION['email']) ?>">
+<label for="new-password">Nytt passord</label><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="15" required>
+<label for="password-confirmation">Gjenta passordet</label><input id="password-confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="15" required>
+<p class="hint">Bruk minst 15 tegn, gjerne en lang setning. Andre innlogginger blir ugyldige når passordet endres.</p><button>Lagre passord</button></form>
+<?php else: ?>
+<p>Bekreft e-posten med en ny engangskode før du setter passord.</p>
+<?php if (isset($_SESSION['challenge'])): ?>
+<form method="post" action="/?account=1"><?php csrf(); ?><input type="hidden" name="action" value="verify">
+<label for="account-code">Engangskode</label><input id="account-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required><button>Bekreft e-post</button></form>
+<?php endif; ?>
+<form method="post" action="/?account=1"><?php csrf(); ?><input type="hidden" name="action" value="send"><input type="hidden" name="email" value="<?= h($_SESSION['email']) ?>"><button>Send innloggingskode</button></form>
+<?php endif; ?></section><p><a href="/">Til Mine quizer</a></p>
+<?php elseif ($playing && $game && $content && !$content['categories']): ?>
 <h1><?= h($content['title']) ?></h1><p>Dette spillet har ingen kategorier ennå.</p>
 <a class="button" href="/?edit=<?= h($game['id']) ?>">Legg til din første kategori</a>
 <?php elseif ($playing && $game && $content): ?>

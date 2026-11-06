@@ -1,25 +1,37 @@
-(function () {
-  'use strict';
-  const key = 'munchboka-jeopardy-theme';
-  const media = window.matchMedia('(prefers-color-scheme: dark)');
-  let preference = 'system';
-  try { preference = localStorage.getItem(key) || 'system'; } catch (_) {}
-  function apply(value) {
-    preference = ['light', 'dark', 'system'].includes(value) ? value : 'system';
-    document.documentElement.dataset.theme = preference === 'system' ? (media.matches ? 'dark' : 'light') : preference;
-    const select = document.getElementById('theme');
-    if (select) select.value = preference;
-  }
-  apply(preference);
-  media.addEventListener('change', () => { if (preference === 'system') apply('system'); });
-  window.addEventListener('storage', event => { if (event.key === key) apply(event.newValue || 'system'); });
-  document.addEventListener('DOMContentLoaded', () => {
-    const select = document.getElementById('theme');
-    if (!select) return;
-    select.value = preference;
-    select.addEventListener('change', () => {
-      apply(select.value);
-      try { localStorage.setItem(key, preference); } catch (_) {}
+/* Apply before styles load to avoid a light flash; preference is local to this browser. */
+(() => {
+  const key = 'munchboka-jeopardy-theme', system = matchMedia('(prefers-color-scheme: dark)');
+  let preference = null;
+  try { preference = localStorage.getItem(key); } catch (_) {}
+  const valid = value => value === 'light' || value === 'dark';
+  if (!valid(preference)) preference = null;
+  function apply() {
+    const theme = preference || (system.matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+    document.querySelectorAll('.theme-toggle').forEach(button => {
+      button.textContent = theme === 'dark' ? 'Lys modus' : 'Mørk modus';
+      button.setAttribute('aria-label', theme === 'dark' ? 'Bytt til lys modus' : 'Bytt til mørk modus');
     });
+  }
+  window.jeopardyThemeButton = () => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'theme-toggle quiet';
+    const dark = document.documentElement.dataset.theme === 'dark';
+    button.textContent = dark ? 'Lys modus' : 'Mørk modus';
+    button.setAttribute('aria-label', dark ? 'Bytt til lys modus' : 'Bytt til mørk modus');
+    button.onclick = () => {
+      preference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem(key, preference); } catch (_) {}
+      apply();
+    };
+    return button;
+  };
+  system.addEventListener('change', () => { if (!preference) apply(); });
+  window.addEventListener('storage', event => {
+    if (event.key === key || event.key === null) { preference = valid(event.newValue) ? event.newValue : null; apply(); }
+  });
+  apply();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('body > header').append(window.jeopardyThemeButton());
   });
 })();

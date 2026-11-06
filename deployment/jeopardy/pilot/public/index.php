@@ -162,12 +162,12 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <meta property="og:title" content="Jeopardy · Munchboka – for lærere og elever">
 <meta property="og:description" content="Et digitalt undervisningsverktøy for faglig repetisjon og samarbeid. Lag egne spørsmål og svar med matematikk og bilder, og bruk dem i klasserommet.">
 <meta property="og:type" content="website"><meta property="og:locale" content="nb_NO">
-<?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=3"></script><link rel="stylesheet" href="/pilot.css?v=4">
+<?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=4"></script><link rel="stylesheet" href="/pilot.css?v=5">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script defer src="/vendor/katex/katex.min.js"></script><script defer src="/math.js?v=2"></script>
 <script defer src="/library.js?v=<?= filemtime(__DIR__ . '/library.js') ?>"></script>
 <?php if ($editing && $game): ?><script defer src="/editor.js?v=8"></script><?php endif; ?>
-<?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css?v=4"><script defer src="/jeopardy.js?v=3"></script><?php endif; ?>
-</head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a><label class="theme-control" for="theme">Utseende<select id="theme"><option value="system">Følg systemet</option><option value="light">Lyst</option><option value="dark">Mørkt</option></select></label></header>
+<?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css?v=4"><script defer src="/jeopardy.js?v=4"></script><?php endif; ?>
+</head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a></header>
 <main>
 <?php if ($flash): ?><div class="notice" role="status"><?= h($flash) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="error" role="alert"><?= h($error) ?></div><?php endif; ?>

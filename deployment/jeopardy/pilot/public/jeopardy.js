@@ -486,6 +486,7 @@
       });
       const footerRight = document.createElement('div');
       footerRight.className = 'jeopardy-footer-right';
+      if (window.jeopardyThemeButton) footerRight.appendChild(window.jeopardyThemeButton());
       footerRight.appendChild(revealBtn);
       footer.appendChild(teamActions);
       footer.appendChild(footerRight);

@@ -1,35 +1,35 @@
-/* Replacing with legacy Jeopardy CSS for faithful styling */
+/* Livequiz-aligned slate and blue palette for the Jeopardy board. */
 /* Jeopardy board styles with light/dark mode (Material-aligned) */
 
 /* Color system */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   /* Light mode tokens */
-  --jp-bg: #EFF7F9;             /* background */
+  --jp-bg: #F8FAFC;             /* background */
   --jp-surface: #FFFFFF;         /* surfaces/cards */
-  --jp-text: #11283A;            /* primary text */
-  --jp-subtle-text: #526C80;     /* secondary text */
-  --jp-outline: #D1E0E6;         /* outlines/dividers */
-  /* Jeopardy palette: ocean teal, marine blue, sea glass */
-  --jp-primary: #2A7081;         /* tiles */
-  --jp-primary-strong: #143F55;  /* header/nav */
+  --jp-text: #1E293B;            /* primary text */
+  --jp-subtle-text: #475569;     /* secondary text */
+  --jp-outline: #CBD5E1;         /* outlines/dividers */
+  /* Blue actions with semantic green scoring and orange warnings. */
+  --jp-primary: #0369A1;         /* tiles */
+  --jp-primary-strong: #075985;  /* header/nav */
   --jp-on-primary: #FFFFFF;      /* text on primary */
-  --jp-secondary: #E4F1F4;       /* subtle surface tint */
-  --jp-danger: #41688F;          /* steel blue warn */
-  --jp-success: #2A8078;         /* teal success */
-  --jp-success-border: #205F5A;  /* deeper teal border */
-  --jp-accent: #5AA8BA;          /* sea glass accent */
-  --jp-accent-border: #3F8EA2;   /* deeper sea glass border */
-  --jp-focus-ring: rgba(42, 112, 129, 0.28);
-  --jp-neutral: #41586A;
-  --jp-neutral-strong: #2D4050;
-  --jp-on-neutral: #F9FAFB;
+  --jp-secondary: #E0F2FE;       /* subtle surface tint */
+  --jp-danger: #9A3412;          /* Livequiz palette */
+  --jp-success: #15803D;         /* Livequiz palette */
+  --jp-success-border: #166534;  /* Livequiz palette */
+  --jp-accent: #0369A1;          /* Livequiz palette */
+  --jp-accent-border: #075985;   /* Livequiz palette */
+  --jp-focus-ring: rgba(2, 132, 199, 0.35);
+  --jp-neutral: #475569;
+  --jp-neutral-strong: #334155;
+  --jp-on-neutral: #F8FAFC;
   --jp-shadow: 0 2px 6px rgba(0,0,0,0.12);
   --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.22);
-  --jp-container-bg: #EAF4F7;
-  --jp-container-border: rgba(20, 63, 85, 0.16);
+  --jp-container-bg: #F1F5F9;
+  --jp-container-border: #CBD5E1;
   --jp-container-radius: 18px;
-  --jp-container-shadow: 0 10px 28px rgba(17,40,58,0.08);
+  --jp-container-shadow: 0 10px 28px rgba(30,41,59,0.08);
   --jp-tile-gradient: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 34%, rgba(0,0,0,0.07) 100%);
   /* Components */
   --jp-header-bg: var(--jp-primary-strong);
@@ -47,29 +47,30 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     /* Dark mode tokens */
-    --jp-bg: #06111B;
-    --jp-surface: #0A1D29;
-    --jp-text: #E2EEF3;
-    --jp-subtle-text: #98B0BE;
-    --jp-outline: #213D4D;
-    --jp-primary: #347E90;         /* tile ocean teal */
-    --jp-primary-strong: #163F54;  /* marine header/nav */
+    --jp-bg: #020617;
+    --jp-surface: #0F172A;
+    --jp-text: #E2E8F0;
+    --jp-subtle-text: #94A3B8;
+    --jp-outline: #475569;
+    --jp-primary: #0369A1;         /* Livequiz palette */
+    --jp-primary-strong: #0C4A6E;  /* Livequiz palette */
     --jp-on-primary: #FFFFFF;
-    --jp-secondary: #0E2431;       /* modal/footer tint */
-    --jp-danger: #52749F;          /* steel blue warn */
-    --jp-success: #348981;         /* teal success */
-    --jp-success-border: #266560;  /* deeper teal border */
-    --jp-accent: #61B1C3;          /* sea glass accent */
-    --jp-accent-border: #458EA2;   /* brighter sea glass border */
-    --jp-focus-ring: rgba(97, 177, 195, 0.35);
-    --jp-neutral: #45606F;
-    --jp-neutral-strong: #314958;
-    --jp-on-neutral: #E2EEF3;
+    --jp-secondary: #1E293B;       /* modal/footer tint */
+    --jp-danger: #9A3412;          /* Livequiz palette */
+    --jp-success: #15803D;         /* Livequiz palette */
+    --jp-success-border: #166534;  /* Livequiz palette */
+    --jp-accent: #0369A1;          /* Livequiz palette */
+    --jp-accent-border: #7DD3FC;   /* Livequiz palette */
+    --jp-focus-ring: rgba(125, 211, 252, 0.4);
+    --jp-neutral: #475569;
+    --jp-neutral-strong: #334155;
+    --jp-on-neutral: #E2E8F0;
     --jp-shadow: 0 2px 6px rgba(0,0,0,0.4);
     --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.6);
     --jp-container-bg: var(--jp-bg);
-    --jp-container-border: rgba(97, 177, 195, 0.28);
+    --jp-container-border: #475569;
     --jp-container-radius: 18px;
     --jp-container-shadow: 0 12px 32px rgba(0,0,0,0.32);
     --jp-tile-gradient: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 28%, rgba(0,0,0,0.14) 100%);
@@ -83,7 +84,7 @@
     --jp-tile-fg: #FFFFFF;
     --jp-modal-bg: var(--jp-surface);
     --jp-modal-fg: var(--jp-text);
-    --jp-modal-footer: #06111B;
+    --jp-modal-footer: #020617;
   }
   /* In dark mode, keep container on the dark surface token */
   .jeopardy-container { background: var(--jp-bg); }
@@ -95,28 +96,29 @@ body.dark-mode,
 html[data-theme='dark'],
 body[data-theme='dark'],
 html[data-mode='dark'] {
-  --jp-bg: #06111B;
-  --jp-surface: #0A1D29;
-  --jp-text: #E2EEF3;
-  --jp-subtle-text: #98B0BE;
-  --jp-outline: #213D4D;
-  --jp-primary: #347E90;
-  --jp-primary-strong: #163F54;
+  color-scheme: dark;
+  --jp-bg: #020617;
+  --jp-surface: #0F172A;
+  --jp-text: #E2E8F0;
+  --jp-subtle-text: #94A3B8;
+  --jp-outline: #475569;
+  --jp-primary: #0369A1;
+  --jp-primary-strong: #0C4A6E;
   --jp-on-primary: #FFFFFF;
-  --jp-secondary: #0E2431;
-  --jp-danger: #52749F;
-  --jp-success: #348981;
-  --jp-success-border: #266560;
-  --jp-accent: #61B1C3;
-  --jp-accent-border: #458EA2;
-  --jp-focus-ring: rgba(97, 177, 195, 0.35);
-  --jp-neutral: #45606F;
-  --jp-neutral-strong: #314958;
-  --jp-on-neutral: #E2EEF3;
+  --jp-secondary: #1E293B;
+  --jp-danger: #9A3412;
+  --jp-success: #15803D;
+  --jp-success-border: #166534;
+  --jp-accent: #0369A1;
+  --jp-accent-border: #7DD3FC;
+  --jp-focus-ring: rgba(125, 211, 252, 0.4);
+  --jp-neutral: #475569;
+  --jp-neutral-strong: #334155;
+  --jp-on-neutral: #E2E8F0;
   --jp-shadow: 0 2px 6px rgba(0,0,0,0.4);
   --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.6);
   --jp-container-bg: var(--jp-bg);
-  --jp-container-border: rgba(97, 177, 195, 0.28);
+  --jp-container-border: #475569;
   --jp-container-radius: 18px;
   --jp-container-shadow: 0 12px 32px rgba(0,0,0,0.32);
   --jp-tile-gradient: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 28%, rgba(0,0,0,0.14) 100%);
@@ -129,7 +131,7 @@ html[data-mode='dark'] {
   --jp-tile-fg: #FFFFFF;
   --jp-modal-bg: var(--jp-surface);
   --jp-modal-fg: var(--jp-text);
-  --jp-modal-footer: #06111B;
+  --jp-modal-footer: #020617;
 }
 
 /* Explicit light tokens when user selects light mode (override system dark)
@@ -141,30 +143,30 @@ body[data-theme='light'],
 html[data-mode='light'],
 [data-mode='light'] {
   color-scheme: light;
-  --jp-bg: #EFF7F9;
+  --jp-bg: #F8FAFC;
   --jp-surface: #FFFFFF;
-  --jp-text: #11283A;
-  --jp-subtle-text: #526C80;
-  --jp-outline: #D1E0E6;
-  --jp-primary: #2A7081;
-  --jp-primary-strong: #143F55;
+  --jp-text: #1E293B;
+  --jp-subtle-text: #475569;
+  --jp-outline: #CBD5E1;
+  --jp-primary: #0369A1;
+  --jp-primary-strong: #075985;
   --jp-on-primary: #FFFFFF;
-  --jp-secondary: #E4F1F4;
-  --jp-danger: #41688F;
-  --jp-success: #2A8078;
-  --jp-success-border: #205F5A;
-  --jp-accent: #5AA8BA;
-  --jp-accent-border: #3F8EA2;
-  --jp-focus-ring: rgba(42, 112, 129, 0.28);
-  --jp-neutral: #41586A;
-  --jp-neutral-strong: #2D4050;
-  --jp-on-neutral: #F9FAFB;
+  --jp-secondary: #E0F2FE;
+  --jp-danger: #9A3412;
+  --jp-success: #15803D;
+  --jp-success-border: #166534;
+  --jp-accent: #0369A1;
+  --jp-accent-border: #075985;
+  --jp-focus-ring: rgba(2, 132, 199, 0.35);
+  --jp-neutral: #475569;
+  --jp-neutral-strong: #334155;
+  --jp-on-neutral: #F8FAFC;
   --jp-shadow: 0 2px 6px rgba(0,0,0,0.12);
   --jp-shadow-lg: 0 8px 30px rgba(0,0,0,0.22);
-  --jp-container-bg: #EAF4F7;
-  --jp-container-border: rgba(20, 63, 85, 0.16);
+  --jp-container-bg: #F1F5F9;
+  --jp-container-border: #CBD5E1;
   --jp-container-radius: 18px;
-  --jp-container-shadow: 0 10px 28px rgba(17,40,58,0.08);
+  --jp-container-shadow: 0 10px 28px rgba(30,41,59,0.08);
   --jp-tile-gradient: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 34%, rgba(0,0,0,0.07) 100%);
   --jp-header-bg: var(--jp-primary-strong);
   --jp-header-fg: var(--jp-on-primary);
@@ -313,8 +315,8 @@ html[data-mode='light'],
   word-break: normal;
   overflow-wrap: break-word;
 }
-.jeopardy-tile:hover { transform: translateY(-2px); box-shadow: var(--jp-shadow-lg); }
-.jeopardy-tile:focus { outline: 2px solid var(--jp-outline); outline-offset: 2px; }
+.jeopardy-tile:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--jp-shadow-lg); }
+.jeopardy-tile:focus { outline: 3px solid var(--accent, #0284c7); outline-offset: 3px; }
 .jeopardy-tile.used { opacity: 0.35; cursor: default; }
 
 /* Modal */
@@ -434,9 +436,9 @@ body[data-theme='dark'] .jeopardy-modal-body,
 .j-btn.warn { background: var(--jp-danger); color: #fff; }
 .j-btn.warn:hover { filter: brightness(1.05); }
 .j-btn.success { 
-  background: var(--jp-success);
-  color: #fff;
-  border: 2px solid var(--jp-success-border);
+  background: var(--jp-primary);
+  color: var(--jp-on-primary);
+  border: 2px solid var(--jp-primary-strong);
 }
 .j-btn.success:hover { filter: brightness(1.05); }
 .j-btn.accent {
@@ -445,7 +447,7 @@ body[data-theme='dark'] .jeopardy-modal-body,
   border: 2px solid var(--jp-accent-border);
 }
 .j-btn.accent:hover { filter: brightness(1.05); }
-.j-btn:focus { outline: 2px solid var(--jp-outline); outline-offset: 2px; }
+.j-btn:focus { outline: 3px solid var(--accent, #0284c7); outline-offset: 3px; }
 
 .jeopardy-team-actions {
   display: flex;

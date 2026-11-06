@@ -258,7 +258,6 @@ function jp_validate_content(PDO $db, int $uid, mixed $data): array
         throw new DomainException('Fyll inn en tittel. Spillet kan ha opptil åtte kategorier.');
     }
     $out = ['title' => $title, 'categories' => []];
-    $values = null;
     foreach ($categories as $category) {
         if (!is_array($category)) throw new DomainException('Ugyldig kategori.');
         $name = jp_text($category['name'] ?? '', 180);
@@ -287,14 +286,12 @@ function jp_validate_content(PDO $db, int $uid, mixed $data): array
                     if ($alt === '') throw new DomainException('Legg til en kort bildebeskrivelse.');
                     $t[$side . 'Image'] = ['id' => $image['id'], 'alt' => $alt];
                 }
-                if ($t[$side] === '' && $image === null) throw new DomainException('Hvert spørsmål og svar trenger tekst eller et bilde.');
             }
             $clean['tiles'][] = $t;
         }
-        if (count(array_unique($rowValues)) !== count($rowValues) || ($values !== null && $values !== $rowValues)) {
-            throw new DomainException('Kategoriene må ha like poengrader, uten gjentatte poengverdier.');
+        if (count(array_unique($rowValues)) !== count($rowValues)) {
+            throw new DomainException('En kategori kan ikke ha gjentatte poengverdier.');
         }
-        $values = $rowValues;
         $out['categories'][] = $clean;
     }
     return $out;
@@ -488,10 +485,14 @@ function jp_shared_media(PDO $db, mixed $token, string $imageId): array
 
 function jp_player_config(array $content, string $shareToken = ''): array
 {
-    $cfg = ['teams' => 2, 'values' => array_column($content['categories'][0]['tiles'], 'value'), 'categories' => []];
+    $values = [];
+    foreach ($content['categories'] as $category) foreach ($category['tiles'] as $tile) $values[] = $tile['value'];
+    $values = array_values(array_unique($values));
+    sort($values, SORT_NUMERIC);
+    $cfg = ['teams' => 2, 'values' => $values, 'categories' => []];
     foreach ($content['categories'] as $category) {
         $cfg['categories'][] = ['name' => $category['name'], 'tiles' => array_map(static fn(array $tile): array => [
-            'value' => $tile['value'], 'question' => jp_side_html($tile, 'question', $shareToken), 'answer' => jp_side_html($tile, 'answer', $shareToken)], $category['tiles'])];
+            'value' => $tile['value'], 'empty' => trim($tile['question'] ?? '') === '' && empty($tile['questionImage']), 'question' => jp_side_html($tile, 'question', $shareToken), 'answer' => jp_side_html($tile, 'answer', $shareToken)], $category['tiles'])];
     }
     return $cfg;
 }

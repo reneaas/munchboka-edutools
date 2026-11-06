@@ -4,7 +4,7 @@
   if (!root) return;
   const game = JSON.parse(root.dataset.game);
   let id = root.dataset.id, revision = Number(root.dataset.revision), active = 0;
-  let baseline = JSON.stringify(game), uploading = 0, saving = false;
+  let baseline = JSON.stringify(game), uploading = 0, saving = false, autosaveTimer, autosaveBlocked = false;
   const csrf = root.dataset.csrf;
   let share = JSON.parse(root.dataset.share || 'null'), sharing = false;
   const el = (tag, text, cls) => {
@@ -37,9 +37,10 @@
   const shareActions = el('div', undefined, 'actions'); shareActions.append(shareButton, copyButton, openLink, stopButton);
   sharingPanel.append(el('h2', 'Del spillet'), el('p', 'Alle med lenken kan spille uten innlogging, men kan ikke redigere originalen. Bare den delte versjonen og bildene i den blir tilgjengelige. Senere endringer deles først når du velger «Oppdater delt versjon».'), linkLabel, shareActions, shareStatus);
   root.append(toolbar, error, sharingPanel, form);
-  function changed() {
+  function changed(schedule = true) {
     const dirty = JSON.stringify(game) !== baseline;
-    status.textContent = uploading ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ulagrede endringer' : id ? `Lagret på nett · versjon ${revision}` : 'Ikke lagret ennå';
+    if(schedule){autosaveBlocked=false;clearTimeout(autosaveTimer);if(dirty)autosaveTimer=setTimeout(autosave,1500);}
+    status.textContent = uploading ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? (autosaveBlocked ? 'Ikke lagret · prøv «Lagre på nett» igjen' : game.title.trim() ? 'Ulagrede endringer · lagres automatisk' : 'Skriv en tittel for å lagre automatisk') : id ? `Lagret på nett · versjon ${revision}` : 'Ikke lagret ennå';
     save.disabled = uploading > 0 || saving || sharing;
     play.hidden = !id || !game.categories.length;
     play.href = id ? '/?play=' + id : '#';
@@ -73,17 +74,22 @@
     return result;
   }
   function dataFor(action) { const data = new FormData(); data.set('action', action); data.set('csrf', csrf); return data; }
+  function autosave() {
+    if(!autosaveBlocked && game.title.trim() && JSON.stringify(game)!==baseline)void saveGame();
+  }
+  setInterval(autosave,15000);
+  window.addEventListener('online',()=>{autosaveBlocked=false;autosave();});
   async function saveGame() {
     if (saving || uploading || sharing) return;
-    saving = true; error.hidden = true; changed();
+    clearTimeout(autosaveTimer);saving = true; error.hidden = true; changed(false);
     const snapshot = JSON.stringify(game);
     const data = dataFor('save'); data.set('content', snapshot); data.set('id', id); data.set('revision', String(revision));
     try {
       const result = await request(data);
-      id = result.id; revision = result.revision; baseline = snapshot;
+      id = result.id; revision = result.revision; baseline = snapshot;autosaveBlocked=false;
       history.replaceState(null, '', '/?edit=' + id);
-    } catch (e) { fail(e.message); }
-    finally { saving = false; changed(); }
+    } catch (e) { autosaveBlocked=true;fail(e.message); }
+    finally { saving = false; changed(false);if(!autosaveBlocked&&JSON.stringify(game)!==baseline)autosaveTimer=setTimeout(autosave,1500); }
   }
   async function changeSharing(action) {
     if (sharing || !id) return;
@@ -158,7 +164,7 @@
       if (game.categories.length >= 8) return;
       const name = newCategory.value.trim();
       if (!name) { newCategory.setCustomValidity('Skriv et navn på kategorien.'); newCategory.reportValidity(); return; }
-      const values = game.categories.length ? game.categories[0].tiles.map(t => t.value) : [100, 200, 300];
+      const values = [100, 200, 300];
       game.categories.push({name, tiles: values.map(emptyTile)});
       active = game.categories.length - 1; render(); changed();
     }
@@ -183,28 +189,24 @@
     const category = game.categories[active];
     form.append(field('Kategorinavn', category.name, v => { category.name = v; select.options[active].textContent = v || `Kategori ${active + 1}`; form.querySelectorAll('.tile-editor > summary').forEach((summary, i) => { summary.textContent = `${v || 'Kategori'} · ${category.tiles[i].value} poeng`; }); }));
     const rows = el('div', undefined, 'row-controls');
-    rows.append(el('h2', 'Poengrader'), el('p', 'Poengverdiene gjelder for alle kategorier. Maks åtte kategorier og åtte rader.', 'hint'));
+    rows.append(el('h2', 'Poengrader'), el('p', 'Hver kategori har sine egne poengrader, maks åtte. Spillebrettet viser alle poengverdiene i stigende rekkefølge. Manglende rader og ruter uten spørsmål kan ikke velges.', 'hint'));
     category.tiles.forEach((tile, i) => {
       const label = el('label', `Rad ${i + 1}`);
       const input = el('input'); input.type = 'number'; input.min = 1; input.max = 10000; input.step = 1; input.value = tile.value;
-      input.addEventListener('input', () => { game.categories.forEach(c => { c.tiles[i].value = Number(input.value); }); changed(); });
-      input.addEventListener('change', () => render());
-      label.append(input); rows.append(label);
+      input.addEventListener('input', () => { tile.value = Number(input.value); changed(); });
+      input.addEventListener('change', () => {form.querySelectorAll('.tile-editor > summary').forEach((summary,index)=>{summary.textContent=`${category.name || 'Kategori'} · ${category.tiles[index].value} poeng`;});});
+      const remove=button('Fjern rad',()=>{if(category.tiles.length<=1)return;if((tile.question||tile.answer||tile.questionImage||tile.answerImage)&&!confirm('Fjerne denne raden fra kategorien?'))return;category.tiles.splice(i,1);render();changed();});remove.disabled=category.tiles.length<=1;remove.setAttribute('aria-label','Fjern rad '+(i+1));
+      const row=el('div',undefined,'actions');label.append(input);row.append(label,remove);rows.append(row);
     });
     const addRow = button('Legg til rad', () => {
       if (category.tiles.length >= 8) return;
-      const value = Math.min(10000, Math.max(...category.tiles.map(t => t.value)) + 100);
-      game.categories.forEach(c => c.tiles.push(emptyTile(value))); render(); changed();
+      let value = Math.min(10000, Math.max(...category.tiles.map(t => t.value)) + 100);
+      if(category.tiles.some(t=>t.value===value)){value=1;while(category.tiles.some(t=>t.value===value))value++;}
+      category.tiles.push(emptyTile(value)); render(); changed();
     });
     addRow.disabled = category.tiles.length >= 8;
-    const removeRow = button('Fjern siste rad', () => {
-      if (category.tiles.length > 1 && confirm('Fjerne siste rad i alle kategorier?')) {
-        game.categories.forEach(c => c.tiles.pop()); render(); changed();
-      }
-    });
-    removeRow.disabled = category.tiles.length <= 1;
-    const actions = el('div', undefined, 'actions'); actions.append(addRow, removeRow); rows.append(actions); form.append(rows);
-    form.append(el('p', 'Bilder: PNG, JPEG eller WebP, maks 2 MB per bilde. Skriv en kort bildebeskrivelse. Bilder lastes opp med én gang; lagre spillet for å beholde koblingen til ruten.', 'hint'));
+    const actions = el('div', undefined, 'actions'); actions.append(addRow); rows.append(actions); form.append(rows);
+    form.append(el('p', 'Bilder: PNG, JPEG eller WebP, maks 2 MB per bilde. Skriv en kort bildebeskrivelse. Bilder lastes opp med én gang; koblingen til ruten lagres automatisk.', 'hint'));
     category.tiles.forEach((tile, i) => {
       const details = el('details', undefined, 'tile-editor'); details.open = i === 0;
       details.append(el('summary', `${category.name || 'Kategori'} · ${tile.value} poeng`));

@@ -204,7 +204,7 @@
     categories.forEach((cat,ci)=>{
       (cat.tiles||[]).forEach(t=>{
         const key = ci+'|'+t.value;
-        lookup[key] = t;
+        if (!t.empty) lookup[key] = t;
       });
     });
     totalPlayableTiles = Object.keys(lookup).length;
@@ -219,7 +219,7 @@
         const key = ci+'|'+val;
         tile.dataset.key = key;
         const data = lookup[key] || null;
-        if(!data){ tile.disabled = true; tile.classList.add('used'); }
+        if(!data){ tile.disabled = true; tile.classList.add('used'); tile.dataset.empty = 'true'; tile.setAttribute('aria-label', (cat.name||'')+' · '+val+' poeng · Tom rute'); }
         if (tileStates[key] && tileStates[key].locked) { tile.disabled = true; tile.classList.add('used'); }
         tile.addEventListener('click', ()=>{
           if(tile.classList.contains('used')||tile.disabled) return;
@@ -277,7 +277,7 @@
       if (scoreboardShown) return;
       if (totalPlayableTiles <= 0) return;
       let lockedCount = 0;
-      for (const k in tileStates) { if (tileStates[k] && tileStates[k].locked) lockedCount++; }
+      for (const k in tileStates) { if (lookup[k] && tileStates[k] && tileStates[k].locked) lockedCount++; }
       if (lockedCount >= totalPlayableTiles) {
         scoreboardShown = true;
         openWinner();
@@ -326,7 +326,7 @@
       teamCategoryPoints = Array.from({length: nTeams}, () => Array.from({length: categories.length}, () => 0));
       scorebar.innerHTML = '';
       try {
-        container.querySelectorAll('.jeopardy-tile').forEach(b=>{ b.disabled = false; b.classList.remove('used'); });
+        container.querySelectorAll('.jeopardy-tile').forEach(b=>{ b.disabled = b.dataset.empty === 'true'; b.classList.toggle('used', b.disabled); });
       } catch(e){}
       try { scorebar.style.display = 'none'; } catch(e){}
       try { turnIndicator.style.display = 'none'; } catch(e){}

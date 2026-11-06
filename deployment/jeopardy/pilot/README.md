@@ -7,7 +7,10 @@ The directory name `pilot` is retained for deployment continuity. Registration i
 
 - New games start with an empty title and no categories or sample questions.
   Users name each category when adding it and can remove every category, including
-  the last. Up to eight categories and one to eight shared point rows (1–10000).
+  the last. Up to eight categories and one to eight point rows per category (1–10000).
+  The board aligns the sorted union of point values. Missing cells and questions
+  without text or an image are disabled, including after resetting a game.
+  Empty question/answer fields can be saved while a game is being prepared.
   Named drafts with zero categories can be saved; playback asks the user to add one.
 - Question and answer text with inline `$...$` and display `$$...$$` LaTeX.
 - Local KaTeX 0.16.22 assets and fonts, MIT license included. No external CDN.
@@ -18,9 +21,11 @@ The directory name `pilot` is retained for deployment continuity. Registration i
 - Delete saved games from “Mine quizer” after confirmation. Deletion requires
   login, CSRF and ownership, and removes the game, revisions and sharing links
   in one transaction. Uploaded media stays available for other games/Livequiz.
-- Explicit online saving, revision checks and retained revision snapshots.
+- Automatic online saving after 1.5 seconds without edits and every 15 seconds
+  while editing, plus a manual save button. A title is required. Saves are
+  serialized, with revision checks and retained revision snapshots.
   Network/validation failures leave the editor contents in the current tab.
-  Unsaved edits trigger a navigation warning. No autosave or offline draft store.
+  Unsaved edits trigger a navigation warning. Failed autosaves pause until another edit or manual retry. No offline draft store.
 - Existing single-category pilot games normalize in memory; historical revisions
   are preserved. Gameplay still uses the shared package's Jeopardy runtime.
 

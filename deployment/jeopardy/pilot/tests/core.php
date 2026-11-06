@@ -56,7 +56,8 @@ $_POST['revision'] = '2';
 rejects(fn() => jp_save($db, 11), 'other user cannot write');
 check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 2, 'failed saves do not create revisions');
 $_POST['question0'] = '';
-rejects(fn() => jp_save($db, 10), 'incomplete content rejected');
+jp_save($db, 10);
+check(json_decode(jp_game($db, $id, 10)['content'], true)['categories'][0]['tiles'][0]['question'] === '', 'empty question saves successfully');
 check(jp_h('<script>alert(1)</script>') === '&lt;script&gt;alert(1)&lt;/script&gt;', 'player content escaped');
 $_POST['title'] = ['bad']; rejects(fn() => jp_input('title', 180), 'array field rejected');
 rejects(fn() => jp_send_code($db, 'user@example.com'), 'outside domain rejected before email');
@@ -122,7 +123,7 @@ $_POST = ['id' => '', 'revision' => '0', 'content' => json_encode($valid)];
 $richId = jp_save($db, 10);
 check(count(json_decode(jp_game($db, $richId, 10)['content'], true)['categories']) === 2, 'multiple categories round trip');
 $sample['categories'][1]['tiles'][0]['value'] = 999;
-rejects(fn() => jp_validate_content($db, 10, $sample), 'inconsistent rows rejected');
+check(jp_validate_content($db, 10, $sample)['categories'][1]['tiles'][0]['value'] === 999, 'independent point rows accepted');
 $sample = $valid;
 $sample['categories'][0]['tiles'][1]['value'] = 100;
 rejects(fn() => jp_validate_content($db, 10, $sample), 'duplicate points rejected');
@@ -211,3 +212,21 @@ check((int) $db->query('SELECT COUNT(*) FROM jp_media')->fetchColumn() === $medi
 check(jp_game($db, $id, 10) === $otherBefore, 'other games preserved');
 rejects(fn() => jp_delete($db, 10, $shareGameId), 'repeated delete rejected safely');
 echo $checks . " core checks passed.\n";
+
+$sparse = ['title'=>'Sparse board','categories'=>[
+ ['name'=>'A','tiles'=>array_map(fn($v)=>['value'=>$v,'question'=>$v===200?'  ':'Question','answer'=>$v===200?'Answer only':''],[100,200,300,400,500])],
+ ['name'=>'B','tiles'=>array_map(fn($v)=>['value'=>$v,'question'=>'Question','answer'=>'Answer'],[100,300,500,700])]
+]];
+$clean = jp_validate_content($db,10,$sparse);
+$_POST = ['id'=>'','revision'=>'0','content'=>json_encode($clean)];
+$sparseId=jp_save($db,10);
+$reopened=jp_normalize(json_decode(jp_game($db,$sparseId,10)['content'],true));
+$config=jp_player_config($reopened);
+check($config['values']===[100,200,300,400,500,700],'board uses sorted union including values only in later categories');
+check(count($reopened['categories'][1]['tiles'])===4,'sparse category preserved on save and reload');
+check($config['categories'][0]['tiles'][1]['empty']===true,'whitespace question disabled even with an answer');
+check($config['categories'][0]['tiles'][0]['empty']===false,'question without answer remains playable');
+$clean['categories'][0]['tiles'][1]['questionImage']=['id'=>$imageId,'alt'=>'Triangle'];
+check(jp_player_config($clean)['categories'][0]['tiles'][1]['empty']===false,'image-only question remains playable');
+check(jp_player_config(['categories'=>[]])['values']===[],'empty board config is safe');
+echo "$checks checks including sparse boards passed\n";

@@ -4,6 +4,8 @@
   if (!root) return;
   const game = JSON.parse(root.dataset.game);
   let id = root.dataset.id, revision = Number(root.dataset.revision), active = 0;
+  const expandedTiles = new WeakMap();
+  let renderedTiles = [];
   let baseline = JSON.stringify(game), uploading = 0, saving = false, autosaveTimer, autosaveBlocked = false;
   const csrf = root.dataset.csrf;
   let share = JSON.parse(root.dataset.share || 'null'), sharing = false;
@@ -148,6 +150,8 @@
   }
   function emptyTile(value) { return {value, question: '', answer: '', questionImage: null, answerImage: null}; }
   function render() {
+    for (const [tile, details] of renderedTiles) expandedTiles.set(tile, details.open);
+    renderedTiles = [];
     form.replaceChildren();
     form.append(field('Spillets tittel', game.title, v => { game.title = v; }));
     const layout = el('div', undefined, 'actions');
@@ -208,7 +212,8 @@
     const actions = el('div', undefined, 'actions'); actions.append(addRow); rows.append(actions); form.append(rows);
     form.append(el('p', 'Bilder: PNG, JPEG eller WebP, maks 2 MB per bilde. Skriv en kort bildebeskrivelse. Bilder lastes opp med én gang; koblingen til ruten lagres automatisk.', 'hint'));
     category.tiles.forEach((tile, i) => {
-      const details = el('details', undefined, 'tile-editor'); details.open = i === 0;
+      const details = el('details', undefined, 'tile-editor'); details.open = expandedTiles.get(tile) ?? (i === 0);
+      renderedTiles.push([tile, details]);
       details.append(el('summary', `${category.name || 'Kategori'} · ${tile.value} poeng`));
       const sides = el('div', undefined, 'tile-sides'); sides.append(sideEditor(tile, 'question', 'Spørsmål'), sideEditor(tile, 'answer', 'Svar'));
       details.append(sides); form.append(details);

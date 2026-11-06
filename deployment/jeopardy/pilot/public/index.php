@@ -165,7 +165,7 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=3"></script><link rel="stylesheet" href="/pilot.css?v=3">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script defer src="/vendor/katex/katex.min.js"></script><script defer src="/math.js?v=2"></script>
 <script defer src="/library.js?v=<?= filemtime(__DIR__ . '/library.js') ?>"></script>
-<?php if ($editing && $game): ?><script defer src="/editor.js?v=6"></script><?php endif; ?>
+<?php if ($editing && $game): ?><script defer src="/editor.js?v=7"></script><?php endif; ?>
 <?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css"><script defer src="/jeopardy.js?v=3"></script><?php endif; ?>
 </head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a><label class="theme-control" for="theme">Utseende<select id="theme"><option value="system">Følg systemet</option><option value="light">Lyst</option><option value="dark">Mørkt</option></select></label></header>
 <main>

@@ -291,9 +291,17 @@ def setup(app):
         for modinfo in pkgutil.iter_modules(pkg.__path__, pkg_prefix + "."):
             try:
                 mod = importlib.import_module(modinfo.name)
-            except Exception:
-                # If a directive module fails to import, let Sphinx surface it
-                # when/if the user explicitly enables that module.
+            except Exception as exc:
+                try:
+                    from sphinx.util import logging
+
+                    logging.getLogger(__name__).warning(
+                        "munchboka_edutools: failed to load directive module %s: %s",
+                        modinfo.name,
+                        exc,
+                    )
+                except Exception:
+                    pass
                 continue
 
             setup_fn = getattr(mod, "setup", None)

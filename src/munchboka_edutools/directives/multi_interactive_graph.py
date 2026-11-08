@@ -39,7 +39,12 @@ import shutil
 import tempfile
 from typing import Any, Dict, List, Tuple
 
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+except ImportError:  # tqdm is an optional dependency (the `progress` extra)
+
+    def tqdm(iterable, *args, **kwargs):
+        return iterable
 
 from docutils import nodes
 from docutils.parsers.rst import directives

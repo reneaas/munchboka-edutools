@@ -154,3 +154,26 @@ Restored Jeopardy as the public heading and brand at the owner’s request.
 Page and Open Graph titles retain “for lærere og elever”; the educational
 introduction, metadata description and about page remain. Deployed
 jeopardy-heading-v7.zip via cPanel and verified the anonymous live homepage.
+
+## Public discovery and row swapping (2026-11-10)
+
+Changing a row to an existing point value swaps those two values within the
+selected category and sorts the editor by points. Questions, answers and images
+stay together. The change uses the existing revision-checked autosave.
+
+`?search=1` provides public title search with 20 results per page, using the same
+literal LIKE escaping and copy pattern as Livequiz. `?public=ID` plays the latest
+public revision; authenticated users can copy it into their own library. Images
+are copied transactionally into the recipient's account with quota checks and
+within-copy deduplication. Copies do not inherit snapshot tokens.
+
+New games and copies default to public, like Livequiz. Legacy games without an
+explicit visibility flag stay unlisted. The editor's Privat switch saves a
+boolean in content; saving private revokes snapshot links. Older editor payloads
+cannot silently republish a private game. Existing copies and already downloaded
+content are unaffected by later privacy changes. No schema migration is needed.
+
+Validation: 117 backend checks passed, plus editor/autosave browser regression
+checks and a localhost PHP integration flow covering anonymous search/play,
+authenticated copy, persisted row swap, privacy revocation and CSRF rejection.
+Tests use SQLite; MySQL concurrency remains a hosting integration limitation.

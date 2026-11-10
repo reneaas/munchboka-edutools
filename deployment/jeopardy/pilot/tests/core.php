@@ -102,7 +102,7 @@ seedCode($db, time() + 600, 0, 'student@osloskolen.no');
 jp_verify($db, '12345678');
 $studentId = (int) $_SESSION['uid'];
 check($studentId !== $teacherId && $_SESSION['email'] === 'student@osloskolen.no', 'new student gets distinct account');
-$_POST = ['id' => '', 'revision' => '0', 'content' => json_encode(jp_normalize(jp_sample()))];
+$_POST = ['id' => '', 'revision' => '0', 'content' => json_encode(jp_normalize(jp_sample()) + ['private' => false])];
 $studentGame = jp_save($db, $studentId);
 check((int) jp_game($db, $studentGame, $studentId)['owner_id'] === $studentId, 'new student can save own game');
 rejects(fn() => jp_game($db, $studentGame, $teacherId), 'teacher cannot read student game');
@@ -153,7 +153,7 @@ rejects(fn() => jp_image_info(str_repeat('x', 2 * 1024 * 1024 + 1)), 'oversize i
 rejects(fn() => jp_upload($db, 10, ['error' => UPLOAD_ERR_OK, 'tmp_name' => __FILE__]), 'non-upload file rejected');
 $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jO1sAAAAASUVORK5CYII=');
 check(jp_image_info($png)['mime'] === 'image/png', 'valid PNG accepted');
-check(jp_new_game() === ['title' => '', 'categories' => []], 'new game starts completely blank');
+check(jp_new_game() === ['title' => '', 'categories' => [], 'private' => false], 'new game starts completely blank');
 $_POST = ['id' => '', 'revision' => '0', 'content' => json_encode(['title' => 'Tomt utkast', 'categories' => []])];
 $emptyId = jp_save($db, 10);
 check(json_decode(jp_game($db, $emptyId, 10)['content'], true)['categories'] === [], 'empty draft can be saved and reopened');
@@ -161,7 +161,7 @@ $_POST = ['id' => $richId, 'revision' => '1', 'content' => json_encode(['title' 
 jp_save($db, 10);
 check(json_decode(jp_game($db, $richId, 10)['content'], true)['categories'] === [], 'last category removal persists');
 
-$_POST = ['id' => '', 'revision' => '0', 'content' => json_encode(jp_normalize(jp_sample()))];
+$_POST = ['id' => '', 'revision' => '0', 'content' => json_encode(jp_normalize(jp_sample()) + ['private' => false])];
 $shareGameId = jp_save($db, 10);
 rejects(fn() => jp_share($db, 11, $shareGameId, 1), 'other owner cannot share');
 rejects(fn() => jp_share($db, 10, $emptyId, 1), 'empty draft cannot be shared');
@@ -230,3 +230,40 @@ $clean['categories'][0]['tiles'][1]['questionImage']=['id'=>$imageId,'alt'=>'Tri
 check(jp_player_config($clean)['categories'][0]['tiles'][1]['empty']===false,'image-only question remains playable');
 check(jp_player_config(['categories'=>[]])['values']===[],'empty board config is safe');
 echo "$checks checks including sparse boards passed\n";
+
+// Discovery must not publish legacy/private games; copying owns its media.
+check(jp_is_private(['title'=>'Legacy']), 'legacy games remain private');
+check(!jp_is_private(jp_new_game()), 'new games follow Livequiz public default');
+$db->exec("INSERT OR IGNORE INTO jp_users (id,email) VALUES (10,'owner@osloskolen.no'),(11,'copy@osloskolen.no')");
+$published = jp_normalize(jp_sample()); $published['private'] = false; $published['title'] = 'Public 100%_lesson';
+$published['categories'][0]['tiles'][0]['questionImage'] = ['id'=>$imageId,'alt'=>'Triangle'];
+$published['categories'][0]['tiles'][0]['answerImage'] = ['id'=>$imageId,'alt'=>'Same triangle'];
+$_POST=['id'=>'','revision'=>'0','content'=>json_encode($published)]; $publicId=jp_save($db,10);
+check(jp_public_game($db,$publicId)['id']===$publicId,'public game readable');
+check(count(jp_discover($db,'100%_')['items'])===1,'literal wildcard search');
+check(jp_discover($db,'no matching title')['items']===[],'no-result search');
+rejects(fn()=>jp_discover($db,'',-1),'negative page rejected');
+rejects(fn()=>jp_public_game($db,$emptyId),'private draft not public');
+check(jp_public_media($db,$publicId,$imageId)['id']===$imageId,'public media membership');
+rejects(fn()=>jp_public_media($db,$publicId,str_repeat('f',32)),'unrelated media denied');
+$copyId=jp_copy_public($db,11,$publicId);
+$copy=json_decode(jp_game($db,$copyId,11)['content'],true);
+$newImage=$copy['categories'][0]['tiles'][0]['questionImage']['id'];
+check($newImage!==$imageId,'copy duplicates foreign media');
+check($copy['categories'][0]['tiles'][0]['answerImage']['id']===$newImage,'copy deduplicates repeated images');
+check(jp_media($db,$newImage,11)['bytes']===jp_media($db,$imageId,10)['bytes'],'copy keeps image bytes');
+check($copy['title']===$published['title'].' (kopi)' && $copy['private']===false,'copy title and visibility');
+$token=jp_share($db,10,$publicId,1)['token'];
+$published['private']=true;$_POST=['id'=>$publicId,'revision'=>'1','content'=>json_encode($published)];jp_save($db,10);
+rejects(fn()=>jp_public_game($db,$publicId),'private toggle revokes public page');
+rejects(fn()=>jp_public_media($db,$publicId,$imageId),'private toggle revokes public media');
+rejects(fn()=>jp_copy_public($db,11,$publicId),'private toggle revokes copying');
+rejects(fn()=>jp_shared_game($db,$token),'private toggle revokes snapshot link');
+rejects(fn()=>jp_share($db,10,$publicId,2),'private game cannot be shared');
+check(count(jp_discover($db,'100%_')['items'])===1,'search only retains independent copy');
+check(jp_public_media($db,$copyId,$newImage)['id']===$newImage,'copy survives source privacy');
+unset($published['private']);$_POST=['id'=>$publicId,'revision'=>'2','content'=>json_encode($published)];jp_save($db,10);
+rejects(fn()=>jp_public_game($db,$publicId),'old editor cannot republish private game');
+check(str_contains(jp_player_config($copy,$copyId)['categories'][0]['tiles'][0]['question'],'&amp;public='.$copyId),'public player scopes image URL');
+rejects(fn()=>jp_copy_public($db,0,$copyId),'anonymous copy rejected');
+echo "$checks checks including discovery and privacy passed\n";

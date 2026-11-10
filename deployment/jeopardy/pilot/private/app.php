@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/passwords.php';
+require_once __DIR__ . '/discovery.php';
 
 // Private application code. database.php lives beside this file, never in Git.
 const JP_ORIGIN = 'https://jeopardy.munchboka.no';
@@ -156,7 +157,7 @@ function jp_verify(PDO $db, string $code): void
 
 function jp_new_game(): array
 {
-    return ['title' => '', 'categories' => []];
+    return ['title' => '', 'categories' => [], 'private' => false];
 }
 
 function jp_game(PDO $db, string $id, int $uid): array
@@ -220,9 +221,15 @@ function jp_save(PDO $db, int $uid): string
                 throw new DomainException('Spillet er endret i en annen fane. Kopier endringene dine før du åpner den nyeste versjonen.');
             }
             $revision = (int) $current + 1;
+            if (!array_key_exists('private', $data ?? [])) {
+                $previous = jp_game($db, $id, $uid);
+                $game['private'] = jp_is_private(json_decode($previous['content'], true));
+                $json = json_encode($game, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            }
             $db->prepare('UPDATE jp_games SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_id = ?')
                 ->execute([$game['title'], $json, $revision, $id, $uid]);
         }
+        if (($data['private'] ?? null) === true) $db->prepare('DELETE FROM jp_shares WHERE game_id = ?')->execute([$id]);
         $db->prepare('INSERT INTO jp_revisions (game_id, revision, content) VALUES (?, ?, ?)')->execute([$id, $revision, $json]);
         $db->commit();
         return $id;
@@ -259,7 +266,8 @@ function jp_validate_content(PDO $db, int $uid, mixed $data): array
     if ($title === '' || !is_array($categories) || !array_is_list($categories) || count($categories) > 8) {
         throw new DomainException('Fyll inn en tittel. Spillet kan ha opptil åtte kategorier.');
     }
-    $out = ['title' => $title, 'categories' => []];
+    if (isset($data['private']) && !is_bool($data['private'])) throw new DomainException('Ugyldig synlighet.');
+    $out = ['title' => $title, 'categories' => [], 'private' => $data['private'] ?? true];
     foreach ($categories as $category) {
         if (!is_array($category)) throw new DomainException('Ugyldig kategori.');
         $name = jp_text($category['name'] ?? '', 180);
@@ -416,7 +424,7 @@ function jp_side_html(array $tile, string $side, string $shareToken = ''): strin
 {
     $html = '<div class="jp-text">' . jp_h($tile[$side]) . '</div>';
     $image = $tile[$side . 'Image'] ?? null;
-    if ($image) $html .= '<img class="jp-content-image" src="/?media=' . jp_h($image['id']) . ($shareToken !== '' ? '&amp;share=' . jp_h($shareToken) : '') . '" alt="' . jp_h($image['alt']) . '">';
+    if ($image) $html .= '<img class="jp-content-image" src="/?media=' . jp_h($image['id']) . ($shareToken !== '' ? (strlen($shareToken) === 32 ? '&amp;public=' : '&amp;share=') . jp_h($shareToken) : '') . '" alt="' . jp_h($image['alt']) . '">';
     return $html;
 }
 
@@ -430,6 +438,7 @@ function jp_share(PDO $db, int $uid, string $id, int $revision): array
         if (!$game) throw new DomainException('Spillet finnes ikke eller tilhører en annen konto.');
         if ((int) $game['revision'] !== $revision) throw new DomainException('Spillet er endret i en annen fane. Åpne den nyeste versjonen før du deler.');
         $content = jp_normalize(json_decode($game['content'], true, 32, JSON_THROW_ON_ERROR));
+        if (($content['private'] ?? null) === true) throw new DomainException('Slå av Privat før du deler spillet.');
         if (!$content['categories']) throw new DomainException('Legg til en kategori og lagre før du deler spillet.');
         $stmt = $db->prepare('SELECT token FROM jp_shares WHERE game_id = ?');
         $stmt->execute([$id]);

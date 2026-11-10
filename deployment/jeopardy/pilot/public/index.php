@@ -47,6 +47,7 @@ try {
         }
         try {
             if (isset($_GET['share'])) $media = jp_shared_media($db, $_GET['share'], $_GET['media']);
+            elseif (isset($_GET['public'])) $media = jp_public_media($db, $_GET['public'], $_GET['media']);
             elseif (isset($_SESSION['uid'])) $media = jp_media($db, $_GET['media'], (int) $_SESSION['uid']);
             else { http_response_code(404); exit; }
         }
@@ -85,6 +86,9 @@ try {
             if ($action === 'share') json_response(['share' => jp_share($db, (int) $_SESSION['uid'], $id, (int) jp_input('revision', 12))]);
             jp_unshare($db, (int) $_SESSION['uid'], $id);
             json_response(['share' => null]);
+        } elseif ($action === 'copy' && isset($_SESSION['uid'])) {
+            $copy = jp_copy_public($db, (int)$_SESSION['uid'], jp_input('id', 32));
+            jp_redirect('?edit=' . $copy);
         } elseif ($action === 'upload' && isset($_SESSION['uid'])) {
             $image = jp_upload($db, (int) $_SESSION['uid'], $_FILES['image'] ?? []);
             json_response(['image' => $image]);
@@ -114,7 +118,12 @@ try {
 }
 if ($api) json_response(['error' => $error ?: 'Ugyldig forespørsel.'], isset($_SESSION['uid']) ? 422 : 401);
 $uid = (int) ($_SESSION['uid'] ?? 0);
-$shared = isset($_GET['share']);
+$publicGame = isset($_GET['public']);
+$searching = isset($_GET['search']);
+$search = is_string($_GET['q'] ?? null) ? $_GET['q'] : '';
+$page = filter_var($_GET['page'] ?? 0, FILTER_VALIDATE_INT);
+$results = ['items' => [], 'more' => false];
+$shared = isset($_GET['share']) || $publicGame;
 $editing = !$about && !$shared && (isset($_GET['new']) || isset($_GET['edit']));
 $playing = $shared || isset($_GET['play']);
 $shareInfo = null;
@@ -122,11 +131,12 @@ $game = null;
 $content = null;
 $games = [];
 try {
+    if ($searching && $db) $results = jp_discover($db, $search, $page === false ? -1 : $page);
     if ($shared && $db) {
-        $game = jp_shared_game($db, $_GET['share']);
+        $game = $publicGame ? jp_public_game($db, $_GET['public']) : jp_shared_game($db, $_GET['share']);
         $content = jp_normalize(json_decode($game['content'], true, 32, JSON_THROW_ON_ERROR));
     } elseif ($uid && $db) {
-        $stmt = $db->prepare('SELECT g.id, g.title, g.revision, g.updated_at, s.token AS share_token FROM jp_games g LEFT JOIN jp_shares s ON s.game_id = g.id WHERE g.owner_id = ? ORDER BY g.updated_at DESC');
+        $stmt = $db->prepare('SELECT g.id, g.title, g.content, g.revision, g.updated_at, s.token AS share_token FROM jp_games g LEFT JOIN jp_shares s ON s.game_id = g.id WHERE g.owner_id = ? ORDER BY g.updated_at DESC');
         $stmt->execute([$uid]);
         $games = $stmt->fetchAll();
         if ($editing || $playing) {
@@ -162,12 +172,12 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <meta property="og:title" content="Jeopardy · Munchboka – for lærere og elever">
 <meta property="og:description" content="Et digitalt undervisningsverktøy for faglig repetisjon og samarbeid. Lag egne spørsmål og svar med matematikk og bilder, og bruk dem i klasserommet.">
 <meta property="og:type" content="website"><meta property="og:locale" content="nb_NO">
-<?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=4"></script><link rel="stylesheet" href="/pilot.css?v=5">
+<?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=4"></script><link rel="stylesheet" href="/pilot.css?v=6">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script defer src="/vendor/katex/katex.min.js"></script><script defer src="/math.js?v=2"></script>
 <script defer src="/library.js?v=<?= filemtime(__DIR__ . '/library.js') ?>"></script>
-<?php if ($editing && $game): ?><script defer src="/editor.js?v=9"></script><?php endif; ?>
+<?php if ($editing && $game): ?><script defer src="/editor.js?v=10"></script><?php endif; ?>
 <?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css?v=4"><script defer src="/jeopardy.js?v=4"></script><?php endif; ?>
-</head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a></header>
+</head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a><nav><a href="/?search=1">Finn Jeopardy</a><a href="/">Mine quizer</a></nav></header>
 <main>
 <?php if ($flash): ?><div class="notice" role="status"><?= h($flash) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="error" role="alert"><?= h($error) ?></div><?php endif; ?>
@@ -179,14 +189,24 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <p>Kategorier og oppgaver bestemmes av den som lager quizen. Verktøyet kan brukes på tvers av fag, og støtter formler med LaTeX og opplastede bilder.</p></section>
 <section class="card"><h2>Laget for lærere og elever</h2>
 <p>For å opprette og lagre quizer må brukeren bekrefte en e-postadresse som slutter på @osloskolen.no. Dette er et selvstendig Munchboka-verktøy, ikke en offisiell innloggingstjeneste fra Osloskolen eller Feide.</p>
-<p>Innholdet lages av brukerne. Eieren velger om en lagret versjon skal deles via lenke. Mottakere kan gjennomføre den delte aktiviteten uten innlogging, men kan ikke redigere originalen.</p>
+<p>Innholdet lages av brukerne. Offentlige quizer er søkbare og kan kopieres. Eieren kan slå på «Privat» for å skjule en quiz og deaktivere delingslenker. Mottakere kan gjennomføre den delte aktiviteten uten innlogging, men kan ikke redigere originalen.</p>
 <p>Poeng og lag brukes som ramme for aktiviteten i klasserommet. Nettstedet har ingen pengespill, kjøp av spillvaluta eller annonser.</p></section>
 <p><a class="button" href="/">Til undervisningsquizene</a></p>
+<?php elseif ($searching): ?>
+<h1>Finn Jeopardy</h1><p>Søk etter offentlige undervisningsspill. Åpne et spill eller lag en egen kopi du kan redigere.</p>
+<form method="get" action="/"><input type="hidden" name="search" value="1"><label for="search-title">Søk etter tittel</label><input id="search-title" name="q" maxlength="180" value="<?= h($search) ?>"><button>Søk</button></form>
+<?php if (!$results['items']): ?><p>Ingen offentlige spill funnet.</p><?php endif; ?>
+<div class="library"><?php foreach ($results['items'] as $item): ?><article class="card"><h2><?= h($item['title']) ?></h2><a href="/?public=<?= h($item['id']) ?>">Åpne spill</a>
+<?php if ($uid): ?><form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="copy"><input type="hidden" name="id" value="<?= h($item['id']) ?>"><button>Kopier til mine quizer</button></form><?php else: ?><p><a href="/">Logg inn for å kopiere</a></p><?php endif; ?>
+</article><?php endforeach; ?></div><nav>
+<?php if ($page > 0): ?><a href="/?<?= h(http_build_query(['search'=>1,'q'=>$search,'page'=>$page-1])) ?>">Forrige</a><?php endif; ?>
+<?php if ($results['more']): ?><a href="/?<?= h(http_build_query(['search'=>1,'q'=>$search,'page'=>$page+1])) ?>">Neste</a><?php endif; ?></nav>
 <?php elseif ($shared): ?>
 <?php if ($game && $content): ?>
+<?php if ($publicGame && $uid): ?><form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="copy"><input type="hidden" name="id" value="<?= h($game['id']) ?>"><button>Kopier til mine quizer</button></form><?php endif; ?>
 <p class="eyebrow">DELT UNDERVISNINGSQUIZ</p><h1><?= h($content['title']) ?></h1>
 <p>Faglig quiz til repetisjon og samarbeid. Du kan gjennomføre aktiviteten uten innlogging. Poeng og fremdrift gjelder bare i denne nettleseren.</p>
-<?php $cfg = jp_player_config($content, $_GET['share']); ?>
+<?php $cfg = jp_player_config($content, $publicGame ? $game['id'] : $_GET['share']); ?>
 <div class="jeopardy-container" id="shared-<?= h($game['id']) ?>-<?= (int) $game['revision'] ?>" data-config="<?= h(json_encode($cfg, JSON_THROW_ON_ERROR)) ?>"></div>
 <?php else: ?><p>Be eieren om en ny delingslenke.</p><?php endif; ?>
 <p><a href="/">Lag din egen undervisningsquiz</a></p>
@@ -210,7 +230,7 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <label for="email">E-post i Osloskolen</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="navn@osloskolen.no">
 <button>Send innloggingskode</button></form>
 <?php if (isset($_SESSION['challenge'])): ?></details><?php endif; ?>
-<p class="hint">Kontoen opprettes når du bekrefter e-postadressen første gang. E-postadressen brukes til innlogging og eierskap. Quizer og bilder er private til du velger å dele en quiz med en lenke.</p></section>
+<p class="hint">Kontoen opprettes når du bekrefter e-postadressen første gang. E-postadressen brukes til innlogging og eierskap. Nye quizer er offentlige og kan finnes og kopieres av andre. Slå på «Privat» i redigeringen for å skjule en quiz og deaktivere deling.</p></section>
 <?php else: ?>
 <nav><a href="/">Mine quizer</a><a href="/?account=1">Min konto</a><span><?= h($_SESSION['email']) ?></span><form method="post" action="/"><?php csrf(); ?><input type="hidden" name="action" value="logout"><button class="quiet">Logg ut</button></form></nav>
 <?php if (isset($_GET['account'])): ?>
@@ -247,6 +267,6 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php else: ?>
 <p class="eyebrow">DINE UNDERVISNINGSQUIZER</p><h1>Mine quizer</h1><p>Quizene er knyttet til kontoen din og lagret på nett.</p><a class="button" href="/?new=1">Opprett quiz</a>
 <?php if (!$games): ?><section class="card"><h2>Plass til din første undervisningsquiz</h2><p>Lag kategorier, fyll inn spørsmål og svar, og lagre quizen til neste time.</p></section><?php endif; ?>
-<div class="library"><?php foreach ($games as $item): ?><article class="card"><h2><?= h($item['title']) ?></h2><p class="hint"><?= $item['share_token'] ? 'Delt med lenke' : 'Privat' ?></p><div class="actions"><a href="/?edit=<?= h($item['id']) ?>">Rediger</a><a href="/?play=<?= h($item['id']) ?>">Start quiz</a><form method="post" action="/" class="delete-game" data-title="<?= h($item['title']) ?>"><?php csrf(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= h($item['id']) ?>"><button type="submit" class="quiet" disabled>Slett</button></form></div></article><?php endforeach; ?></div>
+<div class="library"><?php foreach ($games as $item): ?><article class="card"><h2><?= h($item['title']) ?></h2><p class="hint"><?= !jp_is_private(json_decode($item['content'], true)) ? 'Offentlig · søkbar og kopierbar' : ($item['share_token'] ? 'Delt med lenke' : 'Privat') ?></p><div class="actions"><a href="/?edit=<?= h($item['id']) ?>">Rediger</a><a href="/?play=<?= h($item['id']) ?>">Start quiz</a><form method="post" action="/" class="delete-game" data-title="<?= h($item['title']) ?>"><?php csrf(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= h($item['id']) ?>"><button type="submit" class="quiet" disabled>Slett</button></form></div></article><?php endforeach; ?></div>
 <?php endif; endif; ?>
 </main><footer>Munchboka · Digitale læringsressurser · <a href="/?about=1">Om undervisningsverktøyet</a></footer></body></html>

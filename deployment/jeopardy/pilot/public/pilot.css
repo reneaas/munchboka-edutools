@@ -12,3 +12,5 @@ input:not([type=hidden]),textarea,select{background:var(--field);border-color:va
 
 .badge{background:var(--notice);color:var(--ink)}
 .tile-editor[open]{border-color:var(--accent)}
+/* The privacy switch sits beside its label, unlike text fields. */
+input[role="switch"]{display:inline-block;width:auto;margin:0 10px 0 0;accent-color:var(--accent)}

@@ -3,6 +3,7 @@
   const root = document.getElementById('editor');
   if (!root) return;
   const game = JSON.parse(root.dataset.game);
+  game.private = game.private ?? true;
   let id = root.dataset.id, revision = Number(root.dataset.revision), active = 0;
   const expandedTiles = new WeakMap();
   let renderedTiles = [];
@@ -25,6 +26,10 @@
   const play = el('a', 'Spill lagret versjon');
   const form = el('div', undefined, 'card');
   toolbar.append(save, play, status);
+  const privacyLabel = el('label', 'Privat – skjul fra søk og deaktiver deling');
+  const privacy = el('input'); privacy.type = 'checkbox'; privacy.setAttribute('role', 'switch'); privacy.checked = game.private;
+  privacy.addEventListener('change', () => { game.private = privacy.checked; changed(); });
+  privacyLabel.prepend(privacy);
   const sharingPanel = el('section', undefined, 'card');
   const shareStatus = el('p', '', 'hint'); shareStatus.setAttribute('role', 'status');
   const shareButton = button('Del spill', () => changeSharing('share'));
@@ -37,7 +42,7 @@
   });
   const openLink = el('a', 'Åpne delt spill'); openLink.target = '_blank'; openLink.rel = 'noopener noreferrer';
   const shareActions = el('div', undefined, 'actions'); shareActions.append(shareButton, copyButton, openLink, stopButton);
-  sharingPanel.append(el('h2', 'Del spillet'), el('p', 'Alle med lenken kan spille uten innlogging, men kan ikke redigere originalen. Bare den delte versjonen og bildene i den blir tilgjengelige. Senere endringer deles først når du velger «Oppdater delt versjon».'), linkLabel, shareActions, shareStatus);
+  sharingPanel.append(el('h2', 'Synlighet og deling'), privacyLabel, el('p', 'Offentlige spill er søkbare og kan kopieres av andre. Privat deaktiverer også eksisterende delingslenker når endringen lagres.'), el('p', 'Alle med lenken kan spille uten innlogging, men kan ikke redigere originalen. Delingslenken viser en valgt versjon. Oppdater den med «Oppdater delt versjon». Offentlig søk viser alltid den sist lagrede versjonen.'), linkLabel, shareActions, shareStatus);
   root.append(toolbar, error, sharingPanel, form);
   function changed(schedule = true) {
     const dirty = JSON.stringify(game) !== baseline;
@@ -47,12 +52,12 @@
     play.hidden = !id || !game.categories.length;
     play.href = id ? '/?play=' + id : '#';
     shareButton.textContent = share ? 'Oppdater delt versjon' : 'Del spill';
-    shareButton.disabled = !id || dirty || !game.categories.length || uploading > 0 || saving || sharing;
+    shareButton.disabled = game.private || !id || dirty || !game.categories.length || uploading > 0 || saving || sharing;
     stopButton.disabled = sharing;
     stopButton.hidden = copyButton.hidden = openLink.hidden = linkLabel.hidden = !share;
     shareLink.value = share ? location.origin + '/?share=' + share.token : '';
     openLink.href = shareLink.value || '#';
-    shareStatus.textContent = sharing ? 'Oppdaterer deling …' : share ? `Spillet er delt med lenke.${dirty || revision !== share.revision ? ' Lagre endringene og oppdater delingen når de er klare.' : ''}` : id && !dirty ? 'Spillet er privat. Velg «Del spill» for å lage en lenke.' : 'Lagre spillet før du deler det.';
+    shareStatus.textContent = sharing ? 'Oppdaterer deling …' : share ? `Spillet er delt med lenke.${dirty || revision !== share.revision ? ' Lagre endringene og oppdater delingen når de er klare.' : ''}` : id && !dirty ? (game.private ? 'Spillet er privat.' : 'Spillet er offentlig og kan finnes og kopieres via «Finn Jeopardy».') : 'Lagre spillet før du deler det.';
   }
   function fail(message) { error.textContent = message; error.hidden = false; }
   function field(label, value, oninput, multiline = false) {
@@ -88,7 +93,7 @@
     const data = dataFor('save'); data.set('content', snapshot); data.set('id', id); data.set('revision', String(revision));
     try {
       const result = await request(data);
-      id = result.id; revision = result.revision; baseline = snapshot;autosaveBlocked=false;
+      id = result.id; revision = result.revision; baseline = snapshot; if (JSON.parse(snapshot).private) share = null; autosaveBlocked=false;
       history.replaceState(null, '', '/?edit=' + id);
     } catch (e) { autosaveBlocked=true;fail(e.message); }
     finally { saving = false; changed(false);if(!autosaveBlocked&&JSON.stringify(game)!==baseline)autosaveTimer=setTimeout(autosave,1500); }
@@ -193,12 +198,19 @@
     const category = game.categories[active];
     form.append(field('Kategorinavn', category.name, v => { category.name = v; select.options[active].textContent = v || `Kategori ${active + 1}`; form.querySelectorAll('.tile-editor > summary').forEach((summary, i) => { summary.textContent = `${v || 'Kategori'} · ${category.tiles[i].value} poeng`; }); }));
     const rows = el('div', undefined, 'row-controls');
-    rows.append(el('h2', 'Poengrader'), el('p', 'Hver kategori har sine egne poengrader, maks åtte. Spillebrettet viser alle poengverdiene i stigende rekkefølge. Manglende rader og ruter uten spørsmål kan ikke velges.', 'hint'));
+    rows.append(el('h2', 'Poengrader'), el('p', 'Hver kategori har sine egne poengrader, maks åtte. Spillebrettet viser alle poengverdiene i stigende rekkefølge. Skriv en eksisterende poengverdi for å bytte plass med den raden. Spørsmål, svar og bilder følger med. Manglende rader og ruter uten spørsmål kan ikke velges.', 'hint'));
     category.tiles.forEach((tile, i) => {
       const label = el('label', `Rad ${i + 1}`);
       const input = el('input'); input.type = 'number'; input.min = 1; input.max = 10000; input.step = 1; input.value = tile.value;
-      input.addEventListener('input', () => { tile.value = Number(input.value); changed(); });
-      input.addEventListener('change', () => {form.querySelectorAll('.tile-editor > summary').forEach((summary,index)=>{summary.textContent=`${category.name || 'Kategori'} · ${category.tiles[index].value} poeng`;});});
+      input.addEventListener('change', () => {
+        const value = Number(input.value);
+        if (!Number.isInteger(value) || value < 1 || value > 10000) { input.value = tile.value; fail('Poeng må være hele tall fra 1 til 10000.'); return; }
+        const other = category.tiles.find(t => t !== tile && t.value === value);
+        if (other) other.value = tile.value;
+        tile.value = value;
+        category.tiles.sort((a,b) => a.value-b.value);
+        render(); changed();
+      });
       const remove=button('Fjern rad',()=>{if(category.tiles.length<=1)return;if((tile.question||tile.answer||tile.questionImage||tile.answerImage)&&!confirm('Fjerne denne raden fra kategorien?'))return;category.tiles.splice(i,1);render();changed();});remove.disabled=category.tiles.length<=1;remove.setAttribute('aria-label','Fjern rad '+(i+1));
       const row=el('div',undefined,'actions');label.append(input);row.append(label,remove);rows.append(row);
     });

@@ -64,7 +64,6 @@ function jp_copy_public(PDO $db, int $uid, string $id): string {
         $json = json_encode($content, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $copy = bin2hex(random_bytes(16));
         $db->prepare('INSERT INTO jp_games (id,owner_id,title,content,revision) VALUES (?,?,?,?,1)')->execute([$copy,$uid,$content['title'],$json]);
-        $db->prepare('INSERT INTO jp_revisions (game_id,revision,content) VALUES (?,1,?)')->execute([$copy,$json]);
         $db->commit(); return $copy;
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack(); throw $e; }
 }

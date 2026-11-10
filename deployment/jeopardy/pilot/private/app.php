@@ -230,7 +230,8 @@ function jp_save(PDO $db, int $uid): string
                 ->execute([$game['title'], $json, $revision, $id, $uid]);
         }
         if (($data['private'] ?? null) === true) $db->prepare('DELETE FROM jp_shares WHERE game_id = ?')->execute([$id]);
-        $db->prepare('INSERT INTO jp_revisions (game_id, revision, content) VALUES (?, ?, ?)')->execute([$id, $revision, $json]);
+        // The current game is authoritative; revisions are counters, not backups.
+        $db->prepare('DELETE FROM jp_revisions WHERE game_id = ?')->execute([$id]);
         $db->commit();
         return $id;
     } catch (Throwable $e) {

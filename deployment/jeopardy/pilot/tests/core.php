@@ -49,12 +49,12 @@ rejects(fn() => jp_game($db, $id, 11), 'other user cannot read');
 $_POST['id'] = $id; $_POST['revision'] = '1'; $_POST['title'] = 'Oppdatert';
 jp_save($db, 10);
 check((int) jp_game($db, $id, 10)['revision'] === 2, 'revision increment');
-check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 2, 'revision history retained');
+check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 0, 'saves do not store history');
 rejects(fn() => jp_save($db, 10), 'stale save rejected');
 check(jp_game($db, $id, 10)['title'] === 'Oppdatert', 'stale save did not overwrite');
 $_POST['revision'] = '2';
 rejects(fn() => jp_save($db, 11), 'other user cannot write');
-check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 2, 'failed saves do not create revisions');
+check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 0, 'failed saves do not create revisions');
 $_POST['question0'] = '';
 jp_save($db, 10);
 check(json_decode(jp_game($db, $id, 10)['content'], true)['categories'][0]['tiles'][0]['question'] === '', 'empty question saves successfully');
@@ -202,7 +202,7 @@ try { jp_delete($db, 10, $shareGameId); throw new RuntimeException('Expected del
 catch (PDOException $e) { check(true, 'delete failure propagated'); }
 check(jp_shared_game($db, $reshare['token'])['id'] === $shareGameId, 'failed delete rolls back share removal');
 $stmt = $db->prepare('SELECT COUNT(*) FROM jp_revisions WHERE game_id = ?');
-$stmt->execute([$shareGameId]); check((int) $stmt->fetchColumn() === 2, 'failed delete rolls back revisions');
+$stmt->execute([$shareGameId]); check((int) $stmt->fetchColumn() === 0, 'failed delete preserves empty revision history');
 $db->exec('DROP TRIGGER prevent_delete');
 jp_delete($db, 10, $shareGameId);
 rejects(fn() => jp_game($db, $shareGameId, 10), 'deleted game unavailable');
@@ -267,3 +267,21 @@ rejects(fn()=>jp_public_game($db,$publicId),'old editor cannot republish private
 check(str_contains(jp_player_config($copy,$copyId)['categories'][0]['tiles'][0]['question'],'&amp;public='.$copyId),'public player scopes image URL');
 rejects(fn()=>jp_copy_public($db,0,$copyId),'anonymous copy rejected');
 echo "$checks checks including discovery and privacy passed\n";
+
+// Legacy history is discarded on save; shared snapshots are independent.
+$retained = jp_normalize(jp_sample()) + ['private'=>false];
+$_POST=['id'=>'','revision'=>'0','content'=>json_encode($retained)];$retainedId=jp_save($db,10);
+$retainedShare=jp_share($db,10,$retainedId,1);
+$db->prepare('INSERT INTO jp_revisions (game_id,revision,content) VALUES (?,1,?)')->execute([$retainedId,json_encode($retained)]);
+for ($rev=1;$rev<=25;$rev++) {
+    $retained['title']='Latest title '.$rev;
+    $_POST=['id'=>$retainedId,'revision'=>(string)$rev,'content'=>json_encode($retained)];
+    jp_save($db,10);
+}
+check((int)$db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn()===0,'repeated autosaves clear legacy history without accumulating new versions');
+check(jp_game($db,$retainedId,10)['title']==='Latest title 25','latest saved content retained');
+check((int)jp_game($db,$retainedId,10)['revision']===26,'conflict counter still increments');
+check(json_decode(jp_shared_game($db,$retainedShare['token'])['content'],true)['title']==='Mitt første Jeopardy','shared snapshot survives history removal');
+rejects(fn()=>jp_save($db,10),'stale writes still rejected without history');
+check((int)$db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn()===0,'failed autosave creates no history');
+echo "$checks checks including history removal passed\n";

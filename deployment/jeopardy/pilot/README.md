@@ -177,3 +177,20 @@ Validation: 117 backend checks passed, plus editor/autosave browser regression
 checks and a localhost PHP integration flow covering anonymous search/play,
 authenticated copy, persisted row swap, privacy revocation and CSRF rejection.
 Tests use SQLite; MySQL concurrency remains a hosting integration limitation.
+
+## Remove unused revision history (2026-11-10)
+
+Saves overwrite the current game without inserting historical content into
+jp_revisions. Copies likewise store only their current content. The revision
+counter still increments for optimistic concurrency; shared snapshots remain
+independent and unchanged until the owner updates or revokes sharing.
+
+Saving also deletes that game's legacy history. The CLI-only cleanup-history.php
+runs on deployment and subsequent cron runs, deleting up to 10,000 old history
+rows per run in batches of 1,000. The legacy table remains for compatibility;
+current games, shared snapshots and image records are not removed.
+
+Validation: 123 backend checks passed, including 25 consecutive saves, legacy
+history removal, retained current content/shared snapshots and stale-save
+rejection. PHP syntax and deployment shell syntax checks passed. Production
+cleanup uses MySQL DELETE LIMIT; the SQLite test suite covers save-time cleanup.

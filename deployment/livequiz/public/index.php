@@ -47,6 +47,9 @@ if ($action !== null) {
         $teacherActions = ['library','quiz','copy','save','create','upload','delete','share','organize'];
         if (in_array($action, $teacherActions, true) && !$uid) lq_response(['error'=>'Logg inn på quiz.munchboka.no i en ny fane først.'], 401);
 
+        if ($post && in_array($action, $teacherActions, true) && isset($_SERVER['HTTP_X_EDITOR_OWNER']) && $_SERVER['HTTP_X_EDITOR_OWNER'] !== (string)$uid) {
+            lq_response(['error'=>'Logg inn med samme konto som åpnet quizen.'], 403);
+        }
         $input = [];
         if ($post && $action !== 'upload') {
             $raw = file_get_contents('php://input', false, null, 0, 1100001);

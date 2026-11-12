@@ -50,7 +50,11 @@ $_POST['id'] = $id; $_POST['revision'] = '1'; $_POST['title'] = 'Oppdatert';
 jp_save($db, 10);
 check((int) jp_game($db, $id, 10)['revision'] === 2, 'revision increment');
 check((int) $db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn() === 0, 'saves do not store history');
+check(jp_save($db, 10) === $id, 'identical retry succeeds');
+check((int) jp_game($db, $id, 10)['revision'] === 2, 'retry does not increment revision');
+$_POST['title'] = 'Stale change';
 rejects(fn() => jp_save($db, 10), 'stale save rejected');
+$_POST['title'] = 'Oppdatert';
 check(jp_game($db, $id, 10)['title'] === 'Oppdatert', 'stale save did not overwrite');
 $_POST['revision'] = '2';
 rejects(fn() => jp_save($db, 11), 'other user cannot write');
@@ -282,6 +286,16 @@ check((int)$db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn()===0,'r
 check(jp_game($db,$retainedId,10)['title']==='Latest title 25','latest saved content retained');
 check((int)jp_game($db,$retainedId,10)['revision']===26,'conflict counter still increments');
 check(json_decode(jp_shared_game($db,$retainedShare['token'])['content'],true)['title']==='Mitt første Jeopardy','shared snapshot survives history removal');
+$retained['title'] = 'Conflicting title';
+$_POST['content'] = json_encode($retained);
 rejects(fn()=>jp_save($db,10),'stale writes still rejected without history');
 check((int)$db->query('SELECT COUNT(*) FROM jp_revisions')->fetchColumn()===0,'failed autosave creates no history');
 echo "$checks checks including history removal passed\n";
+
+$_POST = ['id' => str_repeat('e', 32), 'revision' => '0', 'content' => json_encode(jp_normalize(jp_sample()))];
+$retryId = jp_save($db, 10);
+check($retryId === str_repeat('e', 32), 'client-generated creation ID');
+check(jp_save($db, 10) === $retryId, 'creation retry returns same game');
+check((int) jp_game($db, $retryId, 10)['revision'] === 1, 'creation retry keeps revision');
+rejects(fn() => jp_save($db, 11), 'creation retry cannot cross owners');
+echo "Save retry checks passed.\n";

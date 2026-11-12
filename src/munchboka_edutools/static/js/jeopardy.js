@@ -99,10 +99,16 @@
     scoreWrap.appendChild(scorebar);
     const topbarRight = document.createElement('div');
     topbarRight.className = 'jeopardy-topbar-right';
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'j-btn warn jeopardy-undo-button';
+    undoBtn.textContent = 'Angre siste';
+    undoBtn.style.display = 'none';
+    undoBtn.disabled = true;
     const resetBtn = document.createElement('button');
     resetBtn.className = 'j-btn accent jeopardy-reset-button';
     resetBtn.textContent = 'Reset spill';
     resetBtn.style.display = 'none';
+    topbarRight.appendChild(undoBtn);
     topbarRight.appendChild(resetBtn);
     topbar.appendChild(scoreWrap);
     topbar.appendChild(topbarRight);
@@ -181,10 +187,49 @@
         }
         try { scorebar.style.display = ''; } catch(e){}
         try { resetBtn.style.display = ''; } catch(e){}
+        try { undoBtn.style.display = ''; } catch(e){}
         try { setup.style.display = 'none'; } catch(e){}
         updateActiveTeamHighlight();
       } catch(e){}
     }
+
+    const undoStack = [];
+    function updateUndoBtn(){ undoBtn.disabled = undoStack.length === 0; }
+    function restoreSnapshot(s){
+      if (!s || typeof s !== 'object') return;
+      try { hideModal(); } catch(e){}
+      currentTurn = typeof s.currentTurn === 'number' ? s.currentTurn : currentTurn;
+      scoreboardShown = !!s.scoreboardShown;
+      (Array.isArray(s.teams) ? s.teams : []).forEach((t,i)=>{
+        if (teams[i]){ teams[i].score = Number(t && t.score)||0; if (teams[i]._elScore) teams[i]._elScore.textContent = String(teams[i].score); }
+      });
+      if (Array.isArray(s.teamCategoryPoints)){
+        teamCategoryPoints = s.teamCategoryPoints.map(row=> Array.isArray(row)? row.slice(): []);
+      }
+      if (Array.isArray(s.categoryStats)){
+        s.categoryStats.forEach((st,i)=>{ if (categoryStats[i]){ categoryStats[i].correct = Number(st.correct)||0; categoryStats[i].wrong = Number(st.wrong)||0; }});
+      }
+      for (const k in tileStates) { try { delete tileStates[k]; } catch(e){} }
+      if (s.tileStates && typeof s.tileStates === 'object'){
+        Object.keys(s.tileStates).forEach(k=>{ const v = s.tileStates[k]; if (v && v.locked){ tileStates[k] = {locked:true}; }});
+      }
+      try {
+        container.querySelectorAll('.jeopardy-tile').forEach(btn=>{
+          const k = btn && btn.dataset ? btn.dataset.key : null; if (!k) return;
+          if (!lookup[k]) return; // tiles without a question stay disabled
+          const locked = !!(tileStates[k] && tileStates[k].locked);
+          btn.disabled = locked;
+          btn.classList.toggle('used', locked);
+        });
+      } catch(e){}
+      updateActiveTeamHighlight();
+      try { saveState(); } catch(e){}
+    }
+    undoBtn.addEventListener('click', ()=>{
+      if (!undoStack.length) return;
+      restoreSnapshot(undoStack.pop());
+      updateUndoBtn();
+    });
 
     const table = document.createElement('table');
     table.className = 'jeopardy-grid';
@@ -259,7 +304,7 @@
         escHandler = null; 
       }
     };
-    function enableEscClose(){
+    function enableEscClose(onClose){
       if (escHandler) {
         try { document.removeEventListener('keydown', escHandler); } catch(e){}
         escHandler = null;
@@ -268,7 +313,7 @@
         const key = e.key || e.code;
         if (key === 'Escape' || key === 'Esc') {
           try { e.preventDefault(); } catch(_){ }
-          hideModal();
+          (onClose || hideModal)();
         }
       };
       try { document.addEventListener('keydown', escHandler); } catch(e){}
@@ -320,6 +365,8 @@
       started = false;
       scoreboardShown = false;
       currentTurn = 0;
+      undoStack.length = 0;
+      updateUndoBtn();
       for (const k in tileStates) { try { delete tileStates[k]; } catch(e){} }
       for (let i=0;i<categoryStats.length;i++){ categoryStats[i].correct = 0; categoryStats[i].wrong = 0; }
       teams = [];
@@ -331,6 +378,7 @@
       try { scorebar.style.display = 'none'; } catch(e){}
       try { turnIndicator.style.display = 'none'; } catch(e){}
       try { resetBtn.style.display = 'none'; } catch(e){}
+      try { undoBtn.style.display = 'none'; } catch(e){}
       try { setup.style.display = ''; } catch(e){}
       clearState();
     }
@@ -356,6 +404,14 @@
       body.innerHTML = '';
       footer.innerHTML = '';
 
+      // A question can only be opened once: snapshot for undo, then lock the tile immediately
+      undoStack.push(buildState());
+      updateUndoBtn();
+      tileStates[key] = { locked: true };
+      if (tile) { tile.classList.add('used'); tile.disabled = true; }
+      try { saveState(); } catch(e){}
+      const closeAndCheck = ()=>{ hideModal(); checkCompletionAndShowWinner(); };
+
       const q = document.createElement('div'); q.className='jeopardy-q'; q.innerHTML = data && data.question ? data.question : '';
       const a = document.createElement('div'); a.className='jeopardy-a'; a.innerHTML = data && data.answer ? data.answer : '';
 
@@ -380,7 +436,7 @@
         disableTeamButtons();
         if (gameMode==='turn' && teams.length>0){ currentTurn = (currentTurn+1)%teams.length; updateActiveTeamHighlight(); }
         try { saveState(); } catch(e){}
-        try { setTimeout(()=>{ hideModal(); }, 300); } catch(e){}
+        try { setTimeout(()=>{ hideModal(); checkCompletionAndShowWinner(); }, 300); } catch(e){}
       };
       teams.forEach((t, i)=>{
         // In turn-based mode, only the active team can be scored on
@@ -408,7 +464,6 @@
         }
 
         const registerScore = (delta)=>{
-          if (tileStates[key] && tileStates[key].locked) return;
           setScore(i, delta);
           try {
             const ci = parseInt(String(key).split('|')[0], 10);
@@ -430,8 +485,6 @@
           }
 
           scored = true;
-          tileStates[key] = { locked: true };
-          if (tile) { tile.classList.add('used'); tile.disabled = true; }
           if (gameMode==='turn' && teams.length>0){ currentTurn = (currentTurn+1)%teams.length; updateActiveTeamHighlight(); }
           try { saveState(); setTimeout(()=>{ hideModal(); checkCompletionAndShowWinner(); }, 300); } catch(e){}
         };
@@ -475,11 +528,6 @@
         add.addEventListener('click', handleAdd);
         if (zeroBtn) zeroBtn.addEventListener('click', handleZero);
 
-        if (tileStates[key] && tileStates[key].locked) {
-          add.disabled = true;
-          if (zeroBtn) zeroBtn.disabled = true;
-        }
-
         teamCol.appendChild(add);
         if (zeroBtn) teamCol.appendChild(zeroBtn);
         teamActions.appendChild(teamCol);
@@ -494,9 +542,9 @@
       highlightCodeIfAvailable(q); highlightCodeIfAvailable(a);
 
       backdrop.style.display = 'flex';
-      enableEscClose();
+      enableEscClose(closeAndCheck);
       startTimer(onTimeout);
-      closeBtn.onclick = hideModal; backdrop.onclick = (e)=>{ if(e.target===backdrop) hideModal(); };
+      closeBtn.onclick = closeAndCheck; backdrop.onclick = (e)=>{ if(e.target===backdrop) closeAndCheck(); };
     }
 
     const setup = document.createElement('div'); setup.className='jeopardy-setup';
@@ -521,6 +569,7 @@
       rebuildTeams(newN, names);
       try { scorebar.style.display = ''; } catch(e){}
       try { resetBtn.style.display = ''; } catch(e){}
+      try { undoBtn.style.display = ''; } catch(e){}
       try { updateActiveTeamHighlight(); } catch(e){}
       setup.style.display='none';
       try { saveState(); } catch(e){}

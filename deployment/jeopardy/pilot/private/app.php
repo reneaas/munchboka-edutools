@@ -208,8 +208,14 @@ function jp_save(PDO $db, int $uid): string
     $revision = 1;
     $db->beginTransaction();
     try {
-        if ($id === '') {
-            $id = bin2hex(random_bytes(16));
+        $creating = $id !== '' && jp_input('revision', 12) === '0';
+        if ($creating) {
+            $stmt = $db->prepare('SELECT id FROM jp_games WHERE id = ? FOR UPDATE');
+            $stmt->execute([$id]);
+            $creating = $stmt->fetchColumn() === false;
+        }
+        if ($id === '' || $creating) {
+            if ($id === '') $id = bin2hex(random_bytes(16));
             $db->prepare('INSERT INTO jp_games (id, owner_id, title, content, revision) VALUES (?, ?, ?, ?, 1)')
                 ->execute([$id, $uid, $game['title'], $json]);
         } else {
@@ -217,6 +223,15 @@ function jp_save(PDO $db, int $uid): string
             $stmt->execute([$id, $uid]);
             $current = $stmt->fetchColumn();
             if ($current === false) throw new DomainException('Spillet finnes ikke eller tilhører en annen konto.');
+            // A timed-out response may have committed. Replaying that exact save
+            // must not create duplicates or overwrite a later revision.
+            if ((int) $current === (int) jp_input('revision', 12) + 1) {
+                $previous = jp_game($db, $id, $uid);
+                if ($previous['content'] === $json) {
+                    $db->commit();
+                    return $id;
+                }
+            }
             if ((int) $current !== (int) jp_input('revision', 12)) {
                 throw new DomainException('Spillet er endret i en annen fane. Kopier endringene dine før du åpner den nyeste versjonen.');
             }

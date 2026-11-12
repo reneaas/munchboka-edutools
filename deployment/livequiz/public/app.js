@@ -30,11 +30,12 @@
     if(params.has('host')){const key=sessionStorage.getItem('lq-host-'+params.get('host'));if(key)headers['X-Host-Token']=key;}
     if(action==='shared')headers['X-Quiz-Share']=new URLSearchParams(location.hash.slice(1)).get('key')||'';
     if (token) headers['X-Player-Token'] = token;
+    if (data !== undefined && (params.has('edit') || params.has('new'))) headers['X-Editor-Owner'] = String(uid);
     if (data !== undefined) { headers['X-CSRF-Token'] = csrf; if (!(data instanceof FormData)) headers['Content-Type'] = 'application/json'; }
     const response = await fetch(url, {method: data === undefined ? 'GET' : 'POST', headers, body: data === undefined ? undefined : data instanceof FormData ? data : JSON.stringify(data), credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(10000)});
     if (binary && response.ok) return response.blob();
-    let result; try { result = await response.json(); } catch (_) { throw new Error('Serveren svarte ikke som forventet. Prøv igjen.'); }
-    if (!response.ok) throw new Error(result.error || 'Forespørselen mislyktes.'); return result;
+    let result; try { result = await response.json(); } catch (_) { throw Object.assign(new Error('Serveren svarte ikke som forventet. Prøv igjen.'), {retryable:true}); }
+    if (!response.ok) throw Object.assign(new Error(result.error || 'Forespørselen mislyktes.'), {status:response.status, retryable:response.status>=500 || [401,403,429].includes(response.status)}); return result;
   }
   function rich(text) { const n = el('div', text, 'rich'); window.renderMathInElement(n); return n; }
   function optionOrder(n, seed) {
@@ -308,25 +309,85 @@
     let saved = params.has('edit') ? await api('quiz', undefined, {id:params.get('edit')}) : {id:'',revision:0,content:{title:'',questions:[blankQuestion()]}};
     saved.content.scoring ??= 'fixed';saved.content.private ??= false;
     let model = saved.content, baseline = JSON.stringify(model), saving = false;
-    const status = el('p', '', 'hint');
-    function changed() { dirty = JSON.stringify(model) !== baseline; status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ulagrede endringer' : saved.id ? 'Lagret · versjon ' + saved.revision : 'Ikke lagret ennå'; }
-    const save = button('Lagre quiz', async () => {
-      if (uploads) throw new Error('Vent til bildet er lastet opp.');
-      saving = true; changed(); const snapshot = JSON.stringify(model);
-      try { const r = await api('save', {id:saved.id, revision:saved.revision, content:JSON.parse(snapshot),...(!saved.id&&params.get('folder')?{folder:params.get('folder')}:{})}); saved = {...saved,...r}; baseline = snapshot; history.replaceState(null,'','?edit='+r.id); }
-      finally { saving = false; changed(); }
-    });
+    let pendingSave = null, retryTimer, retryDelay = 2000, storageFailed = false;
+    let folder = params.get('folder');
+    const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2,'0')).join('');
+    const draftPrefix = 'livequiz-draft:' + uid + ':';
+    const draftSuffix = randomId();
+    let draftKey = draftPrefix + (saved.id || 'new') + ':' + draftSuffix;
+    const status = el('p', '', 'hint'); status.setAttribute('role','status');
+    const loginLink = link('Logg inn i en ny fane', '?login=1');
+    loginLink.target = '_blank'; loginLink.rel = 'noopener'; loginLink.hidden = true;
+    function persistDraft() {
+      try {
+        if (JSON.stringify(model) === baseline && !pendingSave) localStorage.removeItem(draftKey);
+        else localStorage.setItem(draftKey, JSON.stringify({model, baseline, id:saved.id, revision:saved.revision, folder, pendingSave}));
+        storageFailed = false;
+      } catch (_) { storageFailed = true; }
+    }
+    function changed(persist = true) {
+      dirty = !!pendingSave || JSON.stringify(model) !== baseline;
+      if (persist) persistDraft();
+      status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ikke lagret på nett · utkast beholdes på denne enheten' : saved.revision ? 'Lagret · versjon ' + saved.revision : 'Ikke lagret ennå';
+      if (dirty && storageFailed) status.textContent = 'Ulagrede endringer · lokal sikkerhetskopi er utilgjengelig; behold fanen åpen';
+    }
+    async function refreshSession() {
+      const session = await api('bootstrap');
+      if (!session.uid || session.uid !== uid) {
+        loginLink.hidden = false;
+        throw Object.assign(new Error('Logg inn med samme konto i en ny fane, og kom tilbake hit. Utkastet beholdes.'), {retryable:!session.uid});
+      }
+      csrf = session.csrf; loginLink.hidden = true;
+    }
+    async function editorRequest(action, data) {
+      await refreshSession();
+      return api(action, data);
+    }
+    async function saveQuiz() {
+      if (saving) return;
+      if (uploads) { error(new Error('Vent til bildet er lastet opp.')); return; }
+      clearTimeout(retryTimer); clearError(); saving = true;
+      if (!saved.id) saved.id = randomId();
+      pendingSave ??= {id:saved.id, revision:saved.revision, content:JSON.parse(JSON.stringify(model)),
+        ...(saved.revision===0 && folder ? {folder} : {})};
+      const snapshot = JSON.stringify(pendingSave.content);
+      changed();
+      try {
+        const r = await editorRequest('save', pendingSave);
+        if (r.id !== pendingSave.id || !Number.isInteger(r.revision) || r.revision < 1) throw Object.assign(new Error('Lagring er ikke bekreftet. Prøver igjen.'), {retryable:true});
+        saved = {...saved,...r}; baseline = snapshot; pendingSave = null; retryDelay = 2000;
+        const oldKey = draftKey; draftKey = draftPrefix + saved.id + ':' + draftSuffix;
+        persistDraft();
+        if (!storageFailed && oldKey !== draftKey) { try { localStorage.removeItem(oldKey); } catch (_) {} }
+        history.replaceState(null,'','?edit='+r.id);
+        // Edits made while a save was in flight still need their own save.
+        if (JSON.stringify(model) !== baseline) retryTimer = setTimeout(saveQuiz, 1500);
+      } catch (e) {
+        const retryable = e.retryable || ['TypeError','TimeoutError','AbortError'].includes(e.name);
+        if ([401,403].includes(e.status)) loginLink.hidden = false;
+        if (retryable) {
+          error(new Error(e.message + ' Lagring prøves igjen automatisk.'));
+          retryTimer = setTimeout(saveQuiz, retryDelay); retryDelay = Math.min(retryDelay * 2, 60000);
+        } else { pendingSave = null; error(e); }
+      } finally { saving = false; changed(); }
+    }
+    const save = button('Lagre quiz', saveQuiz);
+    setInterval(() => { if (document.visibilityState === 'visible') void refreshSession().catch(() => {}); }, 300000);
+    const resumeSave = () => { if (pendingSave) void saveQuiz(); };
+    window.addEventListener('online', resumeSave);
+    window.addEventListener('focus', resumeSave);
     const start = button('Start spill', async () => {
       if (dirty || !saved.id || uploads || saving) throw new Error('Lagre quizen før du starter et spill.');
-      const r = await api('create', {id:saved.id}); location.href = '?host=' + r.room;
+      const r = await editorRequest('create', {id:saved.id}); location.href = '?host=' + r.room;
     }, 'secondary');
     const privacyLabel=el('label'),privacy=el('input');privacy.type='checkbox';privacy.checked=model.private;privacy.onchange=()=>{model.private=privacy.checked;changed();};privacyLabel.append(privacy,document.createTextNode(' Privat – bare jeg kan starte nye spill'));
     const scoringLabel = el('label', 'Poengstil'), scoringSelect = el('select');
     for (const [value, label] of [['fixed','Faste poeng'], ['speed','Raske riktige svar']]) { const option = el('option', label); option.value = value; scoringSelect.append(option); }
     scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status,
-      field('Quizens tittel', model.title, v => {model.title=v; changed();}), privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
+    const titleField = field('Quizens tittel', model.title, v => {model.title=v; changed();});
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink,
+      titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {
       list.replaceChildren();
@@ -367,7 +428,7 @@
         const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
         card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
-        upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await api('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
+        upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await editorRequest('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
         imageLabel.append(upload);card.append(imageLabel);
         if(q.image)card.append(button('Fjern bilde',()=>{q.image=null;changed();renderQuestions();},'quiet'));
         if(q.type==='text') card.append(field('Godkjente svar – ett per linje',q.accepted.join('\n'),v=>{q.accepted=v.split('\n').filter(x=>x.trim());changed();},'textarea'),el('p','Store/små bokstaver og alle mellomrom ignoreres. Desimaltall godtas med både komma og punktum (0,25 = 0.25). Ingen algebraisk eller numerisk tilnærming.','hint'));
@@ -397,7 +458,24 @@
         makeCodeEditor(codeField.querySelector('textarea'));
       });
     }
-    app.append(button('＋ Legg til spørsmål',()=>{if(model.questions.length>=50)throw new Error('Maks 50 spørsmål.');model.questions.push(blankQuestion());changed();renderQuestions();}));renderQuestions();changed();
+    app.append(button('＋ Legg til spørsmål',()=>{if(model.questions.length>=50)throw new Error('Maks 50 spørsmål.');model.questions.push(blankQuestion());changed();renderQuestions();}));renderQuestions();changed(false);
+    try {
+      for (const key of Object.keys(localStorage).filter(key => key.startsWith(draftPrefix + (saved.id || 'new') + ':'))) {
+        const draft = JSON.parse(localStorage.getItem(key));
+        if (!draft?.model || typeof draft.baseline !== 'string') continue;
+        const recovery = el('section', undefined, 'card');
+        recovery.append(el('p', 'Et lokalt utkast med ulagrede endringer finnes på denne enheten.'),
+          button('Gjenopprett utkast', () => {
+            if ((dirty || saving) && !confirm('Erstatte endringene i denne fanen med utkastet?')) return;
+            if (saving) return;
+            clearTimeout(retryTimer); draftKey = key; model = draft.model; baseline = draft.baseline;
+            saved = {...saved, id:draft.id, revision:draft.revision}; pendingSave = draft.pendingSave; folder = draft.folder;
+            titleField.querySelector('input').value = model.title; privacy.checked = model.private; scoringSelect.value = model.scoring;
+            renderQuestions(); changed(); recovery.remove();
+          }, 'secondary'), button('Forkast lokalt utkast', () => { localStorage.removeItem(key); recovery.remove(); }, 'quiet'));
+        app.prepend(recovery);
+      }
+    } catch (_) { storageFailed = true; }
   }
   async function room(host) {
     const id=params.get(host?'host':'room'), token=host?'':sessionStorage.getItem('lq-room-'+id)||'';

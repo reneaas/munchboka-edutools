@@ -5,6 +5,34 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Editor timeout recovery
+
+Every edit is backed up in localStorage, separately per account, quiz and editor
+instance. Reopening the editor offers recovery or explicit discard, including
+incomplete questions that cannot yet pass server validation. Confirmed saves
+clear the corresponding backup. Drafts retain references to uploaded images;
+unfinished file uploads must be selected again. Storage failures are shown.
+
+The existing **Lagre quiz** workflow remains. A requested save retries network
+failures, timeouts, expired sessions and temporary server errors with 2–60 second
+backoff. Retries send the original snapshot; edits made during saving are saved
+in a subsequent request. Stable client-generated IDs and exact-content revision
+checks prevent duplicate creations or revision increments after a lost response.
+Validation errors and real revision conflicts retain the draft without overwriting
+newer server content. New quizzes retain their destination folder through recovery.
+
+Editor saves, uploads and game creation refresh the session/CSRF token first.
+A five-minute visible-editor heartbeat keeps the PHP session active; the existing
+eight-hour authentication limit and credential revocation still apply. Login can
+be renewed in another tab, then saving resumes in the original editor. Both the
+client and mutation endpoint check that the account still matches.
+
+Validation: `php tests/core.php` and `node tests/editor-recovery-browser.cjs`
+against the disposable `tests/prepare-local.py` fixture. The browser check covers
+committed saves with lost responses, stalled requests, token rotation, expired
+login, edits during saving, local recovery after reload, account mismatch and
+revision conflicts. SQLite tests do not verify production MySQL lock scheduling.
+
 ## Optional Lightning Round (Lynrunde)
 
 In the room lobby, enable **Aktiver lynrunde**, choose **Varighet på lynrunde

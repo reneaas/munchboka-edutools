@@ -38,7 +38,13 @@ check(json_decode(lq_quiz($db,1,$id)['content'],true)['questions'][0]['youtube']
 rejects(fn()=>lq_quiz($db,2,$id),'cross-account read');
 rejects(fn()=>lq_save($db,2,['id'=>$id,'revision'=>1,'content'=>$quiz]),'cross-account write');
 $saved=lq_save($db,1,['id'=>$id,'revision'=>1,'content'=>$quiz]);check($saved['revision']===2,'revision increments');
-rejects(fn()=>lq_save($db,1,['id'=>$id,'revision'=>1,'content'=>$quiz]),'stale write');
+check(lq_save($db,1,['id'=>$id,'revision'=>1,'content'=>$quiz]) === $saved, 'lost response retry preserves revision');
+rejects(fn()=>lq_save($db,1,['id'=>$id,'revision'=>1,'content'=>array_replace($quiz,['title'=>'Conflicting edit'])]),'stale write');
+$retryInput = ['id'=>str_repeat('e',32),'revision'=>0,'content'=>$quiz];
+$retrySaved = lq_save($db,1,$retryInput);
+check($retrySaved === ['id'=>str_repeat('e',32),'revision'=>1], 'client ID creates quiz');
+check(lq_save($db,1,$retryInput) === $retrySaved, 'creation retry does not duplicate quiz');
+rejects(fn()=>lq_save($db,2,$retryInput),'creation retry cannot cross owners');
 rejects(fn()=>lq_validate($db,1,['title'=>'x','questions'=>[]]),'empty quiz');
 rejects(fn()=>lq_validate($db,1,['title'=>'x','questions'=>[array_replace($q,['correct'=>[0,1]])]]),'single requires one key');
 rejects(fn()=>lq_validate($db,1,['title'=>'x','questions'=>[array_replace($q,['seconds'=>0])]]),'timer range');

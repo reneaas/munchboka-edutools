@@ -2,13 +2,25 @@
   'use strict';
   const root = document.getElementById('editor');
   if (!root) return;
-  const game = JSON.parse(root.dataset.game);
+  let game = JSON.parse(root.dataset.game);
   game.private = game.private ?? true;
   let id = root.dataset.id, revision = Number(root.dataset.revision), active = 0;
   const expandedTiles = new WeakMap();
   let renderedTiles = [];
   let baseline = JSON.stringify(game), uploading = 0, saving = false, autosaveTimer, autosaveBlocked = false;
-  const csrf = root.dataset.csrf;
+  let csrf = root.dataset.csrf;
+  const owner = root.dataset.uid;
+  let pendingSave = null, retryDelay = 2000, draftFailed = false;
+  const draftPrefix = 'jeopardy-draft:' + owner + ':';
+  const draftSuffix = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  let draftKey = draftPrefix + (id || 'new') + ':' + draftSuffix;
+  function persistDraft() {
+    try {
+      if (JSON.stringify(game) === baseline && !pendingSave) localStorage.removeItem(draftKey);
+      else localStorage.setItem(draftKey, JSON.stringify({game, id, revision, baseline, pendingSave}));
+      draftFailed = false;
+    } catch (_) { draftFailed = true; }
+  }
   let share = JSON.parse(root.dataset.share || 'null'), sharing = false;
   const el = (tag, text, cls) => {
     const n = document.createElement(tag);
@@ -43,13 +55,33 @@
   const openLink = el('a', 'Åpne delt spill'); openLink.target = '_blank'; openLink.rel = 'noopener noreferrer';
   const shareActions = el('div', undefined, 'actions'); shareActions.append(shareButton, copyButton, openLink, stopButton);
   sharingPanel.append(el('h2', 'Synlighet og deling'), privacyLabel, el('p', 'Offentlige spill er søkbare og kan kopieres av andre. Privat deaktiverer også eksisterende delingslenker når endringen lagres.'), el('p', 'Alle med lenken kan spille uten innlogging, men kan ikke redigere originalen. Delingslenken viser en valgt versjon. Oppdater den med «Oppdater delt versjon». Offentlig søk viser alltid den sist lagrede versjonen.'), linkLabel, shareActions, shareStatus);
-  root.append(toolbar, error, sharingPanel, form);
+  const login = el('a', 'Logg inn i en ny fane');
+  login.href = '/'; login.target = '_blank'; login.rel = 'noopener'; login.hidden = true;
+  root.append(toolbar, error, login, sharingPanel, form);
+  // Offer recovery explicitly: never silently overwrite a newer server version.
+  try {
+    for (const storedKey of Object.keys(localStorage).filter(key => key.startsWith(draftPrefix + (id || 'new') + ':'))) {
+      const draft = JSON.parse(localStorage.getItem(storedKey) || 'null');
+      if (draft && draft.game && typeof draft.baseline === 'string') {
+        const recovery = el('div', undefined, 'card');
+        recovery.append(el('p', 'Det finnes et lokalt utkast med ulagrede endringer på denne enheten.'),
+          button('Gjenopprett utkast', () => {
+            draftKey = storedKey;
+            game = draft.game; id = draft.id; revision = draft.revision;
+            baseline = draft.baseline; pendingSave = draft.pendingSave;
+            privacy.checked = game.private; active = 0; recovery.remove(); render(); changed();
+          }), button('Forkast lokalt utkast', () => { localStorage.removeItem(storedKey); recovery.remove(); }));
+        root.prepend(recovery);
+      }
+    }
+  } catch (_) { draftFailed = true; }
   function changed(schedule = true) {
-    const dirty = JSON.stringify(game) !== baseline;
-    if(schedule){autosaveBlocked=false;clearTimeout(autosaveTimer);if(dirty)autosaveTimer=setTimeout(autosave,1500);}
+    const dirty = !!pendingSave || JSON.stringify(game) !== baseline;
+    if(schedule){persistDraft();autosaveBlocked=false;clearTimeout(autosaveTimer);if(dirty)autosaveTimer=setTimeout(autosave,1500);}
     status.textContent = uploading ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? (autosaveBlocked ? 'Ikke lagret · prøv «Lagre på nett» igjen' : game.title.trim() ? 'Ulagrede endringer · lagres automatisk' : 'Skriv en tittel for å lagre automatisk') : id ? 'Lagret på nett' : 'Ikke lagret ennå';
+    if (dirty && draftFailed) status.textContent += ' · lokal sikkerhetskopi er utilgjengelig; behold fanen åpen';
     save.disabled = uploading > 0 || saving || sharing;
-    play.hidden = !id || !game.categories.length;
+    play.hidden = !revision || !game.categories.length;
     play.href = id ? '/?play=' + id : '#';
     shareButton.textContent = share ? 'Oppdater delt versjon' : 'Del spill';
     shareButton.disabled = game.private || !id || dirty || !game.categories.length || uploading > 0 || saving || sharing;
@@ -70,32 +102,78 @@
     wrap.append(input);
     return wrap;
   }
-  async function request(data) {
-    const response = await fetch('/', {method: 'POST', headers: {'X-Jeopardy-Request': 'editor'}, body: data, credentials: 'same-origin'});
-    let result;
-    try { result = await response.json(); } catch (_) { throw new Error('Serveren svarte ikke som forventet. Endringene er fortsatt i denne fanen.'); }
-    if (!response.ok) {
-      if (response.status === 401) throw new Error('Innloggingen er utløpt. Logg inn i en ny fane og behold denne fanen åpen. Last deretter inn den nye spillfanen før du kopierer endringene dine.');
-      throw new Error(result.error || 'Forespørselen mislyktes. Prøv igjen.');
-    }
-    return result;
+  async function fetchJSON(url, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const response = await fetch(url, {...options, headers: {'X-Jeopardy-Request': 'editor'}, credentials: 'same-origin', signal: controller.signal});
+      let result;
+      try { result = await response.json(); }
+      catch (_) { throw Object.assign(new Error('Serveren svarte ikke som forventet. Prøver igjen automatisk.'), {retryable: true}); }
+      if (!response.ok) {
+        const auth = response.status === 401 || response.status === 403;
+        login.hidden = !auth;
+        throw Object.assign(new Error(auth ? 'Logg inn i en ny fane, og kom tilbake hit. Endringene dine beholdes.' : result.error || 'Lagring mislyktes.'), {retryable: auth || response.status >= 500 || response.status === 429});
+      }
+      return result;
+    } catch (e) {
+      if (e.name === 'AbortError' || e instanceof TypeError) {
+        throw Object.assign(new Error('Forbindelsen ble brutt. Endringene beholdes, og lagring prøves igjen automatisk.'), {retryable: true});
+      }
+      throw e;
+    } finally { clearTimeout(timeout); }
   }
-  function dataFor(action) { const data = new FormData(); data.set('action', action); data.set('csrf', csrf); return data; }
+  async function refreshSession() {
+    const session = await fetchJSON('/?session=1');
+    if (session.uid !== owner) {
+      login.hidden = false;
+      throw new Error('Logg inn med samme konto som åpnet dette spillet. Utkastet beholdes.');
+    }
+    csrf = session.csrf; login.hidden = true;
+  }
+  async function request(data) {
+    await refreshSession();
+    data.set('csrf', csrf);
+    return fetchJSON('/', {method: 'POST', body: data});
+  }
+  function dataFor(action) { const data = new FormData(); data.set('action', action); data.set('csrf', csrf); data.set('owner', owner); return data; }
   function autosave() {
-    if(!autosaveBlocked && game.title.trim() && JSON.stringify(game)!==baseline)void saveGame();
+    if(!autosaveBlocked && (pendingSave || (game.title.trim() && JSON.stringify(game)!==baseline)))void saveGame();
   }
   setInterval(autosave,15000);
+  // Keep PHP's session storage alive while the editor is open. The absolute
+  // authentication expiry and credential revocation still apply.
+  setInterval(() => { if (document.visibilityState === 'visible') void refreshSession().catch(() => {}); }, 300000);
+  window.addEventListener('focus', () => { autosaveBlocked = false; autosave(); });
   window.addEventListener('online',()=>{autosaveBlocked=false;autosave();});
   async function saveGame() {
     if (saving || uploading || sharing) return;
     clearTimeout(autosaveTimer);saving = true; error.hidden = true; changed(false);
-    const snapshot = JSON.stringify(game);
-    const data = dataFor('save'); data.set('content', snapshot); data.set('id', id); data.set('revision', String(revision));
+    if (!id) id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+    pendingSave ??= {snapshot: JSON.stringify(game), id, revision};
+    const {snapshot} = pendingSave;
+    persistDraft();
+    const data = dataFor('save'); data.set('content', snapshot); data.set('id', pendingSave.id); data.set('revision', String(pendingSave.revision));
     try {
       const result = await request(data);
+      if (result.id !== pendingSave.id || !Number.isInteger(result.revision) || result.revision < 1) {
+        throw Object.assign(new Error('Lagring er ikke bekreftet. Prøver igjen automatisk.'), {retryable: true});
+      }
       id = result.id; revision = result.revision; baseline = snapshot; if (JSON.parse(snapshot).private) share = null; autosaveBlocked=false;
+      pendingSave = null; retryDelay = 2000;
+      const oldKey = draftKey;
+      draftKey = draftPrefix + id + ':' + draftSuffix;
+      persistDraft();
+      if (!draftFailed && oldKey !== draftKey) { try { localStorage.removeItem(oldKey); } catch (_) {} }
       history.replaceState(null, '', '/?edit=' + id);
-    } catch (e) { autosaveBlocked=true;fail(e.message); }
+    } catch (e) {
+      autosaveBlocked = true; fail(e.message);
+      if (e.retryable) {
+        autosaveTimer = setTimeout(() => { autosaveBlocked = false; autosave(); }, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 60000);
+      } else { pendingSave = null; }
+      persistDraft();
+    }
     finally { saving = false; changed(false);if(!autosaveBlocked&&JSON.stringify(game)!==baseline)autosaveTimer=setTimeout(autosave,1500); }
   }
   async function changeSharing(action) {
@@ -234,10 +312,10 @@
     });
   }
   window.addEventListener('beforeunload', e => {
-    if (JSON.stringify(game) !== baseline || uploading || saving) { e.preventDefault(); e.returnValue = ''; }
+    if (pendingSave || JSON.stringify(game) !== baseline || uploading || saving) { e.preventDefault(); e.returnValue = ''; }
   });
   play.addEventListener('click', e => {
     if (JSON.stringify(game) !== baseline && !confirm('Spille den sist lagrede versjonen? Du har ulagrede endringer.')) e.preventDefault();
   });
-  render(); changed();
+  render(); changed(false);
 })();

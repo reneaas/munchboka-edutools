@@ -41,6 +41,14 @@ try {
     $db = jp_db();
     jp_schema($db);
     jp_check_credentials($db);
+    // Same-origin editor heartbeat and token recovery after login in another tab.
+    if ($api && $_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['session'])) {
+        if (empty($_SESSION['uid'])) json_response(['error' => 'Logg inn igjen.'], 401);
+        json_response(['uid' => (string) $_SESSION['uid'], 'csrf' => $_SESSION['csrf']]);
+    }
+    if ($api && $_SERVER['REQUEST_METHOD'] === 'POST' && empty($_SESSION['uid'])) {
+        json_response(['error' => 'Logg inn igjen.'], 401);
+    }
     if (isset($_GET['media'])) {
         if (!is_string($_GET['media']) || !preg_match('/^[a-f0-9]{32}$/D', $_GET['media'])) {
             http_response_code(404); exit;
@@ -58,7 +66,11 @@ try {
         echo $media['bytes']; exit;
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($api && isset($_POST['owner']) && $_POST['owner'] !== (string) $_SESSION['uid']) {
+            json_response(['error' => 'Logg inn med samme konto som åpnet spillet.'], 403);
+        }
         if (!is_string($_POST['csrf'] ?? null) || !hash_equals($_SESSION['csrf'], $_POST['csrf'])) {
+            if ($api) json_response(['error' => 'Innloggingen er endret. Prøv å lagre igjen.'], 403);
             throw new DomainException('Siden er utløpt. Last inn på nytt og prøv igjen.');
         }
         $action = jp_input('action', 20);
@@ -116,7 +128,7 @@ try {
     // Log only exception class and SQLSTATE, never credentials, email codes or SQL data.
     error_log('Jeopardy pilot error: ' . get_class($e) . ' code=' . (string) $e->getCode());
 }
-if ($api) json_response(['error' => $error ?: 'Ugyldig forespørsel.'], isset($_SESSION['uid']) ? 422 : 401);
+if ($api) json_response(['error' => $error ?: 'Ugyldig forespørsel.'], http_response_code() === 503 ? 503 : (isset($_SESSION['uid']) ? 422 : 401));
 $uid = (int) ($_SESSION['uid'] ?? 0);
 $publicGame = isset($_GET['public']);
 $searching = isset($_GET['search']);
@@ -175,7 +187,7 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php if ($publicInfo): ?><link rel="canonical" href="https://jeopardy.munchboka.no/<?= $about ? '?about=1' : '' ?>"><?php endif; ?><script src="/theme.js?v=4"></script><link rel="stylesheet" href="/pilot.css?v=6">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script defer src="/vendor/katex/katex.min.js"></script><script defer src="/math.js?v=2"></script>
 <script defer src="/library.js?v=<?= filemtime(__DIR__ . '/library.js') ?>"></script>
-<?php if ($editing && $game): ?><script defer src="/editor.js?v=10"></script><?php endif; ?>
+<?php if ($editing && $game): ?><script defer src="/editor.js?v=11"></script><?php endif; ?>
 <?php if ($playing && $game): ?><link rel="stylesheet" href="/jeopardy.css?v=4"><script defer src="/jeopardy.js?v=4"></script><?php endif; ?>
 </head><body><header><a class="brand" href="/">Munchboka <strong>Jeopardy</strong></a><nav><a href="/?search=1">Finn Jeopardy</a><a href="/">Mine quizer</a></nav></header>
 <main>
@@ -262,7 +274,7 @@ function csrf(): void { echo '<input type="hidden" name="csrf" value="' . h($_SE
 <?php elseif ($editing && $game && $content): ?>
 <h1><?= $game['id'] ? 'Rediger undervisningsquizen' : 'Lag en undervisningsquiz' ?></h1>
 <p>Skriv matematikk med <code>$x^2$</code> eller <code>$$\frac{1}{2}$$</code>. Legg til bilder i spørsmål og svar.</p>
-<div id="editor" data-share="<?= h(json_encode($shareInfo, JSON_THROW_ON_ERROR)) ?>" data-game="<?= h(json_encode($content, JSON_THROW_ON_ERROR)) ?>" data-id="<?= h($game['id']) ?>" data-revision="<?= (int) $game['revision'] ?>" data-csrf="<?= h($_SESSION['csrf']) ?>">
+<div id="editor" data-uid="<?= $uid ?>" data-share="<?= h(json_encode($shareInfo, JSON_THROW_ON_ERROR)) ?>" data-game="<?= h(json_encode($content, JSON_THROW_ON_ERROR)) ?>" data-id="<?= h($game['id']) ?>" data-revision="<?= (int) $game['revision'] ?>" data-csrf="<?= h($_SESSION['csrf']) ?>">
 <noscript>Slå på JavaScript for å bruke spillverkstedet.</noscript></div>
 <?php else: ?>
 <p class="eyebrow">DINE UNDERVISNINGSQUIZER</p><h1>Mine quizer</h1><p>Quizene er knyttet til kontoen din og lagret på nett.</p><a class="button" href="/?new=1">Opprett quiz</a>

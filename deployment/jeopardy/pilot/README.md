@@ -23,9 +23,19 @@ The directory name `pilot` is retained for deployment continuity. Registration i
   in one transaction. Uploaded media stays available for other games/Livequiz.
 - Automatic online saving after 1.5 seconds without edits and every 15 seconds
   while editing, plus a manual save button. A title is required. Saves are
-  serialized, with revision checks and retained revision snapshots.
-  Network/validation failures leave the editor contents in the current tab.
-  Unsaved edits trigger a navigation warning. Failed autosaves pause until another edit or manual retry. No offline draft store.
+  serialized, with revision checks. Every edit is backed up in browser localStorage,
+  separately per account, game and editor tab. Reopening the editor offers recovery
+  or explicit discard; confirmed saves remove the draft. Drafts include text and
+  references to uploaded images, not files whose uploads have not finished.
+  Storage failures are shown explicitly; unsaved edits trigger a navigation warning.
+  Network failures, timeouts and temporary server errors retry with backoff (2–60s).
+  Requests have a 20-second deadline. Client-generated game IDs and exact-content
+  retry checks prevent duplicate creations/revisions after a lost response.
+  Validation and revision conflicts retain the draft without automatic overwrite.
+  The editor refreshes its account/CSRF state before mutations and sends a heartbeat
+  every five minutes while visible. Expired sessions offer login in another tab;
+  returning to the editor resumes saving with a fresh token for the same account.
+  The eight-hour authentication limit and password revocation still apply.
 - Existing single-category pilot games normalize in memory; historical revisions
   are preserved. Gameplay still uses the shared package's Jeopardy runtime.
 

@@ -87,24 +87,31 @@ function lq_quiz(PDO $db, int $uid, string $id): array {
 }
 function lq_save(PDO $db, int $uid, array $input): array {
     $content = lq_validate($db, $uid, $input['content'] ?? null);
-    if (($input['id'] ?? '') === '' && !empty($input['folder'])) lq_library_prepare($db, $uid);
+    if ((($input['id'] ?? '') === '' || ($input['revision'] ?? null) === 0) && !empty($input['folder'])) lq_library_prepare($db, $uid);
     return lq_transaction($db, function () use ($db, $uid, $input, $content) {
         $id = $input['id'] ?? ''; $rev = 1; $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        if ($id === '') {
+        $creating = $id !== '' && ($input['revision'] ?? null) === 0
+            && lq_query($db, 'SELECT id FROM lq_quizzes WHERE id = ? FOR UPDATE', [lq_id($id)])->fetchColumn() === false;
+        if ($id === '' || $creating) {
             $library = !empty($input['folder']) ? lq_library_data($db, $uid, true) : null;
             $folder = $library !== null ? lq_folder_id($library, $input['folder']) : null;
-            $id = bin2hex(random_bytes(16));
+            if ($id === '') $id = bin2hex(random_bytes(16));
             lq_query($db, 'INSERT INTO lq_quizzes (id, owner_id, title, content, revision) VALUES (?, ?, ?, ?, 1)', [$id, $uid, $content['title'], $json]);
             if ($folder !== null) { $library['quiz_folders'][$id] = $folder; lq_library_write($db, $uid, $library); }
         } else {
             $r = lq_query($db, 'SELECT revision, content FROM lq_quizzes WHERE id = ? AND owner_id = ? FOR UPDATE', [lq_id($id), $uid])->fetch();
-            if ($r === false || (int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
+            if ($r === false) throw new DomainException('Quizen er endret i en annen fane eller utilgjengelig. Kopier arbeidet ditt før du åpner den på nytt.');
             $rev = (int)$r['revision'] + 1;
             $previous = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
             // Old editor tabs must not silently publish an already private quiz.
             if (!array_key_exists('private',$input['content'])) $content['private']=$previous['private'] ?? false;
             if (!$content['private'] && isset($previous['_share'])) $content['_share'] = $previous['_share'];
             $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            // An exact replay after a lost response acknowledges the committed save.
+            if (is_int($input['revision'] ?? null) && (int)$r['revision'] === $input['revision'] + 1 && $r['content'] === $json) {
+                return ['id'=>$id, 'revision'=>(int)$r['revision']];
+            }
+            if ((int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane. Utkastet beholdes; kopier arbeidet ditt før du åpner den nyeste versjonen.');
             lq_query($db, 'UPDATE lq_quizzes SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$content['title'], $json, $rev, $id]);
         }
         return ['id' => $id, 'revision' => $rev];

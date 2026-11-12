@@ -9,6 +9,7 @@ check(lq_share($db,1,$sid,true)['key']===$key,'existing link stays stable');
 rejects(fn()=>lq_shared_quiz($db,$sid,str_repeat('0',64)),'wrong share key');
 $changed=$quiz;$changed['title']='Updated shared title';
 lq_save($db,1,['id'=>$sid,'revision'=>1,'content'=>$changed]);
+check(lq_save($db,1,['id'=>$sid,'revision'=>1,'content'=>$changed])['revision']===2,'retry preserves shared metadata and revision');
 check(lq_shared_quiz($db,$sid,$key)['title']===$changed['title'],'save preserves link and shares latest content');
 $a=bin2hex(random_bytes(32));$b=bin2hex(random_bytes(32));
 $ra=lq_shared_start($db,$sid,$key,$a)['room'];$rb=lq_shared_start($db,$sid,$key,$b)['room'];

@@ -15,7 +15,9 @@ rejects(fn()=>lq_organize($db,1,['command'=>'delete-folder','id'=>$other]),'cros
 rejects(fn()=>lq_organize($db,1,['command'=>'create-folder','name'=>'  ']),'empty folder name rejected');
 rejects(fn()=>lq_organize($db,1,['command'=>'move-folder','id'=>$root,'parent'=>$leaf]),'ancestor into descendant rejected');
 rejects(fn()=>lq_organize($db,1,['command'=>'move-folder','id'=>$root,'parent'=>$root]),'self-parent rejected');
-$savedFolder=lq_save($db,1,['content'=>$quiz,'folder'=>$sub]);$qid=$savedFolder['id'];
+$folderInput=['id'=>str_repeat('f',32),'revision'=>0,'content'=>$quiz,'folder'=>$sub];
+$savedFolder=lq_save($db,1,$folderInput);$qid=$savedFolder['id'];
+check(lq_save($db,1,$folderInput)===$savedFolder,'creation retry preserves folder quiz and revision');
 check(lq_library_data($db,1)['quiz_folders'][$qid]===$sub,'new quiz saved directly in folder');
 $shareKey=lq_share($db,1,$qid,true)['key'];
 $before=lq_quiz($db,1,$qid);

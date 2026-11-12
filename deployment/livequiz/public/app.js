@@ -260,9 +260,34 @@
         const copy=await api('copy',source);location.href='?edit='+copy.id;
       },'secondary'));
   }
+  function questionReady(q) {
+    const video = (q.youtube || '').trim();
+    if (video && !/^[a-zA-Z0-9_-]{11}$/.test(video)) {
+      try {
+        const url = new URL(video);
+        if (!['http:', 'https:'].includes(url.protocol)) return false;
+        let id = '';
+        if (url.hostname === 'youtu.be') id = url.pathname.replace(/^\/+|\/+$/g, '');
+        if (['youtube.com','www.youtube.com','m.youtube.com'].includes(url.hostname)) {
+          id = url.pathname.match(/^\/(?:embed|shorts)\/([a-zA-Z0-9_-]{11})\/?$/)?.[1] || url.searchParams.get('v') || '';
+        }
+        if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return false;
+      } catch (_) { return false; }
+    }
+    if (!(q.prompt || '').trim() && !(q.code || '').trim() && !q.image && !video) return false;
+    const seconds = q.seconds === undefined ? 30 : q.seconds;
+    if (!Number.isInteger(seconds) || seconds < 5 || seconds > 600) return false;
+    if (q.type === 'text') return q.accepted.length > 0 && q.accepted.every(a => a.trim());
+    if (q.options.length < 2 || q.options.some(o => !o.trim()) || !q.correct.length) return false;
+    if (q.correct.some(i => !Number.isInteger(i) || i < 0 || i >= q.options.length)) return false;
+    if (q.type === 'sort') return q.correct.length === q.options.length && new Set(q.correct).size === q.options.length;
+    if (q.type === 'single') return new Set(q.correct).size === 1;
+    return q.type === 'multi';
+  }
   function previewQuiz(contentModel,mediaQuery={}){
     const quiz=JSON.parse(JSON.stringify(contentModel));
-    if(!quiz.questions.length)return;
+    quiz.questions = quiz.questions.filter(questionReady);
+    if(!quiz.questions.length)throw new Error('Quizen har ingen ferdige spørsmål ennå. Fullfør minst ett spørsmål for å forhåndsvise spillet.');
     const opener=document.activeElement,dialog=el('dialog',undefined,'question-modal teacher-modal active-question-modal quiz-preview-modal');
     const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body'),footer=el('div',undefined,'question-modal-footer');
     const previous=el('button','Forrige','secondary'),next=el('button','Neste','secondary'),jumpLabel=el('label','Gå til spørsmål'),jump=el('select');
@@ -316,6 +341,7 @@
     const draftSuffix = randomId();
     let draftKey = draftPrefix + (saved.id || 'new') + ':' + draftSuffix;
     const status = el('p', '', 'hint'); status.setAttribute('role','status');
+    const readiness = el('p', '', 'hint'); readiness.setAttribute('role','status');
     const loginLink = link('Logg inn i en ny fane', '?login=1');
     loginLink.target = '_blank'; loginLink.rel = 'noopener'; loginLink.hidden = true;
     function persistDraft() {
@@ -328,6 +354,11 @@
     function changed(persist = true) {
       dirty = !!pendingSave || JSON.stringify(model) !== baseline;
       if (persist) persistDraft();
+      const ready = model.questions.filter(questionReady).length;
+      readiness.textContent = `${ready} av ${model.questions.length} spørsmål er klare til spill. Uferdige spørsmål lagres, men hoppes over når quizen spilles.`;
+      list.querySelectorAll('.question-draft-status').forEach((label, index) => {
+        label.textContent = model.questions[index] && questionReady(model.questions[index]) ? 'Klar til spill' : 'Uferdig · hoppes over i spillet';
+      });
       status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ikke lagret på nett · utkast beholdes på denne enheten' : saved.revision ? 'Lagret · versjon ' + saved.revision : 'Ikke lagret ennå';
       if (dirty && storageFailed) status.textContent = 'Ulagrede endringer · lokal sikkerhetskopi er utilgjengelig; behold fanen åpen';
     }
@@ -386,7 +417,7 @@
     scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
     const titleField = field('Quizens tittel', model.title, v => {model.title=v; changed();});
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink,
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
       titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {
@@ -408,7 +439,7 @@
           toggle.setAttribute('aria-expanded',String(!collapsed));
           if(collapsed)summary.replaceChildren(rich(q.prompt||'Uten spørsmålstekst'));
         }
-        heading.append(el('h2','Spørsmål '+(index+1)),toggle);section.append(heading,summary,card);updateCollapsed();
+        heading.append(el('h2','Spørsmål '+(index+1)),el('p',questionReady(q)?'Klar til spill':'Uferdig · hoppes over i spillet','hint question-draft-status'),toggle);section.append(heading,summary,card);updateCollapsed();
         const positionLabel=el('label','Flytt til plass'),position=el('select');position.setAttribute('aria-label','Flytt til plass');
         for(let i=0;i<model.questions.length;i++){const option=el('option',String(i+1));option.value=String(i);position.append(option);}
         position.value=String(index);position.disabled=model.questions.length<2;positionLabel.append(position);

@@ -38,7 +38,7 @@ function lq_code(mixed $value): string {
     jp_text($value, 8000); // Validate type, size and UTF-8 without trimming code.
     return $value;
 }
-function lq_validate(PDO $db, int $uid, mixed $data): array {
+function lq_validate(PDO $db, int $uid, mixed $data, bool $draft = false): array {
     if (!is_array($data)) throw new DomainException('Ugyldig quiz.');
     $title = jp_text($data['title'] ?? '', 180); $questions = $data['questions'] ?? null;
     if ($title === '' || !is_array($questions) || !array_is_list($questions) || count($questions) < 1 || count($questions) > 50) throw new DomainException('Gi quizen en tittel og 1–50 spørsmål.');
@@ -49,9 +49,11 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
     foreach ($questions as $q) {
         if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text', 'sort'], true)) throw new DomainException('Ugyldig spørsmålstype.');
         $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => lq_code($q['code'] ?? ''),
-            'youtube' => lq_youtube(jp_text($q['youtube'] ?? '', 500)), 'image' => null];
-        $seconds = $q['seconds'] ?? 30;
-        if (!is_int($seconds) || $seconds < 5 || $seconds > 600) throw new DomainException('Velg 5–600 sekunder.');
+            'youtube' => jp_text($q['youtube'] ?? '', 500), 'image' => null];
+        try { $c['youtube'] = lq_youtube($c['youtube']); }
+        catch (DomainException $e) { if (!$draft) throw $e; }
+        $seconds = array_key_exists('seconds', $q) ? $q['seconds'] : 30;
+        if ((!$draft && (!is_int($seconds) || $seconds < 5 || $seconds > 600)) || ($draft && $seconds !== null && !is_int($seconds) && !is_float($seconds))) throw new DomainException('Velg 5–600 sekunder.');
         $c['seconds'] = $seconds;
         if (($q['image'] ?? null) !== null) {
             if (!is_array($q['image'])) throw new DomainException('Ugyldig bilde.');
@@ -59,26 +61,50 @@ function lq_validate(PDO $db, int $uid, mixed $data): array {
             $alt = jp_text($q['image']['alt'] ?? '', 500);
             $c['image'] = ['id' => $id, 'alt' => $alt];
         }
-        if ($c['prompt'] === '' && trim($c['code']) === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');
+        if (!$draft && $c['prompt'] === '' && trim($c['code']) === '' && !$c['image'] && !$c['youtube']) throw new DomainException('Spørsmålet trenger innhold.');
         $c['options'] = []; $c['correct'] = []; $c['accepted'] = [];
         if ($c['type'] === 'text') {
-            $a = $q['accepted'] ?? null;
-            if (!is_array($a) || !array_is_list($a) || count($a) < 1 || count($a) > 20) throw new DomainException('Legg til 1–20 godkjente svar.');
-            foreach ($a as $v) { $v = jp_text($v, 500); if ($v === '') throw new DomainException('Godkjente svar kan ikke være tomme.'); $c['accepted'][] = $v; }
+            $a = $q['accepted'] ?? [];
+            if (!is_array($a) || !array_is_list($a) || (!$draft && count($a) < 1) || count($a) > 20) throw new DomainException('Legg til 1–20 godkjente svar.');
+            foreach ($a as $v) { $v = jp_text($v, 500); if (!$draft && $v === '') throw new DomainException('Godkjente svar kan ikke være tomme.'); $c['accepted'][] = $v; }
         } else {
-            $opts = $q['options'] ?? null; $correct = $q['correct'] ?? null;
-            if (!is_array($opts) || !array_is_list($opts) || count($opts) < 2 || count($opts) > 6 || !is_array($correct) || !array_is_list($correct) || !$correct) throw new DomainException('Legg til 2–6 alternativer og marker fasit.');
-            foreach ($opts as $v) { $v = jp_text($v, 1000); if ($v === '') throw new DomainException('Svaralternativer kan ikke være tomme.'); $c['options'][] = $v; }
+            $opts = $q['options'] ?? []; $correct = $q['correct'] ?? [];
+            if (!is_array($opts) || !array_is_list($opts) || (!$draft && count($opts) < 2) || count($opts) > 6 || !is_array($correct) || !array_is_list($correct) || count($correct) > 6 || (!$draft && !$correct)) throw new DomainException('Legg til 2–6 alternativer og marker fasit.');
+            foreach ($opts as $v) { $v = jp_text($v, 1000); if (!$draft && $v === '') throw new DomainException('Svaralternativer kan ikke være tomme.'); $c['options'][] = $v; }
             foreach ($correct as $v) if (!is_int($v) || $v < 0 || $v >= count($opts)) throw new DomainException('Ugyldig fasit.');
-            $c['correct'] = array_values(array_unique($correct));
+            $c['correct'] = $draft && $c['type'] === 'sort' ? $correct : array_values(array_unique($correct));
             if ($c['type'] === 'sort') {
-                if (count($correct) !== count($opts) || count($c['correct']) !== count($opts)) throw new DomainException('Sorter alle alternativene nøyaktig én gang.');
+                if (!$draft && (count($correct) !== count($opts) || count($c['correct']) !== count($opts))) throw new DomainException('Sorter alle alternativene nøyaktig én gang.');
             } else sort($c['correct']);
-            if ($c['type'] === 'single' && count($c['correct']) !== 1) throw new DomainException('Velg nøyaktig ett riktig alternativ.');
+            if (!$draft && $c['type'] === 'single' && count($c['correct']) !== 1) throw new DomainException('Velg nøyaktig ett riktig alternativ.');
         }
         $out['questions'][] = $c;
     }
     return $out;
+}
+// Completeness is separate from safe storage: drafts remain editable, while
+// every new room gets a compact snapshot containing only playable questions.
+function lq_question_ready(array $q): bool {
+    $video = $q['youtube'] ?? '';
+    try { lq_youtube($video); } catch (DomainException $e) { return false; }
+    if (trim($q['prompt'] ?? '') === '' && trim($q['code'] ?? '') === '' && empty($q['image']) && $video === '') return false;
+    $seconds = array_key_exists('seconds', $q) ? $q['seconds'] : 30;
+    if (!is_int($seconds) || $seconds < 5 || $seconds > 600) return false;
+    if ($q['type'] === 'text') {
+        $answers = $q['accepted'] ?? [];
+        return count($answers) > 0 && !in_array('', array_map('trim', $answers), true);
+    }
+    $options = $q['options'] ?? []; $correct = $q['correct'] ?? [];
+    if (count($options) < 2 || in_array('', array_map('trim', $options), true) || !$correct) return false;
+    foreach ($correct as $v) if (!is_int($v) || $v < 0 || $v >= count($options)) return false;
+    if ($q['type'] === 'sort') return count($correct) === count($options) && count(array_unique($correct)) === count($options);
+    if ($q['type'] === 'single') return count(array_unique($correct)) === 1;
+    return $q['type'] === 'multi';
+}
+function lq_playable_content(array $content, bool $requireQuestions = true): array {
+    $content['questions'] = array_values(array_filter($content['questions'], 'lq_question_ready'));
+    if ($requireQuestions && !$content['questions']) throw new DomainException('Quizen har ingen ferdige spørsmål ennå. Fullfør minst ett spørsmål før du starter spillet.');
+    return $content;
 }
 function lq_quiz(PDO $db, int $uid, string $id): array {
     $r = lq_query($db, 'SELECT * FROM lq_quizzes WHERE id = ? AND owner_id = ?', [lq_id($id), $uid])->fetch();
@@ -86,7 +112,7 @@ function lq_quiz(PDO $db, int $uid, string $id): array {
     return $r;
 }
 function lq_save(PDO $db, int $uid, array $input): array {
-    $content = lq_validate($db, $uid, $input['content'] ?? null);
+    $content = lq_validate($db, $uid, $input['content'] ?? null, true);
     if ((($input['id'] ?? '') === '' || ($input['revision'] ?? null) === 0) && !empty($input['folder'])) lq_library_prepare($db, $uid);
     return lq_transaction($db, function () use ($db, $uid, $input, $content) {
         $id = $input['id'] ?? ''; $rev = 1; $json = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -135,6 +161,7 @@ function lq_create_room(PDO $db, int $uid, string $id): array {
     return lq_insert_room($db, $uid, $content);
 }
 function lq_insert_room(PDO $db, int $uid, array $content): array {
+    $content = lq_playable_content($content);
     // Shared-link creation already holds a quiz transaction; cron handles its cleanup.
     if (!$db->inTransaction()) lq_prune_history($db,$uid);
     unset($content['_share']);
@@ -262,7 +289,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             // replace its snapshot, and only with one of their own saved quizzes.
             if (!$uid || $uid !== (int)$r['owner_id']) throw new DomainException('Bare eieren kan bytte quiz i denne lobbyen.');
             $quiz=lq_quiz($db,$uid,lq_id($input['quiz'] ?? null));
-            $next=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
+            $next=lq_playable_content(json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR));
             unset($next['_share'],$next['_host_hash'],$next['_race'],$next['_lightning'],$next['_waiting'],$next['_finished_at']);
             $next['_kicked']=$content['_kicked'] ?? [];
             $next['_run']=($content['_run'] ?? 0)+1;

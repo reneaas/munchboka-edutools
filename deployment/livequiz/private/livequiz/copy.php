@@ -29,7 +29,7 @@ function lq_copy_quiz(PDO $db,int $uid,string $id,string $source,string $key='')
         $title=$content['title'];while(strlen($title)>173)$title=preg_replace('/.$/us','',$title);
         $content['title']=$title.' (kopi)';$content['private']=false;
         // Validate and whitelist authored fields, dropping share keys and all internal metadata.
-        $copy=lq_validate($db,$uid,$content);$copyId=bin2hex(random_bytes(16));
+        $copy=lq_validate($db,$uid,$content,true);$copyId=bin2hex(random_bytes(16));
         lq_query($db,'INSERT INTO lq_quizzes (id,owner_id,title,content,revision) VALUES (?,?,?,?,1)',
             [$copyId,$uid,$copy['title'],json_encode($copy,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE)]);
         return ['id'=>$copyId,'revision'=>1];

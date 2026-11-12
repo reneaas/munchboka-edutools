@@ -77,7 +77,7 @@ if ($action !== null) {
             case 'public-preview': lq_response(lq_public_preview($db,jp_text($_GET['id'] ?? '',32)));
             case 'public-quiz':
                 $public=lq_public_quiz($db,jp_text($_GET['id'] ?? '',32));
-                lq_response(['title'=>$public['title'],'total'=>count(json_decode($public['content'],true,32,JSON_THROW_ON_ERROR)['questions'])]);
+                lq_response(['title'=>$public['title'],'total'=>count(lq_playable_content(json_decode($public['content'],true,32,JSON_THROW_ON_ERROR),false)['questions'])]);
             case 'public-start': lq_response(lq_public_start($db,jp_text($input['id'] ?? '',32),jp_text($input['host_token'] ?? '',64)));
             case 'library': lq_response(lq_library($db, $uid));
             case 'organize': lq_response(lq_organize($db, $uid, $input));
@@ -90,7 +90,7 @@ if ($action !== null) {
             case 'shared':
                 $shared = lq_shared_quiz($db, jp_text($_GET['id'] ?? '', 32), jp_text($_SERVER['HTTP_X_QUIZ_SHARE'] ?? '', 64));
                 $content = json_decode($shared['content'], true, 32, JSON_THROW_ON_ERROR);
-                lq_response(['title'=>$shared['title'], 'total'=>count($content['questions'])]);
+                lq_response(['title'=>$shared['title'], 'total'=>count(lq_playable_content($content,false)['questions'])]);
             case 'shared-start': lq_response(lq_shared_start($db, jp_text($input['id'] ?? '', 32), jp_text($input['key'] ?? '', 64), jp_text($input['host_token'] ?? '', 64)));
             case 'create': lq_response(lq_create_room($db, $uid, jp_text($input['id'] ?? '', 32)));
             case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 6), jp_text($input['name'] ?? '', 80), $token));

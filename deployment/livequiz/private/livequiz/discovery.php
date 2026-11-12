@@ -10,7 +10,7 @@ function lq_public_quiz(PDO $db,string $id,bool $lock=false): array {
 function lq_public_preview(PDO $db,string $id): array {
     $quiz=lq_public_quiz($db,$id);
     $content=json_decode($quiz['content'],true,32,JSON_THROW_ON_ERROR);
-    return ['title'=>$quiz['title'],'questions'=>$content['questions']];
+    return ['title'=>$quiz['title'],'questions'=>lq_playable_content($content,false)['questions']];
 }
 function lq_public_media(PDO $db,string $quizId,string $image): array {
     $quiz=lq_public_quiz($db,$quizId);
@@ -31,7 +31,7 @@ function lq_discover(PDO $db,string $search,int $page=0): array {
     $more=count($rows)>20;$items=[];
     foreach(array_slice($rows,0,20) as $row){
         $content=json_decode($row['content'],true,32,JSON_THROW_ON_ERROR);
-        $items[]=['id'=>$row['id'],'title'=>$row['title'],'total'=>count($content['questions'])];
+        $items[]=['id'=>$row['id'],'title'=>$row['title'],'total'=>count(lq_playable_content($content,false)['questions'])];
     }
     return ['quizzes'=>$items,'more'=>$more,'page'=>$page];
 }

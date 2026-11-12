@@ -5,11 +5,36 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Saving incomplete questions
+
+A named quiz can be saved with empty or incomplete questions. The editor labels
+questions as ready or unfinished and shows how many will be included in play.
+Draft fields, including partial answers, video links and unfinished timers, remain
+in the saved quiz and in editable copies. Field types, size limits and image
+ownership are still validated; a title and 1–50 question slots are required.
+
+A question is playable when it has content (text, code, image or valid video), a
+valid 5–600 second timer, and a complete answer key. Choice questions require at
+least two nonempty alternatives; typed questions require nonempty accepted
+answers; sorting questions require a complete ordering. Incomplete questions are
+omitted from preview and new game snapshots, preserving the order of complete
+questions. This applies to owner, public and shared starts, switching quizzes in
+an existing lobby, and all game modes. Public question counts reflect playable
+questions. Existing game snapshots are unchanged.
+
+Quizzes containing only drafts can be saved but cannot start a game until at
+least one question is complete. Playing never removes drafts from the editor.
+No database migration is needed.
+
+Validation: `php tests/drafts.php` and `node tests/drafts-browser.cjs` cover draft
+round trips, partial fields, all-draft guards, filtered previews and game snapshots,
+sharing, copying, switching, counts, later completion and retained access checks.
+
 ## Editor timeout recovery
 
 Every edit is backed up in localStorage, separately per account, quiz and editor
 instance. Reopening the editor offers recovery or explicit discard, including
-incomplete questions that cannot yet pass server validation. Confirmed saves
+incomplete questions and work not yet saved to the server. Confirmed saves
 clear the corresponding backup. Drafts retain references to uploaded images;
 unfinished file uploads must be selected again. Storage failures are shown.
 

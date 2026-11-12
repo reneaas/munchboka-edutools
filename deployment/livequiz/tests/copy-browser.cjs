@@ -25,7 +25,7 @@ const assert=require('node:assert/strict');
  assert.equal(await guest.getByLabel('Quizens tittel').inputValue(),'Editable copy fixture (kopi)');
  await guest.getByRole('button',{name:'Forhåndsvis',exact:true}).click();
  await guest.waitForFunction(()=>[...document.querySelectorAll('img')].some(i=>i.naturalWidth===100));
- await guest.getByLabel('Spørsmål',{exact:true}).fill('My edited question');await guest.getByRole('button',{name:'Lagre quiz',exact:true}).click();await guest.getByText('Lagret · versjon 2',{exact:true}).waitFor();await guest.reload();assert.equal(await guest.getByLabel('Spørsmål',{exact:true}).inputValue(),'My edited question');
+ await guest.getByLabel('Spørsmål',{exact:true}).fill('My edited question');await guest.getByRole('button',{name:'Lagre quiz',exact:true}).click();await guest.getByText('Lagret på nett',{exact:true}).waitFor();await guest.reload();assert.equal(await guest.getByLabel('Spørsmål',{exact:true}).inputValue(),'My edited question');
  await owner.goto(base+'/?edit='+original.id);assert.equal(await owner.getByLabel('Spørsmål',{exact:true}).inputValue(),'Original question');
  await guest.goto(base+'/?share='+original.id+'#key='+original.key);await guest.getByRole('button',{name:'Lag en redigerbar kopi',exact:true}).click();await guest.getByLabel('Quizens tittel').waitFor();const sharedCopy=new URL(guest.url()).searchParams.get('edit');assert.notEqual(sharedCopy,publicCopy);
  assert.equal(await guest.getByLabel('Spørsmål',{exact:true}).inputValue(),'Original question');

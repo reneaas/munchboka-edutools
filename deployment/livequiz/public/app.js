@@ -335,6 +335,7 @@
     saved.content.scoring ??= 'fixed';saved.content.private ??= false;
     let model = saved.content, baseline = JSON.stringify(model), saving = false;
     let pendingSave = null, retryTimer, retryDelay = 2000, storageFailed = false;
+    let autosaveTimer, autosaveBlocked = false, retryWaiting = false;
     let folder = params.get('folder');
     const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2,'0')).join('');
     const draftPrefix = 'livequiz-draft:' + uid + ':';
@@ -353,13 +354,17 @@
     }
     function changed(persist = true) {
       dirty = !!pendingSave || JSON.stringify(model) !== baseline;
-      if (persist) persistDraft();
+      if (persist) {
+        persistDraft(); autosaveBlocked = false;
+        clearTimeout(autosaveTimer);
+        if (dirty) autosaveTimer = setTimeout(autosave, 1500);
+      }
       const ready = model.questions.filter(questionReady).length;
       readiness.textContent = `${ready} av ${model.questions.length} spørsmål er klare til spill. Uferdige spørsmål lagres, men hoppes over når quizen spilles.`;
       list.querySelectorAll('.question-draft-status').forEach((label, index) => {
         label.textContent = model.questions[index] && questionReady(model.questions[index]) ? 'Klar til spill' : 'Uferdig · hoppes over i spillet';
       });
-      status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? 'Ikke lagret på nett · utkast beholdes på denne enheten' : saved.revision ? 'Lagret · versjon ' + saved.revision : 'Ikke lagret ennå';
+      status.textContent = uploads ? 'Laster opp bilde …' : saving ? 'Lagrer …' : dirty ? (autosaveBlocked ? 'Ikke lagret på nett · kontroller feilen og prøv igjen' : retryWaiting ? 'Venter på ny lagring · utkast beholdes på denne enheten' : model.title.trim() ? 'Ulagrede endringer · lagres automatisk' : 'Skriv en tittel for å lagre automatisk') : saved.revision ? 'Lagret på nett' : 'Ikke lagret ennå';
       if (dirty && storageFailed) status.textContent = 'Ulagrede endringer · lokal sikkerhetskopi er utilgjengelig; behold fanen åpen';
     }
     async function refreshSession() {
@@ -374,15 +379,22 @@
       await refreshSession();
       return api(action, data);
     }
+    function autosave() {
+      if (!autosaveBlocked && !retryWaiting && !saving && !uploads &&
+          (pendingSave || (model.title.trim() && JSON.stringify(model) !== baseline))) void saveQuiz();
+    }
+    setInterval(autosave, 15000);
     async function saveQuiz() {
       if (saving) return;
       if (uploads) { error(new Error('Vent til bildet er lastet opp.')); return; }
-      clearTimeout(retryTimer); clearError(); saving = true;
+      if (!pendingSave && saved.revision && JSON.stringify(model) === baseline) return;
+      clearTimeout(retryTimer); clearTimeout(autosaveTimer);
+      retryWaiting = false; autosaveBlocked = false; clearError(); saving = true;
       if (!saved.id) saved.id = randomId();
       pendingSave ??= {id:saved.id, revision:saved.revision, content:JSON.parse(JSON.stringify(model)),
         ...(saved.revision===0 && folder ? {folder} : {})};
       const snapshot = JSON.stringify(pendingSave.content);
-      changed();
+      persistDraft(); changed(false);
       try {
         const r = await editorRequest('save', pendingSave);
         if (r.id !== pendingSave.id || !Number.isInteger(r.revision) || r.revision < 1) throw Object.assign(new Error('Lagring er ikke bekreftet. Prøver igjen.'), {retryable:true});
@@ -391,20 +403,24 @@
         persistDraft();
         if (!storageFailed && oldKey !== draftKey) { try { localStorage.removeItem(oldKey); } catch (_) {} }
         history.replaceState(null,'','?edit='+r.id);
-        // Edits made while a save was in flight still need their own save.
-        if (JSON.stringify(model) !== baseline) retryTimer = setTimeout(saveQuiz, 1500);
       } catch (e) {
         const retryable = e.retryable || ['TypeError','TimeoutError','AbortError'].includes(e.name);
         if ([401,403].includes(e.status)) loginLink.hidden = false;
         if (retryable) {
           error(new Error(e.message + ' Lagring prøves igjen automatisk.'));
-          retryTimer = setTimeout(saveQuiz, retryDelay); retryDelay = Math.min(retryDelay * 2, 60000);
-        } else { pendingSave = null; error(e); }
-      } finally { saving = false; changed(); }
+          retryWaiting = true;
+          retryTimer = setTimeout(() => { retryWaiting = false; void saveQuiz(); }, retryDelay); retryDelay = Math.min(retryDelay * 2, 60000);
+        } else { pendingSave = null; autosaveBlocked = true; error(e); }
+      } finally {
+        saving = false; persistDraft(); changed(false);
+        if (dirty && !autosaveBlocked && !retryWaiting) {
+          clearTimeout(autosaveTimer); autosaveTimer = setTimeout(autosave, 1500);
+        }
+      }
     }
     const save = button('Lagre quiz', saveQuiz);
     setInterval(() => { if (document.visibilityState === 'visible') void refreshSession().catch(() => {}); }, 300000);
-    const resumeSave = () => { if (pendingSave) void saveQuiz(); };
+    const resumeSave = () => { if (pendingSave) void saveQuiz(); else autosave(); };
     window.addEventListener('online', resumeSave);
     window.addEventListener('focus', resumeSave);
     const start = button('Start spill', async () => {
@@ -499,7 +515,7 @@
           button('Gjenopprett utkast', () => {
             if ((dirty || saving) && !confirm('Erstatte endringene i denne fanen med utkastet?')) return;
             if (saving) return;
-            clearTimeout(retryTimer); draftKey = key; model = draft.model; baseline = draft.baseline;
+            clearTimeout(retryTimer); retryWaiting = false; draftKey = key; model = draft.model; baseline = draft.baseline;
             saved = {...saved, id:draft.id, revision:draft.revision}; pendingSave = draft.pendingSave; folder = draft.folder;
             titleField.querySelector('input').value = model.title; privacy.checked = model.private; scoringSelect.value = model.scoring;
             renderQuestions(); changed(); recovery.remove();

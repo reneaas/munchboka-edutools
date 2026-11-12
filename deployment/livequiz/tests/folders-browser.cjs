@@ -20,7 +20,7 @@ const assert=require('node:assert/strict');
  await page.goto(base+'/?teacher=1&folder='+subId);await page.getByRole('heading',{name:prefix+' quiz',exact:true}).waitFor();await page.reload();await page.getByRole('heading',{name:prefix+' quiz',exact:true}).waitFor();
  await page.getByRole('link',{name:'＋ Lag en quiz'}).click();await page.getByLabel('Quizens tittel').fill(prefix+' new');await page.getByLabel('Spørsmål',{exact:true}).fill('Velg A');
  for(const [i,value] of ['A','B','C','D'].entries())await page.getByLabel('Alternativ '+(i+1),{exact:true}).fill(value);
- await page.getByLabel('Riktig 1',{exact:true}).check();await page.getByRole('button',{name:'Lagre quiz',exact:true}).click();await page.getByText('Lagret · versjon 1',{exact:true}).waitFor();await page.getByRole('link',{name:'Mine quizer',exact:true}).click();
+ await page.getByLabel('Riktig 1',{exact:true}).check();await page.getByRole('button',{name:'Lagre quiz',exact:true}).click();await page.getByText('Lagret på nett',{exact:true}).waitFor();await page.getByRole('link',{name:'Mine quizer',exact:true}).click();
  assert.equal(new URL(page.url()).searchParams.get('folder'),subId);await page.getByRole('heading',{name:prefix+' new',exact:true}).waitFor();
  await page.getByRole('button',{name:'Gi mappen nytt navn'}).click();await page.getByLabel('Mappenavn').fill('Likninger');await page.getByRole('dialog').getByRole('button',{name:'Lagre',exact:true}).click();await page.getByRole('heading',{name:'Likninger',exact:true}).waitFor();
  await page.screenshot({path:'/tmp/livequiz-folders-desktop.png'});

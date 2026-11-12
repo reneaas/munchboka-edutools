@@ -38,7 +38,9 @@ incomplete questions and work not yet saved to the server. Confirmed saves
 clear the corresponding backup. Drafts retain references to uploaded images;
 unfinished file uploads must be selected again. Storage failures are shown.
 
-The existing **Lagre quiz** workflow remains. A requested save retries network
+Edits save automatically after 1.5 seconds without changes, and every 15 seconds
+while typing continuously. A title is required; incomplete questions are saved.
+**Lagre quiz** is also available for immediate saving. A requested save retries network
 failures, timeouts, expired sessions and temporary server errors with 2–60 second
 backoff. Retries send the original snapshot; edits made during saving are saved
 in a subsequent request. Stable client-generated IDs and exact-content revision
@@ -46,13 +48,19 @@ checks prevent duplicate creations or revision increments after a lost response.
 Validation errors and real revision conflicts retain the draft without overwriting
 newer server content. New quizzes retain their destination folder through recovery.
 
+Each save overwrites the current quiz in its existing database row. No earlier
+quiz versions are stored. The internal revision counter prevents conflicting
+edits and duplicate retries; it is not displayed as a saved version. Already
+started games keep their own gameplay snapshot.
+
 Editor saves, uploads and game creation refresh the session/CSRF token first.
 A five-minute visible-editor heartbeat keeps the PHP session active; the existing
 eight-hour authentication limit and credential revocation still apply. Login can
 be renewed in another tab, then saving resumes in the original editor. Both the
 client and mutation endpoint check that the account still matches.
 
-Validation: `php tests/core.php` and `node tests/editor-recovery-browser.cjs`
+Validation: `php tests/autosave.php`, `node tests/autosave-browser.cjs`, and
+`node tests/editor-recovery-browser.cjs`
 against the disposable `tests/prepare-local.py` fixture. The browser check covers
 committed saves with lost responses, stalled requests, token rotation, expired
 login, edits during saving, local recovery after reload, account mismatch and
@@ -324,7 +332,7 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
 
 - Separate quiz email-code sign-in using the existing Osloskolen account records.
   Open `/?login=1`; students can join a session without accounts.
-- Quiz library, creation, editing, explicit online saves and revision conflict
+- Quiz library, creation, editing, automatic online saves and revision conflict
   checks. One to fifty questions, two to six choices, 5–600 second answer windows.
 - One correct choice, multiple correct choices (exact set), sorting alternatives (exact order), or typed accepted
   answers (lowercase, all whitespace removed, and comma/dot decimal separators

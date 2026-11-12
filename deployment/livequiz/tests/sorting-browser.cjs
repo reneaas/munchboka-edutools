@@ -16,7 +16,7 @@ const assert=require('node:assert/strict');
  await host.getByRole('button',{name:'Flytt alternativ 1 ned',exact:true}).click();
  assert.deepEqual(await host.locator('.sorting-editor-row input').evaluateAll(es=>es.map(e=>e.value)),['To','En','Tre']);
  await host.getByRole('button',{name:'Flytt alternativ 2 opp',exact:true}).click();
- await host.getByRole('button',{name:'Lagre quiz',exact:true}).click();await host.getByText('Lagret · versjon 2',{exact:true}).waitFor();
+ await host.getByRole('button',{name:'Lagre quiz',exact:true}).click();await host.getByText('Lagret på nett',{exact:true}).waitFor();
  await host.reload();await host.locator('.sorting-editor-row input').first().waitFor();assert.deepEqual(await host.locator('.sorting-editor-row input').evaluateAll(es=>es.map(e=>e.value)),['En','To','Tre']);
  await host.getByRole('button',{name:'Forhåndsvis hele quizen',exact:true}).click();await host.getByLabel('Vis fasit',{exact:true}).check();assert.deepEqual(await host.locator('.sorting-options .rich').allTextContents(),['En','To','Tre']);await host.getByRole('button',{name:'Lukk forhåndsvisning',exact:true}).click();
  await host.getByRole('button',{name:'Start spill',exact:true}).click();await host.locator('.pin').waitFor();const pin=await host.locator('.pin').textContent();

@@ -138,6 +138,7 @@ function lq_save(PDO $db, int $uid, array $input): array {
                 return ['id'=>$id, 'revision'=>(int)$r['revision']];
             }
             if ((int)$r['revision'] !== ($input['revision'] ?? null)) throw new DomainException('Quizen er endret i en annen fane. Utkastet beholdes; kopier arbeidet ditt før du åpner den nyeste versjonen.');
+            // Replace the sole saved content; revision is only a concurrency counter.
             lq_query($db, 'UPDATE lq_quizzes SET title = ?, content = ?, revision = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$content['title'], $json, $rev, $id]);
         }
         return ['id' => $id, 'revision' => $rev];

@@ -32,7 +32,7 @@ const assert=require('node:assert/strict');
  assert.equal(await cards.nth(0).locator('.question-editor-summary').innerText(),'Second');
  assert.deepEqual(await Promise.all([0,1,2].map(i=>cards.nth(i).getByLabel('Spørsmål',{exact:true}).inputValue())),['Second','Third','Edited first']);
  await cards.nth(1).getByLabel('Flytt til plass',{exact:true}).selectOption({value:'0'});await cards.nth(1).getByRole('button',{name:'Flytt spørsmål',exact:true}).click();
- await page.getByRole('button',{name:'Lagre quiz',exact:true}).click();await page.getByText('Lagret · versjon 2',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Lagre quiz',exact:true}).click();await page.getByText('Lagret på nett',{exact:true}).waitFor();
  await page.reload();await cards.nth(2).waitFor();
  const saved=await page.evaluate(async id=>(await(await fetch('index.php?api=quiz&id='+id)).json()).content.questions,seeded.id);
  seeded.questions[0].prompt='Edited first';assert.deepEqual(saved,[seeded.questions[2],seeded.questions[1],seeded.questions[0]]);

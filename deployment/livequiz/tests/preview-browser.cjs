@@ -25,11 +25,11 @@ const assert=require('node:assert/strict');
  await modal.getByRole('button',{name:'Neste',exact:true}).click();await modal.locator('iframe').waitFor({state:'attached'});assert.equal(await modal.locator('.option-card.correct').count(),2);
  await modal.getByRole('button',{name:'Neste',exact:true}).click();await modal.getByText('Godkjente svar: four · 4').waitFor();assert.equal(await modal.locator('iframe').count(),0);assert.equal(await modal.getByRole('button',{name:'Neste',exact:true}).isDisabled(),true);
  await modal.getByLabel('Gå til spørsmål').selectOption('0');await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();await modal.getByRole('button',{name:'Lukk forhåndsvisning',exact:true}).click();
- assert.equal(await page.getByLabel('Spørsmål',{exact:true}).first().inputValue(),'Unsaved $2+2$');await page.getByText('Ulagrede endringer',{exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Spørsmål',{exact:true}).first().inputValue(),'Unsaved $2+2$');await page.getByText('Lagret på nett',{exact:true}).waitFor();
  await page.getByRole('button',{name:'Forhåndsvis hele quizen',exact:true}).click();await page.keyboard.press('Escape');await modal.waitFor({state:'detached'});assert.equal(await modal.count(),0);
- // Restore the draft before leaving, then preview the saved quiz from the library.
- await page.getByLabel('Spørsmål',{exact:true}).first().fill('First $2+2$');await page.goto(base+'/?teacher=1');const card=page.locator('article').filter({has:page.locator('a[href="?edit='+quiz.id+'"]')});await card.getByRole('button',{name:'Forhåndsvis',exact:true}).click();await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();assert.match(await modal.locator('.modal-header').innerText(),/First/);
- const saved=await page.evaluate(async id=>(await(await fetch('index.php?api=quiz&id='+id)).json()),quiz.id);assert.equal(saved.revision,1);assert.equal(saved.content.questions[0].prompt,'First $2+2$');assert.deepEqual(gameplay,[]);assert.deepEqual(errors,[]);
+ // Autosave the restored text before previewing it from the library.
+ await page.getByLabel('Spørsmål',{exact:true}).first().fill('First $2+2$');await page.getByText('Lagret på nett',{exact:true}).waitFor();await page.goto(base+'/?teacher=1');const card=page.locator('article').filter({has:page.locator('a[href="?edit='+quiz.id+'"]')});await card.getByRole('button',{name:'Forhåndsvis',exact:true}).click();await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();assert.match(await modal.locator('.modal-header').innerText(),/First/);
+ const saved=await page.evaluate(async id=>(await(await fetch('index.php?api=quiz&id='+id)).json()),quiz.id);assert.ok(saved.revision>=2);assert.equal(saved.content.questions[0].prompt,'First $2+2$');assert.deepEqual(gameplay,[]);assert.deepEqual(errors,[]);
  // Public previews work in a fresh anonymous session, including protected image storage.
  const guestContext=await browser.newContext();await require('./youtube-stub.cjs')(guestContext);
  const guest=await guestContext.newPage();guest.on('pageerror',e=>errors.push(e.message));

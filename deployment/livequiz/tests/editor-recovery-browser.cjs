@@ -14,7 +14,7 @@ const assert = require('node:assert/strict');
     await page.getByLabel('Svartype').selectOption('text');
     await page.getByLabel('Godkjente svar – ett per linje').fill('Answer');
     const save = () => page.getByRole('button', {name:'Lagre quiz',exact:true}).click();
-    const saved = revision => page.getByText('Lagret · versjon ' + revision,{exact:true}).waitFor();
+    const saved = revision => page.getByText('Lagret på nett',{exact:true}).waitFor();
     // Commit the creation but lose its response: retry must return the same ID.
     let lost = false, attempts = [];
     await page.route('**/index.php?api=save', async route => {

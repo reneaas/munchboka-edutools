@@ -6,7 +6,14 @@ window.quizMusic = function ({lobby = false} = {}) {
   audio.preload = 'none';
   audio.volume = 0;
   let enabled = !lobby, active = false, pending = false, blocked = false, volume = .25;
-  let currentQuestion = null, currentTrack = null;
+  let currentQuestion = null, currentTrack = null, shared = null, serverNow = 0, clockAt = 0;
+  function syncPosition() {
+    if (!shared || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    const elapsed = Math.max(0, serverNow + (performance.now()-clockAt)/1000 - shared.started_at);
+    const position = elapsed % audio.duration;
+    if (Math.abs(audio.currentTime-position)>1) { try { audio.currentTime=position; } catch (_) {} }
+  }
+  audio.addEventListener('loadedmetadata',syncPosition);
   const controls = document.createElement('div');
   controls.className = 'music-controls'+(lobby?' lobby-music-controls':'');
   const toggle = document.createElement('button');
@@ -33,13 +40,14 @@ window.quizMusic = function ({lobby = false} = {}) {
     audio.currentTime = 0;
   }
   audio.onended = () => {
-    if (!lobby || !wanted()) return;
+    if (shared || !lobby || !wanted()) return;
     nextLobbyTrack();
     play();
   };
   function play(prime = false) {
     if (!tracks.length || pending || blocked || !enabled || (!prime && !active)) return;
-    if (lobby && currentTrack === null) nextLobbyTrack();
+    if (lobby && currentTrack === null && !shared) nextLobbyTrack();
+    syncPosition();
     pending = true;
     // Called directly from Start/Next to unlock this element during a user gesture.
     audio.play().then(() => {
@@ -67,8 +75,18 @@ window.quizMusic = function ({lobby = false} = {}) {
   return {
     controls,
     unlock() { blocked = false; describe(); play(true); },
-    update(shouldPlay, question = 0) {
-      if (!lobby && tracks.length && shouldPlay && question !== currentQuestion) {
+    update(shouldPlay, question = 0, selection = null, now = Date.now()/1000) {
+      shared=selection;serverNow=now;clockAt=performance.now();
+      audio.loop=!!shared||!lobby;
+      if(shared){
+        const valid=shared.phase===(lobby?'lobby':'question')&&tracks.includes(shared.track);
+        shouldPlay=shouldPlay&&valid;
+        if(valid&&currentQuestion!==shared.key){
+          stop();currentQuestion=shared.key;currentTrack=shared.track;audio.src=shared.track;
+        }
+        if(shouldPlay)syncPosition();
+      }
+      if (!shared && !lobby && tracks.length && shouldPlay && question !== currentQuestion) {
         stop();
         currentQuestion = question;
         audio.src = tracks[Math.floor(Math.random() * tracks.length)];

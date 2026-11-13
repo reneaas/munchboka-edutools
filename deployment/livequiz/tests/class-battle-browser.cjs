@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
  const errors=[];
- async function page(){const context=await browser.newContext({viewport:{width:1280,height:900}});await require('./youtube-stub.cjs')(context);const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));return p;}
+ async function page(){const context=await browser.newContext({viewport:{width:1280,height:900}});await require('./youtube-stub.cjs')(context);await context.addInitScript(()=>{const Native=window.Audio;window.__audios=[];window.Audio=function(...args){const audio=new Native(...args);window.__audios.push(audio);return audio;};});const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));return p;}
  const base=process.env.LIVEQUIZ_BASE||'http://127.0.0.1:8765';
  const state=p=>p.evaluate(async()=>{const params=new URLSearchParams(location.search),room=params.get('host')||params.get('cohost')||params.get('room'),headers={};if(params.has('cohost'))headers['X-Cohost-Token']=sessionStorage.getItem('lq-cohost-'+room);if(params.has('room'))headers['X-Player-Token']=sessionStorage.getItem('lq-room-'+room);return(await fetch('index.php?api=state&room='+room+(!params.has('room')?'&host=1':''),{headers})).json();});
  const wait=(p,s)=>p.locator('#app[data-state="'+s+'"]').waitFor({state:'attached'});
@@ -19,17 +19,39 @@ const assert=require('node:assert/strict');
   await main.goto(base+'/?host='+room.room);await main.getByLabel('Spilltype').selectOption('classbattle');
   await main.getByRole('button',{name:'Inviter medvert',exact:true}).waitFor();
   const codeA=await main.locator('.lobby-code-summary .pin').innerText();
-  async function invite(name){
-   const before=await main.getByLabel('Invitasjonslenke til medvert').count()?await main.getByLabel('Invitasjonslenke til medvert').inputValue():'';
+  const urls=[];
+  for(let i=0;i<3;i++){
    await main.getByRole('button',{name:'Inviter medvert',exact:true}).click();
-   await main.waitForFunction(previous=>{const i=[...document.querySelectorAll('input[readonly]')].find(i=>i.value.includes('class-invite'));return i&&i.value!==previous;},before);
-   const url=await main.getByLabel('Invitasjonslenke til medvert').inputValue();
+   await main.locator('.battle-invitation').nth(i).waitFor();
+   urls.push(await main.locator('.battle-invitation input').nth(i).inputValue());
+  }
+  assert.equal(new Set(urls).size,3);
+  assert.equal(await main.getByRole('button',{name:'Kopier invitasjonslenke',exact:true}).count(),3);
+  await main.context().grantPermissions(['clipboard-read','clipboard-write']);
+  for(let i=0;i<3;i++){
+   await main.getByRole('button',{name:'Kopier invitasjonslenke',exact:true}).nth(i).click();
+   assert.equal(await main.evaluate(()=>navigator.clipboard.readText()),urls[i]);
+  }
+  await main.screenshot({path:'/private/tmp/class-battle-invitations.png',fullPage:true});
+  await main.reload();await wait(main,'LOBBY');
+  assert.deepEqual(await main.locator('.battle-invitation input').evaluateAll(inputs=>inputs.map(i=>i.value)),urls);
+  let invitationIndex=0;
+  async function invite(name){
+   const url=urls[invitationIndex++];
    const p=await page();await p.goto(url);await p.getByLabel('Klassenavn').fill(name);await p.getByRole('button',{name:'Bli med som medvert',exact:true}).click();await wait(p,'LOBBY');
    assert.equal(await p.getByRole('button',{name:'Start første spørsmål',exact:true}).count(),0);
    assert.equal(await p.getByRole('button',{name:'Avslutt spillet',exact:true}).count(),0);
    return {page:p,url,code:await p.locator('.lobby-code-summary .pin').innerText()};
   }
-  const b=await invite('Class B'),c=await invite('Class C');
+  const b=await invite('Class B'),c=await invite('Class C'),d=await invite('Empty class');
+  await main.getByText('Godtatt · Class B',{exact:true}).waitFor();
+  await b.page.getByRole('button',{name:'Klar',exact:true}).click();
+  await main.getByText('1 av 3 medverter klare',{exact:true}).waitFor();
+  await b.page.reload();await wait(b.page,'LOBBY');
+  await b.page.getByRole('button',{name:'Klar ✓ — angre',exact:true}).click();
+  await main.getByText('0 av 3 medverter klare',{exact:true}).waitFor();
+  const lobbyStates=await Promise.all([main,b.page,c.page,d.page].map(state));
+  for(const s of lobbyStates)assert.deepEqual(s.battle.music,lobbyStates[0].battle.music);
   assert.equal(new Set([codeA,b.code,c.code]).size,3);
   // Opening an already claimed invitation resumes its class, even in a fresh tab.
   await b.page.goto(b.url);await wait(b.page,'LOBBY');
@@ -51,10 +73,15 @@ const assert=require('node:assert/strict');
   await c.page.setViewportSize({width:1280,height:900});
   await main.getByRole('button',{name:'Start første spørsmål',exact:true}).click();
   await Promise.all([main,b.page,c.page,...students.map(s=>s.page)].map(p=>wait(p,'QUESTION_ACTIVE')));
-  const initial=await Promise.all([main,b.page,c.page].map(state));assert.equal(new Set(initial.map(s=>s.deadline)).size,1);assert.equal(new Set(initial.map(s=>s.index)).size,1);
+  const initial=await Promise.all([main,b.page,c.page].map(state));
+  for(const s of initial)assert.deepEqual(s.battle.music,initial[0].battle.music);
+  const sources=await Promise.all([main,b.page,c.page].map(p=>p.evaluate(()=>window.__audios[0].src)));
+  assert.equal(new Set(sources).size,1);assert(sources[0].includes(initial[0].battle.music.track));assert.equal(new Set(initial.map(s=>s.deadline)).size,1);assert.equal(new Set(initial.map(s=>s.index)).size,1);
   await b.page.screenshot({path:'/private/tmp/class-battle-question.png',fullPage:true});
   // Student and co-host reconnect to the same phase and roster.
   await students[0].page.reload();await wait(students[0].page,'QUESTION_ACTIVE');await c.page.reload();await wait(c.page,'QUESTION_ACTIVE');
+  assert.deepEqual((await state(c.page)).battle.music,initial[0].battle.music);
+  assert.equal(await c.page.getByRole('button',{name:'Klar',exact:true}).count(),0);
   const late=await page();await late.goto(base+'/?pin='+b.code);await late.getByLabel('Kallenavn').fill('Too late');await late.getByRole('button',{name:'Bli med',exact:true}).click();await late.getByText('Klasselistene er låst.',{exact:false}).waitFor();
   for(let question=0;question<2;question++){
    await Promise.all(students.map(async student=>{
@@ -73,8 +100,18 @@ const assert=require('node:assert/strict');
   await b.page.getByText('Class B · individuelle resultater',{exact:true}).click();
   await b.page.waitForResponse(r=>r.url().includes('api=state'));
   assert.equal(await b.page.locator('details[data-class-name="Class B"]').getAttribute('open'),'');
-  assert.equal((await state(main)).battle.results.length,3);
+  assert.equal((await state(main)).battle.results.length,4);
+  const mvps=(await state(main)).battle.mvps;
+  assert.equal(mvps.length,3);assert.equal(mvps[0].score,2000);
+  for(const p of [main,b.page,c.page,d.page]){
+   await wait(p,'QUIZ_FINISHED');await p.getByRole('heading',{name:'MVPs',exact:true}).waitFor();
+   assert.deepEqual((await state(p)).battle.mvps,mvps);
+   assert.equal(await p.locator('.mvp-card').count(),3);
+  }
   await b.page.screenshot({path:'/private/tmp/class-battle-final.png',fullPage:true});
-  assert.deepEqual(errors,[]);console.log('Class Battle browser passed: three teachers, classes of 3/2/1 students, distinct entry codes, shared deadlines, individual answers, averages, permission rejection, roster locks, reconnects and final winner.');
+  await b.page.setViewportSize({width:390,height:844});
+  assert.equal(await b.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await b.page.screenshot({path:'/private/tmp/class-battle-mvps-mobile.png',fullPage:true});
+  assert.deepEqual(errors,[]);console.log('Class Battle browser passed: four teachers, three persistent invitations, readiness toggles, synchronized music after reload, identical global MVPs, classes of 3/2/1 students, distinct entry codes, shared deadlines, individual answers, averages, permission rejection, roster locks, reconnects and final winner.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

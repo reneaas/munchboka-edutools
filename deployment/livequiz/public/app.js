@@ -559,7 +559,7 @@
       joinCode.append(address,codeGroup);timer.before(joinCode);
     }
     const battleLive=el('details',undefined,'battle-live'),battleTitle=el('summary','Class Battle'),battleScores=el('div');battleLive.append(battleTitle,battleScores);battleLive.hidden=true;app.append(battleLive);
-    let latestInvite='',battleRendered='';
+    let battleRendered='';
     let state=null, rendered='', failures=0, online=false, offset=0, lastPoll=0, submit=null, ack=null, selection=null, submitting=false, hostClock=null, countdown=null;
     let polling=false, pollAgain=false, pollTimer=null, controlling=false, modeDirty=false, readModeSettings=null;
     let modeSaveTimer=null, modeSavePromise=null, modeRevision=0, removed=false, rosterRendered=null;
@@ -696,22 +696,36 @@
     }
     function classLobby(s) {
       const box=el('section',undefined,'class-battle-lobby');
-      box.append(el('h2','Class Battle · '+s.battle.class_name),el('p',cohost?'Venter på hovedverten. Vis denne koden til din klasse.':'Inviter andre klasser. Start når alle er klare.','intro'));
+      box.append(el('h2','Class Battle · '+s.battle.class_name),el('p',cohost?'Venter på hovedverten. Vis denne koden til din klasse.':'Inviter andre klasser. Du bestemmer når spillet starter.','intro'));
       const name=field('Klassenavn',s.battle.class_name,()=>{});name.querySelector('input').maxLength=80;
       box.append(group(name,button('Lagre klassenavn',()=>battleAction('rename',{name:name.querySelector('input').value}),'secondary')));
+      const peers=s.battle.classes.filter(c=>c.id!=='main');
+      box.append(el('p',peers.filter(c=>c.ready).length+' av '+peers.length+' medverter klare','battle-ready-summary'));
+      const readiness=el('ul',undefined,'battle-readiness');
+      for(const cls of s.battle.classes){
+        const row=el('li',cls.name+' · '+(cls.id==='main'?'Hovedvert':cls.ready?'Klar ✓':'Ikke klar'));
+        row.className=cls.ready?'is-ready':'';readiness.append(row);
+      }
+      box.append(readiness);
       if(canControl){
-        box.append(button('Inviter medvert',async()=>{
-          const result=await battleAction('invite');const url=new URL('./',location.href);url.searchParams.set('class-invite',id);url.hash='invite='+result.key;latestInvite=url.href;
-          renderInvitation();
-        }));
-        const invitation=el('div');box.append(invitation);
-        function renderInvitation(){
-          invitation.replaceChildren();if(!latestInvite)return;
-          const label=el('label','Invitasjonslenke til medvert'),input=el('input');input.value=latestInvite;input.readOnly=true;label.append(input);
-          invitation.append(label,button('Kopier invitasjonslenke',async()=>{try{await navigator.clipboard.writeText(latestInvite);}catch(_){input.focus();input.select();}},'secondary'),el('p','Del lenken bare med læreren. Elevene bruker spillkoden, ikke invitasjonen.','hint'));
+        box.append(button('Inviter medvert',()=>battleAction('invite')));
+        const invitations=el('div',undefined,'battle-invitations');
+        for(const invitation of s.battle.invitations||[]){
+          const url=new URL('./',location.href);url.searchParams.set('class-invite',id);url.hash='invite='+invitation.key;
+          const row=el('section',undefined,'battle-invitation');
+          row.append(el('h3','Invitasjon '+invitation.number),el('p',invitation.accepted?'Godtatt · '+invitation.class_name:'Venter på medvert'));
+          const label=el('label','Invitasjonslenke til medvert '+invitation.number),input=el('input');input.value=url.href;input.readOnly=true;label.append(input);
+          row.append(label,button('Kopier invitasjonslenke',async()=>{try{await navigator.clipboard.writeText(url.href);}catch(_){input.focus();input.select();}},'secondary'));
+          if(!invitation.accepted)row.append(button('Trekk tilbake',()=>battleAction('revoke',{key:invitation.key}),'quiet'));
+          invitations.append(row);
         }
-        renderInvitation();
-      }else box.append(button('Forlat Class Battle',async()=>{if(confirm('Fjerne klassen og elevene fra lobbyen?')){await battleAction('leave');sessionStorage.removeItem('lq-cohost-'+id);location.href='./';}},'quiet'));
+        box.append(invitations,el('p','Del lenkene bare med lærerne. Elevene bruker klassens spillkode. Du kan starte selv om medvertene ikke er klare.','hint'));
+      }else{
+        const ready=s.battle.classes.find(c=>c.id===s.battle.class_id)?.ready;
+        const toggle=button(ready?'Klar ✓ — angre':'Klar',()=>battleAction('ready',{ready:!ready}),ready?'secondary':'');
+        toggle.setAttribute('aria-pressed',String(!!ready));box.append(toggle);
+        box.append(button('Forlat Class Battle',async()=>{if(confirm('Fjerne klassen og elevene fra lobbyen?')){await battleAction('leave');sessionStorage.removeItem('lq-cohost-'+id);location.href='./';}},'quiet'));
+      }
       return box;
     }
     function updateBattle(s) {
@@ -740,8 +754,8 @@
     function updateClock(){
       if(!state)return;
       const now=Date.now()/1000+offset,racing=state.state==='RACE_ACTIVE',left=racing?Infinity:Math.max(0,state.deadline-now),active=['QUESTION_ACTIVE','LIGHTNING_ACTIVE','RACE_ACTIVE'].includes(state.state);
-      lobbyMusic?.update(state.state==='LOBBY'&&online&&Date.now()-lastPoll<=5000);
-      music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube,`${state.run}:`+(racing?'race':state.state==='LIGHTNING_ACTIVE'?'lightning':state.index));
+      lobbyMusic?.update(state.state==='LOBBY'&&online&&Date.now()-lastPoll<=5000,0,state.battle?.music,now);
+      music?.update(active&&left>0&&online&&Date.now()-lastPoll<=5000&&!state.question?.youtube,`${state.run}:`+(racing?'race':state.state==='LIGHTNING_ACTIVE'?'lightning':state.index),state.battle?.music,now);
       const txt=racing?`${state.progress??0} / ${state.total} riktige`:active?(left>0?Math.ceil(left)+' sekunder':'Tiden er ute'):'';
       if(hostClock)hostClock.textContent=txt;
       if(countdown){const remaining=Math.max(0,Math.ceil(state.countdown_end-now));const text=remaining?String(Math.min(3,remaining)):'Venter …';if(countdown.textContent!==text)countdown.textContent=text;}
@@ -1058,6 +1072,15 @@
         }
         if(!s.lobby_players.length)grid.append(el('p','Venter på første deltaker …','hint'));
         results.append(grid);
+      }
+      if(s.state==='QUIZ_FINISHED'&&host&&s.battle){
+        const section=el('section',undefined,'battle-mvps');section.append(el('h2','MVPs'));
+        const podium=el('ol',undefined,'mvp-podium');
+        for(const mvp of s.battle.mvps||[]){
+          const card=el('li',undefined,'mvp-card mvp-rank-'+mvp.rank);
+          card.append(el('h3',['🥇','🥈','🥉'][mvp.rank-1]+' MVP #'+mvp.rank),el('strong',mvp.name),el('p',mvp.class_name),el('p',mvp.score+' poeng'));podium.append(card);
+        }
+        section.append(podium);results.append(section);
       }
       if(s.state==='QUIZ_FINISHED'&&!s.battle)results.append(el('h2','Resultater'),['race','quizlet'].includes(s.game)?raceBoard(s):leaderboardList(s.leaderboard||[]));
     }

@@ -1,0 +1,76 @@
+{
+  "students": 90,
+  "classes": 3,
+  "questions": 2,
+  "worker_count": 9,
+  "statuses": {
+    "200": 1444,
+    "403": 2,
+    "422": 1
+  },
+  "checks": [
+    "Concurrent invitation redemption creates one class",
+    "Simultaneous joins preserve all students; co-host scope and control permissions",
+    "Shared deadlines and standings across three classrooms",
+    "Concurrent answers and polling; triple submissions score once",
+    "Lost-response retry with conflicting answer preserves original score",
+    "Late joins rejected; disconnected clients resume current state",
+    "Exact class totals and averages across two questions"
+  ],
+  "metrics": {
+    "bootstrap": {
+      "requests": 94,
+      "p50_ms": 27,
+      "p95_ms": 39,
+      "max_ms": 47
+    },
+    "save": {
+      "requests": 1,
+      "p50_ms": 6,
+      "p95_ms": 6,
+      "max_ms": 6
+    },
+    "create": {
+      "requests": 1,
+      "p50_ms": 4,
+      "p95_ms": 4,
+      "max_ms": 4
+    },
+    "state": {
+      "requests": 514,
+      "p50_ms": 67,
+      "p95_ms": 162,
+      "max_ms": 275
+    },
+    "control": {
+      "requests": 8,
+      "p50_ms": 6,
+      "p95_ms": 10,
+      "max_ms": 10
+    },
+    "battle-manage": {
+      "requests": 2,
+      "p50_ms": 4,
+      "p95_ms": 4,
+      "max_ms": 4
+    },
+    "battle-join": {
+      "requests": 16,
+      "p50_ms": 14,
+      "p95_ms": 20,
+      "max_ms": 20
+    },
+    "join": {
+      "requests": 91,
+      "p50_ms": 58,
+      "p95_ms": 268,
+      "max_ms": 273
+    },
+    "answer": {
+      "requests": 720,
+      "p50_ms": 55,
+      "p95_ms": 94,
+      "max_ms": 167
+    }
+  }
+}

@@ -20,6 +20,7 @@ $uid = (int)($_SESSION['uid'] ?? 0); $csrf = $_SESSION['csrf'];
 function lq_response(array $data, int $status = 200): never {
     http_response_code($status); header('Content-Type: application/json; charset=utf-8'); echo json_encode($data, JSON_THROW_ON_ERROR); exit;
 }
+define('LQ_MUSIC_PUBLIC_DIR', __DIR__);
 $action = $_GET['api'] ?? null;
 if ($action !== null) {
     try {

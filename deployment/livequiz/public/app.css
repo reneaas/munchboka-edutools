@@ -382,3 +382,15 @@ nav{align-items:center;flex-wrap:wrap}
 .question-modal-footer .battle-live { width: 100%; margin: 0; max-height: 25vh; overflow: auto; }
 .class-battle-lobby input[readonly] { width: 100%; }
 .class-battle-lobby h2 { margin-top: .5rem; }
+
+.battle-invitations{display:grid;gap:1rem;margin-block:1rem}
+.battle-invitation{padding:1rem;border:1px solid var(--line);border-radius:12px;min-width:0}
+.battle-invitation input{width:100%;min-width:0}
+.battle-invitation button{margin-top:.6rem;margin-right:.5rem}
+.battle-readiness{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.battle-readiness li{padding:.5rem .8rem;border-radius:8px;background:#f1f5f9;color:#334155}
+.battle-readiness .is-ready{background:#dcfce7;color:#166534}
+.mvp-podium{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;align-items:end}
+.mvp-card{padding:1.2rem;text-align:center;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);overflow-wrap:anywhere}
+.mvp-rank-1{border-color:#d6a52a;background:#fffbeb;color:#1e293b;padding-block:2rem}
+@media(max-width:600px){.mvp-podium{grid-template-columns:1fr}}

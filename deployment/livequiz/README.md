@@ -15,9 +15,32 @@ their class name and receive a distinct eight-digit student code; the ordinary
 student join form accepts both lengths. Reopening an invitation resumes the same
 class rather than creating another. Invitations are for teachers, not students.
 
+New invitations remain in a numbered list after refresh, with individual copy
+buttons, accepted class names, and revocation for unused links. Only the main
+host receives the recoverable links; co-host and student payloads omit them.
+Invitations created before this update remain valid but cannot be reconstructed
+from their stored hashes.
+
+Co-hosts can toggle **Klar** in the lobby. Shared readiness survives reconnects,
+is informational only, and resets on replay or quiz change. The main host can
+start with zero co-hosts ready (the existing two-class/one-student requirement
+still applies).
+
+Class Battle selects music once on the server for each lobby/run and question,
+using the existing music folders. The selected track and authoritative start
+time are shared by all hosts. The existing audio player seeks approximately to
+that timeline, including after reconnect or autoplay unlock. The shared lobby
+track loops; other modes retain their random lobby playlist. Volume and mute
+remain local, and autoplay failures never block gameplay.
+
+Final host screens show **MVPs** below the class standings: the globally highest
+three individual totals, with class names. Equal scores are ordered by immutable
+player ID so every classroom sees the same podium. Fewer players produce fewer
+cards. The winning class remains the primary result.
+
 All classes use one `lq_rooms` record, the same deadlines and question sequence,
 and the existing individual answer/score records. Class metadata, invitation
-hashes and server-owned participant-to-class assignments live in `_battle` in
+hashes, main-host-only recoverable invitation links, and server-owned participant-to-class assignments live in `_battle` in
 that room's JSON. `lq_class_codes` resolves additional codes to the shared room
 and class. Its eight-digit namespace cannot collide with normal six-digit rooms.
 The additive table is in `schema.sql` and is also prepared before first use;

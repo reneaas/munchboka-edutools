@@ -10,6 +10,10 @@ battleControl($db,$rid,'configure',['game'=>'classbattle','mode'=>'individual','
 rejects(fn()=>battleControl($db,$rid,'next'),'cannot start with only one class');
 $manage=fn($command,$extra=[])=>lq_battle_manage($db,1,['room'=>$rid,'command'=>$command]+$extra,'','');
 $inviteB=$manage('invite')['key'];$inviteC=$manage('invite')['key'];$inviteEmpty=$manage('invite')['key'];
+$invitations=lq_state($db,$rid,1,'',true)['battle']['invitations'];
+check(count($invitations)===3&&count(array_unique(array_column($invitations,'key')))===3,'three persistent independent invitations');
+$revoked=$manage('invite')['key'];$manage('revoke',['key'=>$revoked]);
+rejects(fn()=>lq_battle_join_host($db,['room'=>$rid,'key'=>$revoked,'name'=>'Revoked']),'unused invitation revocation');
 $b=lq_battle_join_host($db,['room'=>$rid,'key'=>$inviteB,'name'=>'Class B']);
 $c=lq_battle_join_host($db,['room'=>$rid,'key'=>$inviteC,'name'=>'Class C']);
 $empty=lq_battle_join_host($db,['room'=>$rid,'key'=>$inviteEmpty,'name'=>'Empty']);
@@ -22,6 +26,15 @@ rejects(fn()=>lq_battle_join_host($db,['room'=>$rid,'key'=>str_repeat('0',64),'n
 rejects(fn()=>lq_join($db,$inviteB,'Host link as code',bin2hex(random_bytes(32))),'invitation is not a student code');
 rejects(fn()=>lq_state($db,$rid,0,'',true,$inviteB),'co-host key cannot authorize main-host control');
 rejects(fn()=>lq_battle_manage($db,0,['room'=>$rid,'command'=>'invite'],'',$inviteB),'co-host cannot invite more hosts');
+rejects(fn()=>$manage('revoke',['key'=>$inviteB]),'accepted invitation cannot be revoked');
+$ready=fn($value)=>lq_battle_manage($db,0,['room'=>$rid,'command'=>'ready','ready'=>$value],'',$inviteB);
+$ready(true);check(array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],'ready','id')[$b['class']],'main host sees cohost ready');
+check(array_column(lq_battle_state($db,$rid,$inviteB)['battle']['classes'],'ready','id')[$b['class']],'readiness survives new state request');
+$ready(false);check(!array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],'ready','id')[$b['class']],'ready can be undone');
+rejects(fn()=>$manage('ready',['ready'=>true]),'main class has no ready action');
+$mainLobby=lq_state($db,$rid,1,'',true);
+check($mainLobby['battle']['music']===$bs['battle']['music'],'shared lobby music survives polling');
+check($mainLobby['battle']['invitations'][0]['class_name']==='Class B','accepted invitation identifies class');
 $tokens=[];$pids=[];
 foreach([[$room['pin'],3,'A'],[$bs['pin'],2,'B'],[$cs['pin'],1,'C']] as [$pin,$n,$class]){
  for($i=0;$i<$n;$i++){$token=bin2hex(random_bytes(32));lq_join($db,$pin,$class.$i,$token);$tokens[$class][]=$token;$pids[$class][]=lq_player($db,$rid,$token)['id'];}
@@ -40,8 +53,9 @@ $leavePin=lq_battle_state($db,$rid,$leaveKey)['pin'];$leaveToken=bin2hex(random_
 lq_battle_manage($db,0,['room'=>$rid,'command'=>'leave'],'',$leaveKey);
 rejects(fn()=>lq_join($db,$leavePin,'Invalid code',bin2hex(random_bytes(32))),'leaving removes class entry code');
 rejects(fn()=>lq_player($db,$rid,$leaveToken),'leaving removes class students from roster');
-$unused=$manage('invite')['key'];
+$unused=$manage('invite')['key'];$ready(true);
 battleControl($db,$rid,'next');
+rejects(fn()=>$ready(true),'ready controls locked after start');
 rejects(fn()=>lq_join($db,$bs['pin'],'Late student',bin2hex(random_bytes(32))),'late join rejected after roster lock');
 rejects(fn()=>lq_battle_join_host($db,['room'=>$rid,'key'=>$unused,'name'=>'Late class']),'class registration locked');
 rejects(fn()=>lq_battle_manage($db,0,['room'=>$rid,'command'=>'leave'],'',$inviteB),'cannot change denominator by leaving mid-game');
@@ -71,6 +85,10 @@ check(lq_state($db,$rid,1,'',true)['index']===1,'all classes advance to second q
 foreach($tokens as $list)foreach($list as $token)lq_answer($db,['room'=>$rid,'run'=>0,'index'=>1,'answer'=>[1]],$token);
 battleControl($db,$rid,'leaderboard');battleControl($db,$rid,'next');
 check(lq_battle_state($db,$rid,$inviteB)['state']==='QUIZ_FINISHED','shared final state');
+$mvpScores=lq_state($db,$rid,1,'',true)['battle']['mvps'];
+check(array_column($mvpScores,'score')===[2000,2000,2000],'MVPs use authoritative cumulative scores across classes');
+$expectedIds=array_merge(array_slice($pids['A'],0,2),$pids['B']);sort($expectedIds);
+check(array_column($mvpScores,'id')===array_slice($expectedIds,0,3),'tied MVP selection uses stable player IDs');
 // Exact tie and rounding-near-tie checks use real persisted cumulative scores.
 lq_query($db,'UPDATE lq_answers SET points=0 WHERE room_id=?',[$rid]);
 lq_query($db,'UPDATE lq_answers SET points=1 WHERE room_id=? AND player_id=? AND question_index=0',[$rid,$pids['A'][0]]);
@@ -79,8 +97,14 @@ $rows=lq_state($db,$rid,1,'',true)['battle']['classes'];$byName=array_column($ro
 check($byName['Class B']['rank']<$byName['Class A']['rank'],'ranking uses exact fractions even when rounded display might tie');
 lq_query($db,'UPDATE lq_answers SET points=0 WHERE room_id=?',[$rid]);
 $rows=lq_state($db,$rid,1,'',true)['battle']['classes'];check(count(array_filter($rows,fn($r)=>$r['rank']===1))===3,'all tied populated classes share rank');
+$finalMain=lq_state($db,$rid,1,'',true);
+$finalCo=lq_battle_state($db,$rid,$inviteB);
+check(count($finalMain['battle']['mvps'])===3,'global top three MVPs');
+check($finalMain['battle']['mvps']===$finalCo['battle']['mvps'],'all hosts see identical MVPs including deterministic ties');
+check(!isset(lq_state($db,$rid,0,$tokens['A'][0],false)['battle']['invitations']),'student cannot retrieve invitation keys');
 battleControl($db,$rid,'restart');
 check(!lq_state($db,$rid,1,'',true)['battle']['locked'],'replay reopens lobby and retains classes');
+check(!array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],'ready','id')[$b['class']],'replay clears readiness');
 battleControl($db,$rid,'switch-quiz',['quiz'=>$quiz['id']]);
 check(lq_battle_state($db,$rid,$inviteB)['pin']===$bs['pin']&&lq_state($db,$rid,1,'',true)['game']==='classbattle','switch quiz retains class battle and entry codes');
 rejects(fn()=>lq_battle_manage($db,0,['room'=>$rid,'command'=>'kick','player'=>$pids['B'][0],'run'=>0],'',$inviteB),'stale lobby action cannot affect a new run');
@@ -94,4 +118,13 @@ check(!str_contains($encoded,$inviteB)&&!str_contains($encoded,'host_hash')&&!st
 lq_query($db,'UPDATE lq_rooms SET expires_at=? WHERE id=?',[time()-1,$rid]);
 rejects(fn()=>lq_join($db,$cs['pin'],'Expired',bin2hex(random_bytes(32))),'expired class code rejected');
 rejects(fn()=>lq_battle_state($db,$rid,$inviteC),'expired co-host room rejected');
+// Fewer than three participants: show only actual players, including an empty game.
+$small=lq_create_room($db,1,$quiz['id']);battleControl($db,$small['room'],'configure',['game'=>'classbattle']);
+$smallKey=lq_battle_manage($db,1,['room'=>$small['room'],'command'=>'invite'],'','')['key'];
+lq_battle_join_host($db,['room'=>$small['room'],'key'=>$smallKey,'name'=>'Other']);
+lq_join($db,$small['pin'],'Only player',bin2hex(random_bytes(32)));
+battleControl($db,$small['room'],'finish');
+check(count(lq_state($db,$small['room'],1,'',true)['battle']['mvps'])===1,'single participant produces one MVP');
+lq_query($db,'DELETE FROM lq_players WHERE room_id=?',[$small['room']]);
+check(lq_state($db,$small['room'],1,'',true)['battle']['mvps']===[],'empty final has no fictional MVPs');
 echo "$checks checks including Class Battle passed\n";

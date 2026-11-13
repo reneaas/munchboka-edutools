@@ -327,7 +327,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
                 $next['play']=['mode'=>'teams','max_team_size'=>$play['max_team_size'],'teams'=>$teams,'keep_teams'=>true];
                 $next['_retained_teams']=$teams;
             }
-            if(isset($content['_battle'])){$next['_battle']=$content['_battle'];$next['_battle']['locked']=false;}
+            if(isset($content['_battle'])){$next['_battle']=$content['_battle'];$next['_battle']['locked']=false;foreach($next['_battle']['classes'] as &$class)$class['ready']=false;unset($class);}
             $next['game']=isset($next['_battle'])?'classbattle':'regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($next,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
@@ -335,7 +335,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         } elseif ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
             unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
-            if(isset($content['_battle']))$content['_battle']['locked']=false;
+            if(isset($content['_battle'])){$content['_battle']['locked']=false;foreach($content['_battle']['classes'] as &$class)$class['ready']=false;unset($class);}
             if($keepTeams){
                 $teams=$content['_retained_teams'] ?? $play['teams'];
                 if(!$teams)throw new DomainException('Det finnes ingen lag å beholde.');

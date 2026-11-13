@@ -715,7 +715,21 @@
           const row=el('section',undefined,'battle-invitation');
           row.append(el('h3','Invitasjon '+invitation.number),el('p',invitation.accepted?'Godtatt · '+invitation.class_name:'Venter på medvert'));
           const label=el('label','Invitasjonslenke til medvert '+invitation.number),input=el('input');input.value=url.href;input.readOnly=true;label.append(input);
-          row.append(label,button('Kopier invitasjonslenke',async()=>{try{await navigator.clipboard.writeText(url.href);}catch(_){input.focus();input.select();}},'secondary'));
+          const copyStatus=el('p','','hint');copyStatus.setAttribute('role','status');
+          let copyTimer;
+          const copyButton=button('Kopier invitasjonslenke',async()=>{
+            clearTimeout(copyTimer);copyStatus.textContent='';
+            try{
+              await navigator.clipboard.writeText(url.href);
+              copyButton.textContent='Kopiert ✓';
+              copyStatus.textContent='Invitasjonslenken er kopiert.';
+              copyTimer=setTimeout(()=>{copyButton.textContent='Kopier invitasjonslenke';copyStatus.textContent='';},2500);
+            }catch(_){
+              input.focus();input.select();copyButton.textContent='Kopier invitasjonslenke';
+              copyStatus.textContent='Kunne ikke kopiere automatisk. Lenken er markert – kopier den med Ctrl+C eller ⌘C.';
+            }
+          },'secondary');
+          row.append(label,copyButton,copyStatus);
           if(!invitation.accepted)row.append(button('Trekk tilbake',()=>battleAction('revoke',{key:invitation.key}),'quiet'));
           invitations.append(row);
         }

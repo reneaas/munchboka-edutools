@@ -29,7 +29,7 @@ const assert=require('node:assert/strict');
   assert.equal(await main.getByRole('button',{name:'Kopier invitasjonslenke',exact:true}).count(),3);
   await main.context().grantPermissions(['clipboard-read','clipboard-write']);
   for(let i=0;i<3;i++){
-   await main.getByRole('button',{name:'Kopier invitasjonslenke',exact:true}).nth(i).click();
+   await main.locator('.battle-invitation').nth(i).getByRole('button',{name:'Kopier invitasjonslenke',exact:true}).click();
    assert.equal(await main.evaluate(()=>navigator.clipboard.readText()),urls[i]);
   }
   await main.screenshot({path:'/private/tmp/class-battle-invitations.png',fullPage:true});

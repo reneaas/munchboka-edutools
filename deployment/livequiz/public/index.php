@@ -25,7 +25,7 @@ if ($action !== null) {
     try {
         if (!is_string($action)) throw new DomainException('Ugyldig forespørsel.');
         $post = $_SERVER['REQUEST_METHOD'] === 'POST';
-        $mutations = ['copy','save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','public-start','organize','lightning-answer','race-answer'];
+        $mutations = ['copy','save','create','join','control','answer','upload','send','verify','password-login','set-password','logout','delete','share','shared-start','public-start','organize','lightning-answer','race-answer','battle-manage','battle-join'];
         if (in_array($action, $mutations, true) !== $post) throw new DomainException('Ugyldig metode.');
         if ($post && !hash_equals($csrf, $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) lq_response(['error'=>'Siden er utløpt. Åpne en ny fane og logg inn igjen. Behold denne fanen med arbeidet ditt.'], 403);
         if (in_array($action, ['join','shared-start','public-start'], true)) {
@@ -59,7 +59,10 @@ if ($action !== null) {
         }
         $hostToken = $_SERVER['HTTP_X_HOST_TOKEN'] ?? '';
         if (strlen($hostToken) > 64) throw new DomainException('Ugyldig vertsnøkkel.');
+        $cohostToken=$_SERVER['HTTP_X_COHOST_TOKEN'] ?? '';
+        if(strlen($cohostToken)>64)throw new DomainException('Ugyldig medvert.');
         $token = $_SERVER['HTTP_X_PLAYER_TOKEN'] ?? '';
+        if($cohostToken!==''&&$action==='control')lq_response(['error'=>'Bare hovedverten kan styre spillet.'],403);
         if (strlen($token) > 64) throw new DomainException('Ugyldig deltaker.');
         $room = $_GET['room'] ?? ''; $host = ($_GET['host'] ?? '') === '1';
         if (!is_string($room)) throw new DomainException('Ugyldig spill.');
@@ -93,16 +96,18 @@ if ($action !== null) {
                 lq_response(['title'=>$shared['title'], 'total'=>count(lq_playable_content($content,false)['questions'])]);
             case 'shared-start': lq_response(lq_shared_start($db, jp_text($input['id'] ?? '', 32), jp_text($input['key'] ?? '', 64), jp_text($input['host_token'] ?? '', 64)));
             case 'create': lq_response(lq_create_room($db, $uid, jp_text($input['id'] ?? '', 32)));
-            case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 6), jp_text($input['name'] ?? '', 80), $token));
+            case 'join': lq_response(lq_join($db, jp_text($input['pin'] ?? '', 8), jp_text($input['name'] ?? '', 80), $token));
             case 'control': lq_response(lq_control($db, $uid, $input, $hostToken));
             case 'race-answer': lq_response(lq_race_answer($db, $input, $token));
             case 'lightning-answer': lq_response(lq_lightning_answer($db, $input, $token));
             case 'answer': lq_response(lq_answer($db, $input, $token));
-            case 'state': lq_response(lq_state($db, $room, $uid, $token, $host, $hostToken));
+            case 'battle-join': lq_response(lq_battle_join_host($db,$input));
+            case 'battle-manage': lq_response(lq_battle_manage($db,$uid,$input,$hostToken,$cohostToken));
+            case 'state': if($cohostToken!=='')lq_response(lq_battle_state($db,$room,$cohostToken)); lq_response(lq_state($db, $room, $uid, $token, $host, $hostToken));
             case 'upload': lq_response(['image'=>jp_upload($db, $uid, $_FILES['image'] ?? [])]);
             case 'media':
                 $image = lq_id($_GET['image'] ?? null);
-                if ($room !== '') $m = lq_room_media($db, $room, $uid, $token, $host, $image, $hostToken);
+                if ($room !== '') $m = lq_room_media($db, $room, $uid, $token, $host, $image, $hostToken, $cohostToken);
                 elseif (isset($_GET['public_quiz'])) $m = lq_public_media($db,jp_text($_GET['public_quiz'],32),$image);
                 elseif ($uid) $m = jp_media($db, $image, $uid);
                 else throw new DomainException('Ingen tilgang.');

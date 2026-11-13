@@ -374,3 +374,11 @@ nav{align-items:center;flex-wrap:wrap}
 
 .quiz-question-count{display:flex;align-items:baseline;gap:6px;width:fit-content;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.4}
 .quiz-question-count strong{font-size:20px;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* A shared classroom display with class-specific entry codes. */
+.battle-live { margin: 1rem 0; padding: .8rem; border: 1px solid var(--line); border-radius: .8rem; }
+.battle-live > summary { cursor: pointer; font-weight: 700; font-size: 1.1rem; }
+.battle-live .leaderboard { margin-block: .6rem; }
+.question-modal-footer .battle-live { width: 100%; margin: 0; max-height: 25vh; overflow: auto; }
+.class-battle-lobby input[readonly] { width: 100%; }
+.class-battle-lobby h2 { margin-top: .5rem; }

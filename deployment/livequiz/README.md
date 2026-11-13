@@ -5,6 +5,60 @@ Uses PHP 8.4 and the **existing Jeopardy MySQL database**. No second database,
 WebSocket subscription, Node server or build step is required on the host.
 Deployment status is recorded at the end of this file.
 
+## Class Battle (local implementation)
+
+Choose **Class Battle** in the host lobby's **Spilltype** selector. The main class
+starts as **Class A** and uses the existing six-digit room code. Rename it and
+choose **Inviter medvert** once for each additional teacher. Each invitation is a
+separate 256-bit bearer capability, delivered in the URL fragment. Teachers enter
+their class name and receive a distinct eight-digit student code; the ordinary
+student join form accepts both lengths. Reopening an invitation resumes the same
+class rather than creating another. Invitations are for teachers, not students.
+
+All classes use one `lq_rooms` record, the same deadlines and question sequence,
+and the existing individual answer/score records. Class metadata, invitation
+hashes and server-owned participant-to-class assignments live in `_battle` in
+that room's JSON. `lq_class_codes` resolves additional codes to the shared room
+and class. Its eight-digit namespace cannot collide with normal six-digit rooms.
+The additive table is in `schema.sql` and is also prepared before first use;
+`cleanup.php` removes entries whose rooms have been pruned. No new service or
+package is required. Deploy the new `class-battle.php` alongside the changed app,
+index, JavaScript, CSS and cleanup files; the existing packaging includes it.
+
+Only the main host controls progression, including restart and switching quizzes.
+Co-hosts use the same projected question/results display with scoped read and
+current-image access, and can rename their class, remove their own students or
+leave while the lobby is open. Leaving removes that class and its students and
+revokes its invitation. A student code never grants host access. Main-host
+controls independently reject co-host capabilities on the server.
+
+Starting requires at least two registered classes and one student. Class lists
+and roster membership then lock atomically with the start. New students/classes
+are rejected; existing student tokens and co-host invitations reconnect normally.
+Restart opens the lobby again, preserving classes and codes; switching quizzes
+also retains the Class Battle. Randomized teams and Lightning Round do not apply
+to this mode. Existing modes retain their own allocation and late-join behavior.
+Class Battle removes the ordinary room's total 60-player cap to accommodate
+multiple full classes; production capacity remains subject to hosting limits.
+
+Standings include all registered members, including nonresponders. Classes are
+ranked by exact rational mean of cumulative individual points (cross-products),
+then formatted to at most two decimals. Ties share a rank; empty classes are
+unranked. Class standings are live on every display. The main host can expand
+individual results for every class; co-hosts can expand only their own class.
+Final screens prominently identify the winner or tied winners.
+
+Validation: `tests/class-battle.php` covers scoped permissions, invalid/expired
+codes, repeat invitations, leaving, roster locks/reconnects, duplicate answers,
+media access, averages, exact ties, replay, stale lobby actions, and more than 60 players. The browser
+suite `tests/class-battle-browser.cjs` plays two questions with three teacher
+sessions and classes of 3, 2 and 1 students, including concurrent submissions,
+shared deadlines, direct API permission checks and reconnects. Existing team,
+Race, Quizlet-like, sorting, Lightning, switching and history backend suites pass.
+The full normal-game and randomized-team-average browser suites also pass.
+Tests use SQLite and localhost PHP; production MySQL concurrency and multi-school
+network latency have not been load-tested. This feature is not yet deployed.
+
 ## Saving incomplete questions
 
 A named quiz can be saved with empty or incomplete questions. The editor labels

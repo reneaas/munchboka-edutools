@@ -62,3 +62,9 @@ CREATE TABLE IF NOT EXISTS lq_auth_limits (
  window_at BIGINT NOT NULL,
  attempts INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS lq_class_codes (
+ pin CHAR(8) PRIMARY KEY,
+ room_id CHAR(32) NOT NULL,
+ class_id CHAR(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -8,6 +8,7 @@ require_once __DIR__ . '/race.php';
 require_once __DIR__ . '/history.php';
 require_once __DIR__ . '/discovery.php';
 require_once __DIR__ . '/copy.php';
+require_once __DIR__ . '/class-battle.php';
 function lq_query(PDO $db, string $sql, array $args = []): PDOStatement {
     $s = $db->prepare($sql); $s->execute($args); return $s;
 }
@@ -185,21 +186,33 @@ function lq_room(PDO $db, string $id, bool $lock = false): array {
     return $r;
 }
 function lq_join(PDO $db, string $pin, string $name, string $token): array {
-    if (!preg_match('/^[0-9]{6}$/D', $pin) || !preg_match('/^[a-f0-9]{64}$/D', $token)) throw new DomainException('Skriv en gyldig spillkode.');
+    if (!preg_match('/^(?:[0-9]{6}|[0-9]{8})$/D', $pin) || !preg_match('/^[a-f0-9]{64}$/D', $token)) throw new DomainException('Skriv en gyldig spillkode.');
     $name = jp_text($name, 80); if ($name === '') throw new DomainException('Skriv et kallenavn.');
+    if(strlen($pin)===8)lq_battle_prepare($db);
     return lq_transaction($db, function () use ($db, $pin, $name, $token) {
-        $r = lq_query($db, 'SELECT * FROM lq_rooms WHERE pin = ? FOR UPDATE', [$pin])->fetch();
+        $class='main';
+        if(strlen($pin)===8){
+            $entry=lq_query($db,'SELECT room_id,class_id FROM lq_class_codes WHERE pin=?',[$pin])->fetch();
+            if(!$entry)throw new DomainException('Spillkoden er ugyldig eller utløpt.');
+            $r=lq_room($db,$entry['room_id'],true);$class=$entry['class_id'];
+        }else $r = lq_query($db, 'SELECT * FROM lq_rooms WHERE pin = ? FOR UPDATE', [$pin])->fetch();
         if (!$r || (int)$r['expires_at'] <= time()) throw new DomainException('Spillkoden er ugyldig eller utløpt.');
         $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
         if(in_array(hash('sha256',$token),$content['_kicked'] ?? [],true))throw new DomainException('Du er fjernet fra dette spillet av læreren.');
         $old = lq_query($db, 'SELECT id, room_id FROM lq_players WHERE token_hash = ?', [hash('sha256', $token)])->fetch();
-        if ($old && $old['room_id'] === $r['id']) return ['room' => $r['id']];
+        if(isset($content['_battle']) && !isset($content['_battle']['classes'][$class]))throw new DomainException('Klassen finnes ikke lenger.');
+        if ($old && $old['room_id'] === $r['id']) {
+            if(isset($content['_battle']) && ($content['_battle']['members'][$old['id']] ?? null)!==$class)throw new DomainException('Du er allerede med i en annen klasse.');
+            return ['room' => $r['id']];
+        }
         if ($old) throw new DomainException('Denne deltakerøkten tilhører et annet spill.');
-        if ((int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
+        if (isset($content['_battle']) && ($content['_battle']['locked'] || $r['phase']!=='lobby'))throw new DomainException('Klasselistene er låst. Bare eksisterende deltakere kan koble til igjen.');
+        if (!isset($content['_battle']) && (int)lq_query($db, 'SELECT COUNT(*) FROM lq_players WHERE room_id = ?', [$r['id']])->fetchColumn() >= 60) throw new DomainException('Spillet er fullt (60 deltakere).');
         $r=lq_advance_locked($db,$r);
         $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);$play=lq_play_settings($content);
         $player=['id'=>bin2hex(random_bytes(16)),'nickname'=>$name];
         lq_query($db, 'INSERT INTO lq_players (id, room_id, nickname, token_hash) VALUES (?, ?, ?, ?)', [$player['id'], $r['id'], $name, hash('sha256', $token)]);
+        if(isset($content['_battle']))$content['_battle']['members'][$player['id']]=$class;
         if (($play['mode']==='teams' && $r['phase']!=='lobby') || in_array($r['phase'],['finished','race_done','light_done'],true)) {
             $content['_waiting'][]=$player['id'];
         } elseif (in_array($r['phase'],['race_count','race'],true)) {
@@ -225,7 +238,15 @@ function lq_player(PDO $db, string $room, string $token): array {
     if (!$r) throw new DomainException('Bli med i spillet først.'); return $r;
 }
 function lq_configure_content(array $content,array $settings): array {
-    $content['game']=$settings['game'] ?? lq_game($content);
+    $game=$settings['game'] ?? lq_game($content);
+    if(isset($content['_battle'])&&$game!=='classbattle')throw new DomainException('Opprett et nytt spill for å bytte fra Class Battle.');
+    $content['game']=$game;
+    if($game==='classbattle'){
+        if(!isset($content['_battle']))throw new DomainException('Aktiver Class Battle fra lobbyen først.');
+        unset($content['_retained_teams']);
+        $content['play']=lq_validate_play('individual',3);$content['lightning']=['enabled'=>false,'seconds'=>60];
+        return $content;
+    }
     if (!in_array($content['game'],['regular','race','quizlet'],true)) throw new DomainException('Ugyldig spilltype.');
     $previous=lq_play_settings($content);
     $keep=$settings['keep_teams'] ?? ($previous['keep_teams'] ?? false);
@@ -260,6 +281,11 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
         if (!$currentRunFinish && (int)$r['version'] !== ($input['version'] ?? null)) throw new DomainException('Spillet er allerede oppdatert. Prøv igjen.');
         $phase = $r['phase']; $index = (int)$r['question_index']; $deadline = 0;
         $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
+        if($phase==='lobby' && ($input['game'] ?? $input['settings']['game'] ?? '')==='classbattle' && !isset($content['_battle'])){
+            $members=[];foreach(lq_query($db,'SELECT id FROM lq_players WHERE room_id=?',[$r['id']])->fetchAll() as $player)$members[$player['id']]='main';
+            $content['_battle']=['classes'=>['main'=>['name'=>'Class A','pin'=>$r['pin']]],'members'=>$members,'invites'=>[],'locked'=>false];
+        }
+        if(isset($content['_battle'])&&$cmd==='kick')throw new DomainException('Bruk klassens deltakerliste for å fjerne elever.');
         // Save the visible lobby settings and start under one lock/version check.
         if ($cmd==='next' && $phase==='lobby' && array_key_exists('settings',$input)) {
             if (!is_array($input['settings'])) throw new DomainException('Ugyldige spillinnstillinger.');
@@ -301,13 +327,15 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
                 $next['play']=['mode'=>'teams','max_team_size'=>$play['max_team_size'],'teams'=>$teams,'keep_teams'=>true];
                 $next['_retained_teams']=$teams;
             }
-            $next['game']='regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
+            if(isset($content['_battle'])){$next['_battle']=$content['_battle'];$next['_battle']['locked']=false;}
+            $next['game']=isset($next['_battle'])?'classbattle':'regular';$next['lightning']=['enabled'=>false,'seconds'=>60];
             lq_query($db,'DELETE FROM lq_answers WHERE room_id=?',[$r['id']]);
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($next,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
             $phase='lobby';$index=-1;
         } elseif ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
             unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
+            if(isset($content['_battle']))$content['_battle']['locked']=false;
             if($keepTeams){
                 $teams=$content['_retained_teams'] ?? $play['teams'];
                 if(!$teams)throw new DomainException('Det finnes ingen lag å beholde.');
@@ -321,6 +349,12 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             $content=lq_configure_content($content,$input);
             lq_query($db, 'UPDATE lq_rooms SET content = ? WHERE id = ?', [json_encode($content, JSON_THROW_ON_ERROR), $r['id']]);
         } elseif ($cmd === 'next' && $phase === 'lobby') {
+            if(isset($content['_battle'])){
+                if(count($content['_battle']['classes'])<2)throw new DomainException('Inviter minst én annen klasse før du starter Class Battle.');
+                if(!count($content['_battle']['members']))throw new DomainException('Vent til minst én elev har blitt med.');
+                $content['_battle']['locked']=true;
+                lq_query($db,'UPDATE lq_rooms SET content=? WHERE id=?',[json_encode($content,JSON_THROW_ON_ERROR),$r['id']]);
+            }
             if ($play['mode'] === 'teams') {
                 $roster = lq_query($db, 'SELECT id, nickname FROM lq_players WHERE room_id = ? ORDER BY id', [$r['id']])->fetchAll();
                 $play['teams'] = ($play['keep_teams'] ?? false)?lq_retain_teams($content['_retained_teams'] ?? $play['teams'],$roster,$play['max_team_size']):lq_assign_teams($roster, $play['max_team_size']);
@@ -454,7 +488,7 @@ function lq_state(PDO $db, string $room, int $uid, string $token, bool $host, st
     return lq_state_payload($db, $r, $p, $host)+($host?['can_switch_quiz'=>$uid>0&&$uid===(int)$r['owner_id']]:[]);
     });
 }
-function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
+function lq_state_payload(PDO $db, array $r, ?array $p, bool $host, ?string $battleClass = null): array {
     $room = $r['id'];
     $content = json_decode($r['content'], true, 32, JSON_THROW_ON_ERROR);
     $index = (int)$r['question_index'];
@@ -519,9 +553,9 @@ function lq_state_payload(PDO $db, array $r, ?array $p, bool $host): array {
         }
         $state['distribution'] = ['counts' => $counts, 'correct' => $correct, 'answered' => count($rows)];
     }
-    return $state;
+    return lq_battle_payload($db,$r,$state,$p,$host,$battleClass);
 }
-function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image, string $hostToken = ''): array {
+function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $host, string $image, string $hostToken = '', string $cohostToken = ''): array {
     $r = lq_room($db, $room);
     if (!$host && $r['phase']==='race') {
         $player=lq_player($db,$room,$token);$content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);
@@ -538,7 +572,7 @@ function lq_room_media(PDO $db, string $room, int $uid, string $token, bool $hos
         if (($question['image']['id'] ?? '') !== $image) throw new DomainException('Bildet er ikke tilgjengelig.');
         return jp_media($db,lq_id($image),(int)$r['owner_id']);
     }
-    if ($host) lq_require_host($r, $uid, $hostToken);
+    if ($host) { if($cohostToken!=='')lq_battle_class(json_decode($r['content'],true,32,JSON_THROW_ON_ERROR),$cohostToken);else lq_require_host($r, $uid, $hostToken); }
     else {
         $player=lq_player($db,$room,$token);
         $content=json_decode($r['content'],true,32,JSON_THROW_ON_ERROR);

@@ -334,7 +334,7 @@
   async function editor() {
     if (!uid) return library();
     let saved = params.has('edit') ? await api('quiz', undefined, {id:params.get('edit')}) : {id:'',revision:0,content:{title:'',questions:[blankQuestion()]}};
-    saved.content.scoring ??= 'fixed';saved.content.private ??= false;
+    saved.content.scoring = 'speed';saved.content.private ??= false;
     let model = saved.content, baseline = JSON.stringify(model), saving = false;
     let pendingSave = null, retryTimer, retryDelay = 2000, storageFailed = false;
     let autosaveTimer, autosaveBlocked = false, retryWaiting = false;
@@ -430,13 +430,10 @@
       const r = await editorRequest('create', {id:saved.id}); location.href = '?host=' + r.room;
     }, 'secondary');
     const privacyLabel=el('label'),privacy=el('input');privacy.type='checkbox';privacy.checked=model.private;privacy.onchange=()=>{model.private=privacy.checked;changed();};privacyLabel.append(privacy,document.createTextNode(' Privat – bare jeg kan starte nye spill'));
-    const scoringLabel = el('label', 'Poengstil'), scoringSelect = el('select');
-    for (const [value, label] of [['fixed','Faste poeng'], ['speed','Raske riktige svar']]) { const option = el('option', label); option.value = value; scoringSelect.append(option); }
-    scoringSelect.value = model.scoring; scoringSelect.onchange = () => { model.scoring = scoringSelect.value; changed(); }; scoringLabel.append(scoringSelect);
     const list = el('div');
     const titleField = field('Quizens tittel', model.title, v => {model.title=v; changed();});
     app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
-      titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), scoringLabel, el('p', 'Faste poeng: 1000 for riktig svar. Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
+      titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), el('p', 'Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {
       list.replaceChildren();
@@ -517,9 +514,9 @@
           button('Gjenopprett utkast', () => {
             if ((dirty || saving) && !confirm('Erstatte endringene i denne fanen med utkastet?')) return;
             if (saving) return;
-            clearTimeout(retryTimer); retryWaiting = false; draftKey = key; model = draft.model; baseline = draft.baseline;
+            clearTimeout(retryTimer); retryWaiting = false; draftKey = key; model = draft.model; model.scoring = 'speed'; baseline = draft.baseline;
             saved = {...saved, id:draft.id, revision:draft.revision}; pendingSave = draft.pendingSave; folder = draft.folder;
-            titleField.querySelector('input').value = model.title; privacy.checked = model.private; scoringSelect.value = model.scoring;
+            titleField.querySelector('input').value = model.title; privacy.checked = model.private;
             renderQuestions(); changed(); recovery.remove();
           }, 'secondary'), button('Forkast lokalt utkast', () => { localStorage.removeItem(key); recovery.remove(); }, 'quiet'));
         app.prepend(recovery);

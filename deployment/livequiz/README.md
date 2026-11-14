@@ -182,7 +182,7 @@ Implementation:
   polling responses cannot move the browser back to an earlier question.
 - Correct Lightning Round answers earn 1,000 points and incorrect answers zero,
   using the existing correctness grader. There is no speed bonus in this round.
-  The normal optional speed-scoring mode remains unchanged. Existing leaderboard
+  The normal speed-scoring mode remains unchanged. Existing leaderboard
   sums include both sets of answers, and team scores are averages of individual
   totals with unchanged assignments. No additional Lightning Round table or
   database migration is required.
@@ -439,7 +439,7 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
   teacher-controlled questions, deadline, reveal, final scoreboard and recovery
   after refreshing the same student tab. Student tokens stay in sessionStorage;
   opening a different tab/device does not recover that player automatically.
-- Quiz-level scoring choice: fixed 1000 points, or speed scoring from 1000 at the
+- All newly saved quizzes and newly started games use speed scoring from 1000 at the
   start to zero at the deadline (500 halfway), rounded to the nearest integer.
   Formula: `round(1000 * (1 - elapsed / time_limit))`, clamped to 0–1000.
   A correct answer that rounds to zero still counts as correct in results.
@@ -451,8 +451,10 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
   video question gives 1000 through second 4, 500 at second 17, and zero at 30.
   This grace period is not synchronized to actual host playback or buffering.
   Network delay and video time beyond the grace period count toward elapsed time.
-  Existing quizzes/rooms default to fixed scoring. Each room snapshots its scoring
-  choice, so edits affect newly created games only. No database migration needed.
+  The editor no longer offers a scoring selector. Older quizzes also use speed
+  scoring when starting a new game or switching quizzes. Already running rooms
+  retain their scoring snapshot. Race, Quizlet-like and Lightning retain their
+  own game-specific scoring rules. No database migration needed.
 - Snapshot isolation: editing a quiz does not change already-created sessions.
 - One poll per second per device (every 200 ms during the transition countdown), non-overlapping requests, retry backoff and
   visible connection status. Server deadlines and first-answer-wins semantics.
@@ -495,7 +497,7 @@ tokens reconnect to the same team.
 Individual games still allow late joins. Disconnected players remain eligible,
 but the question deadline always closes the question, so nobody blocks it forever.
 
-Answers and points remain individual, including the optional speed-scoring mode
+Answers and points remain individual, including the speed-scoring mode
 and video grace period already supported by the app. No new timing-based scoring
 is introduced by teams. Charts still count each individual answer. The team
 leaderboard averages authoritative cumulative member scores through `lq_team_average`;
@@ -595,7 +597,7 @@ compatibility:
 Every manual transition checks owner, CSRF, current version and allowed source
 state. Stale/repeated controls return an error without advancing again. Room locks
 serialize controls, answers, joins and state snapshots. Scores still come solely
-from the persisted answers using the room’s fixed or speed scoring choice; wrong answers always earn zero.
+from the persisted answers using the room’s scoring snapshot; wrong answers always earn zero.
 
 All clients show centered dialogs with blurred backdrops. Four-choice questions
 use a 2 x 2 grid; existing two-to-six-choice, multi-answer and text questions are
@@ -910,7 +912,7 @@ The selected quiz is copied into a fresh room snapshot. Previous answers, scores
 waiting status and game-mode settings are reset. Team assignments are also reset
 unless **Behold eksisterende lag** is selected. The next quiz
 starts as a regular game (team mode when retaining teams, otherwise individual),
-with its saved scoring style; the host can
+with speed scoring; the host can
 change the settings before starting. Switching extends the room lifetime by six
 hours and increments the run ID so old submissions cannot affect the next quiz.
 Only the room owner can switch, and only to a quiz in their own library. Guest

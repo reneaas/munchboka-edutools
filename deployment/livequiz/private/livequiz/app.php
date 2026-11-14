@@ -43,8 +43,8 @@ function lq_validate(PDO $db, int $uid, mixed $data, bool $draft = false): array
     if (!is_array($data)) throw new DomainException('Ugyldig quiz.');
     $title = jp_text($data['title'] ?? '', 180); $questions = $data['questions'] ?? null;
     if ($title === '' || !is_array($questions) || !array_is_list($questions) || count($questions) < 1 || count($questions) > 50) throw new DomainException('Gi quizen en tittel og 1–50 spørsmål.');
-    $scoring = $data['scoring'] ?? 'fixed';
-    if (!in_array($scoring, ['fixed', 'speed'], true)) throw new DomainException('Ugyldig poengstil.');
+    // Accept older saved quizzes and clients, but normalize all new saves to speed.
+    $scoring = 'speed';
     if (!is_bool($data['private'] ?? false)) throw new DomainException('Ugyldig synlighet.');
     $out = ['private' => $data['private'] ?? false, 'title' => $title, 'scoring' => $scoring, 'questions' => []];
     foreach ($questions as $q) {
@@ -103,6 +103,7 @@ function lq_question_ready(array $q): bool {
     return $q['type'] === 'multi';
 }
 function lq_playable_content(array $content, bool $requireQuestions = true): array {
+    $content['scoring'] = 'speed';
     $content['questions'] = array_values(array_filter($content['questions'], 'lq_question_ready'));
     if ($requireQuestions && !$content['questions']) throw new DomainException('Quizen har ingen ferdige spørsmål ennå. Fullfør minst ett spørsmål før du starter spillet.');
     return $content;
@@ -335,6 +336,7 @@ function lq_control(PDO $db, int $uid, array $input, string $hostToken = ''): ar
             lq_query($db,'UPDATE lq_rooms SET content=?, expires_at=? WHERE id=?',[json_encode($next,JSON_THROW_ON_ERROR),time()+21600,$r['id']]);
             $phase='lobby';$index=-1;
         } elseif ($cmd === 'restart' && in_array($phase,['finished','race_done','light_done'],true)) {
+            $content['scoring']='speed';
             unset($content['_race'],$content['_lightning'],$content['_waiting'],$content['_finished_at']);
             $content['_run']=($content['_run'] ?? 0)+1;
             if(isset($content['_battle'])){$content['_battle']['locked']=false;foreach($content['_battle']['classes'] as &$class)$class['ready']=false;unset($class);}

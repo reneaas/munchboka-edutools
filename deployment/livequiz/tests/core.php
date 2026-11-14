@@ -146,7 +146,7 @@ check(lq_answer($db,['room'=>$rid,'index'=>1,'answer'=>[1,0]],$token)['accepted'
 lq_control($db,1,['room'=>$rid,'version'=>lq_room($db,$rid)['version'],'command'=>'reveal']);progressQuestion($db,$rid);
 lq_answer($db,['room'=>$rid,'index'=>2,'answer'=>'fire'],$token);
 lq_control($db,1,['room'=>$rid,'version'=>lq_room($db,$rid)['version'],'command'=>'reveal']);progressQuestion($db,$rid);
-$state=lq_state($db,$rid,0,$token,false);check($state['phase']==='finished'&&(int)$state['leaderboard'][0]['score']===3000,'complete game scores');
+$state=lq_state($db,$rid,0,$token,false);check($state['phase']==='finished'&&(int)$state['leaderboard'][0]['score']===(int)lq_query($db,'SELECT SUM(points) FROM lq_answers WHERE room_id=?',[$rid])->fetchColumn(),'complete game scores');
 rejects(fn()=>lq_answer($db,['room'=>$rid,'index'=>2,'answer'=>'fire'],$other),'finished rejects new answers');
 $ar=lq_create_room($db,1,$id);$ra=$ar['room'];$a1=str_repeat('1',64);$a2=str_repeat('2',64);
 lq_join($db,$ar['pin'],'A',$a1);lq_join($db,$ar['pin'],'B',$a2);
@@ -220,8 +220,9 @@ rejects(fn()=>lq_verify($db,'12345678'),'quiz code cannot be reused');
 seedQuizCode($db,time()+600,'new@osloskolen.no');lq_verify($db,'12345678');
 check($_SESSION['uid']>1 && lq_query($db,'SELECT email FROM jp_users WHERE id = ?',[$_SESSION['uid']])->fetchColumn()==='new@osloskolen.no','quiz new verified account');
 // Scoring is a quiz snapshot setting, with legacy fixed-point compatibility.
-check(lq_validate($db,1,$quiz)['scoring']==='fixed','missing scoring defaults to fixed');
-rejects(fn()=>lq_validate($db,1,array_replace($quiz,['scoring'=>'unknown'])),'invalid scoring rejected');
+check(lq_validate($db,1,$quiz)['scoring']==='speed','missing scoring defaults to speed');
+check(lq_validate($db,1,array_replace($quiz,['scoring'=>'fixed']))['scoring']==='speed','old clients cannot restore fixed scoring');
+check(lq_playable_content($quiz+['scoring'=>'fixed'])['scoring']==='speed','old quizzes launch with speed scoring');
 foreach ([5,30,600] as $duration) {
     check(lq_points(1000,'speed',$duration,$duration)===1000,'full speed points');
     check(lq_points(1000,'speed',$duration,$duration/2)===500,'halfway speed points');

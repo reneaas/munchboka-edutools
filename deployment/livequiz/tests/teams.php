@@ -95,6 +95,9 @@ check($countdown['state']==='COUNTDOWN' && $countdown['index']===-1,'first quest
 check($countdown['countdown_end']-$countdown['now']>2.5,'three-second countdown');
 lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)-0.1)*1000),$ridTeam]);
 check(lq_state($db,$ridTeam,1,'',true)['index']===0,'countdown begins question zero');
+// Pin the fixture to full remaining time: this test isolates team aggregation.
+$question=lq_state($db,$ridTeam,1,'',true)['question'];
+lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)+$question['seconds']+1)*1000),$ridTeam]);
 // Lag 1: two correct answers and one wrong answer. Lag 2: one correct,
 // one disconnected. Every answer remains independent.
 foreach(array_slice($tokens,0,4) as $i=>$token)lq_answer($db,['room'=>$ridTeam,'index'=>0,'answer'=>[$i===2?0:1]],$token);
@@ -124,6 +127,9 @@ $controlTeam('leaderboard');check(lq_state($db,$ridTeam,0,$tokens[0],false)['lea
 $controlTeam('next');
 lq_query($db,'UPDATE lq_rooms SET deadline = ? WHERE id = ?',[(int)round((microtime(true)-0.1)*1000),$ridTeam]);
 check(lq_state($db,$ridTeam,1,'',true)['index']===1,'next countdown advances one question');
+// Pin the fixture to full remaining time: this test isolates team aggregation.
+$question=lq_state($db,$ridTeam,1,'',true)['question'];
+lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)+$question['seconds']+1)*1000),$ridTeam]);
 foreach($tokens as $token)lq_answer($db,['room'=>$ridTeam,'index'=>1,'answer'=>[1]],$token);
 $results=lq_state($db,$ridTeam,1,'',true);
 check($results['state']==='QUESTION_RESULTS','all answered ends question');

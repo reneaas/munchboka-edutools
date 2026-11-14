@@ -74,6 +74,8 @@ check($state['state']==='QUESTION_ACTIVE'&&$state['index']===0,'co-host follows 
 check(lq_room_media($db,$rid,0,'',true,$img,'',$inviteB)['bytes']==='PNG','co-host can load current classroom image');
 rejects(fn()=>lq_room_media($db,$rid,0,'',true,$img,'',str_repeat('0',64)),'invalid co-host cannot load image');
 check(!isset($state['question']['correct'])&&!isset($state['question']['accepted']),'co-host cannot see unrevealed answer key');
+// Keep aggregation assertions independent of elapsed test execution time.
+lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)+61)*1000),$rid]);
 foreach($tokens as $class=>$list)foreach($list as $i=>$token){
  $correct=($class==='B'||($class==='A'&&$i<2));
  $input=['room'=>$rid,'run'=>0,'index'=>0,'answer'=>$correct?[1]:[0]];
@@ -89,6 +91,8 @@ check($state['state']==='QUESTION_RESULTS','normal answer completion advances sh
 battleControl($db,$rid,'leaderboard');battleControl($db,$rid,'next');
 lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)-0.01)*1000),$rid]);
 check(lq_state($db,$rid,1,'',true)['index']===1,'all classes advance to second question');
+// Keep aggregation assertions independent of elapsed test execution time.
+lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)+61)*1000),$rid]);
 foreach($tokens as $list)foreach($list as $token)lq_answer($db,['room'=>$rid,'run'=>0,'index'=>1,'answer'=>[1]],$token);
 battleControl($db,$rid,'leaderboard');battleControl($db,$rid,'next');
 check(lq_battle_state($db,$rid,$inviteB)['state']==='QUIZ_FINISHED','shared final state');

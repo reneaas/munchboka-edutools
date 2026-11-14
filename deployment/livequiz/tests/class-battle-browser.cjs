@@ -98,13 +98,13 @@ const assert=require('node:assert/strict');
    await Promise.all([main,b.page,c.page,...students.map(s=>s.page)].map(p=>wait(p,question===0?'QUESTION_ACTIVE':'QUIZ_FINISHED')));
   }
   await b.page.getByRole('heading',{name:'Vinner: Class B',exact:true}).waitFor();
-  const final=await state(b.page);assert.equal(final.battle.classes[0].score,2000);assert.equal(final.battle.classes.find(c=>c.name==='Class A').count,3);
+  const final=await state(b.page);assert(final.battle.classes[0].score>1000&&final.battle.classes[0].score<=2000);assert.equal(final.battle.classes.find(c=>c.name==='Class A').count,3);
   await b.page.getByText('Class B · individuelle resultater',{exact:true}).click();
   await b.page.waitForResponse(r=>r.url().includes('api=state'));
   assert.equal(await b.page.locator('details[data-class-name="Class B"]').getAttribute('open'),'');
   assert.equal((await state(main)).battle.results.length,4);
   const mvps=(await state(main)).battle.mvps;
-  assert.equal(mvps.length,3);assert.equal(mvps[0].score,2000);
+  assert.equal(mvps.length,3);assert(mvps[0].score>1000&&mvps[0].score<=2000);
   for(const p of [main,b.page,c.page,d.page]){
    await wait(p,'QUIZ_FINISHED');await p.getByRole('heading',{name:'MVPs',exact:true}).waitFor();
    assert.deepEqual((await state(p)).battle.mvps,mvps);

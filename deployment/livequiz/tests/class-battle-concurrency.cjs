@@ -97,7 +97,12 @@ class Client {
     const s=await state(main);assert.equal(s.answers,3*n);assert.equal(s.state,'QUESTION_RESULTS');
     for(let group=0;group<3;group++){
       const cls=s.battle.classes.find(x=>x.name===(group===0?'Class A':'Class '+group));
-      assert.equal(cls.count,n);assert.equal(cls.total,Math.floor(n*(group+1)/3)*1000*(index+1));
+      assert.equal(cls.count,n);
+      const members=s.battle.results.find(x=>x.name===cls.name).players;
+      assert.equal(cls.total,members.reduce((sum,p)=>sum+Number(p.score),0));
+      const correctCount=Math.floor(n*(group+1)/3);
+      assert.equal(members.filter(p=>Number(p.score)>0).length,correctCount);
+      assert(cls.total>0&&cls.total<=correctCount*1000*(index+1));
       assert.equal(cls.score,cls.total/n);
     }
     const views=await Promise.all(teachers.map(state));

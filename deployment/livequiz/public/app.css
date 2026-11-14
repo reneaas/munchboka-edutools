@@ -394,3 +394,21 @@ nav{align-items:center;flex-wrap:wrap}
 .mvp-card{padding:1.2rem;text-align:center;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);overflow-wrap:anywhere}
 .mvp-rank-1{border-color:#d6a52a;background:#fffbeb;color:#1e293b;padding-block:2rem}
 @media(max-width:600px){.mvp-podium{grid-template-columns:1fr}}
+
+.quiz-overview-modal{width:1200px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink);overflow:auto}
+.quiz-overview-modal::backdrop{background:#0008}
+.quiz-overview-toolbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.quiz-overview-toolbar h2{margin:0;overflow-wrap:anywhere}
+.quiz-overview-toolbar .actions,.quiz-overview-toolbar label{margin:0}
+.quiz-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px}
+.quiz-overview-card{min-width:0;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow-wrap:anywhere}
+.quiz-overview-card h3{margin:0}
+.quiz-overview-card .rich{font-size:15px;line-height:1.45}
+.quiz-overview-card .question-image{max-height:180px;margin:12px auto}
+.quiz-overview-card .code-display{max-height:180px;overflow:auto}
+.quiz-overview-card .CodeMirror{font-size:13px}
+.quiz-overview-answers ol{padding-left:24px;margin-bottom:0}
+.quiz-overview-answers li{padding:6px;border-radius:5px}
+.quiz-overview-answers .overview-correct{background:#dcfce7;color:#166534}
+.quiz-overview-answers .overview-correct .hint{color:inherit}
+@media(max-width:600px){.quiz-overview-grid{grid-template-columns:1fr;padding:12px}.quiz-overview-toolbar{align-items:flex-start;flex-direction:column;padding:12px}.quiz-overview-card{padding:14px}}

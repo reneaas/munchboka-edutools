@@ -330,6 +330,43 @@
     window.addEventListener('resize',fit);
     dialog.addEventListener('close',()=>{document.removeEventListener('keydown',navigate);window.removeEventListener('resize',fit);dialog.remove();opener?.focus();},{once:true});
   }
+  function previewQuizOverview(contentModel){
+    const quiz=JSON.parse(JSON.stringify(contentModel));
+    const opener=document.activeElement,dialog=el('dialog',undefined,'quiz-overview-modal');
+    const heading=el('h2',quiz.title||'Quizoversikt');heading.id='quiz-overview-title';dialog.setAttribute('aria-labelledby',heading.id);
+    const revealLabel=el('label'),reveal=el('input');reveal.type='checkbox';revealLabel.append(reveal,document.createTextNode(' Vis fasit'));
+    const top=el('div',undefined,'quiz-overview-toolbar'),grid=el('div',undefined,'quiz-overview-grid');
+    top.append(heading,group(revealLabel,button('Lukk oversikt',()=>dialog.close(),'secondary')));dialog.append(top,grid);
+    const answerViews=[];
+    quiz.questions.forEach((q,index)=>{
+      const card=el('article',undefined,'quiz-overview-card'),media=el('div'),answers=el('div',undefined,'quiz-overview-answers');
+      card.append(el('h3','Spørsmål '+(index+1)),el('p',questionReady(q)?q.seconds+' sekunder':'Uferdig · hoppes over i spillet','hint'),media,answers);
+      void content(q,media,{showVideo:false});
+      if(q.youtube)media.append(el('p','Inneholder YouTube-video','hint'));
+      const renderAnswers=()=>{
+        answers.replaceChildren();
+        if(q.type==='text'){
+          answers.append(el('p',reveal.checked?'Godkjente svar: '+(q.accepted||[]).join(' · '):'Deltakerne skriver inn svaret.'));
+        }else{
+          const order=q.type==='sort'?(reveal.checked?q.correct:optionOrder(q.options.length,'overview:'+index)):q.options.map((_,i)=>i);
+          const list=el('ol');
+          for(const i of order){
+            const correct=reveal.checked&&q.correct.includes(i),item=el('li',undefined,correct?'overview-correct':'');
+            item.append(rich(q.options[i]||'Tomt alternativ'));
+            if(correct&&q.type!=='sort')item.append(el('span','✓ Riktig svar','hint'));
+            list.append(item);
+          }
+          if(q.type==='sort'&&reveal.checked)answers.append(el('p','Riktig rekkefølge','hint'));
+          answers.append(list);
+        }
+      };
+      answerViews.push(renderAnswers);renderAnswers();grid.append(card);
+    });
+    reveal.onchange=()=>answerViews.forEach(render=>render());
+    document.body.append(dialog);dialog.showModal();
+    dialog.querySelectorAll('.CodeMirror').forEach(node=>node.CodeMirror?.refresh());
+    dialog.addEventListener('close',()=>{dialog.remove();opener?.focus();},{once:true});
+  }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {
     if (!uid) return library();
@@ -431,11 +468,14 @@
     }, 'secondary');
     const privacyLabel=el('label'),privacy=el('input');privacy.type='checkbox';privacy.checked=model.private;privacy.onchange=()=>{model.private=privacy.checked;changed();};privacyLabel.append(privacy,document.createTextNode(' Privat – bare jeg kan starte nye spill'));
     const list = el('div');
+    let collapseQuestionViews=[];
+    const collapseAll=button('Skjul alle spørsmål',()=>{collapseQuestionViews.forEach(collapse=>collapse());},'secondary');
     const titleField = field('Quizens tittel', model.title, v => {model.title=v; changed();});
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, collapseAll, button('Vis quizoversikt',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuizOverview(model);},'secondary'), button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
       titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), el('p', 'Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {
+      collapseQuestionViews=[];
       list.replaceChildren();
       model.questions.forEach((q,index) => {
         const section=el('section',undefined,'card question-editor'),card=el('div',undefined,'question-editor-body');
@@ -454,6 +494,7 @@
           toggle.setAttribute('aria-expanded',String(!collapsed));
           if(collapsed)summary.replaceChildren(rich(q.prompt||'Uten spørsmålstekst'));
         }
+        collapseQuestionViews.push(()=>{collapsedQuestions.add(q);updateCollapsed();});
         heading.append(el('h2','Spørsmål '+(index+1)),el('p',questionReady(q)?'Klar til spill':'Uferdig · hoppes over i spillet','hint question-draft-status'),toggle);section.append(heading,summary,card);updateCollapsed();
         const positionLabel=el('label','Flytt til plass'),position=el('select');position.setAttribute('aria-label','Flytt til plass');
         for(let i=0;i<model.questions.length;i++){const option=el('option',String(i+1));option.value=String(i);position.append(option);}

@@ -310,19 +310,25 @@
     const revealLabel=el('label'),reveal=el('input');reveal.type='checkbox';revealLabel.append(reveal,document.createTextNode(' Vis fasit'));
     let index=0,overviewAnswers=null;
     let overviewMode=false;
-    const viewToggle=button('',()=>{overviewMode=!overviewMode;render();},'secondary preview-view-toggle');
-    function updateViewToggle(){
-      const label=overviewMode?'Vis ett spørsmål om gangen':'Vis alle spørsmål i rutenett';
-      viewToggle.setAttribute('aria-label',label);viewToggle.title=label;
+    const viewToggle=el('div',undefined,'preview-view-toggle');
+    viewToggle.setAttribute('role','group');viewToggle.setAttribute('aria-label','Forhåndsvisning');
+    const viewButtons=[];
+    for(const isOverview of [false,true]){
+      const label=isOverview?'Vis alle spørsmål i rutenett':'Vis ett spørsmål om gangen';
+      const control=button('',()=>{if(overviewMode!==isOverview){overviewMode=isOverview;render();}},'secondary');
+      control.setAttribute('aria-label',label);control.title=label;
       const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
       svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','24');svg.setAttribute('height','24');
       svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
-      for(const [x,y,width,height] of overviewMode?[[4,4,16,16]]:[[3,3,7,7],[14,3,7,7],[3,14,7,7],[14,14,7,7]]){
+      for(const [x,y,width,height] of isOverview?[[3,3,7,7],[14,3,7,7],[3,14,7,7],[14,14,7,7]]:[[4,4,16,16]]){
         const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
         for(const [name,value] of Object.entries({x,y,width,height,rx:1.5,fill:'none',stroke:'currentColor','stroke-width':1.8}))rect.setAttribute(name,String(value));
         svg.append(rect);
       }
-      viewToggle.replaceChildren(svg);
+      control.append(svg);viewToggle.append(control);viewButtons.push(control);
+    }
+    function updateViewToggle(){
+      viewButtons.forEach((control,i)=>control.setAttribute('aria-pressed',String(overviewMode===(i===1))));
     }
     for(let i=0;i<quiz.questions.length;i++){const option=el('option','Spørsmål '+(i+1));option.value=String(i);jump.append(option);}jumpLabel.append(jump);
     const answers=el('div',undefined,'preview-answers');

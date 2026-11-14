@@ -418,5 +418,10 @@ nav{align-items:center;flex-wrap:wrap}
 .quiz-overview-modal .overview-preview-body{padding:0;overflow:auto;min-height:0}
 .quiz-preview-modal .question-modal-footer>.actions{margin:8px 0}
 .quiz-overview-modal.quiz-preview-modal>.modal-header{background:var(--surface)}
-.preview-view-toggle{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;padding:10px;flex-shrink:0}
+.preview-view-toggle{display:inline-flex;flex-shrink:0;border:1px solid var(--line);border-radius:9px}
+.preview-view-toggle button{display:inline-flex;align-items:center;justify-content:center;width:48px;height:46px;padding:10px;border:0;border-radius:0}
+.preview-view-toggle button:first-child{border-radius:8px 0 0 8px}
+.preview-view-toggle button:last-child{border-left:1px solid var(--line);border-radius:0 8px 8px 0}
+:root .preview-view-toggle button[aria-pressed=true]{background:var(--accent);color:var(--button-ink)}
+.preview-view-toggle button:focus-visible{position:relative;z-index:1}
 .preview-view-toggle svg{display:block}

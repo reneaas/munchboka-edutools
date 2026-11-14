@@ -363,7 +363,6 @@
     previous.title='Forrige spørsmål (←)';next.title='Neste spørsmål (→)';
     const navigate=event=>{
       if(overviewMode||!dialog.open||event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.isComposing)return;
-      if(event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))return;
       if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
       event.preventDefault();(event.key==='ArrowLeft'?previous:next).click();
     };

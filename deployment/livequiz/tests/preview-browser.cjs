@@ -60,6 +60,17 @@ const assert=require('node:assert/strict');
  await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.quiz-preview-modal img')?.naturalWidth===500);
  assert.ok(await modal.locator('.katex').count());assert.ok(await modal.locator('.CodeMirror').count());assert.equal(await modal.locator('.option-card').count(),4);assert.equal(await modal.getByRole('button',{name:'Forrige',exact:true}).isDisabled(),true);
  await modal.getByLabel('Vis fasit').check();assert.equal(await modal.locator('.option-card.correct').count(),1);
+ // Navigation remains available while the answer checkbox retains keyboard focus.
+ await modal.getByLabel('Vis fasit').press('ArrowRight');
+ await modal.getByRole('heading',{name:'Spørsmål 2 av 3',exact:true}).waitFor();
+ await modal.getByLabel('Vis fasit').press('ArrowLeft');
+ await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();
+ assert.equal(await modal.getByLabel('Vis fasit').isChecked(),true);
+ await modal.getByLabel('Gå til spørsmål').press('ArrowRight');
+ await modal.getByRole('heading',{name:'Spørsmål 2 av 3',exact:true}).waitFor();
+ await modal.getByLabel('Gå til spørsmål').press('ArrowLeft');
+ await modal.getByRole('heading',{name:'Spørsmål 1 av 3',exact:true}).waitFor();
+
  for(const viewport of [{width:1920,height:1080},{width:390,height:844}]){await page.setViewportSize(viewport);await page.waitForTimeout(100);const box=await modal.boundingBox();assert.ok(box.x>=15&&box.y>=15&&box.x+box.width<=viewport.width-15&&box.y+box.height<=viewport.height-15);await page.screenshot({path:`/tmp/livequiz-preview-${viewport.width}.png`});}
  await modal.getByRole('button',{name:'Neste',exact:true}).click();await modal.locator('iframe').waitFor({state:'attached'});assert.equal(await modal.locator('.option-card.correct').count(),2);
  await modal.getByRole('button',{name:'Neste',exact:true}).click();await modal.getByText('Godkjente svar: four · 4').waitFor();assert.equal(await modal.locator('iframe').count(),0);assert.equal(await modal.getByRole('button',{name:'Neste',exact:true}).isDisabled(),true);

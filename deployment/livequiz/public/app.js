@@ -205,7 +205,7 @@
     if(!children.length&&!quizzes.length)app.append(el('p',current?'Denne mappen er tom. Lag en quiz eller flytt en quiz hit.':'Lag en quiz eller en mappe for å komme i gang.','hint'));
     const grid=el('div',undefined,'library');
     for(const q of quizzes){
-      const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p',(q.private?'Privat':'Offentlig')+' · Versjon '+q.revision),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
+      const card=el('article',undefined,'card');card.append(el('h2',q.title),el('p',q.private?'Privat':'Offentlig'),group(link('Rediger','?edit='+q.id+(currentId?'&folder='+currentId:'')),
         button('Start spill',async()=>{const r=await api('create',{id:q.id});location.href='?host='+r.room;}),button('Forhåndsvis',async()=>{const quiz=await api('quiz',undefined,{id:q.id});previewQuiz(quiz.content);},'secondary'),button('Del quiz',()=>shareQuiz(q,card),'secondary'),
         button('Flytt',()=>{const target=destination(q.folder);organizationDialog('Flytt «'+q.title+'»',[target.label],()=>api('organize',{command:'move-quiz',id:q.id,parent:target.value()}));},'quiet'),
         button('Slett',async()=>{if(!confirm('Slette «'+q.title+'»? Dette kan ikke angres.'))return;await api('delete',{id:q.id});await library();},'quiet')));grid.append(card);
@@ -220,7 +220,7 @@
     const url=new URL('./',location.href);url.searchParams.set('share',q.id);url.hash=new URLSearchParams({key:data.key});
     const label=field('Delingslenke',url.href,()=>{}),input=label.querySelector('input');input.readOnly=true;input.onclick=()=>input.select();
     const status=el('p','','hint');status.setAttribute('role','status');
-    panel.append(el('p','Alle med lenken kan starte et eget spill uten konto. De kan lage en redigerbar kopi når de logger inn. Originalen din blir ikke endret. Lenken bruker siste lagrede versjon.','hint'),label,
+    panel.append(el('p','Alle med lenken kan starte et eget spill uten konto. De kan lage en redigerbar kopi når de logger inn. Originalen din blir ikke endret. Lenken bruker quizen slik den sist ble lagret.','hint'),label,
       group(button('Kopier lenke',async()=>{try{await navigator.clipboard.writeText(url.href);status.textContent='Lenken er kopiert.';}catch(_){input.focus();input.select();status.textContent='Kopier den markerte lenken.';}}),
         button('Slå av deling',async()=>{await api('share',{id:q.id,enabled:false});panel.replaceChildren(el('p','Deling er slått av. Gamle lenker kan ikke starte nye spill. Spill som allerede er startet, fortsetter.','hint'));},'quiet')),status);
     card.append(panel);input.focus();input.select();

@@ -11,8 +11,9 @@ Choose **Class Battle** in the host lobby's **Spilltype** selector. The main cla
 starts as **Class A** and uses the existing six-digit room code. Rename it and
 choose **Inviter medvert** once for each additional teacher. Each invitation is a
 separate 256-bit bearer capability, delivered in the URL fragment. Teachers enter
-their class name and receive a distinct eight-digit student code; the ordinary
-student join form accepts both lengths. Reopening an invitation resumes the same
+their class name and receive a distinct six-digit student code, just like the main classroom. New co-host
+codes start with zero, which must be included. Existing eight-digit codes remain
+valid for their current sessions. Reopening an invitation resumes the same
 class rather than creating another. Invitations are for teachers, not students.
 
 New invitations remain in a numbered list after refresh, with individual copy
@@ -42,7 +43,10 @@ All classes use one `lq_rooms` record, the same deadlines and question sequence,
 and the existing individual answer/score records. Class metadata, invitation
 hashes, main-host-only recoverable invitation links, and server-owned participant-to-class assignments live in `_battle` in
 that room's JSON. `lq_class_codes` resolves additional codes to the shared room
-and class. Its eight-digit namespace cannot collide with normal six-digit rooms.
+and class. New codes use 000001–099999, while main rooms use 100000–999999,
+so the namespaces cannot collide even during concurrent creation. The unique
+class-code index handles collisions between co-host codes. The eight-character
+column remains unchanged to support older active sessions.
 The additive table is in `schema.sql` and is also prepared before first use;
 `cleanup.php` removes entries whose rooms have been pruned. No new service or
 package is required. Deploy the new `class-battle.php` alongside the changed app,

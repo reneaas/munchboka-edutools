@@ -188,10 +188,12 @@ function lq_room(PDO $db, string $id, bool $lock = false): array {
 function lq_join(PDO $db, string $pin, string $name, string $token): array {
     if (!preg_match('/^(?:[0-9]{6}|[0-9]{8})$/D', $pin) || !preg_match('/^[a-f0-9]{64}$/D', $token)) throw new DomainException('Skriv en gyldig spillkode.');
     $name = jp_text($name, 80); if ($name === '') throw new DomainException('Skriv et kallenavn.');
-    if(strlen($pin)===8)lq_battle_prepare($db);
-    return lq_transaction($db, function () use ($db, $pin, $name, $token) {
+    // Retain existing eight-digit class codes; new class codes start with zero.
+    $classCode=strlen($pin)===8||$pin[0]==='0';
+    if($classCode)lq_battle_prepare($db);
+    return lq_transaction($db, function () use ($db, $pin, $name, $token, $classCode) {
         $class='main';
-        if(strlen($pin)===8){
+        if($classCode){
             $entry=lq_query($db,'SELECT room_id,class_id FROM lq_class_codes WHERE pin=?',[$pin])->fetch();
             if(!$entry)throw new DomainException('Spillkoden er ugyldig eller utløpt.');
             $r=lq_room($db,$entry['room_id'],true);$class=$entry['class_id'];

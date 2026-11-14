@@ -80,7 +80,8 @@ function lq_battle_join_host(PDO $db,array $input): array {
         $name=jp_text($input['name'] ?? '',80);if($name==='')throw new DomainException('Skriv et klassenavn.');
         $id=bin2hex(random_bytes(16));$pin=null;
         for($i=0;$i<10;$i++){
-            $candidate=(string)random_int(10000000,99999999);
+            // Leading zero reserves a disjoint six-digit namespace: main rooms use 100000–999999.
+            $candidate=sprintf('%06d',random_int(1,99999));
             try{lq_query($db,'INSERT INTO lq_class_codes (pin,room_id,class_id) VALUES (?,?,?)',[$candidate,$room['id'],$id]);$pin=$candidate;break;}
             catch(PDOException $e){if($e->getCode()!=='23000')throw $e;}
         }

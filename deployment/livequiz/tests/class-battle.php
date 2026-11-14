@@ -21,7 +21,7 @@ check(lq_battle_join_host($db,['room'=>$rid,'key'=>$inviteB,'name'=>'Duplicate']
 rejects(fn()=>battleControl($db,$rid,'next'),'cannot start without students');
 $manage('rename',['name'=>'Renamed A']);check(lq_state($db,$rid,1,'',true)['battle']['class_name']==='Renamed A','main class can be named');$manage('rename',['name'=>'Class A']);
 $bs=lq_battle_state($db,$rid,$inviteB);$cs=lq_battle_state($db,$rid,$inviteC);
-check($bs['pin']!==$cs['pin']&&strlen($bs['pin'])===8,'co-host codes are separate');
+check($bs['pin']!==$cs['pin']&&strlen($bs['pin'])===6&&$bs['pin'][0]==='0'&&$room['pin'][0]!=='0','co-host codes are separate');
 rejects(fn()=>lq_battle_join_host($db,['room'=>$rid,'key'=>str_repeat('0',64),'name'=>'Unauthorized']),'invalid invitation rejected');
 rejects(fn()=>lq_join($db,$inviteB,'Host link as code',bin2hex(random_bytes(32))),'invitation is not a student code');
 rejects(fn()=>lq_state($db,$rid,0,'',true,$inviteB),'co-host key cannot authorize main-host control');
@@ -35,6 +35,13 @@ rejects(fn()=>$manage('ready',['ready'=>true]),'main class has no ready action')
 $mainLobby=lq_state($db,$rid,1,'',true);
 check($mainLobby['battle']['music']===$bs['battle']['music'],'shared lobby music survives polling');
 check($mainLobby['battle']['invitations'][0]['class_name']==='Class B','accepted invitation identifies class');
+$oldPin='12345678';
+lq_query($db,'UPDATE lq_class_codes SET pin=? WHERE room_id=? AND class_id=?',[$oldPin,$rid,$empty['class']]);
+$legacyToken=bin2hex(random_bytes(32));lq_join($db,$oldPin,'Legacy student',$legacyToken);
+check(lq_state($db,$rid,0,$legacyToken,false)['battle']['class_id']===$empty['class'],'legacy eight-digit classroom code still routes correctly');
+$legacyId=lq_player($db,$rid,$legacyToken)['id'];
+lq_battle_manage($db,0,['room'=>$rid,'command'=>'kick','player'=>$legacyId],'',$inviteEmpty);
+rejects(fn()=>lq_join($db,substr($bs['pin'],1),'Missing zero',bin2hex(random_bytes(32))),'leading zero is required');
 $tokens=[];$pids=[];
 foreach([[$room['pin'],3,'A'],[$bs['pin'],2,'B'],[$cs['pin'],1,'C']] as [$pin,$n,$class]){
  for($i=0;$i<$n;$i++){$token=bin2hex(random_bytes(32));lq_join($db,$pin,$class.$i,$token);$tokens[$class][]=$token;$pids[$class][]=lq_player($db,$rid,$token)['id'];}

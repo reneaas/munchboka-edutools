@@ -53,6 +53,8 @@ const assert=require('node:assert/strict');
   const lobbyStates=await Promise.all([main,b.page,c.page,d.page].map(state));
   for(const s of lobbyStates)assert.deepEqual(s.battle.music,lobbyStates[0].battle.music);
   assert.equal(new Set([codeA,b.code,c.code]).size,3);
+  for(const code of [codeA,b.code,c.code])assert.match(code,/^[0-9]{6}$/);
+  assert.equal(b.code[0],'0');
   // Opening an already claimed invitation resumes its class, even in a fresh tab.
   await b.page.goto(b.url);await wait(b.page,'LOBBY');
   const students=[];
@@ -68,7 +70,7 @@ const assert=require('node:assert/strict');
   });assert.equal(denied,403);
   await b.page.screenshot({path:'/private/tmp/class-battle-lobby.png',fullPage:true});
   await c.page.setViewportSize({width:390,height:844});
-  assert.equal(await c.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'eight-digit code fits mobile lobby');
+  assert.equal(await c.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'six-digit code fits mobile lobby');
   await c.page.screenshot({path:'/private/tmp/class-battle-mobile.png',fullPage:true});
   await c.page.setViewportSize({width:1280,height:900});
   await main.getByRole('button',{name:'Start første spørsmål',exact:true}).click();

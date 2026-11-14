@@ -4,14 +4,11 @@ declare(strict_types=1);
 function lq_game(array $content): string { return $content['game'] ?? 'regular'; }
 function lq_is_race(array $content): bool { return in_array(lq_game($content),['race','quizlet'],true); }
 function lq_quizlet_limit(array $content): int {
-    // Text and sorting questions give every member a full answer, so only choice questions limit team size.
-    $limits=[60];
+    // Choice count does not restrict team size. Retain the normal room limit.
     foreach($content['questions'] as $q){
-        if(in_array($q['type'],['text','sort'],true))continue;
-        if(!in_array($q['type'],['single','multi'],true))return 0;
-        $limits[]=count($q['options']);
+        if(!in_array($q['type'],['single','multi','text','sort'],true))return 0;
     }
-    return min($limits);
+    return 60;
 }
 function lq_quizlet_deal(array $entry,array $content): array {
     $entry['choices']=[];$entry['confirmed']=[];
@@ -19,7 +16,7 @@ function lq_quizlet_deal(array $entry,array $content): array {
     $members=lq_race_order(count($entry['members']));
     $q=$content['questions'][$entry['order'][$entry['progress']]];
     if(in_array($q['type'],['text','sort'],true))return $entry;
-    if(count($members)>count($q['options']))throw new DomainException('Laget har flere medlemmer enn svaralternativer.');
+    foreach($entry['members'] as $member)$entry['choices'][$member['id']]=[];
     // Spread correct choices across different members before distributing the rest.
     $options=lq_race_order(count($q['options']));
     $options=array_merge(array_values(array_filter($options,fn($i)=>in_array($i,$q['correct'],true))),array_values(array_filter($options,fn($i)=>!in_array($i,$q['correct'],true))));
@@ -27,7 +24,7 @@ function lq_quizlet_deal(array $entry,array $content): array {
         $player=$entry['members'][$members[$i%count($members)]]['id'];
         $entry['choices'][$player][]=$option;
     }
-    foreach($entry['choices'] as &$choices){$original=$choices;$choices=array_map(fn($i)=>$original[$i],lq_race_order(count($original)));}unset($choices);
+    foreach($entry['choices'] as &$choices){if(!$choices)continue;$original=$choices;$choices=array_map(fn($i)=>$original[$i],lq_race_order(count($original)));}unset($choices);
     return $entry;
 }
 function lq_race_order(int $count): array {

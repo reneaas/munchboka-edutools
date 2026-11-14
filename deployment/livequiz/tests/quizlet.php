@@ -4,16 +4,16 @@ function qc(PDO $db,string $id,string $command,array $extra=[]): void {
     $s=lq_state($db,$id,1,'',true);lq_control($db,1,['room'=>$id,'run'=>$s['run'],'version'=>$s['version'],'command'=>$command]+$extra);
 }
 function contentOf(PDO $db,string $id): array {return json_decode(lq_room($db,$id)['content'],true);}
-$questions=[array_replace($q,['image'=>['id'=>$img,'alt'=>'']]),$q,$q];
+$questions=[array_replace($q,['image'=>['id'=>$img,'alt'=>''],'options'=>['False','True'],'correct'=>[1]]),$q,$q];
 $base=['title'=>'Quizlet-like','questions'=>$questions];
 $settings=['game'=>'quizlet','mode'=>'teams','max_team_size'=>3];
 rejects(fn()=>lq_configure_content($base,array_replace($settings,['mode'=>'individual'])),'teams required');
-rejects(fn()=>lq_configure_content($base,array_replace($settings,['max_team_size'=>5])),'no member without choices');
+check(lq_configure_content($base,array_replace($settings,['max_team_size'=>5]))['play']['max_team_size']===5,'team size independent of choice count');
 check(lq_configure_content(['questions'=>[$typed]],$settings)['game']==='quizlet','typed questions supported');
 check(lq_quizlet_limit(['questions'=>[$typed]])===60,'text-only quiz supports normal maximum team size');
-check(lq_quizlet_limit(['questions'=>[$typed,$multi,$q]])===3,'mixed quiz limit uses only choice questions');
+check(lq_quizlet_limit(['questions'=>[$typed,$multi,$q]])===60,'mixed quiz uses normal team size limit');
 check(lq_configure_content(['questions'=>[$multi]],$settings)['game']==='quizlet','multiple correct questions supported');
-foreach([2,3,4] as $size){
+foreach([2,3,4,6] as $size){
  $saved=lq_save($db,1,['content'=>$base]);$room=lq_create_room($db,1,$saved['id']);$id=$room['room'];
  qc($db,$id,'configure',array_replace($settings,['max_team_size'=>$size]));$tokens=[];
  for($i=0;$i<$size*2;$i++){$t=bin2hex(random_bytes(32));lq_join($db,$room['pin'],'P'.$i,$t);$tokens[lq_player($db,$id,$t)['id']]=$t;}
@@ -27,7 +27,7 @@ foreach([2,3,4] as $size){
   foreach($entry['members'] as $m){
    $t=$tokens[$m['id']];$s=lq_state($db,$id,0,$t,false);$own=$entry['choices'][$m['id']];$seen=array_merge($seen,$own);
    check($s['can_answer']&&$s['index']===$index,'all team members see same question and can answer');
-   check(count($own)>=1&&count($own)<=ceil(4/$size),'balanced nonempty choices');
+   check(count($own)>=floor(count($questions[$index]['options'])/$size)&&count($own)<=ceil(count($questions[$index]['options'])/$size),'balanced choices including empty hands');
    check($s['question']['options']===array_map(fn($i)=>$questions[$index]['options'][$i],$own),'only own alternatives in payload');
    check(!isset($s['question']['correct'])&&!isset($s['question']['youtube'])&&!isset($s['race']['choices']),'no solution or other assignments leak');
    check($s['question']===lq_state($db,$id,0,$t,false)['question'],'polling does not reshuffle');
@@ -36,7 +36,7 @@ foreach([2,3,4] as $size){
    rejects(fn()=>lq_race_answer($db,$input+['answer'=>[count($own)]],$t),'unassigned index rejected');
    foreach($own as $local=>$global){if($global===1){$correctPlayer=[$t,$local];}else{$wrongPlayer=[$t,$local];}}
   }
-  sort($seen);check($seen===[0,1,2,3],'every choice assigned exactly once');
+  sort($seen);check($seen===range(0,count($questions[$index]['options'])-1),'every choice assigned exactly once');
   $wrong=$turn%2===1;[$t,$local]=$wrong?$wrongPlayer:$correctPlayer;
   $input['answer']=[$local];$reply=lq_race_answer($db,$input,$t);
   check($reply['correct']===!$wrong,'local selection mapped correctly');

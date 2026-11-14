@@ -401,14 +401,15 @@ nav{align-items:center;flex-wrap:wrap}
 .quiz-overview-toolbar h2{margin:0;overflow-wrap:anywhere}
 .quiz-overview-toolbar .actions,.quiz-overview-toolbar label{margin:0}
 .quiz-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px}
-.quiz-overview-card{min-width:0;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow-wrap:anywhere}
-.quiz-overview-card h3{margin:0}
-.quiz-overview-card .rich{font-size:15px;line-height:1.45}
-.quiz-overview-card .question-image{max-height:180px;margin:12px auto}
-.quiz-overview-card .code-display{max-height:180px;overflow:auto}
-.quiz-overview-card .CodeMirror{font-size:13px}
-.quiz-overview-answers ol{padding-left:24px;margin-bottom:0}
-.quiz-overview-answers li{padding:6px;border-radius:5px}
-.quiz-overview-answers .overview-correct{background:#dcfce7;color:#166534}
-.quiz-overview-answers .overview-correct .hint{color:inherit}
-@media(max-width:600px){.quiz-overview-grid{grid-template-columns:1fr;padding:12px}.quiz-overview-toolbar{align-items:flex-start;flex-direction:column;padding:12px}.quiz-overview-card{padding:14px}}
+.question-modal.quiz-overview-card{width:100%;max-width:none;max-height:none;margin:0;align-self:start;box-shadow:none;animation:none;overflow:hidden}
+.quiz-overview-card .modal-header{max-height:none;overflow:visible}
+.quiz-overview-card .modal-title{font-size:20px;padding:14px 18px}
+.quiz-overview-card .modal-header>.rich{font-size:20px;padding:14px 18px}
+.quiz-overview-card .modal-header>.hint{padding:0 18px}
+.quiz-overview-card .modal-body{padding:18px;overflow:visible}
+.quiz-overview-card .question-media:not(:empty){margin-bottom:16px}
+.quiz-overview-card .question-image{max-height:260px;margin:0 auto}
+.quiz-overview-card .code-display{max-height:260px;overflow:auto}
+.quiz-overview-card .CodeMirror{font-size:14px}
+.quiz-overview-card .preview-answers{min-width:0}
+@media(max-width:600px){.quiz-overview-grid{grid-template-columns:1fr;padding:12px}.quiz-overview-toolbar{align-items:flex-start;flex-direction:column;padding:12px}.quiz-overview-card .modal-body{padding:12px}}

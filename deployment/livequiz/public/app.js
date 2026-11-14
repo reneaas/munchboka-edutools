@@ -286,6 +286,19 @@
     if (q.type === 'single') return new Set(q.correct).size === 1;
     return q.type === 'multi';
   }
+  function previewAnswers(q,index,revealed){
+    return q.type==='text'?el('p',revealed?'Godkjente svar: '+q.accepted.join(' · '):'Deltakerne skriver inn svaret.','qcard-note'):
+      optionCards(q,q.type==='sort'?optionOrder(q.options.length,'preview:'+index):q.options.map((_,i)=>i),revealed);
+  }
+  function previewMedia(question,media,header,mediaQuery={}){
+    const q={...question};
+    if(q.youtube){try{const u=new URL(q.youtube);q.youtube=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){}}
+    void content(q,media,{showVideo:false,query:mediaQuery},header).then(()=>{
+      if(!media.isConnected||!q.youtube)return;
+      if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false);
+      else media.append(el('p','Kontroller YouTube-lenken i redigeringen.','hint'));
+    });
+  }
   function previewQuiz(contentModel,mediaQuery={}){
     const quiz=JSON.parse(JSON.stringify(contentModel));
     quiz.questions = quiz.questions.filter(questionReady);
@@ -297,19 +310,13 @@
     let index=0;
     for(let i=0;i<quiz.questions.length;i++){const option=el('option','Spørsmål '+(i+1));option.value=String(i);jump.append(option);}jumpLabel.append(jump);
     const answers=el('div',undefined,'preview-answers');
-    function renderAnswers(){const q=quiz.questions[index];answers.replaceChildren(q.type==='text'?el('p',reveal.checked?'Godkjente svar: '+q.accepted.join(' · '):'Deltakerne skriver inn svaret.','qcard-note'):optionCards(q,q.type==='sort'?optionOrder(q.options.length,'preview:'+index):q.options.map((_,i)=>i),reveal.checked));}
+    function renderAnswers(){answers.replaceChildren(previewAnswers(quiz.questions[index],index,reveal.checked));}
     function render(){
       const q={...quiz.questions[index]},media=el('div',undefined,'question-media'),title=el('h2','Spørsmål '+(index+1)+' av '+quiz.questions.length,'modal-title');
       title.id='quiz-preview-title';header.replaceChildren(title);dialog.setAttribute('aria-labelledby',title.id);
       body.classList.toggle('media-question-body',!!(q.image||q.youtube));body.replaceChildren(media,answers);renderAnswers();
       previous.disabled=index===0;next.disabled=index===quiz.questions.length-1;jump.value=String(index);
-      // Editing may contain a pasted URL that has not been normalized by saving yet.
-      if(q.youtube){try{const u=new URL(q.youtube);q.youtube=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){} }
-      void content(q,media,{showVideo:false,query:mediaQuery},header).then(()=>{
-        if(!media.isConnected||!q.youtube)return;
-        if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false);
-        else media.append(el('p','Kontroller YouTube-lenken i redigeringen.','hint'));
-      });
+      previewMedia(q,media,header,mediaQuery);
       body.scrollTop=0;header.scrollTop=0;
     }
     previous.onclick=()=>{if(index>0){index--;render();}};next.onclick=()=>{if(index<quiz.questions.length-1){index++;render();}};
@@ -339,27 +346,14 @@
     top.append(heading,group(revealLabel,button('Lukk oversikt',()=>dialog.close(),'secondary')));dialog.append(top,grid);
     const answerViews=[];
     quiz.questions.forEach((q,index)=>{
-      const card=el('article',undefined,'quiz-overview-card'),media=el('div'),answers=el('div',undefined,'quiz-overview-answers');
-      card.append(el('h3','Spørsmål '+(index+1)),el('p',questionReady(q)?q.seconds+' sekunder':'Uferdig · hoppes over i spillet','hint'),media,answers);
-      void content(q,media,{showVideo:false});
-      if(q.youtube)media.append(el('p','Inneholder YouTube-video','hint'));
-      const renderAnswers=()=>{
-        answers.replaceChildren();
-        if(q.type==='text'){
-          answers.append(el('p',reveal.checked?'Godkjente svar: '+(q.accepted||[]).join(' · '):'Deltakerne skriver inn svaret.'));
-        }else{
-          const order=q.type==='sort'?(reveal.checked?q.correct:optionOrder(q.options.length,'overview:'+index)):q.options.map((_,i)=>i);
-          const list=el('ol');
-          for(const i of order){
-            const correct=reveal.checked&&q.correct.includes(i),item=el('li',undefined,correct?'overview-correct':'');
-            item.append(rich(q.options[i]||'Tomt alternativ'));
-            if(correct&&q.type!=='sort')item.append(el('span','✓ Riktig svar','hint'));
-            list.append(item);
-          }
-          if(q.type==='sort'&&reveal.checked)answers.append(el('p','Riktig rekkefølge','hint'));
-          answers.append(list);
-        }
-      };
+      const card=el('article',undefined,'question-modal quiz-overview-card');
+      const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body');
+      const media=el('div',undefined,'question-media'),answers=el('div',undefined,'preview-answers');
+      header.append(el('h3','Spørsmål '+(index+1),'modal-title'));
+      if(!questionReady(q))header.append(el('p','Uferdig · hoppes over i spillet','hint'));
+      body.append(media,answers);card.append(header,body);
+      previewMedia(q,media,header);
+      const renderAnswers=()=>answers.replaceChildren(previewAnswers(q,index,reveal.checked));
       answerViews.push(renderAnswers);renderAnswers();grid.append(card);
     });
     reveal.onchange=()=>answerViews.forEach(render=>render());
@@ -515,8 +509,23 @@
         const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
         card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
-        upload.onchange=async()=>{const file=upload.files[0];if(!file)return;uploads++;changed();upload.disabled=true;try{if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');const data=new FormData();data.set('image',file);const r=await editorRequest('upload',data);q.image={...r.image,alt:''};renderQuestions();}catch(e){error(e);}finally{uploads--;upload.disabled=false;changed();}};
-        imageLabel.append(upload);card.append(imageLabel);
+        // The native filename field resets on render, even when the image is saved.
+        upload.style.display='none';imageLabel.append(upload);
+        const imageStatus=el('p',q.image?'✓ Bilde er lastet opp og lagt til spørsmålet.':'Ingen bilde lagt til.','image-upload-status');
+        imageStatus.setAttribute('role','status');
+        const chooseImage=button(q.image?'Bytt bilde':'Velg bilde',()=>upload.click(),'secondary');
+        upload.onchange=async()=>{
+          const file=upload.files[0];if(!file)return;
+          uploads++;changed();upload.disabled=true;chooseImage.disabled=true;imageStatus.textContent='Laster opp bilde …';
+          try{
+            if(file.size>2097152)throw new Error('Bildet er større enn 2 MiB.');
+            const data=new FormData();data.set('image',file);const r=await editorRequest('upload',data);
+            q.image={...r.image,alt:''};renderQuestions();
+          }catch(e){
+            error(e);imageStatus.textContent=q.image?'Det nye bildet ble ikke lastet opp. Det forrige bildet er fortsatt lagt til.':'Bildet ble ikke lastet opp. Prøv igjen.';
+          }finally{uploads--;upload.disabled=false;chooseImage.disabled=false;upload.value='';changed();}
+        };
+        card.append(imageLabel,imageStatus,chooseImage);
         if(q.image)card.append(button('Fjern bilde',()=>{q.image=null;changed();renderQuestions();},'quiet'));
         if(q.type==='text') card.append(field('Godkjente svar – ett per linje',q.accepted.join('\n'),v=>{q.accepted=v.split('\n').filter(x=>x.trim());changed();},'textarea'),el('p','Store/små bokstaver og alle mellomrom ignoreres. Desimaltall godtas med både komma og punktum (0,25 = 0.25). Ingen algebraisk eller numerisk tilnærming.','hint'));
         else if(q.type==='sort'){
@@ -673,8 +682,7 @@
         modes.hidden=battle;keepLabel.hidden=battle||!(s.teams?.length||s.has_retained_teams);
         if(quizlet)selected='teams';
         for(const radio of modes.querySelectorAll('input')){radio.checked=radio.value===selected;radio.disabled=quizlet;}
-        input.max=quizlet?Math.max(2,s.quizlet_max_team_size||2):60;
-        if(quizlet&&Number(input.value)>Number(input.max))input.value=input.max;
+        input.max=60;
         maximum.hidden=selected!=='teams';input.disabled=selected!=='teams';
         showLightningDuration();lightningRules.hidden=racing;teamRules.hidden=racing;
         rules.hidden=!racing;
@@ -683,7 +691,7 @@
           ['Medverter:', 'Inviter andre lærere fra lobbyen. Hver klasse får sin egen spillkode. Bare hovedverten styrer spillet.'],
           ['Låste klasselister:', 'Klasser og nye elever må bli med før start. Eksisterende elever kan koble til igjen.']
         ]:quizlet?[
-          ['Samarbeid i lag:', 'Alle ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. Hvert medlem får minst ett alternativ på valgspørsmål.'],
+          ['Samarbeid i lag:', 'Alle ser samme spørsmål, men svaralternativene fordeles tilfeldig mellom dere. På spørsmål med få alternativer kan noen hjelpe laget uten å ha et eget alternativ.'],
           ['Send inn riktig svar:', 'Den som har riktig alternativ, sender det inn. Ved flere riktige svar må alle sendes inn før laget går videre.'],
           ['Tekstspørsmål:', 'Alle kan skrive. Første riktige svar tar laget videre.'],
           ['Feil svar:', 'Lagets fremdrift nullstilles.'],
@@ -1060,7 +1068,7 @@
             if(s.race.reset_at && s.now-s.race.reset_at<6){
               const reset=el('p',s.game==='quizlet'?'Feil svar! Laget starter på nytt med nye svaralternativer.':s.mode==='teams'?`Feil svar! Laget må starte på nytt. Neste forsøk starter med ${s.race.starting.nickname}.`:'Feil svar! Start på nytt.','race-reset');reset.setAttribute('role','status');header.append(reset);setTimeout(()=>reset.remove(),Math.max(0,(6-(s.now-s.race.reset_at))*1000));
             }
-            if(s.can_answer){const order=s.question.options.length?optionOrder(s.question.options.length,id+':race:'+s.index):[];questionCard(s,order,header,body);}
+            if(s.can_answer){if(s.game==='quizlet'&&['single','multi'].includes(s.question.type)&&!s.question.options.length)body.append(el('p','Du har ingen svaralternativer på dette spørsmålet. Hjelp laget med å finne riktig svar. En lagkamerat sender det inn.','hint'));const order=s.question.options.length?optionOrder(s.question.options.length,id+':race:'+s.index):[];questionCard(s,order,header,body);}
             else{header.append(el('h2','Quiz Race','modal-title'));body.append(el('p',`Det er ${s.race.active.nickname} sin tur.`,'intro'),el('p',`${s.progress} av ${s.total} riktige · Forsøk ${s.race.attempt+1}`),el('p','Vent på lagkameraten din. Du får spørsmålet automatisk når det er din tur.','hint'));}
           },s.can_answer?'active-question-modal lightning-question-modal':'race-modal');
         }

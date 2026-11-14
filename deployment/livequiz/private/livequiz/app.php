@@ -268,7 +268,6 @@ function lq_configure_content(array $content,array $settings): array {
         $limit=lq_quizlet_limit($content);
         if(!$limit)throw new DomainException('Quizen inneholder en spørsmålstype som ikke støttes.');
         if($content['play']['mode']!=='teams')throw new DomainException('Quizlet-like spilles bare med tilfeldige lag.');
-        if($content['play']['max_team_size']>$limit)throw new DomainException('Maks lagstørrelse kan ikke overstige '.$limit.' svaralternativer.');
     }
     $content['lightning']=lq_validate_lightning($settings['lightning'] ?? lq_lightning_settings($content));
     return $content;

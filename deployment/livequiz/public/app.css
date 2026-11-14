@@ -413,3 +413,10 @@ nav{align-items:center;flex-wrap:wrap}
 .quiz-overview-card .CodeMirror{font-size:14px}
 .quiz-overview-card .preview-answers{min-width:0}
 @media(max-width:600px){.quiz-overview-grid{grid-template-columns:1fr;padding:12px}.quiz-overview-toolbar{align-items:flex-start;flex-direction:column;padding:12px}.quiz-overview-card .modal-body{padding:12px}}
+
+.quiz-overview-modal.quiz-preview-modal[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:calc(100dvh - 32px);overflow:hidden}
+.quiz-overview-modal .overview-preview-body{padding:0;overflow:auto;min-height:0}
+.quiz-preview-modal .question-modal-footer>.actions{margin:8px 0}
+.quiz-overview-modal.quiz-preview-modal>.modal-header{background:var(--surface)}
+.preview-view-toggle{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;padding:10px;flex-shrink:0}
+.preview-view-toggle svg{display:block}

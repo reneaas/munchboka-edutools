@@ -301,17 +301,49 @@
   }
   function previewQuiz(contentModel,mediaQuery={}){
     const quiz=JSON.parse(JSON.stringify(contentModel));
+    const allQuestions=quiz.questions;
     quiz.questions = quiz.questions.filter(questionReady);
     if(!quiz.questions.length)throw new Error('Quizen har ingen ferdige spørsmål ennå. Fullfør minst ett spørsmål for å forhåndsvise spillet.');
     const opener=document.activeElement,dialog=el('dialog',undefined,'question-modal teacher-modal active-question-modal quiz-preview-modal');
     const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body'),footer=el('div',undefined,'question-modal-footer');
     const previous=el('button','Forrige','secondary'),next=el('button','Neste','secondary'),jumpLabel=el('label','Gå til spørsmål'),jump=el('select');
     const revealLabel=el('label'),reveal=el('input');reveal.type='checkbox';revealLabel.append(reveal,document.createTextNode(' Vis fasit'));
-    let index=0;
+    let index=0,overviewAnswers=null;
+    let overviewMode=false;
+    const viewToggle=button('',()=>{overviewMode=!overviewMode;render();},'secondary preview-view-toggle');
+    function updateViewToggle(){
+      const label=overviewMode?'Vis ett spørsmål om gangen':'Vis alle spørsmål i rutenett';
+      viewToggle.setAttribute('aria-label',label);viewToggle.title=label;
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','24');svg.setAttribute('height','24');
+      svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+      for(const [x,y,width,height] of overviewMode?[[4,4,16,16]]:[[3,3,7,7],[14,3,7,7],[3,14,7,7],[14,14,7,7]]){
+        const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+        for(const [name,value] of Object.entries({x,y,width,height,rx:1.5,fill:'none',stroke:'currentColor','stroke-width':1.8}))rect.setAttribute(name,String(value));
+        svg.append(rect);
+      }
+      viewToggle.replaceChildren(svg);
+    }
     for(let i=0;i<quiz.questions.length;i++){const option=el('option','Spørsmål '+(i+1));option.value=String(i);jump.append(option);}jumpLabel.append(jump);
     const answers=el('div',undefined,'preview-answers');
-    function renderAnswers(){answers.replaceChildren(previewAnswers(quiz.questions[index],index,reveal.checked));}
+    function renderAnswers(){
+      if(overviewMode){overviewAnswers?.();return;}
+      answers.replaceChildren(previewAnswers(quiz.questions[index],index,reveal.checked));
+    }
     function render(){
+      const overview=overviewMode;updateViewToggle();
+      navigation.style.display=overview?'none':'';
+      dialog.className=overview?'quiz-overview-modal quiz-preview-modal':'question-modal teacher-modal active-question-modal quiz-preview-modal';
+      body.classList.toggle('overview-preview-body',overview);
+      if(overview){
+        const title=el('h2',quiz.title||'Quizoversikt','modal-title');title.id='quiz-preview-title';header.replaceChildren(title);dialog.setAttribute('aria-labelledby',title.id);
+        body.classList.remove('media-question-body');
+        const result=previewQuizOverview(allQuestions,reveal,mediaQuery);
+        overviewAnswers=result.renderAnswers;body.replaceChildren(result.grid);
+        dialog.querySelectorAll('.CodeMirror').forEach(node=>node.CodeMirror?.refresh());
+        body.scrollTop=0;return;
+      }
+      overviewAnswers=null;
       const q={...quiz.questions[index]},media=el('div',undefined,'question-media'),title=el('h2','Spørsmål '+(index+1)+' av '+quiz.questions.length,'modal-title');
       title.id='quiz-preview-title';header.replaceChildren(title);dialog.setAttribute('aria-labelledby',title.id);
       body.classList.toggle('media-question-body',!!(q.image||q.youtube));body.replaceChildren(media,answers);renderAnswers();
@@ -324,7 +356,7 @@
     previous.setAttribute('aria-keyshortcuts','ArrowLeft');next.setAttribute('aria-keyshortcuts','ArrowRight');
     previous.title='Forrige spørsmål (←)';next.title='Neste spørsmål (→)';
     const navigate=event=>{
-      if(!dialog.open||event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.isComposing)return;
+      if(overviewMode||!dialog.open||event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.isComposing)return;
       if(event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))return;
       if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
       event.preventDefault();(event.key==='ArrowLeft'?previous:next).click();
@@ -332,34 +364,27 @@
     document.addEventListener('keydown',navigate);
 
     const fit=()=>dialog.style.setProperty('--teacher-scale',String(Math.max(1,Math.min((innerWidth-32)/900,(innerHeight-32)/700))));
-    footer.append(el('p','Forhåndsvisning · '+(quiz.title||'Uten tittel'),'hint'),group(previous,jumpLabel,next,revealLabel,button('Lukk forhåndsvisning',()=>dialog.close(),'quiet')));
+    const navigation=group(previous,jumpLabel,next);
+    footer.append(el('p','Forhåndsvisning · '+(quiz.title||'Uten tittel'),'hint'),group(viewToggle,revealLabel,button('Lukk forhåndsvisning',()=>dialog.close(),'quiet')),navigation);
     dialog.append(header,body,footer);document.body.append(dialog);fit();dialog.showModal();render();
     window.addEventListener('resize',fit);
     dialog.addEventListener('close',()=>{document.removeEventListener('keydown',navigate);window.removeEventListener('resize',fit);dialog.remove();opener?.focus();},{once:true});
   }
-  function previewQuizOverview(contentModel){
-    const quiz=JSON.parse(JSON.stringify(contentModel));
-    const opener=document.activeElement,dialog=el('dialog',undefined,'quiz-overview-modal');
-    const heading=el('h2',quiz.title||'Quizoversikt');heading.id='quiz-overview-title';dialog.setAttribute('aria-labelledby',heading.id);
-    const revealLabel=el('label'),reveal=el('input');reveal.type='checkbox';revealLabel.append(reveal,document.createTextNode(' Vis fasit'));
-    const top=el('div',undefined,'quiz-overview-toolbar'),grid=el('div',undefined,'quiz-overview-grid');
-    top.append(heading,group(revealLabel,button('Lukk oversikt',()=>dialog.close(),'secondary')));dialog.append(top,grid);
+  function previewQuizOverview(questions,reveal,mediaQuery){
+    const grid=el('div',undefined,'quiz-overview-grid');
     const answerViews=[];
-    quiz.questions.forEach((q,index)=>{
+    questions.forEach((q,index)=>{
       const card=el('article',undefined,'question-modal quiz-overview-card');
       const header=el('div',undefined,'modal-header'),body=el('div',undefined,'modal-body');
       const media=el('div',undefined,'question-media'),answers=el('div',undefined,'preview-answers');
       header.append(el('h3','Spørsmål '+(index+1),'modal-title'));
       if(!questionReady(q))header.append(el('p','Uferdig · hoppes over i spillet','hint'));
       body.append(media,answers);card.append(header,body);
-      previewMedia(q,media,header);
+      previewMedia(q,media,header,mediaQuery);
       const renderAnswers=()=>answers.replaceChildren(previewAnswers(q,index,reveal.checked));
       answerViews.push(renderAnswers);renderAnswers();grid.append(card);
     });
-    reveal.onchange=()=>answerViews.forEach(render=>render());
-    document.body.append(dialog);dialog.showModal();
-    dialog.querySelectorAll('.CodeMirror').forEach(node=>node.CodeMirror?.refresh());
-    dialog.addEventListener('close',()=>{dialog.remove();opener?.focus();},{once:true});
+    return {grid,renderAnswers:()=>answerViews.forEach(render=>render())};
   }
   const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {
@@ -465,7 +490,7 @@
     let collapseQuestionViews=[];
     const collapseAll=button('Skjul alle spørsmål',()=>{collapseQuestionViews.forEach(collapse=>collapse());},'secondary');
     const titleField = field('Quizens tittel', model.title, v => {model.title=v; changed();});
-    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, collapseAll, button('Vis quizoversikt',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuizOverview(model);},'secondary'), button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
+    app.replaceChildren(el('p', 'QUIZVERKSTED', 'eyebrow'), el('h1', 'Et spørsmål om gangen'), group(save, start, collapseAll, button('Forhåndsvis hele quizen',()=>{if(uploads)throw new Error('Vent til bildet er lastet opp.');previewQuiz(model);},'secondary'), link('Mine quizer','?teacher=1'+(params.get('folder')?'&folder='+params.get('folder'):''))), status, loginLink, readiness,
       titleField, privacyLabel, el('p','Offentlige quizer kan finnes og spilles av alle uten konto. Privat skjuler quizen fra søk og slår av delingslenker når du lagrer. Allerede startet spill fortsetter.','hint'), el('p', 'Raske riktige svar: 1000 ved start, 500 halvveis, ned mot 0 ved fristen. YouTube-spørsmål gir full poengsum de første fire sekundene. Feil svar gir alltid 0.', 'hint'), el('p', 'Bruk $...$ eller $$...$$ for matematikk. Kode vises som tekst og kjøres ikke.', 'hint'), list);
     const collapsedQuestions=new WeakSet();
     function renderQuestions() {

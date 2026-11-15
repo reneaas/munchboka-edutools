@@ -6,7 +6,7 @@ An improved sign chart directive with embedded plotting logic that supports:
 - Polynomial functions
 - Rational functions
 - Transcendental functions (sin, cos, exp, log, etc.)
-- Custom domains for numerical zero finding
+- Custom domains for sign analysis and numerical zero finding
 - Flexible styling options
 
 Usage in MyST Markdown:
@@ -515,13 +515,7 @@ def sort_factors(factors):
 
 
 def _parse_domain_option(domain_val: Any) -> Tuple[Tuple[float, float] | None, str | None]:
-    """Parse the directive `domain:` option.
-
-    Back-compat: if `domain` parses as a 2-tuple of floats, treat it as x-domain
-    for numerical zero finding.
-
-    New: otherwise treat it as parameter assumptions, e.g. `a > 0`.
-    """
+    """Parse a finite x-domain interval or parameter assumptions such as `a > 0`."""
     if domain_val is None:
         return None, None
 
@@ -529,11 +523,21 @@ def _parse_domain_option(domain_val: Any) -> Tuple[Tuple[float, float] | None, s
     if not s:
         return None, None
 
-    tup = _parse_tuple(s, float)
-    if tup and len(tup) == 2:
-        return tup, None
+    parts = [p.strip() for p in re.split(r"\band\b|,", s) if p.strip()]
+    if parts and all(_ASSUMPTION_RE.match(part) for part in parts):
+        return None, s
 
-    return None, s
+    message = "domain must be a finite interval (xmin, xmax) with xmin < xmax"
+    try:
+        values = sp.sympify(s)
+        if not isinstance(values, (tuple, list, sp.Tuple)) or len(values) != 2:
+            raise ValueError(message)
+        lower, upper = (_numeric(value) for value in values)
+    except (sp.SympifyError, TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(lower) or not np.isfinite(upper) or lower >= upper:
+        raise ValueError(message)
+    return (lower, upper), None
 
 
 _ASSUMPTION_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(<=|>=|!=|==|=|<|>)\s*(.+?)\s*$")
@@ -716,6 +720,22 @@ def _domain_breakpoints_real(f: sp.Expr, x: sp.Symbol) -> tuple[list[Any], sp.Se
     return out, dom
 
 
+def _sign_intervals(roots, root_numeric, root_positions, domain, dx, outer_step):
+    """Yield sample points and drawing spans, skipping empty endpoint intervals."""
+    values = [root_numeric[root] for root in roots]
+    lower, upper = domain if domain is not None else (
+        values[0] - 2 * outer_step, values[-1] + 2 * outer_step
+    )
+    bounds = [lower] + values + [upper]
+    positions = [-0.05] + [root_positions[root] for root in roots] + [1.05]
+    for i, (left, right) in enumerate(zip(bounds, bounds[1:])):
+        if left >= right:
+            continue
+        start = positions[i] + (dx if i > 0 else 0)
+        end = positions[i + 1] - (dx if i < len(roots) else 0)
+        yield (left + right) / 2, start, end
+
+
 def draw_factors(
     f,
     factors,
@@ -731,6 +751,7 @@ def draw_factors(
     subs: Dict[sp.Symbol, float] | None = None,
     root_numeric: Dict[Any, float] | None = None,
     singularities_set: set[Any] | None = None,
+    domain: Tuple[float, float] | None = None,
 ):
     """Draw sign lines for each factor.
 
@@ -799,8 +820,9 @@ def draw_factors(
         factor_own_roots = set(r for r in factor_roots if r != -np.inf)
 
         # If no real roots AND no global roots (constant factor with no breakpoints)
-        if (not factor_own_roots) and (not all_sorted_roots):
-            sgn = _eval_sign_at(full_expr, x, 0, subs)
+        if not all_sorted_roots:
+            x0 = (domain[0] + domain[1]) / 2 if domain is not None else 0
+            sgn = _eval_sign_at(full_expr, x, x0, subs)
             if sgn is not None and sgn > 0:
                 ax.plot(
                     [x_min, x_max],
@@ -832,25 +854,9 @@ def draw_factors(
         # This ensures test points fall within valid sub-intervals (e.g. for log(x),
         # the test point will be between 0 and e^{-1/2} rather than at a negative x).
         breakpoints = all_sorted_roots if all_sorted_roots else []
-        bp_positions = [x_min] + [root_positions[r] for r in breakpoints] + [x_max]
-
-        for j in range(len(bp_positions) - 1):
-            left_pos = bp_positions[j]
-            right_pos = bp_positions[j + 1]
-
-            # Add gap around roots (except at boundaries)
-            if j > 0:
-                left_pos += dx
-            if j < len(bp_positions) - 2:
-                right_pos -= dx
-
-            # Choose a test x-value inside this interval
-            if j == 0:
-                test_x = root_numeric[breakpoints[0]] - 1
-            elif j >= len(breakpoints):
-                test_x = root_numeric[breakpoints[-1]] + 1
-            else:
-                test_x = (root_numeric[breakpoints[j - 1]] + root_numeric[breakpoints[j]]) / 2
+        for test_x, left_pos, right_pos in _sign_intervals(
+            breakpoints, root_numeric, root_positions, domain, dx, outer_step=1
+        ):
 
             # Evaluate sign using the robust helper (handles complex/undefined)
             sgn = _eval_sign_at(full_expr, x, test_x, subs)
@@ -899,14 +905,13 @@ def draw_factors(
                 )
                 factor_marker_positions.setdefault(root, []).append(y_pos)
             else:
-                # Not the factor's root — check if factor is undefined here
+                # Numerical periodic roots may not be returned by symbolic factor solving.
                 sgn = _eval_sign_at(full_expr, x, root_numeric[root], subs)
-                if sgn is None:
-                    # Factor is undefined at this point → show "×"
+                if sgn is None or sgn == 0:
                     plt.text(
-                        x=root_pos + 0.005,
+                        x=root_pos + (0.005 if sgn is None else 0),
                         y=y_pos,
-                        s=f"$\\times$",
+                        s="$\\times$" if sgn is None else "$0$",
                         fontsize=fontsize,
                         ha="center",
                         va="center",
@@ -933,6 +938,7 @@ def draw_function(
     subs: Dict[sp.Symbol, float] | None = None,
     root_numeric: Dict[Any, float] | None = None,
     singularities_set: set[Any] | None = None,
+    domain: Tuple[float, float] | None = None,
 ):
 
     x_min = -0.05
@@ -953,7 +959,7 @@ def draw_function(
 
     # Case 1: the function has no explicit roots/breakpoints.
     if len(roots) == 0:
-        x0 = 0
+        x0 = (domain[0] + domain[1]) / 2 if domain is not None else 0
         sgn = _eval_sign_at(f, x, x0, subs)
         if sgn is None:
             ax.plot(
@@ -991,29 +997,13 @@ def draw_function(
 
         return None
 
-    intervals = []
-    interval_positions = []
-
     if root_numeric is None:
         root_numeric = {r: _numeric(r, subs) for r in roots}
 
-    # Intervals before first root
-    intervals.append((root_numeric[roots[0]] - 1, root_numeric[roots[0]] - 0.1))
-    interval_positions.append((x_min, root_positions[roots[0]] - dx))
-
-    # Intervals between roots
-    for i in range(len(roots) - 1):
-        intervals.append((root_numeric[roots[i]] + 0.1, root_numeric[roots[i + 1]] - 0.1))
-        interval_positions.append(
-            (root_positions[roots[i]] + dx, root_positions[roots[i + 1]] - dx)
-        )
-
-    # Interval after last root
-    intervals.append((root_numeric[roots[-1]] + 0.1, root_numeric[roots[-1]] + 1))
-    interval_positions.append((root_positions[roots[-1]] + dx, x_max))
-
-    for i, (x0_interval, pos_interval) in enumerate(zip(intervals, interval_positions)):
-        x0 = (x0_interval[0] + x0_interval[1]) / 2
+    for x0, left_pos, right_pos in _sign_intervals(
+        roots, root_numeric, root_positions, domain, dx, outer_step=0.55
+    ):
+        pos_interval = (left_pos, right_pos)
         sgn = _eval_sign_at(f, x, x0, subs)
         if sgn is None:
             ax.plot(
@@ -1233,7 +1223,7 @@ def plot(
         small_figsize (bool, optional):
             Enables rescaling of the figure for a smaller figure size. Default: `False`.
         domain (tuple, optional):
-            Domain (x_min, x_max) for searching zeros numerically in transcendental functions.
+            Finite interval (x_min, x_max) restricting the chart and numerical zero search.
             If None, uses a default range or symbolic solving only. Example: (-10, 10)
         fontsize (int, optional):
             Font size for all text in the chart. Default: 24.
@@ -1246,6 +1236,11 @@ def plot(
         ax (plt.Axis)
             matplotlib axis.
     """
+    if domain is not None:
+        domain, domain_assumptions = _parse_domain_option(domain)
+        if domain_assumptions is not None:
+            raise ValueError("plot domain must be an interval; use assumptions for parameters")
+
     if isinstance(f, str):
         f = sp.sympify(f)
 
@@ -1282,6 +1277,7 @@ def plot(
     # Determine function type and extract zeros/singularities
     is_polynomial = f.is_polynomial()
     is_rational = False
+    zeros: List[Any] = []
     singularities: List[Any] = []
 
     if is_polynomial:
@@ -1356,8 +1352,10 @@ def plot(
             if factor["root"] not in roots:
                 roots.append(factor["root"])
 
-    # Ensure domain boundary points (finite endpoints) are included to split intervals
-    for b in domain_breaks:
+    # Factor solving may omit numerically discovered periodic zeros.
+    # Also include real-domain boundaries to split undefined intervals.
+    extra_breaks = zeros + singularities if domain is not None else []
+    for b in extra_breaks + domain_breaks:
         if b != -np.inf and b not in roots:
             roots.append(b)
 
@@ -1371,6 +1369,8 @@ def plot(
             root_numeric[r] = float("inf")
 
     roots = sorted(roots, key=lambda r: root_numeric.get(r, float("inf")))
+    if domain is not None:
+        roots = [r for r in roots if domain[0] <= root_numeric[r] <= domain[1]]
 
     # Convert singularities (often computed separately) into the canonical root objects
     # we use for positioning/labeling, by matching numerically.
@@ -1407,14 +1407,24 @@ def plot(
     x_max = 1.05
     positions = np.linspace(0, 1, num_roots + 2)[1:-1]  # Exclude 0 and 1
     root_positions = dict(zip(roots, positions))
+    tick_labels = [
+        f"${sp.latex(root, ln_notation=True)}$" if not generic_labels else f"$x_{i + 1}$"
+        for i, root in enumerate(roots)
+    ]
+    if domain is not None:
+        values = sorted(set([domain[0], domain[1]] + [root_numeric[r] for r in roots]))
+        value_positions = dict(zip(values, np.linspace(x_min, x_max, len(values))))
+        root_positions = {r: value_positions[root_numeric[r]] for r in roots}
+        positions = [root_positions[r] for r in roots]
+        for endpoint in domain:
+            if endpoint not in [root_numeric[r] for r in roots]:
+                positions.append(value_positions[endpoint])
+                tick_labels.append(f"${sp.latex(sp.sympify(endpoint), ln_notation=True)}$")
 
     # Set tick marks for roots of the polynomial
     plt.xticks(
         ticks=positions,
-        labels=[
-            f"${sp.latex(root, ln_notation=True)}$" if not generic_labels else f"$x_{i + 1}$"
-            for i, root in enumerate(roots)
-        ],
+        labels=tick_labels,
         fontsize=fontsize,
     )
 
@@ -1434,6 +1444,7 @@ def plot(
             subs=param_subs,
             root_numeric=root_numeric,
             singularities_set=singularities_set,
+            domain=domain,
         )
 
     # Draw sign lines for function
@@ -1452,6 +1463,7 @@ def plot(
         subs=param_subs,
         root_numeric=root_numeric,
         singularities_set=singularities_set,
+        domain=domain,
     )
 
     # Remove tick labels on y-axis
@@ -1681,7 +1693,7 @@ class SignChart2Directive(SphinxDirective):
                             Example: "sin(x)*cos(x), f(x)"
         factors (optional): Whether to show factored form (default: true)
         domain (optional): Either
-            - an x-domain tuple (xmin, xmax) for numerical zero finding, e.g. "(-10, 10)", or
+            - a finite x-domain tuple (xmin, xmax) restricting the chart, e.g. "(-10, 10)", or
             - parameter assumptions, e.g. "a > 0" to handle indeterminate constants.
         color (optional): Enable colored sign chart (default: true)
         generic_labels (optional): Use x₁, x₂ labels instead of actual values (default: false)
@@ -1830,7 +1842,10 @@ class SignChart2Directive(SphinxDirective):
 
         # Parse domain: either numeric x-domain tuple OR parameter assumptions.
         domain_val = merged.get("domain")
-        custom_domain, domain_assumptions = _parse_domain_option(domain_val)
+        try:
+            custom_domain, domain_assumptions = _parse_domain_option(domain_val)
+        except ValueError as exc:
+            return [self.state_machine.reporter.error(str(exc), line=self.lineno)]
 
         # Parse figsize
         figsize_val = merged.get("figsize")
@@ -1852,7 +1867,7 @@ class SignChart2Directive(SphinxDirective):
             int(bool(use_color)),
             int(bool(generic_labels)),
             int(bool(small_figsize)),
-            str(custom_domain) if custom_domain else "",
+            f"bounded-v1:{custom_domain}" if custom_domain else "",
             str(domain_assumptions) if domain_assumptions else "",
             str(custom_figsize) if custom_figsize else "",
             str(custom_fontsize),

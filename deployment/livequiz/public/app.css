@@ -314,6 +314,15 @@ nav{align-items:center;flex-wrap:wrap}
 .question-modal :is(button,a,input,textarea,select):focus-visible{outline-color:var(--answer-focus)}
 
 /* Sorting uses a numbered vertical sequence in both questions and solutions. */
+/* Image answers use the full width beside the image, rather than half of a
+   narrow answer column. Keep the stacked mobile layout unchanged. */
+@media(min-width:601px){
+  .question-modal:is(.active-question-modal,.results-modal) .media-question-body:has(.question-image)>.option-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(min-width:900px){
+  .question-modal:is(.active-question-modal,.results-modal):has(.media-question-body) .media-question-body:has(.question-image){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+
 .question-modal .option-grid.sorting-options{grid-template-columns:minmax(0,1fr);gap:8px}
 .question-modal .sorting-options .option-card{min-height:52px;padding:14px 12px 14px 44px;text-align:left;justify-content:flex-start}
 .sorting-list{position:relative;list-style:none;padding:6px;margin:0;display:grid;gap:8px}

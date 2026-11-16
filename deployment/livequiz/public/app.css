@@ -435,8 +435,5 @@ nav{align-items:center;flex-wrap:wrap}
 .preview-view-toggle button:focus-visible{position:relative;z-index:1}
 .preview-view-toggle svg{display:block}
 
-/* Participant feedback is one scrollable flow, with the correct answer first. */
+/* Keep long submitted answers scrollable within the participant result. */
 .question-modal.participant-modal.results-modal .participant-results-body{display:block;overflow:auto}
-.question-modal.participant-modal.results-modal .participant-results-body .option-grid{grid-template-columns:minmax(0,1fr)}
-.question-modal.participant-modal.results-modal .participant-results-body .option-card .rich{white-space:pre-wrap;overflow-wrap:anywhere}
-.question-modal.participant-modal.results-modal .participant-results-body .question-image{width:auto;height:auto;max-height:40dvh;margin:20px auto;object-fit:contain}

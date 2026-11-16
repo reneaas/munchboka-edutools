@@ -877,9 +877,8 @@
     }
     function showAnswer(s,order){
       popup((header,body)=>{
-        header.append(el('h2',host?'Svarfordeling':'Fasit','modal-title'));
+        header.append(el('h2',host?'Svarfordeling':'Ditt resultat','modal-title'));
         if(host){body.append(answerChart(s,order));return;}
-        questionCard(s,order,header,body);
         const analysis=el('section',undefined,'results-analysis');
         const feedback=el('div',undefined,'personal-answer-result'+(s.submitted?(s.answer_correct?' correct':' wrong'):''));
         feedback.append(el('p',s.submitted?(s.answer_correct?'Riktig svar!':'Feil svar'):'Ikke svart','result'));
@@ -894,11 +893,8 @@
         }
         feedback.append(el('p',s.submitted?`Du fikk ${s.points} poeng.`:'Du fikk 0 poeng. Du svarte ikke på dette spørsmålet.','hint'));
         analysis.append(feedback);
-        if(s.question.type==='text')analysis.append(el('p','Riktig svar: '+s.question.accepted.join(' · ')));
-        if(s.question.type==='sort')header.append(el('p','Fasit viser riktig rekkefølge.','hint'));
         body.classList.add('participant-results-body');
-        // Keep the answer and personal feedback ahead of the supporting image.
-        body.append(analysis,body.querySelector('.question-media'));
+        body.append(analysis);
       },'results-modal');
     }
     function personalLightningResult(s){

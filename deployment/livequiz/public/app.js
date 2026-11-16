@@ -48,10 +48,11 @@
     for (let i = n - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     return order;
   }
-  function optionCards(q, order, revealed, answer = []) {
+  function optionCards(q, order, revealed, answer = [], correctOnly = false) {
     const grid = el('div', undefined, 'option-grid'+(q.type==='sort'?' sorting-options':''));
     if(q.type==='sort'&&revealed)order=q.correct;
     order.forEach((orig, pos) => {
+      if(correctOnly&&!q.correct.includes(orig))return;
       const card = el('div', undefined, 'option-card' + (revealed ? (q.correct.includes(orig) ? ' correct' : ' wrong') : ''));
       card.append(el('span', String(pos + 1), 'option-badge'), rich(q.options[orig]));
       if (revealed && q.type!=='sort') {
@@ -895,7 +896,9 @@
         analysis.append(feedback);
         if(s.question.type==='text')analysis.append(el('p','Riktig svar: '+s.question.accepted.join(' · ')));
         if(s.question.type==='sort')header.append(el('p','Fasit viser riktig rekkefølge.','hint'));
-        body.append(analysis);
+        body.classList.add('participant-results-body');
+        // Keep the answer and personal feedback ahead of the supporting image.
+        body.append(analysis,body.querySelector('.question-media'));
       },'results-modal');
     }
     function personalLightningResult(s){
@@ -909,7 +912,7 @@
     }
     function questionCard(s,order,header,body){
       const q=s.question,head=el('div',undefined,'qcard-head'),media=el('div',undefined,'question-media');
-      if(q.image||(host&&q.youtube))body.classList.add('media-question-body');
+      if((q.image||(host&&q.youtube))&&(host||s.state!=='QUESTION_RESULTS'))body.classList.add('media-question-body');
       hostClock=el('span',undefined,'qcard-timer');head.append(el('span',s.state==='RACE_ACTIVE'?`${s.game==='quizlet'?'Quizlet-like':'Quiz Race'} · Forsøk ${s.race.attempt+1}`:s.state==='LIGHTNING_ACTIVE'?`LYNRUNDE · ${s.progress+1} av ${s.total}`:`Spørsmål ${s.index+1} av ${s.total}`),hostClock);
       header.append(head);body.append(media);void content(q,media,{query,token,showVideo:host,showImages:true,autoplay:s.state==='QUESTION_ACTIVE'},header);
       if(!host&&s.game==='quizlet'&&q.type!=='multi')header.append(el('p',['text','sort'].includes(q.type)?'Alle på laget kan svare. Første riktige svar tar laget videre. Feil svar nullstiller laget.':'Snakk med laget. Send bare inn hvis du har riktig svar.','multiple-answer-notice'));
@@ -921,7 +924,7 @@
         body.append(answerForm(s,order));
       }
       else if(q.type==='text'){if(s.state==='QUESTION_ACTIVE')body.append(el('p','Elevene skriver svaret sitt.','qcard-note'));}
-      else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS',!host&&Array.isArray(s.answer)?s.answer:[]));
+      else body.append(optionCards(q,order,s.state==='QUESTION_RESULTS',!host&&Array.isArray(s.answer)?s.answer:[],!host&&s.state==='QUESTION_RESULTS'));
     }
     function answerForm(s,order){
       const form=el('form',undefined,'question-answer-form');selection=s.answer??(s.question.type==='text'?'':[]);

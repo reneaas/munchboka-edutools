@@ -92,19 +92,20 @@ function lq_battle_join_host(PDO $db,array $input): array {
     });
 }
 function lq_battle_board(PDO $db,string $room,array $battle): array {
-    $players=lq_query($db,'SELECT p.id,p.nickname,COALESCE(SUM(a.points),0) AS score FROM lq_players p LEFT JOIN lq_answers a ON a.player_id=p.id AND a.room_id=p.room_id WHERE p.room_id=? GROUP BY p.id,p.nickname ORDER BY score DESC,p.nickname,p.id',[$room])->fetchAll();
+    $players=lq_query($db,'SELECT p.id,p.nickname,COALESCE(SUM(a.points),0) AS score,COUNT(a.player_id) AS answers FROM lq_players p LEFT JOIN lq_answers a ON a.player_id=p.id AND a.room_id=p.room_id WHERE p.room_id=? GROUP BY p.id,p.nickname ORDER BY score DESC,p.nickname,p.id',[$room])->fetchAll();
     $rows=[];
     foreach($battle['classes'] as $id=>$class){
         $members=array_values(array_filter($players,fn($p)=>($battle['members'][$p['id']] ?? null)===$id));
-        $total=array_sum(array_column($members,'score'));$n=count($members);
-        $rows[]=['id'=>$id,'name'=>$class['name'],'ready'=>(bool)($class['ready'] ?? false),'count'=>$n,'total'=>$total,'score'=>$n?$total/$n:null,'individuals'=>$members];
+        // A zero-point answer counts as participation; joining alone does not.
+        $total=array_sum(array_column($members,'score'));$n=count(array_filter($members,fn($p)=>(int)$p['answers']>0));
+        $rows[]=['id'=>$id,'name'=>$class['name'],'ready'=>(bool)($class['ready'] ?? false),'count'=>count($members),'participants'=>$n,'total'=>$total,'score'=>$n?$total/$n:null,'individuals'=>$members];
     }
     // Compare rational scores exactly, not their rounded display values.
-    usort($rows,function($a,$b){if(!$a['count']||!$b['count'])return ($b['count']>0)<=>($a['count']>0);return ($b['total']*$a['count']<=>$a['total']*$b['count']) ?: strcmp($a['id'],$b['id']);});
+    usort($rows,function($a,$b){if(!$a['participants']||!$b['participants'])return ($b['participants']>0)<=>($a['participants']>0);return ($b['total']*$a['participants']<=>$a['total']*$b['participants']) ?: strcmp($a['id'],$b['id']);});
     $previous=null;
     foreach($rows as $i=>&$row){
-        $row['rank']=$row['count']?($previous && $previous['total']*$row['count']===$row['total']*$previous['count']?$previous['rank']:$i+1):null;
-        if($row['count'])$previous=$row;
+        $row['rank']=$row['participants']?($previous && $previous['total']*$row['participants']===$row['total']*$previous['participants']?$previous['rank']:$i+1):null;
+        if($row['participants'])$previous=$row;
     }unset($row);return $rows;
 }
 function lq_battle_payload(PDO $db,array $room,array $state,?array $player,bool $host,?string $class=null): array {

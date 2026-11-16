@@ -68,10 +68,12 @@ to this mode. Existing modes retain their own allocation and late-join behavior.
 Class Battle removes the ordinary room's total 60-player cap to accommodate
 multiple full classes; production capacity remains subject to hosting limits.
 
-Standings include all registered members, including nonresponders. Classes are
-ranked by exact rational mean of cumulative individual points (cross-products),
-then formatted to at most two decimals. Ties share a rank; empty classes are
-unranked. Class standings are live on every display. The main host can expand
+Class averages include only members who have submitted at least one answer in
+the current game, including incorrect, zero-point answers. Members who have never
+answered remain in the roster and individual results but do not lower the average.
+Classes are ranked by exact rational mean of these cumulative individual points
+(cross-products), then rounded to whole points for display. Ties share a rank;
+classes with no answers are unranked. Class standings are live on every display. The main host can expand
 individual results for every class; co-hosts can expand only their own class.
 Final screens prominently identify the winner or tied winners.
 

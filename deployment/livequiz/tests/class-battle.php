@@ -76,6 +76,15 @@ rejects(fn()=>lq_room_media($db,$rid,0,'',true,$img,'',str_repeat('0',64)),'inva
 check(!isset($state['question']['correct'])&&!isset($state['question']['accepted']),'co-host cannot see unrevealed answer key');
 // Keep aggregation assertions independent of elapsed test execution time.
 lq_query($db,'UPDATE lq_rooms SET deadline=? WHERE id=?',[(int)round((microtime(true)+61)*1000),$rid]);
+$rows=lq_state($db,$rid,1,'',true)['battle']['classes'];
+check(count(array_filter($rows,fn($r)=>$r['rank']!==null||$r['score']!==null))===0,'classes with no answers are unranked even with registered students');
+lq_answer($db,['room'=>$rid,'run'=>0,'index'=>0,'answer'=>[1]],$tokens['A'][0]);
+$byName=array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],null,'name');
+check($byName['Class A']['score']==1000&&$byName['Class A']['participants']===1&&$byName['Class A']['count']===3,'nonresponders do not dilute average or disappear from roster');
+check($byName['Class A']['rank']===1&&$byName['Class B']['rank']===null,'ranking uses responding members');
+lq_answer($db,['room'=>$rid,'run'=>0,'index'=>0,'answer'=>[0]],$tokens['A'][2]);
+$byName=array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],null,'name');
+check($byName['Class A']['score']==500&&$byName['Class A']['participants']===2,'incorrect zero-point answers count in average');
 foreach($tokens as $class=>$list)foreach($list as $i=>$token){
  $correct=($class==='B'||($class==='A'&&$i<2));
  $input=['room'=>$rid,'run'=>0,'index'=>0,'answer'=>$correct?[1]:[0]];
@@ -113,7 +122,14 @@ $finalCo=lq_battle_state($db,$rid,$inviteB);
 check(count($finalMain['battle']['mvps'])===3,'global top three MVPs');
 check($finalMain['battle']['mvps']===$finalCo['battle']['mvps'],'all hosts see identical MVPs including deterministic ties');
 check(!isset(lq_state($db,$rid,0,$tokens['A'][0],false)['battle']['invitations']),'student cannot retrieve invitation keys');
+// Missing later questions does not erase participation earlier in the game.
+lq_query($db,'DELETE FROM lq_answers WHERE room_id=? AND player_id=? AND question_index=1',[$rid,$pids['A'][0]]);
+lq_query($db,'DELETE FROM lq_answers WHERE room_id=? AND player_id=?',[$rid,$pids['A'][2]]);
+lq_query($db,'UPDATE lq_answers SET points=1000 WHERE room_id=? AND player_id=?',[$rid,$pids['A'][0]]);
+$byName=array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],null,'name');
+check($byName['Class A']['score']==500&&$byName['Class A']['participants']===2,'cumulative average counts each responding student once across questions');
 battleControl($db,$rid,'restart');
+check(array_sum(array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],'participants'))===0,'restart clears participation from the previous game');
 check(!lq_state($db,$rid,1,'',true)['battle']['locked'],'replay reopens lobby and retains classes');
 check(!array_column(lq_state($db,$rid,1,'',true)['battle']['classes'],'ready','id')[$b['class']],'replay clears readiness');
 battleControl($db,$rid,'switch-quiz',['quiz'=>$quiz['id']]);

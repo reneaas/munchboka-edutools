@@ -89,7 +89,7 @@
       const li = el('li'), name = el('span', p.name || p.nickname, 'name');
       if (p.members) name.append(el('small', p.members.map(member => member.nickname).join(' · '), 'team-members'));
       if ('count' in p) name.append(el('small',`${p.count} ${p.count===1?'elev':'elever'}`,'team-members'));
-      li.append(el('span', String('rank' in p ? (p.rank ?? '–') : i + 1), 'rank'), name, el('strong', (p.score===null?'Ikke rangert':(p.members||'count' in p?new Intl.NumberFormat('nb-NO',{maximumFractionDigits:'count' in p?2:0}).format(p.score):p.score)+' poeng'))); list.append(li);
+      li.append(el('span', String('rank' in p ? (p.rank ?? '–') : i + 1), 'rank'), name, el('strong', (p.score===null?'Ikke rangert':(p.members||'count' in p?new Intl.NumberFormat('nb-NO',{maximumFractionDigits:0}).format(p.score):p.score)+' poeng'))); list.append(li);
     });
     return list;
   }
@@ -717,7 +717,7 @@
         showLightningDuration();lightningRules.hidden=racing;teamRules.hidden=racing;
         rules.hidden=!racing;
         rules.replaceChildren(ruleList(battle?[
-          ['Class Battle:', 'Flere klasser spiller samme quiz. Elevene svarer individuelt; klassens poeng er gjennomsnittet av alle elevene.'],
+          ['Class Battle:', 'Flere klasser spiller samme quiz. Elevene svarer individuelt; klassens poeng er gjennomsnittet av de samlede poengene til elevene som har svart minst én gang.'],
           ['Medverter:', 'Inviter andre lærere fra lobbyen. Hver klasse får sin egen spillkode. Bare hovedverten styrer spillet.'],
           ['Låste klasselister:', 'Klasser og nye elever må bli med før start. Eksisterende elever kan koble til igjen.']
         ]:quizlet?[
@@ -823,7 +823,7 @@
       const key=s.state+JSON.stringify(s.battle);if(key===battleRendered)return;battleRendered=key;
       const expanded=new Set([...battleScores.querySelectorAll('details[open]')].map(d=>d.dataset.className));
       battleTitle.textContent='Class Battle · '+s.battle.class_name;
-      battleScores.replaceChildren(el('p','Klassepoeng = gjennomsnittet av alle elevenes samlede poeng.','hint'),leaderboardList(s.battle.classes));
+      battleScores.replaceChildren(el('p','Klassepoeng = gjennomsnittet av de samlede poengene til elevene som har svart minst én gang.','hint'),leaderboardList(s.battle.classes));
       for(const result of s.battle.results||[]){const details=el('details');details.dataset.className=result.name;details.open=expanded.has(result.name);details.append(el('summary',result.name+' · individuelle resultater'),leaderboardList(result.players));battleScores.append(details);}
 
     }

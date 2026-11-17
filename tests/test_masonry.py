@@ -107,6 +107,21 @@ def test_html_content_and_assets(tmp_path, umbrella):
         assert relative in str(soup)
 
 
+def test_title_math_is_inline(tmp_path):
+    out, warnings = build(
+        tmp_path,
+        "# Cards\n\n:::{masonry-card} Speiling om $y$-aksen\nBody.\n:::\n",
+    )
+    assert not warnings
+    soup = BeautifulSoup((out / "index.html").read_text(), "html.parser")
+    title = soup.select_one(".mb-masonry-title")
+    math = title.select_one("span.math")
+    assert math is not None
+    assert math.text == r"\(y\)"
+    assert str(math.previous_sibling) == "Speiling om "
+    assert str(math.next_sibling) == "-aksen"
+
+
 @pytest.mark.parametrize("builder,filename", [("text", "index.txt"), ("latex", "masonry.tex")])
 def test_non_html_retains_content(tmp_path, builder, filename):
     out, warnings = build(tmp_path, SOURCE, builder)

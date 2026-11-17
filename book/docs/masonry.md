@@ -89,6 +89,9 @@ work. With reStructuredText, use normal directive nesting:
 | Both | `name` | — | A reference target. |
 
 `masonry-card` takes an optional title argument and ordinary document content.
+Titles support inline formatting, including single-dollar math such as
+`Speiling om $y$-aksen` when MyST's `dollarmath` extension is enabled. Inline math
+stays in the text flow; long titles can still wrap naturally to fit the card.
 Only `masonry-card` directives can be direct children of `masonry`; put paragraphs,
 figures, equations and nested directives inside a card. Cards occupy one column.
 A card can also be used on its own.

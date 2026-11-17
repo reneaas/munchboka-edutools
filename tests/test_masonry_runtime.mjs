@@ -69,13 +69,31 @@ test('masonry packs, resizes, expands, preserves order and prints',
     const css = await readFile(new URL('../src/munchboka_edutools/static/css/masonry.css', import.meta.url), 'utf8');
     const js = await readFile(new URL('../src/munchboka_edutools/static/js/masonry.js', import.meta.url), 'utf8');
     await evaluate(`document.body.innerHTML = ${JSON.stringify(`
-        <style>${css}</style>
+        <style>
+        ${css}
+        /* PyData's rubric layout must not split inline title content. */
+        p.rubric { display: flex; flex-direction: column; }
+        </style>
+        <div class="mb-masonry-card" style="width:400px">
+            <p class="rubric mb-masonry-title" id="math-title">Speiling om <span class="math notranslate">\\(y\\)</span>-aksen</p>
+        </div>
         <div class="mb-masonry" data-columns="1 2 3" data-placement="shortest"
              style="width:800px; --mb-masonry-gap:16px">
         ${[100, 300, 80, 120].map((height, i) => `<div class="mb-masonry-card" id="card${i}" style="height:${height}px">Card ${i}</div>`).join('')}
         </div>`)};
         window.grid = document.querySelector('.mb-masonry');
         window.cards = [...grid.children];`);
+    const titleTops = await evaluate(`(() => {
+        const title = document.querySelector('#math-title');
+        return [...title.childNodes].map(node => {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            return range.getBoundingClientRect().top;
+        });
+    })()`);
+    assert.equal(titleTops.length, 3);
+    assert.ok(titleTops.every(top => Math.abs(top - titleTops[0]) < 1),
+        `Inline math must share a title line with surrounding text: ${titleTops}`);
     // Progressive fallback before the controller runs.
     assert.equal(await evaluate("getComputedStyle(cards[0]).position"), 'static');
     await evaluate(js);

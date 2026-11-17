@@ -27,6 +27,8 @@
 }
 
 .mb-masonry-card > .mb-masonry-title {
+    /* Override the theme's column-flex rubric layout to preserve inline content. */
+    display: block;
     margin: 0;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--pst-color-border, #8886);

@@ -2,6 +2,27 @@
  * This is a timing workaround, not a guarantee about YouTube's title UI. */
 (() => {
   'use strict';
+  // Shared by the editor, previews and the live player.
+  window.quizVideoStart = value => {
+    const text = String(value ?? '').trim();
+    let seconds;
+    if (/^\d*$/.test(text)) seconds = Number(text);
+    else if (/^\d+:[0-5]\d$/.test(text)) { const [m,s] = text.split(':').map(Number); seconds = m*60+s; }
+    else if (/^(?:\d+h)?(?:\d+m)?(?:\d+s)?$/.test(text) && text) {
+      const parts = text.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+      seconds = Number(parts[1]||0)*3600+Number(parts[2]||0)*60+Number(parts[3]||0);
+    }
+    if (!Number.isSafeInteger(seconds) || seconds < 0 || seconds > 2147483647) throw new Error('Skriv starttid som 1:30 eller 90 sekunder.');
+    return seconds;
+  };
+  window.quizVideoLinkStart = value => {
+    try {
+      const url = new URL(value);
+      if (!['youtu.be','youtube.com','www.youtube.com','m.youtube.com'].includes(url.hostname)) return null;
+      const time = url.searchParams.get('t') ?? url.searchParams.get('start') ?? new URLSearchParams(url.hash.slice(1)).get('t');
+      return time === null ? null : window.quizVideoStart(time);
+    } catch (_) { return null; }
+  };
   let apiReady;
   function loadAPI() {
     if (window.YT?.Player) return Promise.resolve(window.YT);
@@ -15,13 +36,14 @@
     });
     return apiReady;
   }
-  window.quizYouTube = async (target, videoId, autoplay = true) => {
+  window.quizYouTube = async (target, videoId, autoplay = true, start = 0) => {
+    const startSeconds = window.quizVideoStart(start);
     const wrap = document.createElement('div'), screen = document.createElement('div'), frame = document.createElement('iframe');
     wrap.className = 'quiz-video'; screen.className = 'quiz-video-screen';
     frame.title = 'YouTube-video'; frame.tabIndex = -1; frame.setAttribute('aria-hidden', 'true');
     frame.allow = 'autoplay; encrypted-media'; frame.referrerPolicy = 'strict-origin-when-cross-origin';
     // API initiates playback only after its listeners are ready.
-    frame.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?' + new URLSearchParams({enablejsapi:'1', origin:location.origin, autoplay:'0', mute:'0', controls:'0', disablekb:'1', playsinline:'1', cc_load_policy:'0', rel:'0'});
+    frame.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?' + new URLSearchParams({start:String(startSeconds), enablejsapi:'1', origin:location.origin, autoplay:'0', mute:'0', controls:'0', disablekb:'1', playsinline:'1', cc_load_policy:'0', rel:'0'});
     const control = document.createElement('button'), message = document.createElement('p');
     control.type = 'button'; control.className = 'secondary'; control.textContent = 'Spill av'; control.disabled = true;
     message.className = 'hint'; message.setAttribute('role', 'status'); message.textContent = 'Laster YouTube …';
@@ -64,7 +86,7 @@
       }});
       control.onclick = () => {
         if (state === 1) { hide(); player.pauseVideo(); }
-        else { player.unMute(); player.playVideo(); }
+        else { if (state === 0) player.seekTo(startSeconds, true); player.unMute(); player.playVideo(); }
       };
     } catch (err) { if (!disposed && wrap.isConnected) fail(err.message); }
   };

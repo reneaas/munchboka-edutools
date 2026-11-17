@@ -102,7 +102,7 @@
       try { const blob = await api('media', undefined, {...context.query, image: q.image.id}, context.token || '', true); const url = URL.createObjectURL(blob); img.onload = () => URL.revokeObjectURL(url); img.src = url; }
       catch (_) { img.replaceWith(el('p', 'Bildet kunne ikke lastes.')); }
     }
-    if (q.youtube && context.showVideo !== false) void window.quizYouTube(target, q.youtube, context.autoplay !== false);
+    if (q.youtube && context.showVideo !== false) void window.quizYouTube(target, q.youtube, context.autoplay !== false,q.youtube_start ?? 0);
   }
 
   function home() {
@@ -264,6 +264,7 @@
       },'secondary'));
   }
   function questionReady(q) {
+    try { window.quizVideoStart(q.youtube_start ?? 0); } catch (_) { return false; }
     const video = (q.youtube || '').trim();
     if (video && !/^[a-zA-Z0-9_-]{11}$/.test(video)) {
       try {
@@ -296,7 +297,7 @@
     if(q.youtube){try{const u=new URL(q.youtube);q.youtube=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.split('/').pop();}catch(_){}}
     void content(q,media,{showVideo:false,query:mediaQuery},header).then(()=>{
       if(!media.isConnected||!q.youtube)return;
-      if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false);
+      if(/^[\w-]{11}$/.test(q.youtube))void window.quizYouTube(media,q.youtube,false,q.youtube_start ?? 0);
       else media.append(el('p','Kontroller YouTube-lenken i redigeringen.','hint'));
     });
   }
@@ -392,7 +393,7 @@
     });
     return {grid,renderAnswers:()=>answerViews.forEach(render=>render())};
   }
-  const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
+  const blankQuestion = () => ({type:'single', prompt:'', code:'', youtube:'', youtube_start:0, image:null, seconds:30, options:['','','',''], correct:[0], accepted:[]});
   async function editor() {
     if (!uid) return library();
     let saved = params.has('edit') ? await api('quiz', undefined, {id:params.get('edit')}) : {id:'',revision:0,content:{title:'',questions:[blankQuestion()]}};
@@ -538,7 +539,15 @@
         for (const [value,label] of [['single','Ett riktig alternativ'],['multi','Flere riktige alternativer'],['text','Skriv svaret'],['sort','Sorter alternativene']]) { const o = el('option',label); o.value=value; select.append(o); }
         select.value=q.type; select.onchange=()=>{q.type=select.value; if(q.type==='single') q.correct=[q.correct[0] ?? 0]; if(q.type==='sort'){while(q.options.length<2)q.options.push('');q.correct=q.options.map((_,i)=>i);} changed(); renderQuestions();}; typeLabel.append(select);
         const codeField = field('Kode (valgfritt)',q.code,v=>{q.code=v;changed();},'textarea');
-        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{q.youtube=v;changed();}), field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
+        const startValue=q.youtube_start ?? 0;
+        const videoStart = field('Start ved (min:sek eller sekunder)',typeof startValue==='number'?Math.floor(startValue/60)+':'+String(startValue%60).padStart(2,'0'):startValue,v=>{q.youtube_start=v;changed();});
+        videoStart.querySelector('input').placeholder='1:30';
+        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{
+          q.youtube=v;
+          const start=window.quizVideoLinkStart(v);
+          if(start!==null){q.youtube_start=start;videoStart.querySelector('input').value=Math.floor(start/60)+':'+String(start%60).padStart(2,'0');}
+          changed();
+        }), videoStart, field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
         // The native filename field resets on render, even when the image is saved.
         upload.style.display='none';imageLabel.append(upload);

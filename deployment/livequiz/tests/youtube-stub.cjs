@@ -12,6 +12,7 @@ module.exports = async context => {
    emit(state){this.state=state;this.events.onStateChange({target:this,data:state});}
    unMute(){this.muted=false;}
    playVideo(){if(window.__ytBlocked)this.events.onAutoplayBlocked();else this.emit(1);}
+   seekTo(seconds){this.seek=seconds;}
    pauseVideo(){this.emit(2);}
    destroy(){this.destroyed=true;this.frame.remove();}
  }};

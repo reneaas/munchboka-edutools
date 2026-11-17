@@ -423,7 +423,13 @@ from the deployed quiz music folder. Music also plays during the Lightning Round
 - Text, safe LaTeX via existing local KaTeX assets, literal code blocks, uploaded
   images via existing private Jeopardy media storage, and automatically loaded YouTube
   embeds. Active questions request autoplay with sound; results do not restart playback.
-  Video fades in after four uninterrupted seconds in the YouTube PLAYING state.
+  Each question can set “Start ved” as `1:30` or `90` seconds. Timestamped
+  YouTube links populate this field automatically; an explicit field value wins.
+  The offset is saved as `youtube_start` seconds (older questions default to zero)
+  and applies to previews and live playback. Replay returns to that offset;
+  pause/resume continues from the current position.
+  Video fades in after four uninterrupted seconds in the YouTube PLAYING state,
+  even when starting at a nonzero offset. Pausing or buffering resets this delay.
   Buffering, pause and end hide it immediately and reset the reveal timer. Pointer
   and keyboard interaction with the iframe are disabled; separate Play/Pause controls
   provide a fallback when audible autoplay is blocked. Removed players are destroyed.

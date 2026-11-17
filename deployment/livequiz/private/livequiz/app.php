@@ -35,6 +35,20 @@ function lq_youtube(string $s): string {
     if (!is_string($id) || !preg_match('/^[a-zA-Z0-9_-]{11}$/D', $id)) throw new DomainException('Ugyldig YouTube-lenke.');
     return $id;
 }
+function lq_youtube_start(mixed $value): int {
+    if (!is_int($value) && !is_string($value)) throw new DomainException('Ugyldig starttid.');
+    $text=trim((string)$value);$seconds=null;
+    if (preg_match('/^\d*$/D',$text)) $seconds=(float)$text;
+    elseif (preg_match('/^(\d+):([0-5]\d)$/D',$text,$m)) $seconds=(float)$m[1]*60+(int)$m[2];
+    elseif ($text!=='' && preg_match('/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/D',$text,$m)) $seconds=(float)($m[1]??0)*3600+(float)($m[2]??0)*60+(float)($m[3]??0);
+    if ($seconds===null || $seconds<0 || $seconds>2147483647) throw new DomainException('Skriv starttid som 1:30 eller 90 sekunder.');
+    return (int)$seconds;
+}
+function lq_youtube_link_start(string $url): int {
+    lq_youtube($url); // Validate the video source before reading its timestamp.
+    $parts=parse_url($url);parse_str($parts['query']??'',$query);parse_str($parts['fragment']??'',$fragment);
+    return lq_youtube_start($query['t']??$query['start']??$fragment['t']??0);
+}
 function lq_code(mixed $value): string {
     jp_text($value, 8000); // Validate type, size and UTF-8 without trimming code.
     return $value;
@@ -51,6 +65,9 @@ function lq_validate(PDO $db, int $uid, mixed $data, bool $draft = false): array
         if (!is_array($q) || !in_array($q['type'] ?? '', ['single', 'multi', 'text', 'sort'], true)) throw new DomainException('Ugyldig spørsmålstype.');
         $c = ['type' => $q['type'], 'prompt' => jp_text($q['prompt'] ?? '', 8000), 'code' => lq_code($q['code'] ?? ''),
             'youtube' => jp_text($q['youtube'] ?? '', 500), 'image' => null];
+        $c['youtube_start']=$q['youtube_start']??0;
+        try { $c['youtube_start']=array_key_exists('youtube_start',$q)?lq_youtube_start($q['youtube_start']):lq_youtube_link_start($c['youtube']); }
+        catch (DomainException $e) { if (!$draft) throw $e; }
         try { $c['youtube'] = lq_youtube($c['youtube']); }
         catch (DomainException $e) { if (!$draft) throw $e; }
         $seconds = array_key_exists('seconds', $q) ? $q['seconds'] : 30;
@@ -87,7 +104,7 @@ function lq_validate(PDO $db, int $uid, mixed $data, bool $draft = false): array
 // every new room gets a compact snapshot containing only playable questions.
 function lq_question_ready(array $q): bool {
     $video = $q['youtube'] ?? '';
-    try { lq_youtube($video); } catch (DomainException $e) { return false; }
+    try { lq_youtube($video); lq_youtube_start($q['youtube_start']??0); } catch (DomainException $e) { return false; }
     if (trim($q['prompt'] ?? '') === '' && trim($q['code'] ?? '') === '' && empty($q['image']) && $video === '') return false;
     $seconds = array_key_exists('seconds', $q) ? $q['seconds'] : 30;
     if (!is_int($seconds) || $seconds < 5 || $seconds > 600) return false;

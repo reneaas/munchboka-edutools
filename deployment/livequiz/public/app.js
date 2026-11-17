@@ -542,12 +542,14 @@
         const startValue=q.youtube_start ?? 0;
         const videoStart = field('Start ved (min:sek eller sekunder)',typeof startValue==='number'?Math.floor(startValue/60)+':'+String(startValue%60).padStart(2,'0'):startValue,v=>{q.youtube_start=v;changed();});
         videoStart.querySelector('input').placeholder='1:30';
-        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{
+        const videoFields=el('div',undefined,'video-editor-fields');
+        videoFields.append(field('YouTube-lenke eller video-ID (valgfritt)',q.youtube,v=>{
           q.youtube=v;
           const start=window.quizVideoLinkStart(v);
           if(start!==null){q.youtube_start=start;videoStart.querySelector('input').value=Math.floor(start/60)+':'+String(start%60).padStart(2,'0');}
           changed();
-        }), videoStart, field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
+        }), videoStart);
+        card.append(typeLabel, field('Spørsmål',q.prompt,v=>{q.prompt=v;changed();},'textarea'), codeField, videoFields, field('Svartid i sekunder (5–600)',q.seconds,v=>{q.seconds=Number(v);changed();},'number'));
         const imageLabel=el('label','Bilde (PNG, JPEG eller WebP, maks 2 MiB)'), upload=el('input'); upload.type='file'; upload.accept='image/png,image/jpeg,image/webp';
         // The native filename field resets on render, even when the image is saved.
         upload.style.display='none';imageLabel.append(upload);
